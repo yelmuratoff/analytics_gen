@@ -1,6 +1,32 @@
-# Analytics Gen
+<div align="center">
+  <img src="https://github.com/yelmuratoff/packages_assets/blob/main/assets/analytics_gen.png?raw=true" width="400">
 
-Type-safe analytics event tracking with code generation from YAML configuration.
+  <p><strong>Type-safe analytics event tracking with code generation from YAML configuration.</strong></p>
+
+  <p>
+    <a href="https://pub.dev/packages/analytics_gen">
+      <img src="https://img.shields.io/pub/v/analytics_gen?include_prereleases&style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="pub version">
+    </a>
+    <a href="https://opensource.org/licenses/Apache-2.0">
+      <img src="https://img.shields.io/github/license/yelmuratoff/analytics_gen?style=for-the-badge&logo=apache&labelColor=000000&color=DF4926" alt="License">
+    </a>
+    <a href="https://github.com/yelmuratoff/analytics_gen">
+      <img src="https://img.shields.io/github/stars/yelmuratoff/analytics_gen?style=for-the-badge&logo=github&labelColor=000000&color=DF4926" alt="GitHub stars">
+    </a>
+  </p>
+
+  <p>
+    <a href="https://pub.dev/packages/analytics_gen/score">
+      <img src="https://img.shields.io/pub/likes/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub likes">
+    </a>
+    <a href="https://pub.dev/packages/analytics_gen/score">
+      <img src="https://img.shields.io/pub/points/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub points">
+    </a>
+    <a href="https://pub.dev/packages/analytics_gen/downloads">
+      <img src="https://img.shields.io/pub/dm/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub downloads">
+    </a>
+  </p>
+</div>
 
 ## Features
 
