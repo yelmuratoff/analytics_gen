@@ -1,0 +1,18 @@
+purchase:
+  completed:
+    description: User completed a purchase
+    parameters:
+      product_id: string
+      price: double
+      currency: string
+      quantity:
+        type: int
+        description: Number of items purchased
+        
+  cancelled:
+    description: User cancelled a purchase
+    parameters:
+      product_id: string
+      reason:
+        type: string?
+        description: Reason for cancellation

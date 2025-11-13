@@ -1,0 +1,19 @@
+auth:
+  login:
+    description: User logs in to the application
+    parameters:
+      method:
+        type: string
+        description: Login method (email, google, apple)
+      
+  logout:
+    description: User logs out
+    parameters: {}
+    
+  signup:
+    description: User creates a new account
+    parameters:
+      method: string
+      referral_code:
+        type: string?
+        description: Optional referral code used during signup

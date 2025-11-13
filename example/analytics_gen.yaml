@@ -1,0 +1,18 @@
+analytics_gen:
+  # Path to YAML event files (relative to project root)
+  events_path: events
+  
+  # Path where generated code will be written (relative to lib/)
+  output_path: src/analytics/generated
+  
+  # Path for documentation (optional)
+  docs_path: docs/analytics_events.md
+  
+  # Path for export files (optional)
+  exports_path: assets/generated
+  
+  # Enable/disable various generators
+  generate_docs: true
+  generate_csv: true
+  generate_json: true
+  generate_sql: true

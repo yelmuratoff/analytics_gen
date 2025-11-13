@@ -1,0 +1,56 @@
+/// Configuration for analytics code generation
+final class AnalyticsConfig {
+  /// Path to directory containing YAML event files (relative to project root)
+  final String eventsPath;
+
+  /// Path where generated Dart code will be written (relative to lib/)
+  final String outputPath;
+
+  /// Path where documentation will be generated (optional)
+  final String? docsPath;
+
+  /// Path where database exports will be generated (optional)
+  final String? exportsPath;
+
+  /// Whether to generate CSV export
+  final bool generateCsv;
+
+  /// Whether to generate JSON export
+  final bool generateJson;
+
+  /// Whether to generate SQL export
+  final bool generateSql;
+
+  /// Whether to generate documentation
+  final bool generateDocs;
+
+  const AnalyticsConfig({
+    this.eventsPath = 'events',
+    this.outputPath = 'src/analytics/generated',
+    this.docsPath,
+    this.exportsPath,
+    this.generateCsv = false,
+    this.generateJson = false,
+    this.generateSql = false,
+    this.generateDocs = false,
+  });
+
+  /// Creates config from YAML map
+  factory AnalyticsConfig.fromYaml(Map<dynamic, dynamic> yaml) {
+    final config = yaml['analytics_gen'] as Map<dynamic, dynamic>? ?? {};
+
+    return AnalyticsConfig(
+      eventsPath: config['events_path'] as String? ?? 'events',
+      outputPath: config['output_path'] as String? ?? 'src/analytics/generated',
+      docsPath: config['docs_path'] as String?,
+      exportsPath: config['exports_path'] as String?,
+      generateCsv: config['generate_csv'] as bool? ?? false,
+      generateJson: config['generate_json'] as bool? ?? false,
+      generateSql: config['generate_sql'] as bool? ?? false,
+      generateDocs: config['generate_docs'] as bool? ?? false,
+    );
+  }
+
+  /// Default configuration
+  static const AnalyticsConfig defaultConfig = AnalyticsConfig();
+}

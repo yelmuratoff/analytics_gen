@@ -1,15 +1,14 @@
-name: example
-description: A sample command-line application.
+name: analytics_gen_example
+description: Example project demonstrating analytics_gen usage
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+publish_to: none
 
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.7.2
 
-# Add regular dependencies here.
 dependencies:
-  path: ^1.9.0
+  analytics_gen:
+    path: ../
 
 dev_dependencies:
   lints: ^6.0.0
-  test: ^1.25.6

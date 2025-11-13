@@ -1,0 +1,12 @@
+screen:
+  view:
+    description: User views a screen
+    event_name: "Screen: View"
+    parameters:
+      screen_name: string
+      previous_screen:
+        type: string?
+        description: Name of the previous screen
+      duration_ms:
+        type: int?
+        description: Time spent on previous screen in milliseconds
