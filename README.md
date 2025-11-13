@@ -269,4 +269,4 @@ dart run lib/main.dart
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file.
+Apache License - see [LICENSE](LICENSE) file.
