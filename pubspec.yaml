@@ -1,0 +1,28 @@
+name: analytics_gen
+description: Dart package for tracking analytics events with automatic code generation from YAML configuration
+version: 0.0.1
+
+# scripts:
+#   generate: dart bin/generate.dart
+#   docs: dart tool/generate_docs.dart
+
+# executables:
+#   generate: generate
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  yaml: ^3.1.3
+  path: ^1.9.1
+  build: ^2.5.4
+  ispectify: ^4.4.8-dev06
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.2
+  build_runner: ^2.5.4
+  mockito: ^5.4.6
+  build_test: ^3.2.0
+  build_runner_core: ^9.1.2
+  build_config: ^1.1.2
