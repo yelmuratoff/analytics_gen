@@ -45,6 +45,9 @@ final class JsonGenerator {
               'event_name':
                   event.customEventName ?? '${entry.key}: ${event.name}',
               'description': event.description,
+              'deprecated': event.deprecated,
+              if (event.replacement != null)
+                'replacement': event.replacement,
               'parameters': event.parameters.map((p) {
                 return {
                   'name': p.name,

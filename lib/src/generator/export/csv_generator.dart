@@ -12,7 +12,9 @@ final class CsvGenerator {
     final buffer = StringBuffer();
 
     // CSV Header
-    buffer.writeln('Domain,Action,Event Name,Description,Parameters');
+    buffer.writeln(
+      'Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement',
+    );
 
     // Data rows
     for (final domain in domains.values) {
@@ -25,7 +27,13 @@ final class CsvGenerator {
         }).join('; ');
 
         buffer.writeln(
-          '${_escape(domain.name)},${_escape(event.name)},${_escape(eventName)},${_escape(event.description)},${_escape(parameters)}',
+          '${_escape(domain.name)},'
+          '${_escape(event.name)},'
+          '${_escape(eventName)},'
+          '${_escape(event.description)},'
+          '${_escape(parameters)},'
+          '${event.deprecated},'
+          '${_escape(event.replacement ?? '')}',
         );
       }
     }

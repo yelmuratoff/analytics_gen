@@ -43,6 +43,8 @@ final class SqlGenerator {
     buffer.writeln('  name TEXT NOT NULL,');
     buffer.writeln('  event_name TEXT NOT NULL,');
     buffer.writeln('  description TEXT NOT NULL,');
+    buffer.writeln('  deprecated INTEGER NOT NULL DEFAULT 0,');
+    buffer.writeln('  replacement TEXT,');
     buffer.writeln('  FOREIGN KEY (domain_id) REFERENCES domains(id),');
     buffer.writeln('  UNIQUE(domain_id, name)');
     buffer.writeln(');');
@@ -101,9 +103,11 @@ final class SqlGenerator {
         final eventName =
             event.customEventName ?? '${domain.name}: ${event.name}';
         buffer.writeln(
-          "INSERT INTO events (id, domain_id, name, event_name, description) "
+          "INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) "
           "VALUES ($eventId, $dId, '${_escape(event.name)}', "
-          "'${_escape(eventName)}', '${_escape(event.description)}');",
+          "'${_escape(eventName)}', '${_escape(event.description)}', "
+          "${event.deprecated ? 1 : 0}, "
+          "${event.replacement != null ? "'${_escape(event.replacement!)}'" : 'NULL'});",
         );
 
         // Insert parameters

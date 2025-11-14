@@ -41,13 +41,24 @@ void main() {
 
     test('parses event with simple parameters', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
-      await yamlFile.writeAsString('auth:\n  login:\n    description: User logs in\n    parameters:\n      method: string\n      user_id: int\n');
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    deprecated: true\n'
+        '    replacement: auth.login_v2\n'
+        '    parameters:\n'
+        '      method: string\n'
+        '      user_id: int\n',
+      );
 
       final parser = YamlParser(eventsPath: eventsPath);
       final domains = await parser.parseEvents();
 
       final loginEvent = domains['auth']!.events.first;
       expect(loginEvent.parameters.length, equals(2));
+      expect(loginEvent.deprecated, isTrue);
+      expect(loginEvent.replacement, equals('auth.login_v2'));
 
       final methodParam = loginEvent.parameters[0];
       expect(methodParam.name, equals('method'));

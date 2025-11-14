@@ -91,6 +91,20 @@ auth:
     parameters: {}
 ```
 
+To deprecate an event:
+
+```yaml
+auth:
+  login:
+    description: User logs in
+    deprecated: true
+    replacement: auth.login_v2
+    parameters:
+      method:
+        type: string
+        description: Login method (email, google, apple)
+```
+
 ### 3. Generate Code
 
 ```bash

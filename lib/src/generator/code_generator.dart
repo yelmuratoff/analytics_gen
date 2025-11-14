@@ -126,6 +126,14 @@ final class CodeGenerator {
     final buffer = StringBuffer();
     final methodName = _createMethodName(domainName, event.name);
 
+    // Deprecation annotation
+    if (event.deprecated) {
+      final message = event.replacement != null
+          ? 'Use ${event.replacement} instead.'
+          : 'This analytics event is deprecated.';
+      buffer.writeln("  @Deprecated('$message')");
+    }
+
     // Documentation
     buffer.writeln('  /// ${event.description}');
     buffer.writeln('  ///');

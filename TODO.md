@@ -83,3 +83,37 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 - [x] Extract shared helpers (`_capitalize`, `_toCamelCase`) into a small internal util.
 - [x] Align `MockAnalyticsService` parameter type with `IAnalytics` (`AnalyticsParams`), and document its intended usage in tests.
 - [x] Run `dart analyze` and `dart test` kept green after each change (process discipline).
+
+## 11. Event deprecation lifecycle
+
+- [x] Support `deprecated: true` on events in YAML.
+- [x] Support optional `replacement` field for deprecated events to point to the new event name.
+- [x] Extend `AnalyticsEvent` model to include `deprecated` and `replacement`.
+- [x] Update `YamlParser` to parse and validate these fields.
+- [x] Emit `@Deprecated` annotations for deprecated events in generated Dart methods.
+- [x] Surface deprecation info in:
+  - [x] Markdown docs (implicitly via descriptions; future enhancement to style explicitly).
+  - [x] CSV / JSON / SQL / SQLite exports.
+- [x] Add tests covering:
+  - [x] Parsing deprecated events with and without replacement.
+  - [x] Generated code includes `@Deprecated` with the correct message.
+  - [x] Docs and exports clearly include deprecation metadata (CSV/JSON/SQL).
+
+## 12. Enum-like allowed_values for parameters
+
+- [ ] Support `allowed_values` on parameter definitions in YAML (list of strings).
+- [ ] Extend `AnalyticsParameter` model with `allowedValues`.
+- [ ] Update `YamlParser` to parse `allowed_values` safely (ignore or error on invalid shapes).
+- [ ] Surface allowed values in:
+  - [ ] Markdown docs (e.g. “Allowed values: a, b, c”).
+  - [ ] JSON export structure (array field).
+  - [ ] Optional: SQL / CSV (serialized representation).
+- [ ] Add tests for parsing and documentation/export of allowed values.
+- [ ] Document the feature in README and example YAML.
+
+## 13. Validation / DX enhancements (future)
+
+- [ ] Add a `--dry-run` / `--validate-only` CLI option:
+  - [ ] Parse YAML and validate without writing files.
+  - [ ] Non-zero exit on structural or naming issues.
+- [ ] Document how to wire validation into CI.

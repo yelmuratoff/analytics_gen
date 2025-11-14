@@ -28,6 +28,8 @@ void main() {
         'auth:\n'
         '  login:\n'
         '    description: User logs in\n'
+        '    deprecated: true\n'
+        '    replacement: auth.login_v2\n'
         '    parameters:\n'
         '      method: string\n',
       );
@@ -66,6 +68,10 @@ void main() {
         authContent,
         contains('logger.logEvent('),
       );
+      expect(
+        authContent,
+        contains('@Deprecated('),
+      );
 
       final analyticsContent = await analyticsFile.readAsString();
       expect(analyticsContent, contains('final class Analytics extends'));
@@ -79,4 +85,3 @@ void main() {
     });
   });
 }
-

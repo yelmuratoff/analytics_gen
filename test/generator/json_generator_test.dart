@@ -28,6 +28,8 @@ void main() {
             const AnalyticsEvent(
               name: 'login',
               description: 'User logs in',
+              deprecated: true,
+              replacement: 'auth.login_v2',
               parameters: [
                 AnalyticsParameter(
                   name: 'method',
@@ -60,7 +62,11 @@ void main() {
       expect(domainsJson, hasLength(1));
       final authDomain = domainsJson.first as Map<String, dynamic>;
       expect(authDomain['name'], equals('auth'));
+
+      final eventsJson = authDomain['events'] as List<dynamic>;
+      final login = eventsJson.first as Map<String, dynamic>;
+      expect(login['deprecated'], isTrue);
+      expect(login['replacement'], equals('auth.login_v2'));
     });
   });
 }
-

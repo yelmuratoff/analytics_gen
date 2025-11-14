@@ -136,6 +136,8 @@ final class YamlParser {
       final description = eventData['description'] as String? ??
           'No description provided';
       final customEventName = eventData['event_name'] as String?;
+      final deprecated = eventData['deprecated'] as bool? ?? false;
+      final replacement = eventData['replacement'] as String?;
 
       final rawParameters = eventData['parameters'];
       if (rawParameters != null && rawParameters is! YamlMap) {
@@ -152,6 +154,8 @@ final class YamlParser {
           name: eventName,
           description: description,
           customEventName: customEventName,
+          deprecated: deprecated,
+          replacement: replacement,
           parameters: parameters,
         ),
       );

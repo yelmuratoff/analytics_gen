@@ -61,7 +61,9 @@ void main() {
       expect(sql, contains('login'));
       expect(sql, contains('INSERT INTO parameters'));
       expect(sql, contains('method'));
+
+      // Deprecated column presence
+      expect(sql, contains('deprecated INTEGER NOT NULL DEFAULT 0'));
     });
   });
 }
-

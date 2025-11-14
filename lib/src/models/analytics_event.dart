@@ -36,12 +36,16 @@ final class AnalyticsEvent {
   final String description;
   final String? customEventName;
   final List<AnalyticsParameter> parameters;
+  final bool deprecated;
+  final String? replacement;
 
   const AnalyticsEvent({
     required this.name,
     required this.description,
     this.customEventName,
     required this.parameters,
+    this.deprecated = false,
+    this.replacement,
   });
 
   @override
@@ -54,6 +58,8 @@ final class AnalyticsEvent {
         other.name == name &&
         other.description == description &&
         other.customEventName == customEventName &&
+        other.deprecated == deprecated &&
+        other.replacement == replacement &&
         _listEquals(other.parameters, parameters);
   }
 
@@ -62,6 +68,8 @@ final class AnalyticsEvent {
       name.hashCode ^
       description.hashCode ^
       customEventName.hashCode ^
+      deprecated.hashCode ^
+      replacement.hashCode ^
       Object.hashAll(parameters);
 }
 
