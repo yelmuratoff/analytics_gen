@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://github.com/yelmuratoff/packages_assets/blob/main/assets/analytics_gen.png?raw=true" width="400">
 
-  <p><strong>Type-safe analytics event tracking with code generation from YAML configuration.</strong></p>
+  <p><strong>Type‑safe analytics events from a single YAML source of truth.</strong></p>
 
   <p>
     <a href="https://pub.dev/packages/analytics_gen">
@@ -28,16 +28,26 @@
   </p>
 </div>
 
-## Features
+## Overview
 
-- **Type Safety**: Compile-time checking for all events and parameters
-- **Code Generation**: Strongly-typed Dart methods from YAML definitions
-- **Auto-generated Analytics Class**: No manual setup required
-- **Organized Structure**: Each domain in separate file for better readability
-- **Multi-Provider**: Send events to multiple analytics platforms simultaneously
-- **Export Formats**: CSV, JSON, SQL, and SQLite database
-- **Testing Support**: Built-in `MockAnalyticsService` for unit tests
-- **Watch Mode**: Auto-regenerate on YAML file changes
+`analytics_gen` keeps your tracking plan, generated code, and analytics providers in sync.
+
+You describe events once in YAML; the package generates:
+
+- A type‑safe Dart API for all events and parameters
+- A single `Analytics` entrypoint with domain‑specific mixins
+- Optional documentation and export files (CSV/JSON/SQL/SQLite)
+
+This removes hand‑written string keys, reduces tracking drift between platforms, and makes analytics changes reviewable in code reviews.
+
+## Key Features
+
+- **Type‑safe events**: Compile‑time checking of event names and parameter types
+- **Code generation from YAML**: Strongly‑typed Dart methods derived from simple YAML definitions
+- **Clean structure by domain**: Each domain (`auth`, `screen`, `purchase`, etc.) lives in its own generated file
+- **Multi‑provider support**: Fan out a single event call to multiple analytics backends
+- **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
+- **Watch mode**: Optional file watcher to regenerate when YAML changes
 
 ## Quick Start
 
@@ -48,7 +58,7 @@ dev_dependencies:
   analytics_gen: ^0.1.3
 ```
 
-### 2. Define Events
+### 2. Define Events (YAML Tracking Plan)
 
 Create `events/auth.yaml`:
 
@@ -84,7 +94,7 @@ lib/src/analytics/generated/
     └── purchase_events.dart   # Purchase domain events
 ```
 
-### 4. Use It
+### 4. Use It in Your App
 
 ```dart
 import 'package:analytics_gen/analytics_gen.dart';
@@ -102,14 +112,14 @@ void main() {
 
 ## Why This Structure?
 
-- **Readable**: Each domain in separate file - easy to navigate
-- **Maintainable**: Changes to one domain don't affect others
-- **Scalable**: Add domains without making files huge
-- **Clean Imports**: Barrel file provides single import point
+- **Readable**: Each domain lives in a separate file — easy to navigate and review
+- **Maintainable**: Changes to one domain do not affect others
+- **Scalable**: Adding new domains does not grow a single “god file”
+- **Clean imports**: A barrel file provides a single import point for all events
 
 ## Configuration
 
-Create `analytics_gen.yaml` in your project root (optional):
+Create `analytics_gen.yaml` in your project root (optional, with sensible defaults if omitted):
 
 ```yaml
 analytics_gen:
@@ -161,7 +171,7 @@ purchase:
         description: Purchase price
 ```
 
-### Custom Event Names
+### Custom Event Names (for Legacy / External Systems)
 
 ```yaml
 screen:
@@ -225,7 +235,10 @@ Analytics.initialize(mockService);
 
 // Verify in tests
 expect(mockService.totalEvents, equals(1));
-expect(mockService.getEventsByName('login'), hasLength(1));
+expect(
+  mockService.getEventsByName('login'),
+  hasLength(1),
+);
 ```
 
 ### Multi-Provider
@@ -295,4 +308,4 @@ dart run lib/main.dart
 
 ## License
 
-Apache License - see [LICENSE](LICENSE) file.
+Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) for details.
