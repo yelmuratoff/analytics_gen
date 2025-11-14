@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../parser/yaml_parser.dart';
+import '../util/string_utils.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -106,7 +107,7 @@ final class CodeGenerator {
   /// Generates a mixin for a single domain
   String _generateDomainMixin(String domainName, AnalyticsDomain domain) {
     final buffer = StringBuffer();
-    final className = 'Analytics${_capitalize(domainName)}';
+    final className = 'Analytics${StringUtils.capitalizePascal(domainName)}';
 
     buffer.writeln('/// Generated mixin for $domainName analytics events');
     buffer.writeln('mixin $className on AnalyticsBase {');
@@ -192,26 +193,12 @@ final class CodeGenerator {
 
   /// Creates a method name from domain and event names
   String _createMethodName(String domain, String eventName) {
-    final capitalizedDomain = _capitalize(domain);
+    final capitalizedDomain = StringUtils.capitalizePascal(domain);
     final parts = eventName.split('_');
-    final capitalizedEvent =
-        parts.first + parts.skip(1).map((p) => _capitalize(p)).join();
+    final capitalizedEvent = parts.first +
+        parts.skip(1).map(StringUtils.capitalizePascal).join();
 
-    return 'log$capitalizedDomain${_capitalize(capitalizedEvent)}';
-  }
-
-  /// Capitalizes first letter and handles snake_case to CamelCase
-  String _capitalize(String text) {
-    if (text.isEmpty) return text;
-
-    if (text.contains('_')) {
-      return text.split('_').map((part) {
-        if (part.isEmpty) return '';
-        return part[0].toUpperCase() + part.substring(1);
-      }).join('');
-    }
-
-    return text[0].toUpperCase() + text.substring(1);
+    return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
 
   /// Maps YAML type names to Dart type names
@@ -237,10 +224,7 @@ final class CodeGenerator {
 
   /// Converts snake_case or kebab-case to camelCase
   String _toCamelCase(String text) {
-    if (text.isEmpty) return text;
-    final parts = text.split(RegExp(r'[_-]'));
-    return parts.first +
-        parts.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+    return StringUtils.toCamelCase(text);
   }
 
   /// Generates Analytics singleton class with all domain mixins
@@ -271,7 +255,9 @@ final class CodeGenerator {
     // Generate mixin list
     final sortedDomains = domains.keys.toList()..sort();
     final mixins =
-        sortedDomains.map((d) => 'Analytics${_capitalize(d)}').toList();
+        sortedDomains
+            .map((d) => 'Analytics${StringUtils.capitalizePascal(d)}')
+            .toList();
 
     // Class declaration
     buffer.write('final class Analytics extends AnalyticsBase');

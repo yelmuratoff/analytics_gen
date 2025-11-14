@@ -303,6 +303,12 @@ class FirebaseAnalyticsService implements IAnalytics {
 - Keys are always `String` in snake_case.
 - Values should be JSON-serializable (String, num, bool, null, List, Map) or simple objects supported by your analytics SDK.
 
+### Sync vs Async logging
+
+- The `IAnalytics.logEvent` API is synchronous for ergonomics in UI and business code.
+- Your implementation may perform asynchronous work internally (e.g. calling an async SDK), but the generated methods themselves do not return a `Future`.
+- If you need strict delivery guarantees, handle retries and error reporting inside your `IAnalytics` implementation.
+
 ## Testing
 
 ```dart

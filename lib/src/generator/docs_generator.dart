@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../parser/yaml_parser.dart';
+import '../util/string_utils.dart';
 
 /// Generates Markdown documentation for analytics events.
 final class DocsGenerator {
@@ -201,37 +202,17 @@ final class DocsGenerator {
 
   /// Creates a method name from domain and event names
   String _createMethodName(String domain, String eventName) {
-    final capitalizedDomain = _capitalize(domain);
+    final capitalizedDomain = StringUtils.capitalizePascal(domain);
     final parts = eventName.split('_');
-    final capitalizedEvent =
-        parts.first + parts.skip(1).map((p) => _capitalize(p)).join();
+    final capitalizedEvent = parts.first +
+        parts.skip(1).map(StringUtils.capitalizePascal).join();
 
-    return 'log$capitalizedDomain${_capitalize(capitalizedEvent)}';
-  }
-
-  /// Capitalizes first letter and handles snake_case
-  String _capitalize(String text) {
-    if (text.isEmpty) return text;
-
-    if (text.contains('_')) {
-      return text
-          .split('_')
-          .map((part) {
-            if (part.isEmpty) return '';
-            return part[0].toUpperCase() + part.substring(1);
-          })
-          .join('');
-    }
-
-    return text[0].toUpperCase() + text.substring(1);
+    return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
 
   /// Converts snake_case to camelCase
   String _toCamelCase(String text) {
-    if (text.isEmpty) return text;
-    final parts = text.split(RegExp(r'[_-]'));
-    return parts.first +
-        parts.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+    return StringUtils.toCamelCase(text);
   }
 
   /// Gets an example value for documentation

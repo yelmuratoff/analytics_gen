@@ -37,7 +37,7 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 - [x] Introduce `typedef AnalyticsParams = Map<String, Object?>;`.
 - [x] Switch `IAnalytics.logEvent` and generated methods to use `AnalyticsParams?` where appropriate.
 - [x] Document expectations in `README.md` (values should be serializable).
-- [ ] Evaluate (and document) whether `logEvent` should remain sync or eventually be `Future<void>`.
+- [x] Evaluate (and document) whether `logEvent` should remain sync or eventually be `Future<void>` (documented as intentionally synchronous for now).
 
 ## 5. Domain/file naming and constraints
 
@@ -80,6 +80,6 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 
 ## 10. Small internal polish
 
-- [ ] Extract shared helpers (`_capitalize`, `_toCamelCase`) into a small internal util.
+- [x] Extract shared helpers (`_capitalize`, `_toCamelCase`) into a small internal util.
 - [x] Align `MockAnalyticsService` parameter type with `IAnalytics` (`AnalyticsParams`), and document its intended usage in tests.
 - [x] Run `dart analyze` and `dart test` kept green after each change (process discipline).
