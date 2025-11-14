@@ -19,7 +19,6 @@ High-level goal: keep the package small and focused while improving DX, safety, 
   - [x] `AnalyticsParameter`
   - [x] `AnalyticsEvent`
   - [x] `AnalyticsDomain`
-- [ ] Consider small helper to compute hashes consistently.
 - [x] Add tests that compare instances and use the models in sets/maps.
 
 ## 3. YAML parsing robustness
@@ -54,7 +53,7 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 
 ## 7. Generator and export tests
 
-- [ ] Add targeted tests for:
+- [x] Add targeted tests for:
   - [x] `CodeGenerator.generate` (creates expected files and signatures).
   - [x] `DocsGenerator.generate` (domain/event rows, example calls).
   - [x] `ExportGenerator` + `JsonGenerator` (metadata counts, parameters).
