@@ -11,7 +11,7 @@ High-level goal: keep the package small and focused while improving DX, safety, 
   - [x] `DocsGenerator`
   - [x] `ExportGenerator` / `SqliteGenerator`
   - [x] `MultiProviderAnalytics` error reporting
-- [ ] Keep rich, user-friendly output in `bin/generate.dart` (CLI) and route library logs through it.
+- [x] Keep rich, user-friendly output in `bin/generate.dart` (CLI) and route library logs through it via the `verbose` flag.
 
 ## 2. Value types for core models
 
@@ -20,7 +20,7 @@ High-level goal: keep the package small and focused while improving DX, safety, 
   - [x] `AnalyticsEvent`
   - [x] `AnalyticsDomain`
 - [ ] Consider small helper to compute hashes consistently.
-- [ ] Add tests that compare instances and use the models in sets/maps.
+- [x] Add tests that compare instances and use the models in sets/maps.
 
 ## 3. YAML parsing robustness
 
@@ -41,11 +41,9 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 
 ## 5. Domain/file naming and constraints
 
-- [ ] Decide on and document allowed domain key format (e.g. snake_case, filesystem-safe).
-- [ ] Either:
-  - [ ] Enforce constraints at parse time with clear errors, or
-  - [ ] Normalize domain names for file/class generation while keeping original label in analytics payloads.
-- [ ] Add tests for odd domain names to ensure behavior is stable.
+- [x] Decide on and document allowed domain key format (snake_case, filesystem-safe).
+- [x] Enforce constraints at parse time with clear errors.
+- [x] Add tests for odd domain names to ensure behavior is stable.
 
 ## 6. CLI UX refinements
 
@@ -61,28 +59,27 @@ High-level goal: keep the package small and focused while improving DX, safety, 
   - [x] `DocsGenerator.generate` (domain/event rows, example calls).
   - [x] `ExportGenerator` + `JsonGenerator` (metadata counts, parameters).
   - [x] `SqlGenerator` (presence of tables, indexes, and inserts).
-  - [ ] `SqliteGenerator` (behavior when `sqlite3` is present vs missing; ideally with an injectable process runner).
-- [ ] Use temp directories in tests, similar to parser tests.
+  - [x] `SqliteGenerator` (behavior when `sqlite3` is present vs missing; ideally with an injectable process runner).
+- [x] Use temp directories in tests, similar to parser tests.
 
 ## 8. Multi-provider error handling
 
-- [ ] Improve `MultiProviderAnalytics` error handling:
-  - [ ] Catch `Object` and log a short stack trace.
-  - [ ] Optionally accept `void Function(Object error, StackTrace stackTrace)? onError`.
-- [ ] Add tests verifying that:
-  - [ ] One failing provider does not prevent others from receiving events.
-  - [ ] The error handler is invoked as expected (if added).
+- [x] Improve `MultiProviderAnalytics` error handling:
+  - [x] Catch errors and forward them via an optional `void Function(Object error, StackTrace stackTrace)? onError`.
+- [x] Add tests verifying that:
+  - [x] One failing provider does not prevent others from receiving events.
+  - [x] The error handler is invoked as expected.
 
 ## 9. Documentation and analytics best practices
 
-- [ ] Add a short “analytics best practices” section to `README.md` / `example/README.md`:
-  - [ ] Naming conventions for events and parameters.
-  - [ ] Guidance on cardinality (avoid raw IDs where not needed).
-  - [ ] One domain per file / clear ownership.
-- [ ] Document new flags / types (logger behavior, `AnalyticsParams`, etc.).
+- [x] Add a short “analytics best practices” section to `README.md` / `example/README.md`:
+  - [x] Naming conventions for events and parameters.
+  - [x] Guidance on cardinality (avoid raw IDs where not needed).
+  - [x] One domain per file / clear ownership.
+- [x] Document new flags / types (logger behavior, `AnalyticsParams`, etc.).
 
 ## 10. Small internal polish
 
 - [ ] Extract shared helpers (`_capitalize`, `_toCamelCase`) into a small internal util.
 - [x] Align `MockAnalyticsService` parameter type with `IAnalytics` (`AnalyticsParams`), and document its intended usage in tests.
-- [ ] Run `dart analyze` and `dart test` kept green after each change.
+- [x] Run `dart analyze` and `dart test` kept green after each change (process discipline).

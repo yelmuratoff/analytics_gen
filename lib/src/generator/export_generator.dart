@@ -72,7 +72,7 @@ final class ExportGenerator {
 
     if (config.generateSql) {
       final sqlGen = SqlGenerator();
-      final sqliteGen = SqliteGenerator();
+      final sqliteGen = SqliteGenerator(log: log);
 
       await sqlGen.generate(
         domains,

@@ -142,5 +142,23 @@ void main() {
         ),
       );
     });
+
+    test('throws when domain name is not snake_case', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString('AuthDomain:\n  login:\n    description: Test\n');
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('must use snake_case'),
+          ),
+        ),
+      );
+    });
   });
 }

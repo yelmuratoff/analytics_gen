@@ -65,19 +65,30 @@ final class YamlParser {
       }
 
       for (final key in parsed.keys) {
-        if (merged.containsKey(key)) {
+        final domainKey = key.toString();
+
+        // Enforce snake_case, filesystem-safe domain names
+        final isValidDomain = RegExp(r'^[a-z0-9_]+$').hasMatch(domainKey);
+        if (!isValidDomain) {
+          throw FormatException(
+            'Domain "$domainKey" in ${file.path} must use snake_case '
+            'with lowercase letters, digits and underscores only.',
+          );
+        }
+
+        if (merged.containsKey(domainKey)) {
           throw StateError(
-            'Duplicate domain "$key" found in multiple files. '
+            'Duplicate domain "$domainKey" found in multiple files. '
             'Each domain must be defined in only one file.',
           );
         }
         final value = parsed[key];
         if (value is! YamlMap) {
           throw FormatException(
-            'Domain "$key" in ${file.path} must be a map of events.',
+            'Domain "$domainKey" in ${file.path} must be a map of events.',
           );
         }
-        merged[key] = _DomainSource(
+        merged[domainKey] = _DomainSource(
           filePath: file.path,
           yaml: value,
         );

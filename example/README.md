@@ -33,7 +33,7 @@ dart pub get
 ### 2. Generate Analytics Code
 
 ```bash
-# Generate code only
+# Generate code only (default)
 dart run analytics_gen:generate
 
 # Generate code + documentation
@@ -42,8 +42,17 @@ dart run analytics_gen:generate --docs
 # Generate everything (code + docs + exports)
 dart run analytics_gen:generate --docs --exports
 
+# Docs only
+dart run analytics_gen:generate --docs --no-code
+
+# Exports only
+dart run analytics_gen:generate --exports --no-code
+
 # Watch mode (auto-regenerate on changes)
 dart run analytics_gen:generate --watch
+
+# Quiet mode (no generator logs, only summary)
+dart run analytics_gen:generate --no-verbose
 ```
 
 ### 3. Run the Example
@@ -125,6 +134,18 @@ auth:
 - `list` - List<dynamic>
 
 Add `?` for nullable parameters: `string?`, `int?`, etc.
+
+### Domain Naming
+
+- Domain keys (top-level YAML keys such as `auth`, `screen`, `purchase`) must be snake_case with lowercase letters, digits, and underscores only.
+- This keeps generated filenames and mixin names predictable and filesystem-safe.
+
+## Analytics Best Practices
+
+- **Stable naming**: Use consistent snake_case for events and parameters (`auth_login`, `screen_view`, `user_id`).
+- **Low cardinality**: Avoid sending raw IDs or highly variable strings where possible; prefer normalized values (e.g. `plan_tier` instead of raw price).
+- **One domain per file**: Keep related events together and owned by a single team (auth, screen, purchase).
+- **Documentation first**: Always include `description` for events and important parameters so generated docs stay useful for product and analytics teams.
 
 ## Using Analytics
 

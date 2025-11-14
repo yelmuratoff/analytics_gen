@@ -204,10 +204,15 @@ screen:
 - `list` (List<dynamic>)
 - Add `?` for nullable: `string?`, `int?`
 
+### Domain Naming
+
+- Domain keys (top-level YAML keys) must be snake_case, using only lowercase letters, digits, and underscores (e.g. `auth`, `screen_navigation`).
+- This keeps generated file and class names stable and filesystem‑safe.
+
 ## CLI Commands
 
 ```bash
-# Generate code only
+# Generate code only (default)
 dart run analytics_gen:generate
 
 # Generate code + documentation
@@ -216,8 +221,17 @@ dart run analytics_gen:generate --docs
 # Generate everything
 dart run analytics_gen:generate --docs --exports
 
+# Docs only
+dart run analytics_gen:generate --docs --no-code
+
+# Exports only
+dart run analytics_gen:generate --exports --no-code
+
 # Watch mode (auto-regenerate on changes)
 dart run analytics_gen:generate --watch
+
+# Quiet mode (no generator logs, only summary)
+dart run analytics_gen:generate --no-verbose
 ```
 
 ## Generated Files
