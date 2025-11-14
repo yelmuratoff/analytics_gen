@@ -69,7 +69,7 @@ auth:
 ### 3. Generate Code
 
 ```bash
-dart run analytics_gen:generate
+dart run analytics_gen:generate --docs --exports
 ```
 
 This automatically generates a clean, organized structure:
