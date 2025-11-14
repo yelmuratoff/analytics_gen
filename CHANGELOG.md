@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-11-16
+- CLI `--docs` flag now respects project config when omitted and allows overriding via `--no-docs`.
+- CLI automatically runs export generation when any of the export toggles are enabled in `analytics_gen.yaml`, with `--no-exports` available to opt out per run.
+- Documented the `--help` usage and configuration interplay in the README.
+
 ## [0.1.3] - 2025-11-15
 - Fix badge issues
 

@@ -1,3 +1,4 @@
+import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:args/args.dart';
 import 'package:test/test.dart';
 import '../../bin/generate.dart' as cli;
@@ -45,6 +46,40 @@ void main() {
       final results = parser.parse(const <String>['--validate-only']);
 
       expect(results['validate-only'], isTrue);
+    });
+
+    test('help flag is available', () {
+      final results = parser.parse(const <String>['--help']);
+
+      expect(results['help'], isTrue);
+    });
+
+    test('resolveDocsFlag falls back to config when flag omitted', () {
+      final results = parser.parse(const <String>[]);
+      const config = AnalyticsConfig(generateDocs: true);
+
+      expect(cli.resolveDocsFlag(results, config), isTrue);
+    });
+
+    test('resolveDocsFlag respects CLI override', () {
+      final results = parser.parse(const <String>['--no-docs']);
+      const config = AnalyticsConfig(generateDocs: true);
+
+      expect(cli.resolveDocsFlag(results, config), isFalse);
+    });
+
+    test('resolveExportsFlag defaults to config exports', () {
+      final results = parser.parse(const <String>[]);
+      const config = AnalyticsConfig(generateCsv: true);
+
+      expect(cli.resolveExportsFlag(results, config), isTrue);
+    });
+
+    test('resolveExportsFlag respects CLI --no-exports', () {
+      final results = parser.parse(const <String>['--no-exports']);
+      const config = AnalyticsConfig(generateCsv: true);
+
+      expect(cli.resolveExportsFlag(results, config), isFalse);
     });
   });
 }

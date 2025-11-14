@@ -113,6 +113,8 @@ dart run analytics_gen:generate --docs --exports
 
 This generates a clean, organized structure:
 
+> Tip: run `dart run analytics_gen:generate --help` anytime to list every CLI flag and see usage examples.
+
 ```
 lib/src/analytics/generated/
 ├── analytics.dart              # Auto-generated singleton
@@ -161,6 +163,8 @@ analytics_gen:
   generate_json: true
   generate_sql: true
 ```
+
+When `generate_docs` is `true` or any export toggle is enabled, the CLI automatically runs those generators without requiring `--docs` or `--exports`. Pass `--no-docs` or `--no-exports` for a one-off override.
 
 ## YAML Schema
 

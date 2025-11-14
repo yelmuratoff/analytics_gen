@@ -76,8 +76,8 @@ Future<void> main(List<String> arguments) async {
     final config = await _loadConfig(projectRoot, configPath);
 
     final generateCode = results['code'] as bool;
-    final generateDocs = results['docs'] as bool || config.generateDocs;
-    final generateExports = results['exports'] as bool;
+    final generateDocs = resolveDocsFlag(results, config);
+    final generateExports = resolveExportsFlag(results, config);
     final verbose = results['verbose'] as bool;
     final watch = results['watch'] as bool;
     final validateOnly = results['validate-only'] as bool;
@@ -145,6 +145,22 @@ void _printUsage(ArgParser parser) {
   print('');
   print('  # Validate YAML only (no files written)');
   print('  dart run analytics_gen:generate --validate-only');
+}
+
+/// Determines whether docs should be generated based on CLI flags and config.
+bool resolveDocsFlag(ArgResults results, AnalyticsConfig config) {
+  if (results.wasParsed('docs')) {
+    return results['docs'] as bool;
+  }
+  return config.generateDocs;
+}
+
+/// Determines whether exports should be generated based on CLI flags/config.
+bool resolveExportsFlag(ArgResults results, AnalyticsConfig config) {
+  if (results.wasParsed('exports')) {
+    return results['exports'] as bool;
+  }
+  return config.generateCsv || config.generateJson || config.generateSql;
 }
 
 /// Loads configuration from file or returns default
