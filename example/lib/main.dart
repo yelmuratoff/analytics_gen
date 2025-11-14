@@ -2,13 +2,13 @@ import 'package:analytics_gen/analytics_gen.dart';
 import 'src/analytics/generated/analytics.dart';
 
 void main() {
-  // Initialize analytics with mock service for demonstration
+  // Initialize analytics with a mock service for demonstration
   final mockService = MockAnalyticsService(verbose: true);
   Analytics.initialize(mockService);
 
-  print('Analytics Gen Example\n');
+  print('analytics_gen example\n');
   print('═' * 50);
-  print('\nDemonstrating analytics event logging:\n');
+  print('\nDemonstrating type-safe analytics event logging:\n');
 
   // Example 1: Simple event without parameters
   print('1. Logging logout event (no parameters)');
@@ -68,9 +68,9 @@ void main() {
   }
 
   print('\n${'═' * 50}');
-  print('\nTo generate code for your own events:');
-  print('1. Create YAML files in the events/ directory');
-  print('2. Run: dart run analytics_gen:generate');
-  print('3. Use the generated methods in your code!');
+  print('\nTo generate code for your own tracking plan:');
+  print('1. Define events in YAML files under the events/ directory');
+  print('2. Run: dart run analytics_gen:generate --docs --exports');
+  print('3. Use the generated, type-safe methods in your code');
   print('\n${'═' * 50}');
 }

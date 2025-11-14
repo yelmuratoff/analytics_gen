@@ -1,6 +1,6 @@
 # Analytics Gen Example
 
-This example demonstrates how to use the `analytics_gen` package in your project.
+This example demonstrates how to define a YAML tracking plan and use the generated, type‑safe Dart API from the `analytics_gen` package.
 
 ## Project Structure
 
@@ -57,7 +57,7 @@ dart run lib/main.dart
 After running the generator, you'll have:
 
 ### Generated Code
-- `lib/src/analytics/generated/analytics.dart` - **Analytics singleton with all mixins (auto-generated!)**
+- `lib/src/analytics/generated/analytics.dart` - **Analytics singleton with all mixins (auto-generated)**
 - `lib/src/analytics/generated/generated_events.dart` - Type-safe event mixins
 
 ### Documentation (if `--docs`)
@@ -161,7 +161,7 @@ void main() {
   
   // Verify in tests
   print('Total events: ${mockService.totalEvents}');
-  print('Login events: ${mockService.getEventsByName('auth: login').length}');
+  print("Login events: ${mockService.getEventsByName('auth: login').length}");
 }
 ```
 
