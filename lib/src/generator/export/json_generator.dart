@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../models/analytics_event.dart';
+import '../generation_metadata.dart';
 
 /// Generates JSON export of analytics events (pretty and minified).
 final class JsonGenerator {
@@ -10,7 +11,8 @@ final class JsonGenerator {
     Map<String, AnalyticsDomain> domains,
     String outputDir,
   ) async {
-    final data = _buildJsonStructure(domains);
+    final metadata = GenerationMetadata.fromDomains(domains);
+    final data = _buildJsonStructure(domains, metadata);
 
     // Pretty JSON
     final prettyJson = const JsonEncoder.withIndent('  ').convert(data);
@@ -25,15 +27,10 @@ final class JsonGenerator {
   /// Builds the JSON data structure
   Map<String, dynamic> _buildJsonStructure(
     Map<String, AnalyticsDomain> domains,
+    GenerationMetadata metadata,
   ) {
     return {
-      'metadata': {
-        'generated_at': DateTime.now().toIso8601String(),
-        'total_domains': domains.length,
-        'total_events': domains.values.fold(0, (sum, d) => sum + d.eventCount),
-        'total_parameters':
-            domains.values.fold(0, (sum, d) => sum + d.parameterCount),
-      },
+      'metadata': metadata.toJson(),
       'domains': domains.entries.map((entry) {
         return {
           'name': entry.key,
@@ -46,8 +43,7 @@ final class JsonGenerator {
                   event.customEventName ?? '${entry.key}: ${event.name}',
               'description': event.description,
               'deprecated': event.deprecated,
-              if (event.replacement != null)
-                'replacement': event.replacement,
+              if (event.replacement != null) 'replacement': event.replacement,
               'parameters': event.parameters.map((p) {
                 return {
                   'name': p.name,

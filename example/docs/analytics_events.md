@@ -1,37 +1,19 @@
 # Analytics Events Documentation
 
-Generated on: 2025-11-14T17:11:48.553390
+Fingerprint: `-6973fa48b7dfcee0`
+Domains: 3 | Events: 6 | Parameters: 12
 
 ## Table of Contents
 
-- [screen](#screen)
 - [auth](#auth)
 - [purchase](#purchase)
+- [screen](#screen)
 
 ## Summary
 
 - **Total Domains**: 3
 - **Total Events**: 6
 - **Total Parameters**: 12
-
-## screen
-
-Events: 1 | Parameters: 3
-
-| Event | Description | Parameters |
-|-------|-------------|------------|
-| Screen: View | User views a screen | `screen_name` (string)<br>`previous_screen` (string?): Name of the previous screen<br>`duration_ms` (int?): Time spent on previous screen in milliseconds |
-
-### Code Examples
-
-```dart
-Analytics.instance.logScreenView(
-  screenName: 'example',
-  previousScreen: null,
-  durationMs: null,
-);
-
-```
 
 ## auth
 
@@ -65,12 +47,17 @@ Events: 2 | Parameters: 6
 
 | Event | Description | Parameters |
 |-------|-------------|------------|
-| purchase: completed | User completed a purchase | `product_id` (string)<br>`price` (double)<br>`currency` (string)<br>`quantity` (int): Number of items purchased |
 | purchase: cancelled | User cancelled a purchase | `product_id` (string)<br>`reason` (string?): Reason for cancellation |
+| purchase: completed | User completed a purchase | `product_id` (string)<br>`price` (double)<br>`currency` (string)<br>`quantity` (int): Number of items purchased |
 
 ### Code Examples
 
 ```dart
+Analytics.instance.logPurchaseCancelled(
+  productId: 'example',
+  reason: null,
+);
+
 Analytics.instance.logPurchaseCompleted(
   productId: 'example',
   price: 1.5,
@@ -78,9 +65,23 @@ Analytics.instance.logPurchaseCompleted(
   quantity: 123,
 );
 
-Analytics.instance.logPurchaseCancelled(
-  productId: 'example',
-  reason: null,
+```
+
+## screen
+
+Events: 1 | Parameters: 3
+
+| Event | Description | Parameters |
+|-------|-------------|------------|
+| Screen: View | User views a screen | `screen_name` (string)<br>`previous_screen` (string?): Name of the previous screen<br>`duration_ms` (int?): Time spent on previous screen in milliseconds |
+
+### Code Examples
+
+```dart
+Analytics.instance.logScreenView(
+  screenName: 'example',
+  previousScreen: null,
+  durationMs: null,
 );
 
 ```
@@ -94,10 +95,8 @@ import 'package:analytics_gen/analytics_gen.dart';
 Analytics.initialize(yourAnalyticsService);
 
 // Log events
-Analytics.instance.logScreenView(
-  screenName: value,
-  previousScreen: value,
-  durationMs: value,
+Analytics.instance.logAuthLogin(
+  method: value,
 );
 ```
 

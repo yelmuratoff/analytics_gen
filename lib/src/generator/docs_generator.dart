@@ -6,6 +6,7 @@ import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../parser/yaml_parser.dart';
 import '../util/string_utils.dart';
+import 'generation_metadata.dart';
 
 /// Generates Markdown documentation for analytics events.
 final class DocsGenerator {
@@ -37,8 +38,10 @@ final class DocsGenerator {
       return;
     }
 
+    final metadata = GenerationMetadata.fromDomains(domains);
+
     // Generate documentation
-    final markdown = _generateMarkdown(domains);
+    final markdown = _generateMarkdown(domains, metadata);
 
     // Write to output file
     final outputPath = config.docsPath != null
@@ -52,25 +55,29 @@ final class DocsGenerator {
     log?.call('✓ Generated analytics documentation at: $outputPath');
 
     // Print summary
-    final totalEvents = domains.values.fold(0, (sum, d) => sum + d.eventCount);
-    final totalParams = domains.values.fold(
-      0,
-      (sum, d) => sum + d.parameterCount,
-    );
     log?.call(
-      '✓ Documented $totalEvents events across ${domains.length} domains',
+      '✓ Documented ${metadata.totalEvents} events across '
+      '${metadata.totalDomains} domains',
     );
-    log?.call('  Total parameters: $totalParams');
+    log?.call('  Total parameters: ${metadata.totalParameters}');
   }
 
   /// Generates complete Markdown documentation
-  String _generateMarkdown(Map<String, AnalyticsDomain> domains) {
+  String _generateMarkdown(
+    Map<String, AnalyticsDomain> domains,
+    GenerationMetadata metadata,
+  ) {
     final buffer = StringBuffer();
 
     // Header
     buffer.writeln('# Analytics Events Documentation');
     buffer.writeln();
-    buffer.writeln('Generated on: ${DateTime.now().toIso8601String()}');
+    buffer.writeln('Fingerprint: `${metadata.fingerprint}`');
+    buffer.writeln(
+      'Domains: ${metadata.totalDomains} | '
+      'Events: ${metadata.totalEvents} | '
+      'Parameters: ${metadata.totalParameters}',
+    );
     buffer.writeln();
 
     // Table of contents
@@ -83,17 +90,11 @@ final class DocsGenerator {
     buffer.writeln();
 
     // Summary statistics
-    final totalEvents = domains.values.fold(0, (sum, d) => sum + d.eventCount);
-    final totalParams = domains.values.fold(
-      0,
-      (sum, d) => sum + d.parameterCount,
-    );
-
     buffer.writeln('## Summary');
     buffer.writeln();
-    buffer.writeln('- **Total Domains**: ${domains.length}');
-    buffer.writeln('- **Total Events**: $totalEvents');
-    buffer.writeln('- **Total Parameters**: $totalParams');
+    buffer.writeln('- **Total Domains**: ${metadata.totalDomains}');
+    buffer.writeln('- **Total Events**: ${metadata.totalEvents}');
+    buffer.writeln('- **Total Parameters**: ${metadata.totalParameters}');
     buffer.writeln();
 
     // Generate documentation for each domain

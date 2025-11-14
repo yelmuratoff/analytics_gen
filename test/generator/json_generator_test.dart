@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:analytics_gen/src/generator/export/json_generator.dart';
+import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
@@ -52,12 +53,14 @@ void main() {
       expect(prettyFile.existsSync(), isTrue);
       expect(minFile.existsSync(), isTrue);
 
-      final prettyJson = jsonDecode(await prettyFile.readAsString())
-          as Map<String, dynamic>;
+      final prettyJson =
+          jsonDecode(await prettyFile.readAsString()) as Map<String, dynamic>;
 
+      final metadata = GenerationMetadata.fromDomains(domains);
       expect(prettyJson['metadata']['total_domains'], equals(1));
       expect(prettyJson['metadata']['total_events'], equals(1));
       expect(prettyJson['metadata']['total_parameters'], equals(1));
+      expect(prettyJson['metadata']['fingerprint'], metadata.fingerprint);
 
       final domainsJson = prettyJson['domains'] as List<dynamic>;
       expect(domainsJson, hasLength(1));

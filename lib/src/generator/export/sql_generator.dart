@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../../models/analytics_event.dart';
+import '../generation_metadata.dart';
 
 /// Generates SQL schema and data inserts for analytics events.
 final class SqlGenerator {
@@ -11,7 +12,9 @@ final class SqlGenerator {
   ) async {
     final buffer = StringBuffer();
 
-    _writeHeader(buffer);
+    final metadata = GenerationMetadata.fromDomains(domains);
+
+    _writeHeader(buffer, metadata);
     _writeSchema(buffer);
     _writeIndexes(buffer);
     _writeData(buffer, domains);
@@ -20,9 +23,14 @@ final class SqlGenerator {
     await File(outputPath).writeAsString(buffer.toString());
   }
 
-  void _writeHeader(StringBuffer buffer) {
+  void _writeHeader(StringBuffer buffer, GenerationMetadata metadata) {
     buffer.writeln('-- Analytics Events Database Schema');
-    buffer.writeln('-- Generated on: ${DateTime.now().toIso8601String()}');
+    buffer.writeln(
+      '-- Fingerprint: ${metadata.fingerprint} '
+      '(domains=${metadata.totalDomains}, '
+      'events=${metadata.totalEvents}, '
+      'parameters=${metadata.totalParameters})',
+    );
     buffer.writeln();
   }
 
@@ -117,10 +125,10 @@ final class SqlGenerator {
           final desc = param.description != null
               ? "'${_escape(param.description!)}'"
               : 'NULL';
-          final allowed = (param.allowedValues != null &&
-                  param.allowedValues!.isNotEmpty)
-              ? "'${_escape(param.allowedValues!.join(', '))}'"
-              : 'NULL';
+          final allowed =
+              (param.allowedValues != null && param.allowedValues!.isNotEmpty)
+                  ? "'${_escape(param.allowedValues!.join(', '))}'"
+                  : 'NULL';
           buffer.writeln(
             "INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) "
             "VALUES ($eventId, '${_escape(param.name)}', '${_escape(param.type)}', "

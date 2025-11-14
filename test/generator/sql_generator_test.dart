@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/generator/export/sql_generator.dart';
+import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
@@ -48,6 +49,7 @@ void main() {
       expect(sqlFile.existsSync(), isTrue);
 
       final sql = await sqlFile.readAsString();
+      final metadata = GenerationMetadata.fromDomains(domains);
 
       // Basic schema
       expect(sql, contains('CREATE TABLE IF NOT EXISTS domains'));
@@ -64,6 +66,7 @@ void main() {
 
       // Deprecated column presence
       expect(sql, contains('deprecated INTEGER NOT NULL DEFAULT 0'));
+      expect(sql, contains('-- Fingerprint: ${metadata.fingerprint}'));
     });
   });
 }

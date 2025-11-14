@@ -55,6 +55,11 @@ void main() {
 
       final content = await docsFile.readAsString();
       expect(content, contains('# Analytics Events Documentation'));
+      expect(content, contains('Fingerprint: `'));
+      expect(
+        content,
+        contains('Domains: 1 | Events: 1 | Parameters: 1'),
+      );
       expect(content, contains('## auth'));
       expect(content, contains('login'));
       expect(content, contains('User logs in'));

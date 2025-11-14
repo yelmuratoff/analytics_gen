@@ -48,7 +48,7 @@ This removes hand‑written string keys, reduces tracking drift between platform
 - **Multi-provider support**: Fan out a single event call to multiple analytics backends
 - **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
 - **Watch mode**: Optional file watcher to regenerate when YAML changes
-- **Deterministic output**: Sorted generation keeps diffs stable across machines
+- **Deterministic output**: Sorted generation plus content fingerprints keep diffs stable across machines
 - **Self-cleaning output**: Each run wipes the generated `events/` directory so domains you delete from YAML never linger in source control
 
 ## When to Use (and When Not)
@@ -282,6 +282,9 @@ lib/src/analytics/generated/
 - **JSON**: `assets/generated/analytics_events.json`
 - **SQL**: `assets/generated/create_database.sql`
 - **SQLite**: `assets/generated/analytics_events.db`
+
+### Deterministic Metadata
+Docs, JSON, and SQL exports embed a fingerprint derived from your YAML tracking plan (for example `Fingerprint: \`-6973fa48b7dfcee0\`` in docs and `"fingerprint": "-6973fa48b7dfcee0"` inside JSON metadata). Because timestamps are no longer written, re-running the generator without plan changes produces byte-identical artifacts across machines.
 
 ## Analytics Providers
 

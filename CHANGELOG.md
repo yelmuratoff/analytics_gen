@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Event deprecation lifecycle: YAML accepts `deprecated` + `replacement`, generators emit `@Deprecated`, and metadata is surfaced in docs/exports.
 - Parameters support `allowed_values`, propagated through docs/JSON/SQL/CSV with validation.
 - Validation/DX enhancements: `--validate-only` mode verifies the tracking plan without writing files and fails fast on structural issues.
+- Docs/JSON/SQL exports embed deterministic fingerprints (no timestamps) so repeated runs stay diff-friendly across machines.
 
 ## [0.1.3] - 2025-11-15
 - Fix badge issues

@@ -1,43 +1,11 @@
 {
   "metadata": {
-    "generated_at": "2025-11-14T17:11:48.561217",
+    "fingerprint": "-6973fa48b7dfcee0",
     "total_domains": 3,
     "total_events": 6,
     "total_parameters": 12
   },
   "domains": [
-    {
-      "name": "screen",
-      "event_count": 1,
-      "parameter_count": 3,
-      "events": [
-        {
-          "name": "view",
-          "event_name": "Screen: View",
-          "description": "User views a screen",
-          "deprecated": false,
-          "parameters": [
-            {
-              "name": "screen_name",
-              "type": "string",
-              "nullable": false
-            },
-            {
-              "name": "previous_screen",
-              "type": "string",
-              "nullable": true,
-              "description": "Name of the previous screen"
-            },
-            {
-              "name": "duration_ms",
-              "type": "int",
-              "nullable": true,
-              "description": "Time spent on previous screen in milliseconds"
-            }
-          ]
-        }
-      ]
-    },
     {
       "name": "auth",
       "event_count": 3,
@@ -91,6 +59,25 @@
       "parameter_count": 6,
       "events": [
         {
+          "name": "cancelled",
+          "event_name": "purchase: cancelled",
+          "description": "User cancelled a purchase",
+          "deprecated": false,
+          "parameters": [
+            {
+              "name": "product_id",
+              "type": "string",
+              "nullable": false
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "nullable": true,
+              "description": "Reason for cancellation"
+            }
+          ]
+        },
+        {
           "name": "completed",
           "event_name": "purchase: completed",
           "description": "User completed a purchase",
@@ -118,23 +105,36 @@
               "description": "Number of items purchased"
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "name": "screen",
+      "event_count": 1,
+      "parameter_count": 3,
+      "events": [
         {
-          "name": "cancelled",
-          "event_name": "purchase: cancelled",
-          "description": "User cancelled a purchase",
+          "name": "view",
+          "event_name": "Screen: View",
+          "description": "User views a screen",
           "deprecated": false,
           "parameters": [
             {
-              "name": "product_id",
+              "name": "screen_name",
               "type": "string",
               "nullable": false
             },
             {
-              "name": "reason",
+              "name": "previous_screen",
               "type": "string",
               "nullable": true,
-              "description": "Reason for cancellation"
+              "description": "Name of the previous screen"
+            },
+            {
+              "name": "duration_ms",
+              "type": "int",
+              "nullable": true,
+              "description": "Time spent on previous screen in milliseconds"
             }
           ]
         }
