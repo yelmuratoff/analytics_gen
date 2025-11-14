@@ -161,7 +161,7 @@ final class CodeGenerator {
     // Method body
     final eventName = event.customEventName ?? '$domainName: ${event.name}';
     buffer.writeln('    logger.logEvent(');
-    buffer.writeln('      name: \'$eventName\',');
+    buffer.writeln('      name: "$eventName",');
 
     if (event.parameters.isNotEmpty) {
       buffer.writeln('      parameters: <String, dynamic>{');
@@ -169,10 +169,10 @@ final class CodeGenerator {
         final camelParam = _toCamelCase(param.name);
         if (param.isNullable) {
           buffer.writeln(
-            "        if ($camelParam != null) '${param.name}': $camelParam,",
+            '        if ($camelParam != null) "${param.name}": $camelParam,',
           );
         } else {
-          buffer.writeln("        '${param.name}': $camelParam,");
+          buffer.writeln('        "${param.name}": $camelParam,');
         }
       }
       buffer.writeln('      },');
@@ -191,8 +191,8 @@ final class CodeGenerator {
   String _createMethodName(String domain, String eventName) {
     final capitalizedDomain = _capitalize(domain);
     final parts = eventName.split('_');
-    final capitalizedEvent = parts.first +
-        parts.skip(1).map((p) => _capitalize(p)).join();
+    final capitalizedEvent =
+        parts.first + parts.skip(1).map((p) => _capitalize(p)).join();
 
     return 'log$capitalizedDomain${_capitalize(capitalizedEvent)}';
   }
@@ -256,7 +256,8 @@ final class CodeGenerator {
     buffer.writeln('/// Main Analytics singleton class.');
     buffer.writeln('///');
     buffer.writeln('/// Automatically generated with all domain mixins.');
-    buffer.writeln('/// Initialize once at app startup, then use throughout your app.');
+    buffer.writeln(
+        '/// Initialize once at app startup, then use throughout your app.');
     buffer.writeln('///');
     buffer.writeln('/// Example:');
     buffer.writeln('/// ```dart');
@@ -266,7 +267,8 @@ final class CodeGenerator {
 
     // Generate mixin list
     final sortedDomains = domains.keys.toList()..sort();
-    final mixins = sortedDomains.map((d) => 'Analytics${_capitalize(d)}').toList();
+    final mixins =
+        sortedDomains.map((d) => 'Analytics${_capitalize(d)}').toList();
 
     // Class declaration
     buffer.write('final class Analytics extends AnalyticsBase');
@@ -290,7 +292,8 @@ final class CodeGenerator {
     buffer.writeln('{');
 
     // Singleton implementation
-    buffer.writeln('  static final Analytics _instance = Analytics._internal();');
+    buffer
+        .writeln('  static final Analytics _instance = Analytics._internal();');
     buffer.writeln('  Analytics._internal();');
     buffer.writeln();
     buffer.writeln('  /// Access the singleton instance');
@@ -300,7 +303,8 @@ final class CodeGenerator {
     buffer.writeln();
     buffer.writeln('  /// Initialize analytics with your provider');
     buffer.writeln('  ///');
-    buffer.writeln('  /// Call this once at app startup before using any analytics methods.');
+    buffer.writeln(
+        '  /// Call this once at app startup before using any analytics methods.');
     buffer.writeln('  static void initialize(IAnalytics analytics) {');
     buffer.writeln('    _instance._analytics = analytics;');
     buffer.writeln('  }');
