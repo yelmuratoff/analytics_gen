@@ -49,6 +49,7 @@ This removes hand‑written string keys, reduces tracking drift between platform
 - **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
 - **Watch mode**: Optional file watcher to regenerate when YAML changes
 - **Deterministic output**: Sorted generation keeps diffs stable across machines
+- **Self-cleaning output**: Each run wipes the generated `events/` directory so domains you delete from YAML never linger in source control
 
 ## When to Use (and When Not)
 

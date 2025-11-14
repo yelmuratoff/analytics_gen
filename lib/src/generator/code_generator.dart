@@ -38,8 +38,8 @@ final class CodeGenerator {
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final eventsDir = path.join(outputDir, 'events');
 
-    // Create directories
-    await Directory(eventsDir).create(recursive: true);
+    // Ensure we start from a clean slate so stale domains disappear
+    await _prepareOutputDirectories(outputDir, eventsDir);
 
     // Generate individual domain files
     for (final entry in domains.entries) {
@@ -326,5 +326,22 @@ final class CodeGenerator {
     await analyticsFile.writeAsString(buffer.toString());
 
     log?.call('✓ Generated Analytics class at: $analyticsPath');
+  }
+
+  /// Removes stale generated files so deleted domains do not linger.
+  Future<void> _prepareOutputDirectories(
+    String outputDir,
+    String eventsDir,
+  ) async {
+    final outputDirectory = Directory(outputDir);
+    if (!outputDirectory.existsSync()) {
+      await outputDirectory.create(recursive: true);
+    }
+
+    final eventsDirectory = Directory(eventsDir);
+    if (eventsDirectory.existsSync()) {
+      await eventsDirectory.delete(recursive: true);
+    }
+    await eventsDirectory.create(recursive: true);
   }
 }

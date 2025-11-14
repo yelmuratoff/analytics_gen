@@ -83,5 +83,41 @@ void main() {
         isNotEmpty,
       );
     });
+
+    test('removes stale domain files before regenerating', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final eventsDir = Directory(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events'),
+      );
+      final staleFile = File(p.join(eventsDir.path, 'legacy_events.dart'));
+      await staleFile.writeAsString('// stale domain');
+      expect(staleFile.existsSync(), isTrue);
+
+      await generator.generate();
+
+      expect(staleFile.existsSync(), isFalse);
+      expect(
+        File(p.join(eventsDir.path, 'auth_events.dart')).existsSync(),
+        isTrue,
+      );
+    });
   });
 }
