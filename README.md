@@ -8,7 +8,7 @@
       <img src="https://img.shields.io/pub/v/analytics_gen?include_prereleases&style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="pub version">
     </a>
     <a href="https://opensource.org/licenses/Apache-2.0">
-      <img src="https://img.shields.io/github/license/yelmuratoff/analytics_gen?style=for-the-badge&logo=apache&labelColor=000000&color=DF4926" alt="License">
+      <img src="https://img.shields.io/badge/license-apache 2.0-blue?style=for-the-badge&logo=apache&labelColor=000000&color=DF4926" alt="License">
     </a>
     <a href="https://github.com/yelmuratoff/analytics_gen">
       <img src="https://img.shields.io/github/stars/yelmuratoff/analytics_gen?style=for-the-badge&logo=github&labelColor=000000&color=DF4926" alt="GitHub stars">
