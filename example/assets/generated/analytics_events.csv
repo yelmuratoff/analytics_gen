@@ -1,7 +1,7 @@
-Domain,Action,Event Name,Description,Parameters
-screen,view,Screen: View,User views a screen,screen_name (string); previous_screen (string?): Name of the previous screen; duration_ms (int?): Time spent on previous screen in milliseconds
-auth,login,auth: login,User logs in to the application,"method (string): Login method (email, google, apple)"
-auth,logout,auth: logout,User logs out,
-auth,signup,auth: signup,User creates a new account,method (string); referral_code (string?): Optional referral code used during signup
-purchase,completed,purchase: completed,User completed a purchase,product_id (string); price (double); currency (string); quantity (int): Number of items purchased
-purchase,cancelled,purchase: cancelled,User cancelled a purchase,product_id (string); reason (string?): Reason for cancellation
+Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement
+screen,view,Screen: View,User views a screen,screen_name (string); previous_screen (string?): Name of the previous screen; duration_ms (int?): Time spent on previous screen in milliseconds,false,
+auth,login,auth: login,User logs in to the application,"method (string): Login method (email, google, apple)",false,
+auth,logout,auth: logout,User logs out,,false,
+auth,signup,auth: signup,User creates a new account,method (string); referral_code (string?): Optional referral code used during signup,false,
+purchase,completed,purchase: completed,User completed a purchase,product_id (string); price (double); currency (string); quantity (int): Number of items purchased,false,
+purchase,cancelled,purchase: cancelled,User cancelled a purchase,product_id (string); reason (string?): Reason for cancellation,false,

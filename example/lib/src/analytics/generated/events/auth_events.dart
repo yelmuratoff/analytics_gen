@@ -15,9 +15,9 @@ mixin AnalyticsAuth on AnalyticsBase {
     required String method,
   }) {
     logger.logEvent(
-      name: 'auth: login',
-      parameters: <String, dynamic>{
-        'method': method,
+      name: "auth: login",
+      parameters: <String, Object?>{
+        "method": method,
       },
     );
   }
@@ -26,7 +26,7 @@ mixin AnalyticsAuth on AnalyticsBase {
   ///
   void logAuthLogout() {
     logger.logEvent(
-      name: 'auth: logout',
+      name: "auth: logout",
       parameters: const {},
     );
   }
@@ -41,10 +41,10 @@ mixin AnalyticsAuth on AnalyticsBase {
     String? referralCode,
   }) {
     logger.logEvent(
-      name: 'auth: signup',
-      parameters: <String, dynamic>{
-        'method': method,
-        if (referralCode != null) 'referral_code': referralCode,
+      name: "auth: signup",
+      parameters: <String, Object?>{
+        "method": method,
+        if (referralCode != null) "referral_code": referralCode,
       },
     );
   }

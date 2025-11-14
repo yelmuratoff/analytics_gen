@@ -21,12 +21,12 @@ mixin AnalyticsPurchase on AnalyticsBase {
     required int quantity,
   }) {
     logger.logEvent(
-      name: 'purchase: completed',
-      parameters: <String, dynamic>{
-        'product_id': productId,
-        'price': price,
-        'currency': currency,
-        'quantity': quantity,
+      name: "purchase: completed",
+      parameters: <String, Object?>{
+        "product_id": productId,
+        "price": price,
+        "currency": currency,
+        "quantity": quantity,
       },
     );
   }
@@ -41,10 +41,10 @@ mixin AnalyticsPurchase on AnalyticsBase {
     String? reason,
   }) {
     logger.logEvent(
-      name: 'purchase: cancelled',
-      parameters: <String, dynamic>{
-        'product_id': productId,
-        if (reason != null) 'reason': reason,
+      name: "purchase: cancelled",
+      parameters: <String, Object?>{
+        "product_id": productId,
+        if (reason != null) "reason": reason,
       },
     );
   }

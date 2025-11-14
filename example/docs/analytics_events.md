@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Generated on: 2025-11-13T17:42:19.731648
+Generated on: 2025-11-14T17:11:48.553390
 
 ## Table of Contents
 

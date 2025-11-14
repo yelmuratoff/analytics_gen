@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-11-13T17:42:19.739144",
+    "generated_at": "2025-11-14T17:11:48.561217",
     "total_domains": 3,
     "total_events": 6,
     "total_parameters": 12
@@ -15,6 +15,7 @@
           "name": "view",
           "event_name": "Screen: View",
           "description": "User views a screen",
+          "deprecated": false,
           "parameters": [
             {
               "name": "screen_name",
@@ -46,6 +47,7 @@
           "name": "login",
           "event_name": "auth: login",
           "description": "User logs in to the application",
+          "deprecated": false,
           "parameters": [
             {
               "name": "method",
@@ -59,12 +61,14 @@
           "name": "logout",
           "event_name": "auth: logout",
           "description": "User logs out",
+          "deprecated": false,
           "parameters": []
         },
         {
           "name": "signup",
           "event_name": "auth: signup",
           "description": "User creates a new account",
+          "deprecated": false,
           "parameters": [
             {
               "name": "method",
@@ -90,6 +94,7 @@
           "name": "completed",
           "event_name": "purchase: completed",
           "description": "User completed a purchase",
+          "deprecated": false,
           "parameters": [
             {
               "name": "product_id",
@@ -118,6 +123,7 @@
           "name": "cancelled",
           "event_name": "purchase: cancelled",
           "description": "User cancelled a purchase",
+          "deprecated": false,
           "parameters": [
             {
               "name": "product_id",

@@ -19,11 +19,11 @@ mixin AnalyticsScreen on AnalyticsBase {
     int? durationMs,
   }) {
     logger.logEvent(
-      name: 'Screen: View',
-      parameters: <String, dynamic>{
-        'screen_name': screenName,
-        if (previousScreen != null) 'previous_screen': previousScreen,
-        if (durationMs != null) 'duration_ms': durationMs,
+      name: "Screen: View",
+      parameters: <String, Object?>{
+        "screen_name": screenName,
+        if (previousScreen != null) "previous_screen": previousScreen,
+        if (durationMs != null) "duration_ms": durationMs,
       },
     );
   }

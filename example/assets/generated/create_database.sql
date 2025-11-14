@@ -1,5 +1,5 @@
 -- Analytics Events Database Schema
--- Generated on: 2025-11-13T17:42:19.743566
+-- Generated on: 2025-11-14T17:11:48.566699
 
 -- Create domains table
 CREATE TABLE IF NOT EXISTS domains (
@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS events (
   name TEXT NOT NULL,
   event_name TEXT NOT NULL,
   description TEXT NOT NULL,
+  deprecated INTEGER NOT NULL DEFAULT 0,
+  replacement TEXT,
   FOREIGN KEY (domain_id) REFERENCES domains(id),
   UNIQUE(domain_id, name)
 );
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS parameters (
   type TEXT NOT NULL,
   nullable INTEGER NOT NULL,
   description TEXT,
+  allowed_values TEXT,
   FOREIGN KEY (event_id) REFERENCES events(id)
 );
 
@@ -41,24 +44,24 @@ INSERT INTO domains (id, name, event_count, parameter_count) VALUES (2, 'auth', 
 INSERT INTO domains (id, name, event_count, parameter_count) VALUES (3, 'purchase', 2, 6);
 
 -- Insert event data
-INSERT INTO events (id, domain_id, name, event_name, description) VALUES (1, 1, 'view', 'Screen: View', 'User views a screen');
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (1, 'screen_name', 'string', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (1, 'previous_screen', 'string', 1, 'Name of the previous screen');
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (1, 'duration_ms', 'int', 1, 'Time spent on previous screen in milliseconds');
-INSERT INTO events (id, domain_id, name, event_name, description) VALUES (2, 2, 'login', 'auth: login', 'User logs in to the application');
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (2, 'method', 'string', 0, 'Login method (email, google, apple)');
-INSERT INTO events (id, domain_id, name, event_name, description) VALUES (3, 2, 'logout', 'auth: logout', 'User logs out');
-INSERT INTO events (id, domain_id, name, event_name, description) VALUES (4, 2, 'signup', 'auth: signup', 'User creates a new account');
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (4, 'method', 'string', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (4, 'referral_code', 'string', 1, 'Optional referral code used during signup');
-INSERT INTO events (id, domain_id, name, event_name, description) VALUES (5, 3, 'completed', 'purchase: completed', 'User completed a purchase');
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (5, 'product_id', 'string', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (5, 'price', 'double', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (5, 'currency', 'string', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (5, 'quantity', 'int', 0, 'Number of items purchased');
-INSERT INTO events (id, domain_id, name, event_name, description) VALUES (6, 3, 'cancelled', 'purchase: cancelled', 'User cancelled a purchase');
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (6, 'product_id', 'string', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description) VALUES (6, 'reason', 'string', 1, 'Reason for cancellation');
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (1, 1, 'view', 'Screen: View', 'User views a screen', 0, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (1, 'screen_name', 'string', 0, NULL, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (1, 'previous_screen', 'string', 1, 'Name of the previous screen', NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (1, 'duration_ms', 'int', 1, 'Time spent on previous screen in milliseconds', NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (2, 2, 'login', 'auth: login', 'User logs in to the application', 0, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (2, 'method', 'string', 0, 'Login method (email, google, apple)', NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (3, 2, 'logout', 'auth: logout', 'User logs out', 0, NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (4, 2, 'signup', 'auth: signup', 'User creates a new account', 0, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (4, 'method', 'string', 0, NULL, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (4, 'referral_code', 'string', 1, 'Optional referral code used during signup', NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (5, 3, 'completed', 'purchase: completed', 'User completed a purchase', 0, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (5, 'product_id', 'string', 0, NULL, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (5, 'price', 'double', 0, NULL, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (5, 'currency', 'string', 0, NULL, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (5, 'quantity', 'int', 0, 'Number of items purchased', NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (6, 3, 'cancelled', 'purchase: cancelled', 'User cancelled a purchase', 0, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (6, 'product_id', 'string', 0, NULL, NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (6, 'reason', 'string', 1, 'Reason for cancellation', NULL);
 
 -- Create useful views
 CREATE VIEW IF NOT EXISTS events_with_domain AS
