@@ -41,10 +41,9 @@ final class DocsGenerator {
     final markdown = _generateMarkdown(domains);
 
     // Write to output file
-    final outputPath =
-        config.docsPath != null
-            ? path.join(projectRoot, config.docsPath!)
-            : path.join(projectRoot, 'analytics_docs.md');
+    final outputPath = config.docsPath != null
+        ? path.join(projectRoot, config.docsPath!)
+        : path.join(projectRoot, 'analytics_docs.md');
 
     final outputFile = File(outputPath);
     await outputFile.parent.create(recursive: true);
@@ -154,24 +153,24 @@ final class DocsGenerator {
 
     for (final event in domain.events) {
       final eventName = event.customEventName ?? '$domainName: ${event.name}';
-      final params =
-          event.parameters.isEmpty
-              ? '-'
-              : event.parameters
-                  .map((p) {
-                    final typeStr =
-                        '`${p.name}` (${p.type}${p.isNullable ? '?' : ''})';
-                    final desc =
-                        p.description != null ? ': ${p.description}' : '';
-                    final allowed = (p.allowedValues != null &&
-                            p.allowedValues!.isNotEmpty)
-                        ? ' (allowed: ${p.allowedValues!.join(', ')})'
-                        : '';
-                    return '$typeStr$desc$allowed';
-                  })
-                  .join('<br>');
+      final params = event.parameters.isEmpty
+          ? '-'
+          : event.parameters.map((p) {
+              final typeStr =
+                  '`${p.name}` (${p.type}${p.isNullable ? '?' : ''})';
+              final desc = p.description != null ? ': ${p.description}' : '';
+              final allowed =
+                  (p.allowedValues != null && p.allowedValues!.isNotEmpty)
+                      ? ' (allowed: ${p.allowedValues!.join(', ')})'
+                      : '';
+              return '$typeStr$desc$allowed';
+            }).join('<br>');
 
-      buffer.writeln('| $eventName | ${event.description} | $params |');
+      buffer.writeln(
+        '| ${_escapeMarkdownCell(eventName)} | '
+        '${_escapeMarkdownCell(event.description)} | '
+        '${_escapeMarkdownCell(params)} |',
+      );
     }
 
     buffer.writeln();
@@ -208,8 +207,8 @@ final class DocsGenerator {
   String _createMethodName(String domain, String eventName) {
     final capitalizedDomain = StringUtils.capitalizePascal(domain);
     final parts = eventName.split('_');
-    final capitalizedEvent = parts.first +
-        parts.skip(1).map(StringUtils.capitalizePascal).join();
+    final capitalizedEvent =
+        parts.first + parts.skip(1).map(StringUtils.capitalizePascal).join();
 
     return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
@@ -242,5 +241,10 @@ final class DocsGenerator {
       default:
         return 'value';
     }
+  }
+
+  String _escapeMarkdownCell(String text) {
+    final normalized = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    return normalized.replaceAll('|', '\\|').replaceAll('\n', '<br>');
   }
 }

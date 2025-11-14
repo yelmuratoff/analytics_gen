@@ -43,7 +43,8 @@ final class YamlParser {
         .listSync()
         .whereType<File>()
         .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
-        .toList();
+        .toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
 
     if (yamlFiles.isEmpty) {
       log?.call('No YAML files found in: $eventsPath');
@@ -64,7 +65,10 @@ final class YamlParser {
         continue;
       }
 
-      for (final key in parsed.keys) {
+      final sortedDomainKeys = parsed.keys.toList()
+        ..sort((a, b) => a.toString().compareTo(b.toString()));
+
+      for (final key in sortedDomainKeys) {
         final domainKey = key.toString();
 
         // Enforce snake_case, filesystem-safe domain names
@@ -95,7 +99,10 @@ final class YamlParser {
       }
     }
 
-    for (final entry in merged.entries) {
+    final sortedDomains = merged.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    for (final entry in sortedDomains) {
       final domainName = entry.key.toString();
       final source = entry.value;
       final eventsYaml = source.yaml;
@@ -121,7 +128,10 @@ final class YamlParser {
   }) {
     final events = <AnalyticsEvent>[];
 
-    for (final entry in eventsYaml.entries) {
+    final sortedEvents = eventsYaml.entries.toList()
+      ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
+
+    for (final entry in sortedEvents) {
       final eventName = entry.key.toString();
       final value = entry.value;
 

@@ -203,8 +203,8 @@ final class CodeGenerator {
   String _createMethodName(String domain, String eventName) {
     final capitalizedDomain = StringUtils.capitalizePascal(domain);
     final parts = eventName.split('_');
-    final capitalizedEvent = parts.first +
-        parts.skip(1).map(StringUtils.capitalizePascal).join();
+    final capitalizedEvent =
+        parts.first + parts.skip(1).map(StringUtils.capitalizePascal).join();
 
     return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
@@ -262,10 +262,9 @@ final class CodeGenerator {
 
     // Generate mixin list
     final sortedDomains = domains.keys.toList()..sort();
-    final mixins =
-        sortedDomains
-            .map((d) => 'Analytics${StringUtils.capitalizePascal(d)}')
-            .toList();
+    final mixins = sortedDomains
+        .map((d) => 'Analytics${StringUtils.capitalizePascal(d)}')
+        .toList();
 
     // Class declaration
     buffer.write('final class Analytics extends AnalyticsBase');
@@ -296,7 +295,10 @@ final class CodeGenerator {
     buffer.writeln('  /// Access the singleton instance');
     buffer.writeln('  static Analytics get instance => _instance;');
     buffer.writeln();
-    buffer.writeln('  late IAnalytics _analytics;');
+    buffer.writeln('  IAnalytics? _analytics;');
+    buffer.writeln();
+    buffer.writeln('  /// Whether analytics has been initialized');
+    buffer.writeln('  bool get isInitialized => _analytics != null;');
     buffer.writeln();
     buffer.writeln('  /// Initialize analytics with your provider');
     buffer.writeln('  ///');
@@ -307,7 +309,9 @@ final class CodeGenerator {
     buffer.writeln('  }');
     buffer.writeln();
     buffer.writeln('  @override');
-    buffer.writeln('  IAnalytics get logger => _analytics;');
+    buffer.writeln(
+      '  IAnalytics get logger => ensureAnalyticsInitialized(_analytics);',
+    );
     buffer.writeln('}');
     buffer.writeln();
 

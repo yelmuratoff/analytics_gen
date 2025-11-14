@@ -31,7 +31,7 @@ final class MockAnalyticsService implements IAnalytics {
   }
 
   /// Returns events matching the given name
-  List<Map<String, dynamic>> getEventsByName(String name) {
+  List<Map<String, Object?>> getEventsByName(String name) {
     return events.where((e) => e['name'] == name).toList();
   }
 

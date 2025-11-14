@@ -22,17 +22,18 @@ void main() {
 
     test('parses simple event without parameters', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
-      await yamlFile.writeAsString('auth:\n  logout:\n    description: User logs out\n    parameters: {}\n');
+      await yamlFile.writeAsString(
+          'auth:\n  logout:\n    description: User logs out\n    parameters: {}\n');
 
       final parser = YamlParser(eventsPath: eventsPath);
       final domains = await parser.parseEvents();
 
       expect(domains.length, equals(1));
       expect(domains.containsKey('auth'), isTrue);
-      
+
       final authDomain = domains['auth']!;
       expect(authDomain.events.length, equals(1));
-      
+
       final logoutEvent = authDomain.events.first;
       expect(logoutEvent.name, equals('logout'));
       expect(logoutEvent.description, equals('User logs out'));
@@ -73,7 +74,8 @@ void main() {
 
     test('parses nullable parameters', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
-      await yamlFile.writeAsString('auth:\n  signup:\n    description: User signs up\n    parameters:\n      referral_code: string?\n');
+      await yamlFile.writeAsString(
+          'auth:\n  signup:\n    description: User signs up\n    parameters:\n      referral_code: string?\n');
 
       final parser = YamlParser(eventsPath: eventsPath);
       final domains = await parser.parseEvents();
@@ -175,7 +177,8 @@ void main() {
 
     test('throws when domain name is not snake_case', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
-      await yamlFile.writeAsString('AuthDomain:\n  login:\n    description: Test\n');
+      await yamlFile
+          .writeAsString('AuthDomain:\n  login:\n    description: Test\n');
 
       final parser = YamlParser(eventsPath: eventsPath);
 
@@ -189,6 +192,31 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('sorts domains and events for deterministic results', () async {
+      final authFile = File(path.join(eventsPath, 'z_auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  z_event:\n'
+        '    description: Last\n'
+        '  a_event:\n'
+        '    description: First\n',
+      );
+
+      final screenFile = File(path.join(eventsPath, 'a_screen.yaml'));
+      await screenFile.writeAsString(
+        'screen:\n'
+        '  view:\n'
+        '    description: Screen view\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+      final domains = await parser.parseEvents();
+
+      expect(domains.keys.toList(), equals(['auth', 'screen']));
+      final authEvents = domains['auth']!.events.map((e) => e.name).toList();
+      expect(authEvents, equals(['a_event', 'z_event']));
     });
   });
 }

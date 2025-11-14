@@ -24,11 +24,15 @@ final class SqliteGenerator {
   /// Generates SQLite database file
   Future<void> generate(
     Map<String, AnalyticsDomain> domains,
-    String outputDir,
-  ) async {
-    // First generate SQL script
-    final sqlPath = path.join(outputDir, 'create_database.sql');
-    await _sqlGenerator.generate(domains, sqlPath);
+    String outputDir, {
+    String? existingSqlPath,
+  }) async {
+    final sqlPath =
+        existingSqlPath ?? path.join(outputDir, 'create_database.sql');
+
+    if (existingSqlPath == null) {
+      await _sqlGenerator.generate(domains, sqlPath);
+    }
 
     // Check if sqlite3 is available
     final sqliteAvailable = await _isSqlite3Available();
@@ -67,9 +71,9 @@ final class SqliteGenerator {
   /// Checks if sqlite3 command is available
   Future<bool> _isSqlite3Available() async {
     try {
-      final result = await _runProcess('which', ['sqlite3']);
+      final result = await _runProcess('sqlite3', ['--version']);
       return result.exitCode == 0;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }

@@ -11,3 +11,13 @@ abstract class AnalyticsBase {
   /// the configured analytics provider.
   IAnalytics get logger;
 }
+
+/// Ensures analytics has been initialized before logging events.
+IAnalytics ensureAnalyticsInitialized(IAnalytics? analytics) {
+  if (analytics == null) {
+    throw StateError(
+      'Analytics.initialize(...) must be called before logging events.',
+    );
+  }
+  return analytics;
+}

@@ -12,15 +12,18 @@ import 'generated_events.dart';
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
-final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen
-{
+final class Analytics extends AnalyticsBase
+    with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen {
   static final Analytics _instance = Analytics._internal();
   Analytics._internal();
 
   /// Access the singleton instance
   static Analytics get instance => _instance;
 
-  late IAnalytics _analytics;
+  IAnalytics? _analytics;
+
+  /// Whether analytics has been initialized
+  bool get isInitialized => _analytics != null;
 
   /// Initialize analytics with your provider
   ///
@@ -30,6 +33,5 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
   }
 
   @override
-  IAnalytics get logger => _analytics;
+  IAnalytics get logger => ensureAnalyticsInitialized(_analytics);
 }
-

@@ -40,21 +40,29 @@ void main() {
 
     test('skips database creation when sqlite3 is not available', () async {
       final logs = <String>[];
+      final sqlPath = p.join(tempDir.path, 'create_database.sql');
+      File(sqlPath).writeAsStringSync('prebuilt');
 
       final generator = SqliteGenerator(
         log: logs.add,
         runProcess: (executable, arguments) async {
-          // Simulate missing sqlite3 for any command.
-          return ProcessResult(0, 1, '', 'not found');
+          if (executable == 'sqlite3' && arguments.contains('--version')) {
+            return ProcessResult(0, 1, '', 'not found');
+          }
+          return ProcessResult(0, 0, '', '');
         },
       );
 
-      await generator.generate(domains, tempDir.path);
+      await generator.generate(
+        domains,
+        tempDir.path,
+        existingSqlPath: sqlPath,
+      );
 
-      final sqlPath = p.join(tempDir.path, 'create_database.sql');
       final dbPath = p.join(tempDir.path, 'analytics_events.db');
 
       expect(File(sqlPath).existsSync(), isTrue);
+      expect(File(sqlPath).readAsStringSync(), equals('prebuilt'));
       expect(File(dbPath).existsSync(), isFalse);
       expect(
         logs.join('\n'),
@@ -65,14 +73,19 @@ void main() {
     test('invokes sqlite3 when available and logs success', () async {
       final logs = <String>[];
 
-      Future<ProcessResult> fakeRun(String executable, List<String> arguments) async {
-        if (executable == 'which' && arguments.contains('sqlite3')) {
-          return ProcessResult(0, 0, '/usr/bin/sqlite3', '');
+      Future<ProcessResult> fakeRun(
+        String executable,
+        List<String> arguments,
+      ) async {
+        if (executable == 'sqlite3' &&
+            arguments.length == 1 &&
+            arguments[0] == '--version') {
+          return ProcessResult(0, 0, '3.45.0', '');
         }
 
-        if (executable == 'sqlite3') {
+        if (executable == 'sqlite3' && arguments.length == 2) {
           final dbPath = arguments.first;
-          // Simulate creation of the database file.
+          // Simulate creation of the database file when executing the SQL script.
           File(dbPath).writeAsBytesSync(const <int>[]);
           return ProcessResult(0, 0, '', '');
         }

@@ -72,6 +72,88 @@ void main() {
         isNotEmpty,
       );
     });
+
+    test('orders domains and events deterministically', () async {
+      final authFile = File(p.join(tempProject.path, 'events', 'z_auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  z_event:\n'
+        '    description: Last\n'
+        '  a_event:\n'
+        '    description: First\n',
+      );
+
+      final screenFile =
+          File(p.join(tempProject.path, 'events', 'a_screen.yaml'));
+      await screenFile.writeAsString(
+        'screen:\n'
+        '  view:\n'
+        '    description: Screen view\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final content = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      final authIndex = content.indexOf('## auth');
+      final screenIndex = content.indexOf('## screen');
+      expect(authIndex, isNot(-1));
+      expect(screenIndex, isNot(-1));
+      expect(authIndex, lessThan(screenIndex));
+
+      final firstEventIndex = content.indexOf('a_event');
+      final lastEventIndex = content.indexOf('z_event');
+      expect(firstEventIndex, lessThan(lastEventIndex));
+    });
+
+    test('escapes markdown table cells with pipes and newlines', () async {
+      final eventsFile =
+          File(p.join(tempProject.path, 'events', 'purchase.yaml'));
+      await eventsFile.writeAsString(
+        'purchase:\n'
+        '  refund:\n'
+        '    description: Contains | pipe\n'
+        '    parameters:\n'
+        '      reason:\n'
+        '        type: string\n'
+        '        description: |\n'
+        '          first line\n'
+        '          second line\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final content = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      expect(content, contains('purchase: refund'));
+      expect(content, contains('Contains \\| pipe'));
+      expect(content, contains('first line<br>second line'));
+    });
   });
 }
-

@@ -74,16 +74,18 @@ final class ExportGenerator {
       final sqlGen = SqlGenerator();
       final sqliteGen = SqliteGenerator(log: log);
 
-      await sqlGen.generate(
-        domains,
-        path.join(outputDir, 'create_database.sql'),
-      );
+      final sqlPath = path.join(outputDir, 'create_database.sql');
+      await sqlGen.generate(domains, sqlPath);
       log?.call(
-        '✓ Generated SQL at: ${path.join(outputDir, 'create_database.sql')}',
+        '✓ Generated SQL at: $sqlPath',
       );
 
       // Try to generate SQLite database (optional)
-      await sqliteGen.generate(domains, outputDir);
+      await sqliteGen.generate(
+        domains,
+        outputDir,
+        existingSqlPath: sqlPath,
+      );
     }
 
     log?.call('✓ Export generation completed');

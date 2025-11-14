@@ -45,9 +45,10 @@ This removes hand‑written string keys, reduces tracking drift between platform
 - **Type‑safe events**: Compile‑time checking of event names and parameter types
 - **Code generation from YAML**: Strongly‑typed Dart methods derived from simple YAML definitions
 - **Clean structure by domain**: Each domain (`auth`, `screen`, `purchase`, etc.) lives in its own generated file
-- **Multi‑provider support**: Fan out a single event call to multiple analytics backends
+- **Multi-provider support**: Fan out a single event call to multiple analytics backends
 - **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
 - **Watch mode**: Optional file watcher to regenerate when YAML changes
+- **Deterministic output**: Sorted generation keeps diffs stable across machines
 
 ## When to Use (and When Not)
 
@@ -137,9 +138,11 @@ void main() {
   
   // Use anywhere
   Analytics.instance.logAuthLogin(method: 'email');
-  Analytics.instance.logAuthLogout();
+Analytics.instance.logAuthLogout();
 }
 ```
+
+> Important: accessing `Analytics.instance` before calling `Analytics.initialize` throws a descriptive `StateError`, keeping improper usage from silently failing.
 
 ## Why This Structure?
 
@@ -293,6 +296,10 @@ expect(
   mockService.getEventsByName('login'),
   hasLength(1),
 );
+
+// Returns List<Map<String, Object?>> so you can inspect parameters directly.
+final first = mockService.getEventsByName('login').first;
+expect(first['parameters'], containsPair('method', 'email'));
 ```
 
 ### Multi-Provider
@@ -333,6 +340,10 @@ class FirebaseAnalyticsService implements IAnalytics {
 - The `IAnalytics.logEvent` API is synchronous for ergonomics in UI and business code.
 - Your implementation may perform asynchronous work internally (e.g. calling an async SDK), but the generated methods themselves do not return a `Future`.
 - If you need strict delivery guarantees, handle retries and error reporting inside your `IAnalytics` implementation.
+
+## Deterministic Output
+
+`analytics_gen` sorts YAML files, domains, and events before emitting code, docs, or exports. Running `dart run analytics_gen:generate` on different machines produces identical output as long as the input YAML is the same, which keeps pull request diffs and CI artifacts predictable.
 
 ## Testing
 
