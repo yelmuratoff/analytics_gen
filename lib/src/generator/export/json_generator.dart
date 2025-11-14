@@ -54,6 +54,8 @@ final class JsonGenerator {
                   'type': p.type,
                   'nullable': p.isNullable,
                   if (p.description != null) 'description': p.description,
+                  if (p.allowedValues != null && p.allowedValues!.isNotEmpty)
+                    'allowed_values': p.allowedValues,
                 };
               }).toList(),
             };

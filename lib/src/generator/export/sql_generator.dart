@@ -58,6 +58,7 @@ final class SqlGenerator {
     buffer.writeln('  type TEXT NOT NULL,');
     buffer.writeln('  nullable INTEGER NOT NULL,');
     buffer.writeln('  description TEXT,');
+    buffer.writeln('  allowed_values TEXT,');
     buffer.writeln('  FOREIGN KEY (event_id) REFERENCES events(id)');
     buffer.writeln(');');
     buffer.writeln();
@@ -116,10 +117,14 @@ final class SqlGenerator {
           final desc = param.description != null
               ? "'${_escape(param.description!)}'"
               : 'NULL';
+          final allowed = (param.allowedValues != null &&
+                  param.allowedValues!.isNotEmpty)
+              ? "'${_escape(param.allowedValues!.join(', '))}'"
+              : 'NULL';
           buffer.writeln(
-            "INSERT INTO parameters (event_id, name, type, nullable, description) "
+            "INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) "
             "VALUES ($eventId, '${_escape(param.name)}', '${_escape(param.type)}', "
-            "$nullable, $desc);",
+            "$nullable, $desc, $allowed);",
           );
         }
 

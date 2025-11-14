@@ -4,12 +4,14 @@ final class AnalyticsParameter {
   final String type;
   final bool isNullable;
   final String? description;
+  final List<String>? allowedValues;
 
   const AnalyticsParameter({
     required this.name,
     required this.type,
     required this.isNullable,
     this.description,
+    this.allowedValues,
   });
 
   @override
@@ -22,12 +24,17 @@ final class AnalyticsParameter {
         other.name == name &&
         other.type == type &&
         other.isNullable == isNullable &&
-        other.description == description;
+        other.description == description &&
+        _listEquals(other.allowedValues ?? const [], allowedValues ?? const []);
   }
 
   @override
   int get hashCode =>
-      name.hashCode ^ type.hashCode ^ isNullable.hashCode ^ description.hashCode;
+      name.hashCode ^
+      type.hashCode ^
+      isNullable.hashCode ^
+      description.hashCode ^
+      Object.hashAll(allowedValues ?? const []);
 }
 
 /// Represents a single analytics event.

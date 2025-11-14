@@ -174,6 +174,7 @@ final class YamlParser {
 
       String paramType;
       String? description;
+      List<String>? allowedValues;
 
       if (paramValue is YamlMap) {
         // Complex parameter with 'type' and/or 'description'
@@ -185,9 +186,21 @@ final class YamlParser {
         } else {
           // Fallback: Find type key (anything except 'description')
           final typeKey = paramValue.keys
-              .where((k) => k.toString() != 'description')
+              .where(
+                (k) => k.toString() != 'description' && k.toString() != 'allowed_values',
+              )
               .firstOrNull;
           paramType = typeKey?.toString() ?? 'dynamic';
+        }
+
+        final rawAllowed = paramValue['allowed_values'];
+        if (rawAllowed != null) {
+          if (rawAllowed is! YamlList) {
+            throw FormatException(
+              'allowed_values for parameter "$paramName" must be a list.',
+            );
+          }
+          allowedValues = rawAllowed.map((e) => e.toString()).toList();
         }
       } else {
         // Simple parameter (just type)
@@ -206,6 +219,7 @@ final class YamlParser {
           type: paramType,
           isNullable: isNullable,
           description: description,
+          allowedValues: allowedValues,
         ),
       );
     }

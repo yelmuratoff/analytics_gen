@@ -35,6 +35,7 @@ void main() {
                   name: 'method',
                   type: 'string',
                   isNullable: false,
+                  allowedValues: ['email', 'google', 'apple'],
                 ),
               ],
             ),
@@ -67,6 +68,9 @@ void main() {
       final login = eventsJson.first as Map<String, dynamic>;
       expect(login['deprecated'], isTrue);
       expect(login['replacement'], equals('auth.login_v2'));
+      final paramsJson = login['parameters'] as List<dynamic>;
+      final method = paramsJson.first as Map<String, dynamic>;
+      expect(method['allowed_values'], equals(['email', 'google', 'apple']));
     });
   });
 }

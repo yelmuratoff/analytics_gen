@@ -83,6 +83,25 @@ void main() {
       expect(param.isNullable, isTrue);
     });
 
+    test('parses allowed_values for parameters', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method:\n'
+        '        type: string\n'
+        '        allowed_values: [email, google, apple]\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+      final domains = await parser.parseEvents();
+
+      final param = domains['auth']!.events.first.parameters.first;
+      expect(param.allowedValues, equals(['email', 'google', 'apple']));
+    });
+
     test('returns empty map when events directory does not exist', () async {
       final parser = YamlParser(eventsPath: '/nonexistent/path');
       final domains = await parser.parseEvents();

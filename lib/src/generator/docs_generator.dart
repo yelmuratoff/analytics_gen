@@ -161,9 +161,13 @@ final class DocsGenerator {
                   .map((p) {
                     final typeStr =
                         '`${p.name}` (${p.type}${p.isNullable ? '?' : ''})';
-                    return p.description != null
-                        ? '$typeStr: ${p.description}'
-                        : typeStr;
+                    final desc =
+                        p.description != null ? ': ${p.description}' : '';
+                    final allowed = (p.allowedValues != null &&
+                            p.allowedValues!.isNotEmpty)
+                        ? ' (allowed: ${p.allowedValues!.join(', ')})'
+                        : '';
+                    return '$typeStr$desc$allowed';
                   })
                   .join('<br>');
 

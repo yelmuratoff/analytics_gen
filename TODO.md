@@ -101,15 +101,15 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 
 ## 12. Enum-like allowed_values for parameters
 
-- [ ] Support `allowed_values` on parameter definitions in YAML (list of strings).
-- [ ] Extend `AnalyticsParameter` model with `allowedValues`.
-- [ ] Update `YamlParser` to parse `allowed_values` safely (ignore or error on invalid shapes).
-- [ ] Surface allowed values in:
-  - [ ] Markdown docs (e.g. “Allowed values: a, b, c”).
-  - [ ] JSON export structure (array field).
-  - [ ] Optional: SQL / CSV (serialized representation).
-- [ ] Add tests for parsing and documentation/export of allowed values.
-- [ ] Document the feature in README and example YAML.
+- [x] Support `allowed_values` on parameter definitions in YAML (list of strings).
+- [x] Extend `AnalyticsParameter` model with `allowedValues`.
+- [x] Update `YamlParser` to parse `allowed_values` safely (throws on invalid shapes).
+- [x] Surface allowed values in:
+  - [x] Markdown docs (e.g. “(allowed: a, b, c)” next to parameter).
+  - [x] JSON export structure (array field).
+  - [x] SQL / CSV (serialized representation).
+- [x] Add tests for parsing and documentation/export of allowed values.
+- [x] Document the feature in README and example YAML.
 
 ## 13. Validation / DX enhancements (future)
 

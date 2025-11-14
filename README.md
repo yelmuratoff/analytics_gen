@@ -198,6 +198,10 @@ purchase:
       price:
         type: double
         description: Purchase price
+      method:
+        type: string
+        description: Payment method
+        allowed_values: [card, paypal, apple_pay]
 ```
 
 ### Custom Event Names (for Legacy / External Systems)
