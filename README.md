@@ -50,6 +50,7 @@ This removes hand‑written string keys, reduces tracking drift between platform
 - **Watch mode**: Optional file watcher to regenerate when YAML changes
 - **Deterministic output**: Sorted generation plus content fingerprints keep diffs stable across machines
 - **Self-cleaning output**: Each run wipes the generated `events/` directory so domains you delete from YAML never linger in source control
+- **Lifecycle-aware docs**: Generated Markdown docs expose a Status column so deprecated events and their replacements are obvious to product/data teams
 
 ## When to Use (and When Not)
 
@@ -282,6 +283,15 @@ lib/src/analytics/generated/
 - **JSON**: `assets/generated/analytics_events.json`
 - **SQL**: `assets/generated/create_database.sql`
 - **SQLite**: `assets/generated/analytics_events.db`
+
+Docs screenshot (Markdown excerpt from the example project):
+
+```markdown
+| Event | Description | Status | Parameters |
+|-------|-------------|--------|------------|
+| auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) |
+| auth: logout | User logs out | Active | - |
+```
 
 ### Deterministic Metadata
 Docs, JSON, and SQL exports embed a fingerprint derived from your YAML tracking plan (for example `Fingerprint: \`-6973fa48b7dfcee0\`` in docs and `"fingerprint": "-6973fa48b7dfcee0"` inside JSON metadata). Because timestamps are no longer written, re-running the generator without plan changes produces byte-identical artifacts across machines.

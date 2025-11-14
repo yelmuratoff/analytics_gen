@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Parameters support `allowed_values`, propagated through docs/JSON/SQL/CSV with validation.
 - Validation/DX enhancements: `--validate-only` mode verifies the tracking plan without writing files and fails fast on structural issues.
 - Docs/JSON/SQL exports embed deterministic fingerprints (no timestamps) so repeated runs stay diff-friendly across machines.
+- Docs tables gained a Status column that marks deprecated events (and their replacements) so migrations are visible without leaving the Markdown export.
 
 ## [0.1.3] - 2025-11-15
 - Fix badge issues

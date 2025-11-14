@@ -1,5 +1,5 @@
 -- Analytics Events Database Schema
--- Fingerprint: -6973fa48b7dfcee0 (domains=3, events=6, parameters=12)
+-- Fingerprint: 74b7c22b40f24619 (domains=3, events=6, parameters=12)
 
 -- Create domains table
 CREATE TABLE IF NOT EXISTS domains (
@@ -44,7 +44,7 @@ INSERT INTO domains (id, name, event_count, parameter_count) VALUES (2, 'purchas
 INSERT INTO domains (id, name, event_count, parameter_count) VALUES (3, 'screen', 1, 3);
 
 -- Insert event data
-INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (1, 1, 'login', 'auth: login', 'User logs in to the application', 0, NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (1, 1, 'login', 'auth: login', 'User logs in to the application', 1, 'auth.login_v2');
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (1, 'method', 'string', 0, 'Login method (email, google, apple)', NULL);
 INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (2, 1, 'logout', 'auth: logout', 'User logs out', 0, NULL);
 INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (3, 1, 'signup', 'auth: signup', 'User creates a new account', 0, NULL);

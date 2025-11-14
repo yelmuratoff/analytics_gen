@@ -149,8 +149,8 @@ final class DocsGenerator {
     buffer.writeln();
 
     // Create table
-    buffer.writeln('| Event | Description | Parameters |');
-    buffer.writeln('|-------|-------------|------------|');
+    buffer.writeln('| Event | Description | Status | Parameters |');
+    buffer.writeln('|-------|-------------|--------|------------|');
 
     for (final event in domain.events) {
       final eventName = event.customEventName ?? '$domainName: ${event.name}';
@@ -166,10 +166,12 @@ final class DocsGenerator {
                       : '';
               return '$typeStr$desc$allowed';
             }).join('<br>');
+      final status = _formatEventStatus(event);
 
       buffer.writeln(
         '| ${_escapeMarkdownCell(eventName)} | '
         '${_escapeMarkdownCell(event.description)} | '
+        '${_escapeMarkdownCell(status)} | '
         '${_escapeMarkdownCell(params)} |',
       );
     }
@@ -242,6 +244,19 @@ final class DocsGenerator {
       default:
         return 'value';
     }
+  }
+
+  String _formatEventStatus(AnalyticsEvent event) {
+    if (!event.deprecated) {
+      return 'Active';
+    }
+
+    final replacement = event.replacement;
+    if (replacement != null && replacement.isNotEmpty) {
+      return '**Deprecated** -> `$replacement`';
+    }
+
+    return '**Deprecated**';
   }
 
   String _escapeMarkdownCell(String text) {

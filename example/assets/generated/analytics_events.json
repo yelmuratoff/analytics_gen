@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fingerprint": "-6973fa48b7dfcee0",
+    "fingerprint": "74b7c22b40f24619",
     "total_domains": 3,
     "total_events": 6,
     "total_parameters": 12
@@ -15,7 +15,8 @@
           "name": "login",
           "event_name": "auth: login",
           "description": "User logs in to the application",
-          "deprecated": false,
+          "deprecated": true,
+          "replacement": "auth.login_v2",
           "parameters": [
             {
               "name": "method",

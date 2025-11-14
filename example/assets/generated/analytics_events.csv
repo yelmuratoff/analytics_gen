@@ -1,5 +1,5 @@
 Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement
-auth,login,auth: login,User logs in to the application,"method (string): Login method (email, google, apple)",false,
+auth,login,auth: login,User logs in to the application,"method (string): Login method (email, google, apple)",true,auth.login_v2
 auth,logout,auth: logout,User logs out,,false,
 auth,signup,auth: signup,User creates a new account,method (string); referral_code (string?): Optional referral code used during signup,false,
 purchase,cancelled,purchase: cancelled,User cancelled a purchase,product_id (string); reason (string?): Reason for cancellation,false,

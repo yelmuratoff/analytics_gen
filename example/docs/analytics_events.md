@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Fingerprint: `-6973fa48b7dfcee0`
+Fingerprint: `74b7c22b40f24619`
 Domains: 3 | Events: 6 | Parameters: 12
 
 ## Table of Contents
@@ -19,11 +19,11 @@ Domains: 3 | Events: 6 | Parameters: 12
 
 Events: 3 | Parameters: 3
 
-| Event | Description | Parameters |
-|-------|-------------|------------|
-| auth: login | User logs in to the application | `method` (string): Login method (email, google, apple) |
-| auth: logout | User logs out | - |
-| auth: signup | User creates a new account | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup |
+| Event | Description | Status | Parameters |
+|-------|-------------|--------|------------|
+| auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) |
+| auth: logout | User logs out | Active | - |
+| auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup |
 
 ### Code Examples
 
@@ -45,10 +45,10 @@ Analytics.instance.logAuthSignup(
 
 Events: 2 | Parameters: 6
 
-| Event | Description | Parameters |
-|-------|-------------|------------|
-| purchase: cancelled | User cancelled a purchase | `product_id` (string)<br>`reason` (string?): Reason for cancellation |
-| purchase: completed | User completed a purchase | `product_id` (string)<br>`price` (double)<br>`currency` (string)<br>`quantity` (int): Number of items purchased |
+| Event | Description | Status | Parameters |
+|-------|-------------|--------|------------|
+| purchase: cancelled | User cancelled a purchase | Active | `product_id` (string)<br>`reason` (string?): Reason for cancellation |
+| purchase: completed | User completed a purchase | Active | `product_id` (string)<br>`price` (double)<br>`currency` (string)<br>`quantity` (int): Number of items purchased |
 
 ### Code Examples
 
@@ -71,9 +71,9 @@ Analytics.instance.logPurchaseCompleted(
 
 Events: 1 | Parameters: 3
 
-| Event | Description | Parameters |
-|-------|-------------|------------|
-| Screen: View | User views a screen | `screen_name` (string)<br>`previous_screen` (string?): Name of the previous screen<br>`duration_ms` (int?): Time spent on previous screen in milliseconds |
+| Event | Description | Status | Parameters |
+|-------|-------------|--------|------------|
+| Screen: View | User views a screen | Active | `screen_name` (string)<br>`previous_screen` (string?): Name of the previous screen<br>`duration_ms` (int?): Time spent on previous screen in milliseconds |
 
 ### Code Examples
 

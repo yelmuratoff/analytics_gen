@@ -1,9 +1,8 @@
 auth:
   login:
     description: User logs in to the application
-    # Example of deprecation (optional)
-    # deprecated: true
-    # replacement: auth.login_v2
+    deprecated: true
+    replacement: auth.login_v2
     parameters:
       method:
         type: string

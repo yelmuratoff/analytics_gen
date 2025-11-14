@@ -60,6 +60,11 @@ void main() {
         content,
         contains('Domains: 1 | Events: 1 | Parameters: 1'),
       );
+      expect(
+        content,
+        contains('| Event | Description | Status | Parameters |'),
+      );
+      expect(content, contains('Active'));
       expect(content, contains('## auth'));
       expect(content, contains('login'));
       expect(content, contains('User logs in'));
@@ -159,6 +164,38 @@ void main() {
       expect(content, contains('purchase: refund'));
       expect(content, contains('Contains \\| pipe'));
       expect(content, contains('first line<br>second line'));
+    });
+
+    test('marks deprecated events and shows replacements in status column',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    deprecated: true\n'
+        '    replacement: auth.login_v2\n'
+        '    parameters: {}\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final content = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      expect(content, contains('**Deprecated** -> `auth.login_v2`'));
     });
   });
 }
