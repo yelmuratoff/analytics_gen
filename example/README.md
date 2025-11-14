@@ -53,6 +53,9 @@ dart run analytics_gen:generate --watch
 
 # Quiet mode (no generator logs, only summary)
 dart run analytics_gen:generate --no-verbose
+
+# Validate YAML only (no files written)
+dart run analytics_gen:generate --validate-only
 ```
 
 ### 3. Run the Example

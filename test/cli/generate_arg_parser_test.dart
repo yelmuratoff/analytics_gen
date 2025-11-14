@@ -40,5 +40,11 @@ void main() {
 
       expect(results['verbose'], isFalse);
     });
+
+    test('supports validate-only flag', () {
+      final results = parser.parse(const <String>['--validate-only']);
+
+      expect(results['validate-only'], isTrue);
+    });
   });
 }

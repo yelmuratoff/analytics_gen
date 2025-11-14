@@ -113,7 +113,7 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 
 ## 13. Validation / DX enhancements (future)
 
-- [ ] Add a `--dry-run` / `--validate-only` CLI option:
-  - [ ] Parse YAML and validate without writing files.
-  - [ ] Non-zero exit on structural or naming issues.
-- [ ] Document how to wire validation into CI.
+- [x] Add a `--validate-only` CLI option:
+  - [x] Parse YAML and validate without writing files.
+  - [x] Non-zero exit on structural or naming issues.
+- [x] Document validation usage in README and example README.

@@ -8,6 +8,7 @@ import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/parser/yaml_parser.dart';
 
 ArgParser createArgParser() {
   return ArgParser()
@@ -51,6 +52,11 @@ ArgParser createArgParser() {
       negatable: true,
       defaultsTo: true,
       help: 'Show detailed generation logs',
+    )
+    ..addFlag(
+      'validate-only',
+      negatable: false,
+      help: 'Validate YAML tracking plan only (no files written)',
     );
 }
 
@@ -74,6 +80,21 @@ Future<void> main(List<String> arguments) async {
     final generateExports = results['exports'] as bool;
     final verbose = results['verbose'] as bool;
     final watch = results['watch'] as bool;
+    final validateOnly = results['validate-only'] as bool;
+
+    if (validateOnly && watch) {
+      print('Error: --validate-only cannot be used together with --watch.');
+      exit(1);
+    }
+
+    if (validateOnly) {
+      await _validateTrackingPlan(
+        projectRoot,
+        config,
+        verbose: verbose,
+      );
+      return;
+    }
 
     if (watch) {
       await _watchMode(
@@ -121,6 +142,9 @@ void _printUsage(ArgParser parser) {
   print('');
   print('  # Watch mode');
   print('  dart run analytics_gen:generate --watch');
+  print('');
+  print('  # Validate YAML only (no files written)');
+  print('  dart run analytics_gen:generate --validate-only');
 }
 
 /// Loads configuration from file or returns default
@@ -151,6 +175,47 @@ Future<AnalyticsConfig> _loadConfig(
   final content = await configFile.readAsString();
   final yaml = loadYaml(content) as Map;
   return AnalyticsConfig.fromYaml(yaml);
+}
+
+/// Validates YAML tracking plan without writing any files.
+Future<void> _validateTrackingPlan(
+  String projectRoot,
+  AnalyticsConfig config, {
+  required bool verbose,
+}) async {
+  print('╔════════════════════════════════════════════════╗');
+  print('║   Analytics Gen - Validation Only              ║');
+  print('╚════════════════════════════════════════════════╝');
+  print('');
+
+  final parser = YamlParser(
+    eventsPath: path.join(projectRoot, config.eventsPath),
+    log: verbose ? (message) => print(message) : null,
+  );
+
+  try {
+    final domains = await parser.parseEvents();
+
+    if (domains.isEmpty) {
+      print('No analytics events found.');
+    } else {
+      final totalEvents =
+          domains.values.fold(0, (sum, d) => sum + d.eventCount);
+      final totalParams =
+          domains.values.fold(0, (sum, d) => sum + d.parameterCount);
+
+      print('✓ Validation successful.');
+      print('  Domains: ${domains.length}');
+      print('  Events: $totalEvents');
+      print('  Parameters: $totalParams');
+    }
+  } catch (e, stack) {
+    print('✗ Validation failed: $e');
+    if (verbose) {
+      print('Stack trace: $stack');
+    }
+    exit(1);
+  }
 }
 
 /// Runs generation once
