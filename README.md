@@ -45,7 +45,7 @@
 
 ```yaml
 dev_dependencies:
-  analytics_gen: ^0.1.2
+  analytics_gen: ^0.1.3
 ```
 
 ### 2. Define Events
