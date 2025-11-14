@@ -38,7 +38,7 @@ You describe events once in YAML; the package generates:
 - A single `Analytics` entrypoint with domain‑specific mixins
 - Optional documentation and export files (CSV/JSON/SQL/SQLite)
 
-This removes hand‑written string keys, reduces tracking drift between platforms, and makes analytics changes reviewable in code reviews.
+This removes hand‑written string keys, reduces tracking drift between platforms, and makes analytics changes easy to review and refactor.
 
 ## Key Features
 
@@ -61,7 +61,7 @@ Use `analytics_gen` when:
 You probably do not need `analytics_gen` when:
 
 - You have a very small app with a few one‑off events
-- Your analytics scheme changes rarely and is maintained manually
+- Your analytics plan changes rarely and is maintained manually
 - You prefer provider‑specific SDK features over a unified interface
 
 ## Quick Start
@@ -97,7 +97,7 @@ auth:
 dart run analytics_gen:generate --docs --exports
 ```
 
-This automatically generates a clean, organized structure:
+This generates a clean, organized structure:
 
 ```
 lib/src/analytics/generated/
