@@ -49,18 +49,18 @@ High-level goal: keep the package small and focused while improving DX, safety, 
 
 ## 6. CLI UX refinements
 
-- [ ] Revisit `--code`, `--docs`, `--exports` semantics:
-  - [ ] Allow “docs only” / “exports only” flows (e.g. negatable flags or explicit modes).
-  - [ ] Add `--verbose` / `--quiet` flags to control generator logging noise.
-- [ ] Add tests (or golden outputs) for argument parsing in `bin/generate.dart`.
+- [x] Revisit `--code`, `--docs`, `--exports` semantics:
+  - [x] Allow “docs only” / “exports only” flows (e.g. negatable flags or explicit modes).
+  - [x] Add `--verbose` / `--quiet` flags to control generator logging noise.
+- [x] Add tests (or golden outputs) for argument parsing in `bin/generate.dart`.
 
 ## 7. Generator and export tests
 
 - [ ] Add targeted tests for:
   - [x] `CodeGenerator.generate` (creates expected files and signatures).
-  - [ ] `DocsGenerator.generate` (domain/event rows, example calls).
+  - [x] `DocsGenerator.generate` (domain/event rows, example calls).
   - [x] `ExportGenerator` + `JsonGenerator` (metadata counts, parameters).
-  - [ ] `SqlGenerator` (presence of tables, indexes, and inserts).
+  - [x] `SqlGenerator` (presence of tables, indexes, and inserts).
   - [ ] `SqliteGenerator` (behavior when `sqlite3` is present vs missing; ideally with an injectable process runner).
 - [ ] Use temp directories in tests, similar to parser tests.
 

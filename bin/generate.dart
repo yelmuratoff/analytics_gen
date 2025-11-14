@@ -9,8 +9,8 @@ import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
 
-Future<void> main(List<String> arguments) async {
-  final parser = ArgParser()
+ArgParser createArgParser() {
+  return ArgParser()
     ..addFlag(
       'help',
       abbr: 'h',
@@ -25,18 +25,18 @@ Future<void> main(List<String> arguments) async {
     )
     ..addFlag(
       'code',
-      negatable: false,
+      negatable: true,
       defaultsTo: true,
       help: 'Generate analytics code',
     )
     ..addFlag(
       'docs',
-      negatable: false,
+      negatable: true,
       help: 'Generate documentation',
     )
     ..addFlag(
       'exports',
-      negatable: false,
+      negatable: true,
       help: 'Generate export files (CSV, JSON, SQL)',
     )
     ..addOption(
@@ -52,6 +52,10 @@ Future<void> main(List<String> arguments) async {
       defaultsTo: true,
       help: 'Show detailed generation logs',
     );
+}
+
+Future<void> main(List<String> arguments) async {
+  final parser = createArgParser();
 
   try {
     final results = parser.parse(arguments);

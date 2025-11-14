@@ -1,0 +1,67 @@
+import 'dart:io';
+
+import 'package:analytics_gen/src/generator/export/sql_generator.dart';
+import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:path/path.dart' as p;
+import 'package:test/test.dart';
+
+void main() {
+  group('SqlGenerator', () {
+    late Directory tempDir;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('analytics_gen_sql_');
+    });
+
+    tearDown(() {
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('generates SQL schema and inserts for domains and events', () async {
+      final domains = <String, AnalyticsDomain>{
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            const AnalyticsEvent(
+              name: 'login',
+              description: 'User logs in',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'method',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final outputPath = p.join(tempDir.path, 'create_database.sql');
+      final generator = SqlGenerator();
+
+      await generator.generate(domains, outputPath);
+
+      final sqlFile = File(outputPath);
+      expect(sqlFile.existsSync(), isTrue);
+
+      final sql = await sqlFile.readAsString();
+
+      // Basic schema
+      expect(sql, contains('CREATE TABLE IF NOT EXISTS domains'));
+      expect(sql, contains('CREATE TABLE IF NOT EXISTS events'));
+      expect(sql, contains('CREATE TABLE IF NOT EXISTS parameters'));
+
+      // Inserts for domain and event
+      expect(sql, contains('INSERT INTO domains'));
+      expect(sql, contains('auth'));
+      expect(sql, contains('INSERT INTO events'));
+      expect(sql, contains('login'));
+      expect(sql, contains('INSERT INTO parameters'));
+      expect(sql, contains('method'));
+    });
+  });
+}
+
