@@ -22,9 +22,9 @@
     <a href="https://pub.dev/packages/analytics_gen/score">
       <img src="https://img.shields.io/pub/points/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub points">
     </a>
-    <a href="https://pub.dev/packages/analytics_gen/downloads">
+    <!-- <a href="https://pub.dev/packages/analytics_gen/downloads">
       <img src="https://img.shields.io/pub/dm/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub downloads">
-    </a>
+    </a> -->
   </p>
 </div>
 
@@ -45,7 +45,7 @@
 
 ```yaml
 dev_dependencies:
-  analytics_gen: ^0.1.1
+  analytics_gen: ^0.1.2
 ```
 
 ### 2. Define Events
