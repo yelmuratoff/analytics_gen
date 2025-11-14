@@ -3,9 +3,25 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.1.4] - 2025-11-16
-- CLI `--docs` flag now respects project config when omitted and allows overriding via `--no-docs`.
-- CLI automatically runs export generation when any of the export toggles are enabled in `analytics_gen.yaml`, with `--no-exports` available to opt out per run.
-- Documented the `--help` usage and configuration interplay in the README.
+- Library vs CLI logging cleanup: internal generators and parsers now emit logs only when a verbose callback is provided, while the CLI keeps the rich user-friendly output.
+- Core models (`AnalyticsParameter`, `AnalyticsEvent`, `AnalyticsDomain`) implement value semantics and have dedicated equality tests.
+- YAML parser is much stricter: domains/events/parameters must be maps, errors surface file + key context, and malformed structures throw `FormatException`.
+- Public API ergonomics:
+  - Added `typedef AnalyticsParams = Map<String, Object?>`.
+  - `IAnalytics.logEvent` and generated methods use typed params while remaining synchronous by design.
+  - README explains serialization expectations and sync logging rationale.
+- Enforced snake_case domain naming and documented expectations so files stay filesystem-safe.
+- CLI UX:
+  - Added `--validate-only`, `--watch`, `--verbose`, and negatable `--code`/`--docs`/`--exports` flags for flexible runs.
+  - `--docs`/`--exports` now respect `analytics_gen.yaml` defaults with `--no-docs`/`--no-exports` overrides.
+  - `--help` highlights all new options.
+- Generators & exports now include thorough tests (code, docs, JSON, SQL, SQLite) using temp directories.
+- `MultiProviderAnalytics` catches provider errors and surfaces them via optional `onError` without halting the rest.
+- Documentation expanded with analytics best practices, naming guidance, cardinality tips, and example YAML snippets.
+- Internal polish: shared string helpers extracted, `MockAnalyticsService` aligns with `AnalyticsParams`, and CI discipline enforced via `dart analyze`/`dart test`.
+- Event deprecation lifecycle: YAML accepts `deprecated` + `replacement`, generators emit `@Deprecated`, and metadata is surfaced in docs/exports.
+- Parameters support `allowed_values`, propagated through docs/JSON/SQL/CSV with validation.
+- Validation/DX enhancements: `--validate-only` mode verifies the tracking plan without writing files and fails fast on structural issues.
 
 ## [0.1.3] - 2025-11-15
 - Fix badge issues
