@@ -6,11 +6,16 @@ void main() {
     late MockAnalyticsService service1;
     late MockAnalyticsService service2;
     late MultiProviderAnalytics multiProvider;
+    late List<Object> errors;
 
     setUp(() {
       service1 = MockAnalyticsService();
       service2 = MockAnalyticsService();
-      multiProvider = MultiProviderAnalytics([service1, service2]);
+      errors = [];
+      multiProvider = MultiProviderAnalytics(
+        [service1, service2],
+        onError: (error, _) => errors.add(error),
+      );
     });
 
     test('forwards events to all providers', () {
@@ -63,7 +68,7 @@ void main() {
       final multiWithFailure = MultiProviderAnalytics([
         failingProvider,
         service1,
-      ]);
+      ], onError: (error, _) => errors.add(error));
 
       // Act & Assert - should not throw
       expect(
@@ -73,6 +78,7 @@ void main() {
 
       // Service1 should still receive the event
       expect(service1.totalEvents, equals(1));
+      expect(errors, isNotEmpty);
     });
 
     test('works with empty provider list', () {
@@ -93,7 +99,7 @@ class _FailingAnalyticsService implements IAnalytics {
   @override
   void logEvent({
     required String name,
-    Map<String, dynamic>? parameters,
+    AnalyticsParams? parameters,
   }) {
     throw Exception('Intentional failure');
   }

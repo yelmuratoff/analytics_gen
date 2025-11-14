@@ -10,24 +10,27 @@ import '../parser/yaml_parser.dart';
 final class CodeGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
+  final void Function(String message)? log;
 
   CodeGenerator({
     required this.config,
     required this.projectRoot,
+    this.log,
   });
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate() async {
-    print('Starting analytics code generation...');
+    log?.call('Starting analytics code generation...');
 
     // Parse YAML files
     final parser = YamlParser(
       eventsPath: path.join(projectRoot, config.eventsPath),
+      log: log,
     );
     final domains = await parser.parseEvents();
 
     if (domains.isEmpty) {
-      print('No analytics events found. Skipping generation.');
+      log?.call('No analytics events found. Skipping generation.');
       return;
     }
 
@@ -45,8 +48,8 @@ final class CodeGenerator {
     // Generate barrel file with all exports
     await _generateBarrelFile(domains, outputDir);
 
-    print('✓ Generated ${domains.length} domain files');
-    print('  Domains: ${domains.keys.join(', ')}');
+    log?.call('✓ Generated ${domains.length} domain files');
+    log?.call('  Domains: ${domains.keys.join(', ')}');
 
     // Generate Analytics singleton class
     await _generateAnalyticsClass(domains);
@@ -164,7 +167,7 @@ final class CodeGenerator {
     buffer.writeln('      name: "$eventName",');
 
     if (event.parameters.isNotEmpty) {
-      buffer.writeln('      parameters: <String, dynamic>{');
+      buffer.writeln('      parameters: <String, Object?>{');
       for (final param in event.parameters) {
         final camelParam = _toCamelCase(param.name);
         if (param.isNullable) {
@@ -324,6 +327,6 @@ final class CodeGenerator {
     final analyticsFile = File(analyticsPath);
     await analyticsFile.writeAsString(buffer.toString());
 
-    print('✓ Generated Analytics class at: $analyticsPath');
+    log?.call('✓ Generated Analytics class at: $analyticsPath');
   }
 }

@@ -10,21 +10,29 @@ import '../parser/yaml_parser.dart';
 final class DocsGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
+  final void Function(String message)? log;
 
-  DocsGenerator({required this.config, required this.projectRoot});
+  DocsGenerator({
+    required this.config,
+    required this.projectRoot,
+    this.log,
+  });
 
   /// Generates analytics documentation and writes to configured path
   Future<void> generate() async {
-    print('Starting analytics documentation generation...');
+    log?.call('Starting analytics documentation generation...');
 
     // Parse YAML files
     final parser = YamlParser(
       eventsPath: path.join(projectRoot, config.eventsPath),
+      log: log,
     );
     final domains = await parser.parseEvents();
 
     if (domains.isEmpty) {
-      print('No analytics events found. Skipping documentation generation.');
+      log?.call(
+        'No analytics events found. Skipping documentation generation.',
+      );
       return;
     }
 
@@ -41,7 +49,7 @@ final class DocsGenerator {
     await outputFile.parent.create(recursive: true);
     await outputFile.writeAsString(markdown);
 
-    print('✓ Generated analytics documentation at: $outputPath');
+    log?.call('✓ Generated analytics documentation at: $outputPath');
 
     // Print summary
     final totalEvents = domains.values.fold(0, (sum, d) => sum + d.eventCount);
@@ -49,8 +57,10 @@ final class DocsGenerator {
       0,
       (sum, d) => sum + d.parameterCount,
     );
-    print('✓ Documented $totalEvents events across ${domains.length} domains');
-    print('  Total parameters: $totalParams');
+    log?.call(
+      '✓ Documented $totalEvents events across ${domains.length} domains',
+    );
+    log?.call('  Total parameters: $totalParams');
   }
 
   /// Generates complete Markdown documentation

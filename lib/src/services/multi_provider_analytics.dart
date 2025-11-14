@@ -15,20 +15,25 @@ import '../core/analytics_interface.dart';
 /// ```
 final class MultiProviderAnalytics implements IAnalytics {
   final List<IAnalytics> _providers;
+  final void Function(Object error, StackTrace stackTrace)? onError;
 
-  MultiProviderAnalytics(this._providers);
+  MultiProviderAnalytics(
+    this._providers, {
+    this.onError,
+  });
 
   @override
   void logEvent({
     required String name,
-    Map<String, dynamic>? parameters,
+    AnalyticsParams? parameters,
   }) {
     for (final provider in _providers) {
       try {
         provider.logEvent(name: name, parameters: parameters);
-      } catch (e) {
-        // Log error but continue with other providers
-        print('[MultiProviderAnalytics] Error logging to provider: $e');
+      } catch (error, stackTrace) {
+        if (onError != null) {
+          onError!(error, stackTrace);
+        }
       }
     }
   }

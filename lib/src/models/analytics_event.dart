@@ -14,6 +14,20 @@ final class AnalyticsParameter {
 
   @override
   String toString() => '$name: $type${isNullable ? '?' : ''}';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AnalyticsParameter &&
+        other.name == name &&
+        other.type == type &&
+        other.isNullable == isNullable &&
+        other.description == description;
+  }
+
+  @override
+  int get hashCode =>
+      name.hashCode ^ type.hashCode ^ isNullable.hashCode ^ description.hashCode;
 }
 
 /// Represents a single analytics event.
@@ -32,6 +46,23 @@ final class AnalyticsEvent {
 
   @override
   String toString() => '$name (${parameters.length} parameters)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AnalyticsEvent &&
+        other.name == name &&
+        other.description == description &&
+        other.customEventName == customEventName &&
+        _listEquals(other.parameters, parameters);
+  }
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      description.hashCode ^
+      customEventName.hashCode ^
+      Object.hashAll(parameters);
 }
 
 /// Represents an analytics domain containing multiple events.
@@ -51,4 +82,24 @@ final class AnalyticsDomain {
 
   @override
   String toString() => '$name ($eventCount events, $parameterCount parameters)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AnalyticsDomain &&
+        other.name == name &&
+        _listEquals(other.events, events);
+  }
+
+  @override
+  int get hashCode => name.hashCode ^ Object.hashAll(events);
+}
+
+bool _listEquals<T>(List<T> a, List<T> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

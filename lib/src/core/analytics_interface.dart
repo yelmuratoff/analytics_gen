@@ -1,3 +1,9 @@
+/// Common type used for analytics event parameters.
+///
+/// Values should be JSON-serializable (String, num, bool, null, List, Map),
+/// or simple objects that your analytics provider knows how to handle.
+typedef AnalyticsParams = Map<String, Object?>;
+
 /// Interface for analytics service implementations.
 ///
 /// Implement this interface to integrate with any analytics provider
@@ -9,6 +15,6 @@ abstract interface class IAnalytics {
   /// [parameters] contains event-specific data in snake_case format.
   void logEvent({
     required String name,
-    Map<String, dynamic>? parameters,
+    AnalyticsParams? parameters,
   });
 }

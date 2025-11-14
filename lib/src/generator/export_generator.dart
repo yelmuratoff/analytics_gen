@@ -15,24 +15,27 @@ import 'export/sqlite_generator.dart';
 final class ExportGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
+  final void Function(String message)? log;
 
   ExportGenerator({
     required this.config,
     required this.projectRoot,
+    this.log,
   });
 
   /// Generates all configured export files
   Future<void> generate() async {
-    print('Starting analytics export generation...');
+    log?.call('Starting analytics export generation...');
 
     // Parse YAML files
     final parser = YamlParser(
       eventsPath: path.join(projectRoot, config.eventsPath),
+      log: log,
     );
     final domains = await parser.parseEvents();
 
     if (domains.isEmpty) {
-      print('No analytics events found. Skipping export generation.');
+      log?.call('No analytics events found. Skipping export generation.');
       return;
     }
 
@@ -51,14 +54,20 @@ final class ExportGenerator {
         domains,
         path.join(outputDir, 'analytics_events.csv'),
       );
-      print('✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}');
+      log?.call(
+        '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
+      );
     }
 
     if (config.generateJson) {
       final jsonGen = JsonGenerator();
       await jsonGen.generate(domains, outputDir);
-      print('✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}');
-      print('✓ Generated minified JSON at: ${path.join(outputDir, 'analytics_events.min.json')}');
+      log?.call(
+        '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
+      );
+      log?.call(
+        '✓ Generated minified JSON at: ${path.join(outputDir, 'analytics_events.min.json')}',
+      );
     }
 
     if (config.generateSql) {
@@ -69,12 +78,14 @@ final class ExportGenerator {
         domains,
         path.join(outputDir, 'create_database.sql'),
       );
-      print('✓ Generated SQL at: ${path.join(outputDir, 'create_database.sql')}');
+      log?.call(
+        '✓ Generated SQL at: ${path.join(outputDir, 'create_database.sql')}',
+      );
 
       // Try to generate SQLite database (optional)
       await sqliteGen.generate(domains, outputDir);
     }
 
-    print('✓ Export generation completed');
+    log?.call('✓ Export generation completed');
   }
 }

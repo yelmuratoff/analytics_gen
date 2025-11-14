@@ -44,6 +44,13 @@ Future<void> main(List<String> arguments) async {
       abbr: 'c',
       help: 'Path to config file',
       defaultsTo: 'analytics_gen.yaml',
+    )
+    ..addFlag(
+      'verbose',
+      abbr: 'v',
+      negatable: true,
+      defaultsTo: true,
+      help: 'Show detailed generation logs',
     );
 
   try {
@@ -61,6 +68,7 @@ Future<void> main(List<String> arguments) async {
     final generateCode = results['code'] as bool;
     final generateDocs = results['docs'] as bool || config.generateDocs;
     final generateExports = results['exports'] as bool;
+    final verbose = results['verbose'] as bool;
     final watch = results['watch'] as bool;
 
     if (watch) {
@@ -70,6 +78,7 @@ Future<void> main(List<String> arguments) async {
         generateCode: generateCode,
         generateDocs: generateDocs,
         generateExports: generateExports,
+        verbose: verbose,
       );
     } else {
       await _generate(
@@ -78,6 +87,7 @@ Future<void> main(List<String> arguments) async {
         generateCode: generateCode,
         generateDocs: generateDocs,
         generateExports: generateExports,
+        verbose: verbose,
       );
     }
   } catch (e) {
@@ -146,6 +156,7 @@ Future<void> _generate(
   required bool generateCode,
   required bool generateDocs,
   required bool generateExports,
+  required bool verbose,
 }) async {
   print('╔════════════════════════════════════════════════╗');
   print('║   Analytics Gen - Code Generation              ║');
@@ -159,6 +170,7 @@ Future<void> _generate(
       final codeGen = CodeGenerator(
         config: config,
         projectRoot: projectRoot,
+        log: verbose ? (message) => print(message) : null,
       );
       await codeGen.generate();
       print('');
@@ -168,6 +180,7 @@ Future<void> _generate(
       final docsGen = DocsGenerator(
         config: config,
         projectRoot: projectRoot,
+        log: verbose ? (message) => print(message) : null,
       );
       await docsGen.generate();
       print('');
@@ -177,6 +190,7 @@ Future<void> _generate(
       final exportGen = ExportGenerator(
         config: config,
         projectRoot: projectRoot,
+        log: verbose ? (message) => print(message) : null,
       );
       await exportGen.generate();
       print('');
@@ -198,6 +212,7 @@ Future<void> _watchMode(
   required bool generateCode,
   required bool generateDocs,
   required bool generateExports,
+  required bool verbose,
 }) async {
   print('╔════════════════════════════════════════════════╗');
   print('║   Analytics Gen - Watch Mode                   ║');
@@ -214,6 +229,7 @@ Future<void> _watchMode(
     generateCode: generateCode,
     generateDocs: generateDocs,
     generateExports: generateExports,
+    verbose: verbose,
   );
 
   // Watch for changes
@@ -236,6 +252,7 @@ Future<void> _watchMode(
         generateCode: generateCode,
         generateDocs: generateDocs,
         generateExports: generateExports,
+        verbose: verbose,
       );
     }
   }

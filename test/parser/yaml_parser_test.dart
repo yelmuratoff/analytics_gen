@@ -83,5 +83,64 @@ void main() {
       final domains = await parser.parseEvents();
       expect(domains, isEmpty);
     });
+
+    test('throws when domain value is not a map', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString('auth: 123\n');
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Domain "auth"'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when event value is not a map', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString('auth:\n  login: 1\n');
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Event "auth.login"'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when parameters is not a map', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters: 1\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Parameters for event "auth.login"'),
+          ),
+        ),
+      );
+    });
   });
 }

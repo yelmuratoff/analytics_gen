@@ -277,12 +277,17 @@ class FirebaseAnalyticsService implements IAnalytics {
   @override
   void logEvent({
     required String name,
-    Map<String, dynamic>? parameters,
+    AnalyticsParams? parameters,
   }) {
     _firebase.logEvent(name: name, parameters: parameters);
   }
 }
 ```
+
+`AnalyticsParams` is a typedef for `Map<String, Object?>`. In practice:
+
+- Keys are always `String` in snake_case.
+- Values should be JSON-serializable (String, num, bool, null, List, Map) or simple objects supported by your analytics SDK.
 
 ## Testing
 

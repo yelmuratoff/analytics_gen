@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 
 import '../models/analytics_event.dart';
@@ -8,19 +7,38 @@ import '../models/analytics_event.dart';
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
   final String eventsPath;
+  final void Function(String message)? log;
 
-  YamlParser({required this.eventsPath});
+  YamlParser({
+    required this.eventsPath,
+    this.log,
+  });
 
   /// Parses all YAML files in the events directory and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents() async {
+    final domains = <String, AnalyticsDomain>{};
+    await for (final domain in loadAnalyticsDomains(
+      eventsPath: eventsPath,
+      log: log,
+    )) {
+      domains[domain.name] = domain;
+    }
+
+    return domains;
+  }
+
+  /// Internal helper to load domains as a stream while allowing reuse in tests.
+  static Stream<AnalyticsDomain> loadAnalyticsDomains({
+    required String eventsPath,
+    void Function(String message)? log,
+  }) async* {
     final eventsDir = Directory(eventsPath);
 
     if (!eventsDir.existsSync()) {
-      print('Events directory not found at: $eventsPath');
-      return {};
+      log?.call('Events directory not found at: $eventsPath');
+      return;
     }
 
-    // Find all YAML files
     final yamlFiles = eventsDir
         .listSync()
         .whereType<File>()
@@ -28,24 +46,24 @@ final class YamlParser {
         .toList();
 
     if (yamlFiles.isEmpty) {
-      print('No YAML files found in: $eventsPath');
-      return {};
+      log?.call('No YAML files found in: $eventsPath');
+      return;
     }
 
-    print('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
+    log?.call('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
 
-    // Parse and merge all YAML files
-    final Map<String, dynamic> merged = {};
+    final merged = <String, _DomainSource>{};
     for (final file in yamlFiles) {
       final content = await file.readAsString();
       final parsed = loadYaml(content);
 
       if (parsed is! YamlMap) {
-        print('Warning: ${path.basename(file.path)} does not contain a YamlMap. Skipping.');
+        log?.call(
+          'Warning: ${file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : file.path} does not contain a YamlMap. Skipping.',
+        );
         continue;
       }
 
-      // Check for duplicate domains
       for (final key in parsed.keys) {
         if (merged.containsKey(key)) {
           throw StateError(
@@ -53,42 +71,69 @@ final class YamlParser {
             'Each domain must be defined in only one file.',
           );
         }
-        merged[key] = parsed[key];
+        final value = parsed[key];
+        if (value is! YamlMap) {
+          throw FormatException(
+            'Domain "$key" in ${file.path} must be a map of events.',
+          );
+        }
+        merged[key] = _DomainSource(
+          filePath: file.path,
+          yaml: value,
+        );
       }
     }
 
-    // Convert to domain models
-    final domains = <String, AnalyticsDomain>{};
     for (final entry in merged.entries) {
       final domainName = entry.key.toString();
-      final eventsYaml = entry.value as YamlMap;
+      final source = entry.value;
+      final eventsYaml = source.yaml;
 
-      final events = _parseEventsForDomain(domainName, eventsYaml);
-      domains[domainName] = AnalyticsDomain(
+      final parser = YamlParser(eventsPath: eventsPath, log: log);
+      final events = parser._parseEventsForDomain(
+        domainName,
+        eventsYaml,
+        filePath: source.filePath,
+      );
+      yield AnalyticsDomain(
         name: domainName,
         events: events,
       );
     }
-
-    return domains;
   }
 
   /// Parses events for a single domain
   List<AnalyticsEvent> _parseEventsForDomain(
     String domainName,
-    YamlMap eventsYaml,
-  ) {
+    YamlMap eventsYaml, {
+    required String filePath,
+  }) {
     final events = <AnalyticsEvent>[];
 
     for (final entry in eventsYaml.entries) {
       final eventName = entry.key.toString();
-      final eventData = entry.value as YamlMap;
+      final value = entry.value;
+
+      if (value is! YamlMap) {
+        throw FormatException(
+          'Event "$domainName.$eventName" in $filePath must be a map.',
+        );
+      }
+
+      final eventData = value;
 
       final description = eventData['description'] as String? ??
           'No description provided';
       final customEventName = eventData['event_name'] as String?;
-      final parametersYaml = eventData['parameters'] as YamlMap? ?? YamlMap();
 
+      final rawParameters = eventData['parameters'];
+      if (rawParameters != null && rawParameters is! YamlMap) {
+        throw FormatException(
+          'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
+        );
+      }
+
+      final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
       final parameters = _parseParameters(parametersYaml);
 
       events.add(
@@ -152,4 +197,14 @@ final class YamlParser {
 
     return parameters;
   }
+}
+
+final class _DomainSource {
+  final String filePath;
+  final YamlMap yaml;
+
+  _DomainSource({
+    required this.filePath,
+    required this.yaml,
+  });
 }

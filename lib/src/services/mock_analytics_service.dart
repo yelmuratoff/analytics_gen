@@ -5,7 +5,7 @@ import '../core/analytics_interface.dart';
 /// Records events in memory and provides query methods for verification.
 final class MockAnalyticsService implements IAnalytics {
   /// All logged events, stored as maps with 'name' and 'parameters' keys
-  final List<Map<String, dynamic>> events = [];
+  final List<Map<String, Object?>> events = [];
 
   /// Whether to print events to console when logged
   final bool verbose;
@@ -15,11 +15,11 @@ final class MockAnalyticsService implements IAnalytics {
   @override
   void logEvent({
     required String name,
-    Map<String, dynamic>? parameters,
+    AnalyticsParams? parameters,
   }) {
     final event = {
       'name': name,
-      'parameters': parameters ?? const <String, dynamic>{},
+      'parameters': parameters ?? const <String, Object?>{},
       'timestamp': DateTime.now().toIso8601String(),
     };
 
