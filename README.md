@@ -49,6 +49,21 @@ This removes hand‑written string keys, reduces tracking drift between platform
 - **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
 - **Watch mode**: Optional file watcher to regenerate when YAML changes
 
+## When to Use (and When Not)
+
+Use `analytics_gen` when:
+
+- You have more than a handful of events and want a single, reviewable tracking plan
+- Multiple teams (product, data, engineering) need a shared source of truth
+- You send the same events to multiple analytics providers
+- You want compile‑time guarantees instead of stringly‑typed `logEvent('some_name')` calls
+
+You probably do not need `analytics_gen` when:
+
+- You have a very small app with a few one‑off events
+- Your analytics scheme changes rarely and is maintained manually
+- You prefer provider‑specific SDK features over a unified interface
+
 ## Quick Start
 
 ### 1. Install
@@ -309,3 +324,17 @@ dart run lib/main.dart
 ## License
 
 Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) for details.
+
+## FAQ
+
+**Why YAML instead of defining events directly in Dart?**  
+YAML keeps the tracking plan tooling‑agnostic: product and analytics teams can read and edit it, and you can export the same source of truth to code, docs, and data formats.
+
+**Can I migrate existing events?**  
+Yes. Start by describing your current events in YAML, generate Dart code, then gradually replace existing manual `logEvent` calls with the generated methods.
+
+**Does this lock me into a single analytics provider?**  
+No. You implement `IAnalytics` adapters for each provider and can use `MultiProviderAnalytics` to send the same event to several backends.
+
+**Is this safe to commit to source control?**  
+Yes. The YAML definitions and generated code are designed to be code‑review friendly and should live in your repo alongside application code.
