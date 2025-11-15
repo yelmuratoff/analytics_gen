@@ -7,6 +7,7 @@ import '../models/analytics_event.dart';
 import '../parser/yaml_parser.dart';
 import '../util/event_naming.dart';
 import '../util/string_utils.dart';
+import '../util/type_mapper.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -161,7 +162,7 @@ final class CodeGenerator {
     if (event.parameters.isNotEmpty) {
       buffer.writeln('{');
       for (final param in event.parameters) {
-        final dartType = _mapYamlTypeToDart(param.type);
+        final dartType = DartTypeMapper.toDartType(param.type);
         final nullableType = param.isNullable ? '$dartType?' : dartType;
         final required = param.isNullable ? '' : 'required ';
         final camelParam = _toCamelCase(param.name);
@@ -242,32 +243,6 @@ final class CodeGenerator {
     return 'Use ${event.replacement} instead.';
   }
 
-  /// Maps YAML type names to Dart type names
-  String _mapYamlTypeToDart(String yamlType) {
-    final trimmed = yamlType.trim();
-    switch (trimmed.toLowerCase()) {
-      case 'int':
-        return 'int';
-      case 'bool':
-        return 'bool';
-      case 'float':
-      case 'double':
-        return 'double';
-      case 'string':
-        return 'String';
-      case 'map':
-        return 'Map<String, dynamic>';
-      case 'list':
-        return 'List<dynamic>';
-      case 'datetime':
-      case 'date':
-        return 'DateTime';
-      case 'uri':
-        return 'Uri';
-      default:
-        return trimmed;
-    }
-  }
 
   /// Converts snake_case or kebab-case to camelCase
   String _toCamelCase(String text) {

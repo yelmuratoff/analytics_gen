@@ -1,29 +1,39 @@
+import 'dart:io';
+
 import '../core/analytics_interface.dart';
 
 /// Analytics service that forwards events to multiple providers.
 ///
-/// Use this to send events to multiple analytics platforms simultaneously
-/// (e.g., Firebase + Amplitude + Mixpanel).
+/// This class is immutable. Use [addProvider] or [removeProvider]
+/// to create new instances with modified provider lists.
 ///
 /// Example:
-/// ```
+/// ```dart
 /// final multiProvider = MultiProviderAnalytics([
 ///   FirebaseAnalyticsService(firebase),
 ///   AmplitudeService(amplitude),
 ///   MixpanelService(mixpanel),
 /// ]);
+///
+/// // Functional updates (immutable)
+/// final updated = multiProvider.addProvider(SegmentService(segment));
 /// ```
 final class MultiProviderAnalytics implements IAnalytics {
   final List<IAnalytics> _providers;
   final void Function(Object error, StackTrace stackTrace)? onError;
-  /// Notifies observers when a specific provider fails so you can emit metrics/logs with context.
+
+  /// Notifies observers when a specific provider fails.
+  /// Use this for metrics, logging, or alerting with full context.
   final void Function(MultiProviderAnalyticsFailure failure)? onProviderFailure;
 
+  /// Creates an immutable multi-provider analytics service.
+  ///
+  /// The [providers] list is copied and made unmodifiable to ensure immutability.
   MultiProviderAnalytics(
-    this._providers, {
+    List<IAnalytics> providers, {
     this.onError,
     this.onProviderFailure,
-  });
+  }) : _providers = List.unmodifiable(providers);
 
   @override
   void logEvent({
@@ -33,34 +43,86 @@ final class MultiProviderAnalytics implements IAnalytics {
     for (final provider in _providers) {
       try {
         provider.logEvent(name: name, parameters: parameters);
+      } on SocketException catch (error, stackTrace) {
+        // Expected: Network failures - continue with other providers
+        _handleProviderFailure(provider, name, parameters, error, stackTrace);
+      } on FormatException catch (error, stackTrace) {
+        // Expected: Validation errors - continue with other providers
+        _handleProviderFailure(provider, name, parameters, error, stackTrace);
       } catch (error, stackTrace) {
-        final failure = MultiProviderAnalyticsFailure(
-          provider: provider,
-          providerName: provider.runtimeType.toString(),
-          eventName: name,
-          parameters: parameters,
-          error: error,
-          stackTrace: stackTrace,
-        );
-        onProviderFailure?.call(failure);
-        if (onError != null) {
-          onError!(failure.error, failure.stackTrace);
-        }
+        // Unexpected: Provider bugs - log and continue
+        _handleProviderFailure(provider, name, parameters, error, stackTrace);
+
+        // In debug mode, log unexpected errors with more detail
+        assert(() {
+          // Log to console in debug builds
+          // ignore: avoid_print
+          print(
+            '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
+            '  Error: $error\n'
+            '  Event: $name\n'
+            '  Parameters: $parameters\n'
+            '  Stack trace: $stackTrace',
+          );
+          return true;
+        }());
       }
     }
   }
 
-  /// Returns the number of configured providers
-  int get providerCount => _providers.length;
+  void _handleProviderFailure(
+    IAnalytics provider,
+    String eventName,
+    AnalyticsParams? parameters,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    final failure = MultiProviderAnalyticsFailure(
+      provider: provider,
+      providerName: provider.runtimeType.toString(),
+      eventName: eventName,
+      parameters: parameters,
+      error: error,
+      stackTrace: stackTrace,
+    );
 
-  /// Adds a new provider to the list
-  void addProvider(IAnalytics provider) {
-    _providers.add(provider);
+    onProviderFailure?.call(failure);
+    onError?.call(failure.error, failure.stackTrace);
   }
 
-  /// Removes a provider from the list
-  void removeProvider(IAnalytics provider) {
-    _providers.remove(provider);
+  /// Returns the number of configured providers.
+  int get providerCount => _providers.length;
+
+  /// Returns a new instance with the added provider (functional update).
+  ///
+  /// This method does not mutate the current instance.
+  ///
+  /// Example:
+  /// ```dart
+  /// final updated = analytics.addProvider(NewProvider());
+  /// ```
+  MultiProviderAnalytics addProvider(IAnalytics provider) {
+    return MultiProviderAnalytics(
+      [..._providers, provider],
+      onError: onError,
+      onProviderFailure: onProviderFailure,
+    );
+  }
+
+  /// Returns a new instance without the specified provider (functional update).
+  ///
+  /// This method does not mutate the current instance.
+  ///
+  /// Example:
+  /// ```dart
+  /// final updated = analytics.removeProvider(oldProvider);
+  /// ```
+  MultiProviderAnalytics removeProvider(IAnalytics provider) {
+    return MultiProviderAnalytics(
+      _providers.where((p) => p != provider).toList(),
+      onError: onError,
+      onProviderFailure: onProviderFailure,
+    );
   }
 }
 

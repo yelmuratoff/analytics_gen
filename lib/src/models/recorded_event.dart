@@ -1,4 +1,8 @@
+import 'package:collection/collection.dart';
+
 import '../core/analytics_interface.dart';
+
+const _mapEq = MapEquality<String, Object?>();
 
 /// Immutable snapshot of an analytics event recorded by [MockAnalyticsService].
 final class RecordedAnalyticsEvent {
@@ -30,35 +34,10 @@ final class RecordedAnalyticsEvent {
     return other is RecordedAnalyticsEvent &&
         other.name == name &&
         other.timestamp == timestamp &&
-        _mapEquals(other.parameters, parameters);
+        _mapEq.equals(other.parameters, parameters);
   }
 
   @override
   int get hashCode =>
-      name.hashCode ^ timestamp.hashCode ^ _mapHash(parameters);
-}
-
-bool _mapEquals(Map<String, Object?> a, Map<String, Object?> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (final key in a.keys) {
-    if (!b.containsKey(key)) return false;
-    final aValue = a[key];
-    final bValue = b[key];
-    if (aValue != bValue) return false;
-  }
-  return true;
-}
-
-int _mapHash(Map<String, Object?> map) {
-  var hash = 0;
-  final entries = map.entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
-
-  for (final entry in entries) {
-    hash = hash * 31 + entry.key.hashCode;
-    hash = hash * 31 + (entry.value?.hashCode ?? 0);
-  }
-
-  return hash;
+      Object.hash(name, timestamp, _mapEq.hash(parameters));
 }

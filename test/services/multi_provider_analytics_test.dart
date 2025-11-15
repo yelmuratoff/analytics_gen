@@ -36,30 +36,51 @@ void main() {
       expect(multiProvider.providerCount, equals(2));
     });
 
-    test('can add new provider', () {
+    test('addProvider returns new instance with added provider', () {
       // Arrange
       final service3 = MockAnalyticsService();
 
-      // Act
-      multiProvider.addProvider(service3);
+      // Act - functional update
+      final updated = multiProvider.addProvider(service3);
 
-      // Assert
-      expect(multiProvider.providerCount, equals(3));
+      // Assert - original unchanged
+      expect(multiProvider.providerCount, equals(2));
+      expect(updated.providerCount, equals(3));
 
-      multiProvider.logEvent(name: 'test');
+      updated.logEvent(name: 'test');
       expect(service3.totalEvents, equals(1));
+      expect(
+          service1.totalEvents, equals(1)); // Both original providers get event
+      expect(service2.totalEvents, equals(1));
     });
 
-    test('can remove provider', () {
-      // Act
-      multiProvider.removeProvider(service1);
+    test('withoutProvider returns new instance without specified provider', () {
+      // Act - functional update
+      final updated = multiProvider.removeProvider(service1);
 
-      // Assert
-      expect(multiProvider.providerCount, equals(1));
+      // Assert - original unchanged
+      expect(multiProvider.providerCount, equals(2));
+      expect(updated.providerCount, equals(1));
 
-      multiProvider.logEvent(name: 'test');
-      expect(service1.totalEvents, equals(0));
+      updated.logEvent(name: 'test');
+      expect(service1.totalEvents, equals(0)); // Not in updated instance
       expect(service2.totalEvents, equals(1));
+    });
+
+    test('addProvider throws UnsupportedError with migration message', () {
+      // Act & Assert
+      expect(
+        () => multiProvider.addProvider(MockAnalyticsService()),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('removeProvider throws UnsupportedError with migration message', () {
+      // Act & Assert
+      expect(
+        () => multiProvider.removeProvider(service1),
+        throwsA(isA<UnsupportedError>()),
+      );
     });
 
     test('continues with other providers if one fails', () {
@@ -101,7 +122,8 @@ void main() {
       expect(failures, hasLength(1));
       final failure = failures.single;
       expect(failure.provider, equals(failingProvider));
-      expect(failure.providerName, equals(failingProvider.runtimeType.toString()));
+      expect(
+          failure.providerName, equals(failingProvider.runtimeType.toString()));
       expect(failure.eventName, equals('important_event'));
       expect(failure.parameters, isNotNull);
       expect(failure.parameters!['source'], equals('test'));

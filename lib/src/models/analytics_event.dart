@@ -1,3 +1,7 @@
+import 'package:collection/collection.dart';
+
+const _listEq = ListEquality<String>();
+
 /// Represents a single analytics event parameter.
 final class AnalyticsParameter {
   final String name;
@@ -25,17 +29,21 @@ final class AnalyticsParameter {
         other.type == type &&
         other.isNullable == isNullable &&
         other.description == description &&
-        _listEquals(other.allowedValues ?? const [], allowedValues ?? const []);
+        _listEq.equals(other.allowedValues, allowedValues);
   }
 
   @override
   int get hashCode =>
-      name.hashCode ^
-      type.hashCode ^
-      isNullable.hashCode ^
-      description.hashCode ^
-      Object.hashAll(allowedValues ?? const []);
+      Object.hash(
+        name,
+        type,
+        isNullable,
+        description,
+        _listEq.hash(allowedValues ?? const []),
+      );
 }
+
+const _paramListEq = ListEquality<AnalyticsParameter>();
 
 /// Represents a single analytics event.
 final class AnalyticsEvent {
@@ -67,18 +75,22 @@ final class AnalyticsEvent {
         other.customEventName == customEventName &&
         other.deprecated == deprecated &&
         other.replacement == replacement &&
-        _listEquals(other.parameters, parameters);
+        _paramListEq.equals(other.parameters, parameters);
   }
 
   @override
   int get hashCode =>
-      name.hashCode ^
-      description.hashCode ^
-      customEventName.hashCode ^
-      deprecated.hashCode ^
-      replacement.hashCode ^
-      Object.hashAll(parameters);
+      Object.hash(
+        name,
+        description,
+        customEventName,
+        deprecated,
+        replacement,
+        _paramListEq.hash(parameters),
+      );
 }
+
+const _eventListEq = ListEquality<AnalyticsEvent>();
 
 /// Represents an analytics domain containing multiple events.
 final class AnalyticsDomain {
@@ -103,18 +115,9 @@ final class AnalyticsDomain {
     if (identical(this, other)) return true;
     return other is AnalyticsDomain &&
         other.name == name &&
-        _listEquals(other.events, events);
+        _eventListEq.equals(other.events, events);
   }
 
   @override
-  int get hashCode => name.hashCode ^ Object.hashAll(events);
-}
-
-bool _listEquals<T>(List<T> a, List<T> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
+  int get hashCode => Object.hash(name, _eventListEq.hash(events));
 }

@@ -1,0 +1,1 @@
+{"type":"CodeCoverage","coverage":[{"source":"package:analytics_gen/src/core/analytics_base.dart","script":{"type":"@Script","fixedId":true,"id":"libraries/1/scripts/package%3Aanalytics_gen%2Fsrc%2Fcore%2Fanalytics_base.dart","uri":"package:analytics_gen/src/core/analytics_base.dart","_kind":"library"},"hits":[16,1,18,1]}]}
