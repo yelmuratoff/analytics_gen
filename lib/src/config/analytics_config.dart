@@ -24,6 +24,9 @@ final class AnalyticsConfig {
   /// Whether to generate documentation
   final bool generateDocs;
 
+  /// Whether to include the runtime tracking plan in generated code.
+  final bool generatePlan;
+
   const AnalyticsConfig({
     this.eventsPath = 'events',
     this.outputPath = 'src/analytics/generated',
@@ -33,6 +36,7 @@ final class AnalyticsConfig {
     this.generateJson = false,
     this.generateSql = false,
     this.generateDocs = false,
+    this.generatePlan = true,
   });
 
   /// Creates config from YAML map
@@ -48,6 +52,7 @@ final class AnalyticsConfig {
       generateJson: config['generate_json'] as bool? ?? false,
       generateSql: config['generate_sql'] as bool? ?? false,
       generateDocs: config['generate_docs'] as bool? ?? false,
+      generatePlan: config['generate_plan'] as bool? ?? true,
     );
   }
 

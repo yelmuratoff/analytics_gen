@@ -16,3 +16,4 @@ analytics_gen:
   generate_csv: true
   generate_json: true
   generate_sql: true
+  generate_plan: true

@@ -169,9 +169,12 @@ analytics_gen:
   generate_csv: true
   generate_json: true
   generate_sql: true
+  generate_plan: true
 ```
 
 When `generate_docs` is `true` or any export toggle is enabled, the CLI automatically runs those generators without requiring `--docs` or `--exports`. Pass `--no-docs` or `--no-exports` for a one-off override.
+
+Set `generate_plan` to `false` if you prefer to omit the runtime `Analytics.plan` metadata from the generated `analytics.dart` file.
 
 ## YAML Schema
 

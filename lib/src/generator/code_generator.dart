@@ -329,8 +329,10 @@ final class CodeGenerator {
     }
 
     buffer.writeln('{');
-    buffer.write(_generateAnalyticsPlanField(domains));
-    buffer.writeln();
+    if (config.generatePlan) {
+      buffer.write(_generateAnalyticsPlanField(domains));
+      buffer.writeln();
+    }
 
     // Singleton implementation
     buffer
@@ -393,9 +395,9 @@ final class CodeGenerator {
 
   String _analyticsDomainPlanEntry(AnalyticsDomain domain) {
     final buffer = StringBuffer();
-    buffer.writeln('    const AnalyticsDomain(');
+    buffer.writeln('    AnalyticsDomain(');
     buffer.writeln("      name: '${_escapeSingleQuoted(domain.name)}',");
-    buffer.writeln('      events: const <AnalyticsEvent>[');
+    buffer.writeln('      events: <AnalyticsEvent>[');
 
     for (final event in domain.events) {
       buffer.write(_analyticsEventPlanEntry(event));
@@ -408,7 +410,7 @@ final class CodeGenerator {
 
   String _analyticsEventPlanEntry(AnalyticsEvent event) {
     final buffer = StringBuffer();
-    buffer.writeln('        const AnalyticsEvent(');
+    buffer.writeln('        AnalyticsEvent(');
     buffer.writeln("          name: '${_escapeSingleQuoted(event.name)}',");
     buffer.writeln(
       "          description: '${_escapeSingleQuoted(event.description)}',",
@@ -424,7 +426,7 @@ final class CodeGenerator {
         "          replacement: '${_escapeSingleQuoted(event.replacement!)}',",
       );
     }
-    buffer.writeln('          parameters: const <AnalyticsParameter>[');
+    buffer.writeln('          parameters: <AnalyticsParameter>[');
 
     for (final param in event.parameters) {
       buffer.write(_analyticsParameterPlanEntry(param));
@@ -437,7 +439,7 @@ final class CodeGenerator {
 
   String _analyticsParameterPlanEntry(AnalyticsParameter param) {
     final buffer = StringBuffer();
-    buffer.writeln('            const AnalyticsParameter(');
+    buffer.writeln('            AnalyticsParameter(');
     buffer.writeln("              name: '${_escapeSingleQuoted(param.name)}',");
     buffer.writeln("              type: '${_escapeSingleQuoted(param.type)}',");
     buffer.writeln('              isNullable: ${param.isNullable},');
@@ -447,7 +449,7 @@ final class CodeGenerator {
       );
     }
     if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
-      buffer.writeln('              allowedValues: const <String>[');
+      buffer.writeln('              allowedValues: <String>[');
       for (final value in param.allowedValues!) {
         buffer.writeln(
           "                '${_escapeSingleQuoted(value)}',",

@@ -34,5 +34,6 @@ void _printDefaultConfigReminder(String configPath) {
   print('  generate_csv: true');
   print('  generate_json: true');
   print('  generate_sql: true');
+  print('  generate_plan: true');
   print('');
 }

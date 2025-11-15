@@ -16,16 +16,16 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
 {
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
-    const AnalyticsDomain(
+    AnalyticsDomain(
       name: 'auth',
-      events: const <AnalyticsEvent>[
-        const AnalyticsEvent(
+      events: <AnalyticsEvent>[
+        AnalyticsEvent(
           name: 'login',
           description: 'User logs in to the application',
           deprecated: true,
           replacement: 'auth.login_v2',
-          parameters: const <AnalyticsParameter>[
-            const AnalyticsParameter(
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
               name: 'method',
               type: 'string',
               isNullable: false,
@@ -33,12 +33,12 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
             ),
           ],
         ),
-        const AnalyticsEvent(
+        AnalyticsEvent(
           name: 'login_v2',
           description: 'User logs in to the application (v2)',
           deprecated: false,
-          parameters: const <AnalyticsParameter>[
-            const AnalyticsParameter(
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
               name: 'method',
               type: 'string',
               isNullable: false,
@@ -46,24 +46,24 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
             ),
           ],
         ),
-        const AnalyticsEvent(
+        AnalyticsEvent(
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
-          parameters: const <AnalyticsParameter>[
+          parameters: <AnalyticsParameter>[
           ],
         ),
-        const AnalyticsEvent(
+        AnalyticsEvent(
           name: 'signup',
           description: 'User creates a new account',
           deprecated: false,
-          parameters: const <AnalyticsParameter>[
-            const AnalyticsParameter(
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
               name: 'method',
               type: 'string',
               isNullable: false,
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'referral_code',
               type: 'string',
               isNullable: true,
@@ -73,20 +73,20 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
         ),
       ],
     ),
-    const AnalyticsDomain(
+    AnalyticsDomain(
       name: 'purchase',
-      events: const <AnalyticsEvent>[
-        const AnalyticsEvent(
+      events: <AnalyticsEvent>[
+        AnalyticsEvent(
           name: 'cancelled',
           description: 'User cancelled a purchase',
           deprecated: false,
-          parameters: const <AnalyticsParameter>[
-            const AnalyticsParameter(
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
               name: 'product_id',
               type: 'string',
               isNullable: false,
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'reason',
               type: 'string',
               isNullable: true,
@@ -94,27 +94,27 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
             ),
           ],
         ),
-        const AnalyticsEvent(
+        AnalyticsEvent(
           name: 'completed',
           description: 'User completed a purchase',
           deprecated: false,
-          parameters: const <AnalyticsParameter>[
-            const AnalyticsParameter(
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
               name: 'currency',
               type: 'string',
               isNullable: false,
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'price',
               type: 'double',
               isNullable: false,
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'product_id',
               type: 'string',
               isNullable: false,
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'quantity',
               type: 'int',
               isNullable: false,
@@ -124,28 +124,28 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
         ),
       ],
     ),
-    const AnalyticsDomain(
+    AnalyticsDomain(
       name: 'screen',
-      events: const <AnalyticsEvent>[
-        const AnalyticsEvent(
+      events: <AnalyticsEvent>[
+        AnalyticsEvent(
           name: 'view',
           description: 'User views a screen',
           customEventName: 'Screen: View',
           deprecated: false,
-          parameters: const <AnalyticsParameter>[
-            const AnalyticsParameter(
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
               name: 'duration_ms',
               type: 'int',
               isNullable: true,
               description: 'Time spent on previous screen in milliseconds',
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'previous_screen',
               type: 'string',
               isNullable: true,
               description: 'Name of the previous screen',
             ),
-            const AnalyticsParameter(
+            AnalyticsParameter(
               name: 'screen_name',
               type: 'string',
               isNullable: false,

@@ -85,7 +85,7 @@ void main() {
         contains('static const List<AnalyticsDomain> plan ='),
       );
       expect(analyticsContent, contains("name: 'auth'"));
-      expect(analyticsContent, contains('const AnalyticsParameter('));
+      expect(analyticsContent, contains('AnalyticsParameter('));
 
       // Ensure logging used the injectable logger
       expect(
