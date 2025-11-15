@@ -81,6 +81,33 @@ void main() {
       expect(errors, isNotEmpty);
     });
 
+    test('reports failure details for logging/metrics hooks', () {
+      // Arrange
+      final failingProvider = _FailingAnalyticsService();
+      final failures = <MultiProviderAnalyticsFailure>[];
+      final multiWithFailure = MultiProviderAnalytics(
+        [failingProvider, service1],
+        onError: (error, _) => errors.add(error),
+        onProviderFailure: (failure) => failures.add(failure),
+      );
+
+      // Act
+      multiWithFailure.logEvent(
+        name: 'important_event',
+        parameters: {'source': 'test'},
+      );
+
+      // Assert
+      expect(failures, hasLength(1));
+      final failure = failures.single;
+      expect(failure.provider, equals(failingProvider));
+      expect(failure.providerName, equals(failingProvider.runtimeType.toString()));
+      expect(failure.eventName, equals('important_event'));
+      expect(failure.parameters, isNotNull);
+      expect(failure.parameters!['source'], equals('test'));
+      expect(errors, isNotEmpty);
+    });
+
     test('works with empty provider list', () {
       // Arrange
       final emptyMulti = MultiProviderAnalytics([]);

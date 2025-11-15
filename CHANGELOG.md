@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
   - `--docs`/`--exports` now respect `analytics_gen.yaml` defaults with `--no-docs`/`--no-exports` overrides.
   - `--help` highlights all new options.
 - Generators & exports now include thorough tests (code, docs, JSON, SQL, SQLite) using temp directories.
-- `MultiProviderAnalytics` catches provider errors and surfaces them via optional `onError` without halting the rest.
+- `MultiProviderAnalytics` catches provider errors, emits a `MultiProviderAnalyticsFailure` payload, fires an optional `onProviderFailure` hook for logging/metrics, and still calls `onError` so the rest of the providers keep running.
 - Documentation expanded with analytics best practices, naming guidance, cardinality tips, and example YAML snippets.
 - Internal polish: shared string helpers extracted, `MockAnalyticsService` aligns with `AnalyticsParams`, and CI discipline enforced via `dart analyze`/`dart test`.
 - Event deprecation lifecycle: YAML accepts `deprecated` + `replacement`, generators emit `@Deprecated`, and metadata is surfaced in docs/exports.

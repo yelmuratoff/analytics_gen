@@ -208,6 +208,29 @@ void main() {
 }
 ```
 
+Multi-provider mode forwards every event to each adapter and survives individual failures.
+You can wire logging/metrics hooks to watch for dropped events:
+
+```dart
+final multiProvider = MultiProviderAnalytics(
+  [
+    FirebaseAnalyticsService(firebaseAnalytics),
+    AmplitudeService(amplitude),
+  ],
+  onError: (error, stackTrace) {
+    logger.error('Analytics provider failed', error, stackTrace);
+  },
+  onProviderFailure: (failure) {
+    telemetry.increment('analytics_provider_failure', {
+      'provider': failure.providerName,
+      'event': failure.eventName,
+    });
+  },
+);
+```
+
+`MultiProviderAnalyticsFailure` describes the failing provider, event, parameters, and exception so you can mirror the same observability that your production stack uses.
+
 ## Custom Analytics Provider
 
 Implement the `IAnalytics` interface:

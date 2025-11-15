@@ -327,6 +327,28 @@ final multiProvider = MultiProviderAnalytics([
 Analytics.initialize(multiProvider);
 ```
 
+MultiProvider analytics keeps every provider running even if one throws. Supply optional callbacks to log the failure and record metrics:
+
+```dart
+final multiProvider = MultiProviderAnalytics(
+  [
+    FirebaseAnalyticsService(firebase),
+    AmplitudeService(amplitude),
+  ],
+  onError: (error, stackTrace) {
+    logger.error('Analytics provider failed', error, stackTrace);
+  },
+  onProviderFailure: (failure) {
+    telemetry.increment('analytics_provider_failure', {
+      'provider': failure.providerName,
+      'event': failure.eventName,
+    });
+  },
+);
+```
+
+`onProviderFailure` receives a `MultiProviderAnalyticsFailure` with the failing provider, event name, parameters, error, and stack trace so you can build observability around lost events.
+
 ### Custom Provider
 
 ```dart
