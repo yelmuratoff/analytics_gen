@@ -75,5 +75,66 @@ void main() {
       final method = paramsJson.first as Map<String, dynamic>;
       expect(method['allowed_values'], equals(['email', 'google', 'apple']));
     });
+
+    test('writes identical JSON outputs across runs', () async {
+      final domains = <String, AnalyticsDomain>{
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            const AnalyticsEvent(
+              name: 'login',
+              description: 'User logs in',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'method',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+        'screen': AnalyticsDomain(
+          name: 'screen',
+          events: [
+            const AnalyticsEvent(
+              name: 'view',
+              description: 'Screen view',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'screen_name',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final generator = JsonGenerator();
+      await generator.generate(domains, tempDir.path);
+
+      final prettyFirst =
+          await File(p.join(tempDir.path, 'analytics_events.json'))
+              .readAsString();
+      final minifiedFirst =
+          await File(p.join(tempDir.path, 'analytics_events.min.json'))
+              .readAsString();
+
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      await generator.generate(domains, tempDir.path);
+
+      final prettySecond =
+          await File(p.join(tempDir.path, 'analytics_events.json'))
+              .readAsString();
+      final minifiedSecond =
+          await File(p.join(tempDir.path, 'analytics_events.min.json'))
+              .readAsString();
+
+      expect(prettySecond, equals(prettyFirst));
+      expect(minifiedSecond, equals(minifiedFirst));
+    });
   });
 }

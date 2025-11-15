@@ -295,6 +295,7 @@ Docs screenshot (Markdown excerpt from the example project):
 
 ### Deterministic Metadata
 Docs, JSON, and SQL exports embed a fingerprint derived from your YAML tracking plan (for example `Fingerprint: \`-6973fa48b7dfcee0\`` in docs and `"fingerprint": "-6973fa48b7dfcee0"` inside JSON metadata). Because timestamps are no longer written, re-running the generator without plan changes produces byte-identical artifacts across machines.
+Repeated runs reuse the same fingerprint and totals, so docs/JSON/SQL files stay byte-for-byte identical even when generated at different times.
 
 ## Analytics Providers
 

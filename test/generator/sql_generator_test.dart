@@ -68,5 +68,39 @@ void main() {
       expect(sql, contains('deprecated INTEGER NOT NULL DEFAULT 0'));
       expect(sql, contains('-- Fingerprint: ${metadata.fingerprint}'));
     });
+
+    test('writes reproducible SQL across runs', () async {
+      final domains = <String, AnalyticsDomain>{
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            const AnalyticsEvent(
+              name: 'login',
+              description: 'User logs in',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'method',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final outputPath = p.join(tempDir.path, 'create_database.sql');
+      final generator = SqlGenerator();
+
+      await generator.generate(domains, outputPath);
+      final first = await File(outputPath).readAsString();
+
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      await generator.generate(domains, outputPath);
+      final second = await File(outputPath).readAsString();
+
+      expect(second, equals(first));
+    });
   });
 }

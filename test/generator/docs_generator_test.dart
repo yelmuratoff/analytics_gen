@@ -197,5 +197,42 @@ void main() {
 
       expect(content, contains('**Deprecated** -> `auth.login_v2`'));
     });
+
+    test('produces identical output on repeated runs', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method:\n'
+        '        type: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+      final firstRun = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      await generator.generate();
+      final secondRun = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      expect(secondRun, equals(firstRun));
+    });
   });
 }
