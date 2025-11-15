@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../../models/analytics_event.dart';
+import '../../util/event_naming.dart';
 import '../generation_metadata.dart';
 
 /// Generates SQL schema and data inserts for analytics events.
@@ -109,8 +110,7 @@ final class SqlGenerator {
       final dId = domainIdMap[domain.name]!;
 
       for (final event in domain.events) {
-        final eventName =
-            event.customEventName ?? '${domain.name}: ${event.name}';
+        final eventName = EventNaming.resolveEventName(domain.name, event);
         buffer.writeln(
           "INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) "
           "VALUES ($eventId, $dId, '${_escape(event.name)}', "

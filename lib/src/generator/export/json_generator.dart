@@ -3,6 +3,7 @@ import 'dart:io';
 
 import '../../models/analytics_event.dart';
 import '../generation_metadata.dart';
+import '../../util/event_naming.dart';
 
 /// Generates JSON export of analytics events (pretty and minified).
 final class JsonGenerator {
@@ -39,8 +40,7 @@ final class JsonGenerator {
           'events': entry.value.events.map((event) {
             return {
               'name': event.name,
-              'event_name':
-                  event.customEventName ?? '${entry.key}: ${event.name}',
+              'event_name': EventNaming.resolveEventName(entry.key, event),
               'description': event.description,
               'deprecated': event.deprecated,
               if (event.replacement != null) 'replacement': event.replacement,

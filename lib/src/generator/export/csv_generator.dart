@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../../models/analytics_event.dart';
+import '../../util/event_naming.dart';
 
 /// Generates Excel-compatible CSV export of analytics events.
 final class CsvGenerator {
@@ -19,15 +20,14 @@ final class CsvGenerator {
     // Data rows
     for (final domain in domains.values) {
       for (final event in domain.events) {
-        final eventName =
-            event.customEventName ?? '${domain.name}: ${event.name}';
+        final eventName = EventNaming.resolveEventName(domain.name, event);
         final parameters = event.parameters.map((p) {
           final typeStr = '${p.name} (${p.type}${p.isNullable ? '?' : ''})';
           final desc = p.description != null ? ': ${p.description}' : '';
-          final allowed = (p.allowedValues != null &&
-                  p.allowedValues!.isNotEmpty)
-              ? ' {allowed: ${p.allowedValues!.join('|')}}'
-              : '';
+          final allowed =
+              (p.allowedValues != null && p.allowedValues!.isNotEmpty)
+                  ? ' {allowed: ${p.allowedValues!.join('|')}}'
+                  : '';
           return '$typeStr$desc$allowed';
         }).join('; ');
 

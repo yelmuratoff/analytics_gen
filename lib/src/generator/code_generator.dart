@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../parser/yaml_parser.dart';
+import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
@@ -124,7 +125,10 @@ final class CodeGenerator {
   /// Generates a method for a single event
   String _generateEventMethod(String domainName, AnalyticsEvent event) {
     final buffer = StringBuffer();
-    final methodName = _createMethodName(domainName, event.name);
+    final methodName = EventNaming.buildLoggerMethodName(
+      domainName,
+      event.name,
+    );
 
     // Deprecation annotation
     if (event.deprecated) {
@@ -198,7 +202,7 @@ final class CodeGenerator {
     }
 
     // Method body
-    final eventName = event.customEventName ?? '$domainName: ${event.name}';
+    final eventName = EventNaming.resolveEventName(domainName, event);
     buffer.writeln('    logger.logEvent(');
     buffer.writeln('      name: "$eventName",');
 
@@ -224,16 +228,6 @@ final class CodeGenerator {
     buffer.writeln();
 
     return buffer.toString();
-  }
-
-  /// Creates a method name from domain and event names
-  String _createMethodName(String domain, String eventName) {
-    final capitalizedDomain = StringUtils.capitalizePascal(domain);
-    final parts = eventName.split('_');
-    final capitalizedEvent =
-        parts.first + parts.skip(1).map(StringUtils.capitalizePascal).join();
-
-    return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
 
   /// Maps YAML type names to Dart type names

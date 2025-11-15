@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../parser/yaml_parser.dart';
+import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 import 'generation_metadata.dart';
 
@@ -117,7 +118,10 @@ final class DocsGenerator {
       final firstDomain = domains.values.first;
       if (firstDomain.events.isNotEmpty) {
         final firstEvent = firstDomain.events.first;
-        final methodName = _createMethodName(firstDomain.name, firstEvent.name);
+        final methodName = EventNaming.buildLoggerMethodName(
+          firstDomain.name,
+          firstEvent.name,
+        );
 
         if (firstEvent.parameters.isEmpty) {
           buffer.writeln('Analytics.instance.$methodName();');
@@ -153,7 +157,7 @@ final class DocsGenerator {
     buffer.writeln('|-------|-------------|--------|------------|');
 
     for (final event in domain.events) {
-      final eventName = event.customEventName ?? '$domainName: ${event.name}';
+      final eventName = EventNaming.resolveEventName(domainName, event);
       final params = event.parameters.isEmpty
           ? '-'
           : event.parameters.map((p) {
@@ -185,7 +189,10 @@ final class DocsGenerator {
 
     for (final event in domain.events.take(3)) {
       // Show max 3 examples
-      final methodName = _createMethodName(domainName, event.name);
+      final methodName = EventNaming.buildLoggerMethodName(
+        domainName,
+        event.name,
+      );
 
       if (event.parameters.isEmpty) {
         buffer.writeln('Analytics.instance.$methodName();');
@@ -204,16 +211,6 @@ final class DocsGenerator {
     buffer.writeln('```');
 
     return buffer.toString();
-  }
-
-  /// Creates a method name from domain and event names
-  String _createMethodName(String domain, String eventName) {
-    final capitalizedDomain = StringUtils.capitalizePascal(domain);
-    final parts = eventName.split('_');
-    final capitalizedEvent =
-        parts.first + parts.skip(1).map(StringUtils.capitalizePascal).join();
-
-    return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
 
   /// Converts snake_case to camelCase

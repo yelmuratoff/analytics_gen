@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:yaml/yaml.dart';
 
 import '../models/analytics_event.dart';
+import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 
 /// Parses YAML files containing analytics event definitions.
@@ -285,7 +286,7 @@ final class YamlParser {
     for (final entry in domains.entries) {
       final domainName = entry.key;
       for (final event in entry.value.events) {
-        final actualName = _resolveEventName(domainName, event);
+        final actualName = EventNaming.resolveEventName(domainName, event);
         final conflictDomain = seen[actualName];
 
         if (conflictDomain != null) {
@@ -299,11 +300,6 @@ final class YamlParser {
         seen[actualName] = domainName;
       }
     }
-  }
-
-  /// Actual event name used when logging (custom or default `<domain>: <event>`).
-  String _resolveEventName(String domainName, AnalyticsEvent event) {
-    return event.customEventName ?? '$domainName: ${event.name}';
   }
 }
 
