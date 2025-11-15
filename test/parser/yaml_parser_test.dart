@@ -218,5 +218,71 @@ void main() {
       final authEvents = domains['auth']!.events.map((e) => e.name).toList();
       expect(authEvents, equals(['a_event', 'z_event']));
     });
+
+    test('throws when custom event names duplicate across domains', () async {
+      final authFile = File(path.join(eventsPath, 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    event_name: user.login\n'
+        '    parameters: {}\n',
+      );
+
+      final purchaseFile = File(path.join(eventsPath, 'purchase.yaml'));
+      await purchaseFile.writeAsString(
+        'purchase:\n'
+        '  complete:\n'
+        '    description: Purchase completed\n'
+        '    event_name: user.login\n'
+        '    parameters: {}\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Duplicate analytics event name "user.login"'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when custom event matches another domain default name',
+        () async {
+      final authFile = File(path.join(eventsPath, 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters: {}\n',
+      );
+
+      final screenFile = File(path.join(eventsPath, 'screen.yaml'));
+      await screenFile.writeAsString(
+        'screen:\n'
+        '  view:\n'
+        '    description: Screen view\n'
+        '    event_name: "auth: login"\n'
+        '    parameters: {}\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Duplicate analytics event name "auth: login"'),
+          ),
+        ),
+      );
+    });
   });
 }

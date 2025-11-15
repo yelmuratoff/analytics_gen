@@ -24,6 +24,8 @@ final class YamlParser {
       domains[domain.name] = domain;
     }
 
+    _validateUniqueEventNames(domains);
+
     return domains;
   }
 
@@ -235,6 +237,34 @@ final class YamlParser {
     }
 
     return parameters;
+  }
+
+  /// Ensures every resolved [AnalyticsEvent] name is unique across domains.
+  void _validateUniqueEventNames(Map<String, AnalyticsDomain> domains) {
+    final seen = <String, String>{};
+
+    for (final entry in domains.entries) {
+      final domainName = entry.key;
+      for (final event in entry.value.events) {
+        final actualName = _resolveEventName(domainName, event);
+        final conflictDomain = seen[actualName];
+
+        if (conflictDomain != null) {
+          throw FormatException(
+            'Duplicate analytics event name "$actualName" found in domains '
+            '"$conflictDomain" and "$domainName". '
+            'Event names (custom_event_name or "<domain>: <event>") must be unique.',
+          );
+        }
+
+        seen[actualName] = domainName;
+      }
+    }
+  }
+
+  /// Actual event name used when logging (custom or default "<domain>: <event>").
+  String _resolveEventName(String domainName, AnalyticsEvent event) {
+    return event.customEventName ?? '$domainName: ${event.name}';
   }
 }
 

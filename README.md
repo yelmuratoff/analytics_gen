@@ -235,6 +235,12 @@ screen:
 
 - Domain keys (top-level YAML keys) must be snake_case, using only lowercase letters, digits, and underscores (e.g. `auth`, `screen_navigation`).
 - This keeps generated file and class names stable and filesystem‑safe.
+- Each event's effective name—either the optional `event_name` override or the default `<domain>: <event>` string—must be unique across your entire tracking plan. Duplicate names cause the parser to throw a `FormatException`, which surfaces immediately when you run the generator (including `--validate-only`), preventing conflicting analytics payloads from being emitted.
+
+## Validation Guarantees
+
+- `dart run analytics_gen:generate --validate-only` (or any run that parses your YAML) now enforces the same uniqueness constraint, so duplicate event names fail fast before any generated files are written.
+- Since the parser sorts files, domains, and events before visiting them, every validation failure is predictable and repeatable—no ordering surprises in CI or on different machines.
 
 ## CLI Commands
 
