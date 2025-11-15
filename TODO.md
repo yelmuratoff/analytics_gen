@@ -8,6 +8,10 @@ High-level focus: build on the existing generator by adding stricter parameter v
 - [x] Cover the new behavior with code generator tests that assert the guard logic and custom types show up in generated files.
 - [x] Document the new validation/type guarantees in `README.md` so users know how to rely on them.
 
+## Next Work Items
+- [x] Enforce snake_case parameter names (start with a letter, lowercase, digits/underscores) so generated methods always receive valid Dart identifiers.
+- [x] Reject duplicate parameter names per event and document these naming rules in `README.md`.
+
 ## Process
 - Update this TODO after completing each item (check the box and record the test/README coverage), so the plan stays accurate.
 - Every code change must be accompanied by a focused unit test and README mention as requested.

@@ -235,6 +235,7 @@ screen:
 ### Parameter Validation
 
 - Declare `allowed_values` for a parameter to auto-generate a runtime guard that throws an `ArgumentError` if your app passes anything outside that list. This keeps your analytics payloads consistent with the tracking plan and surfaces mistakes during development (and CI when you run `dart test` or `dart run analytics_gen:generate`).
+- Parameter names must be snake_case (lowercase letters, digits, underscores) and start with a letter, and they must remain unique even after camelCase normalization (e.g., `user_id` vs `user-id`). The parser throws a `FormatException` if those rules are violated so generated methods always receive valid Dart identifiers.
 
 ### Domain Naming
 

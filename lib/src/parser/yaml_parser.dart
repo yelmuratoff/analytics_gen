@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:yaml/yaml.dart';
 
 import '../models/analytics_event.dart';
+import '../util/string_utils.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
@@ -159,7 +160,11 @@ final class YamlParser {
       }
 
       final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
-      final parameters = _parseParameters(parametersYaml);
+      final parameters = _parseParameters(
+        parametersYaml,
+        domainName: domainName,
+        eventName: eventName,
+      );
 
       events.add(
         AnalyticsEvent(
@@ -177,11 +182,43 @@ final class YamlParser {
   }
 
   /// Parses parameters from YAML
-  List<AnalyticsParameter> _parseParameters(YamlMap parametersYaml) {
+  List<AnalyticsParameter> _parseParameters(
+    YamlMap parametersYaml, {
+    required String domainName,
+    required String eventName,
+  }) {
     final parameters = <AnalyticsParameter>[];
+    final seenRawNames = <String>{};
+    final camelNameToOriginal = <String, String>{};
 
-    for (final entry in parametersYaml.entries) {
+    final sortedEntries = parametersYaml.entries.toList()
+      ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
+
+    for (final entry in sortedEntries) {
       final paramName = entry.key.toString();
+      if (!_isValidParameterName(paramName)) {
+        throw FormatException(
+          'Parameter "$paramName" in $domainName.$eventName must use '
+          'snake_case (lowercase letters, digits, underscores, starting with '
+          'a letter).',
+        );
+      }
+      if (!seenRawNames.add(paramName)) {
+        throw FormatException(
+          'Duplicate parameter "$paramName" found in $domainName.$eventName.',
+        );
+      }
+
+      final camelParamName = StringUtils.toCamelCase(paramName);
+      final existingParam = camelNameToOriginal[camelParamName];
+      if (existingParam != null) {
+        throw FormatException(
+          'Parameter "$paramName" in $domainName.$eventName conflicts '
+          'with "$existingParam" after camelCase normalization.',
+        );
+      }
+      camelNameToOriginal[camelParamName] = paramName;
+
       final paramValue = entry.value;
 
       String paramType;
@@ -268,6 +305,11 @@ final class YamlParser {
   String _resolveEventName(String domainName, AnalyticsEvent event) {
     return event.customEventName ?? '$domainName: ${event.name}';
   }
+}
+
+bool _isValidParameterName(String name) {
+  final regex = RegExp(r'^[a-z][a-z0-9_]*$');
+  return regex.hasMatch(name);
 }
 
 final class _DomainSource {

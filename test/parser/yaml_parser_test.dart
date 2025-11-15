@@ -175,6 +175,55 @@ void main() {
       );
     });
 
+    test('throws when parameter name is not snake_case', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters:\n'
+        '      Method: string\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('must use snake_case'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when parameter names conflict after camelCase', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters:\n'
+        '      user_id: string\n'
+        '      user__id: string\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('conflicts with'),
+          ),
+        ),
+      );
+    });
+
     test('throws when domain name is not snake_case', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
       await yamlFile
