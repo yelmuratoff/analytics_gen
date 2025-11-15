@@ -132,9 +132,7 @@ final class CodeGenerator {
 
     // Deprecation annotation
     if (event.deprecated) {
-      final message = event.replacement != null
-          ? 'Use ${event.replacement} instead.'
-          : 'This analytics event is deprecated.';
+      final message = _buildDeprecationMessage(event);
       buffer.writeln("  @Deprecated('$message')");
     }
 
@@ -228,6 +226,20 @@ final class CodeGenerator {
     buffer.writeln();
 
     return buffer.toString();
+  }
+
+  String _buildDeprecationMessage(AnalyticsEvent event) {
+    if (event.replacement == null || event.replacement!.isEmpty) {
+      return 'This analytics event is deprecated.';
+    }
+
+    final methodName =
+        EventNaming.buildLoggerMethodNameFromReplacement(event.replacement!);
+    if (methodName != null) {
+      return 'Use $methodName instead.';
+    }
+
+    return 'Use ${event.replacement} instead.';
   }
 
   /// Maps YAML type names to Dart type names

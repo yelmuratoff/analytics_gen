@@ -72,6 +72,10 @@ void main() {
         authContent,
         contains('@Deprecated('),
       );
+      expect(
+        authContent,
+        contains('Use logAuthLoginV2 instead.'),
+      );
 
       final analyticsContent = await analyticsFile.readAsString();
       expect(analyticsContent, contains('final class Analytics extends'));

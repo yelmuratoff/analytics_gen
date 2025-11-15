@@ -22,4 +22,17 @@ final class EventNaming {
 
     return 'log$capitalizedDomain${StringUtils.capitalizePascal(capitalizedEvent)}';
   }
+
+  /// Builds a logger method name from a replacement reference like `domain.event`.
+  static String? buildLoggerMethodNameFromReplacement(String replacement) {
+    final segments = replacement.split('.');
+    if (segments.length < 2) return null;
+
+    final domain = segments.first.trim();
+    final eventName = segments.sublist(1).join('.');
+
+    if (domain.isEmpty || eventName.isEmpty) return null;
+
+    return buildLoggerMethodName(domain, eventName);
+  }
 }
