@@ -19,43 +19,38 @@ void main() {
       }
     });
 
-    test('includes deprecation and allowed_values metadata', () async {
-      final domains = <String, AnalyticsDomain>{
-        'auth': AnalyticsDomain(
-          name: 'auth',
+    test('escapes special characters and doubles quotes in fields', () async {
+      final domains = {
+        'domain,with,comma': AnalyticsDomain(
+          name: 'domain,with,comma',
           events: [
-            const AnalyticsEvent(
-              name: 'login',
-              description: 'User logs in',
-              deprecated: true,
-              replacement: 'auth.login_v2',
+            AnalyticsEvent(
+              name: 'login"event',
+              description: 'Description with comma, newline\nand "quote"',
               parameters: [
-                AnalyticsParameter(
+                const AnalyticsParameter(
                   name: 'method',
                   type: 'string',
                   isNullable: false,
+                  description: 'Param desc, newline\nand "quote"',
                   allowedValues: ['email', 'google'],
                 ),
               ],
+              replacement: 'replacement,"with"quote',
             ),
           ],
         ),
       };
 
-      final outputPath = p.join(tempDir.path, 'events.csv');
-      final generator = CsvGenerator();
+      final csvPath = p.join(tempDir.path, 'analytics_events.csv');
+      await CsvGenerator().generate(domains, csvPath);
 
-      await generator.generate(domains, outputPath);
+      final csvContent = await File(csvPath).readAsString();
 
-      final csv = await File(outputPath).readAsString();
-
-      expect(
-        csv.split('\n').first,
-        contains('Deprecated'),
-      );
-      expect(csv, contains('true')); // deprecated flag
-      expect(csv, contains('auth.login_v2')); // replacement
-      expect(csv, contains('{allowed: email|google}'));
+      expect(csvContent, contains('"domain,with,comma"'));
+      expect(csvContent, contains('"login""event"'));
+      expect(csvContent, contains('and ""quote"" {allowed: email|google}'));
+      expect(csvContent, contains('replacement,""with""quote'));
     });
   });
 }
