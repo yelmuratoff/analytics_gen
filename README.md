@@ -38,44 +38,44 @@ You describe events once in YAML; the package generates:
 - A single `Analytics` entrypoint with domain‑specific mixins
 - Optional documentation and export files (CSV/JSON/SQL/SQLite)
 
-This removes hand‑written string keys, reduces tracking drift between platforms, and makes analytics changes easy to review and refactor.
+This removes brittle, hand‑written string keys, prevents drift across platforms, and makes analytics changes safe to review and refactor from a single YAML source.
 
-## Key Features
+## Key features
 
-- **Type‑safe events**: Compile‑time checking of event names and parameter types
-- **Code generation from YAML**: Strongly‑typed Dart methods derived from simple YAML definitions
-- **Clean structure by domain**: Each domain (`auth`, `screen`, `purchase`, etc.) lives in its own generated file
-- **Multi-provider support**: Fan out a single event call to multiple analytics backends
-- **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
-- **Clean exports**: Each generation wipes the configured exports folder first so toggling formats never leaves stale artifacts
-- **Runtime plan access**: Read-only `Analytics.plan` mirrors the generated domains/events/parameters so you can programmatically verify instrumentation.
-- **Watch mode**: Optional file watcher that debounces filesystem noise so a single save triggers only one regeneration
-- **Deterministic output**: Sorted generation plus content fingerprints keep diffs stable across machines
-- **Self-cleaning output**: Each run wipes the generated `events/` directory so domains you delete from YAML never linger in source control
-- **Lifecycle-aware docs**: Generated Markdown docs expose a Status column so deprecated events and their replacements are obvious to product/data teams
+- **Type‑safe analytics** — compile‑time checking of event names and parameter types
+- **YAML → Dart generation** — write your plan once; emit strongly‑typed methods
+- **Domain-per-file** — a clean file per domain for readable diffs and code review
+- **Multi‑provider support** — fan‑out events to multiple analytics backends
+- **Exports & docs** — optional CSV/JSON/SQL/SQLite and generated Markdown for stakeholders
+- **Deterministic output** — fingerprinted and sorted generation prevents noisy diffs
+- **Watch mode & cleanup** — safe incremental regeneration; outputs cleaned before emit
+- **Runtime plan** — generated `Analytics.plan` makes plan metadata available at runtime
 
-## When to Use (and When Not)
+## When to use
 
-Use `analytics_gen` when:
+- You maintain a growing tracking plan and want the plan to be reviewable and type‑safe
+- Product, data, and engineering teams need a shared source of truth
+- You send identical events to multiple analytics providers and want consistency
+- You prefer compile‑time guarantees over stringly‑typed event names
 
-- You have more than a handful of events and want a single, reviewable tracking plan
-- Multiple teams (product, data, engineering) need a shared source of truth
-- You send the same events to multiple analytics providers
-- You want compile‑time guarantees instead of stringly‑typed `logEvent('some_name')` calls
+## When it may not fit
 
-You probably do not need `analytics_gen` when:
-
-- You have a very small app with a few one‑off events
-- Your analytics plan changes rarely and is maintained manually
-- You prefer provider‑specific SDK features over a unified interface
+- Small apps with very few events and no need for a shared tracking plan
+- When you rely heavily on provider-specific SDK primitives that can't be generalized
 
 ## Quick Start
 
 ### 1. Install
 
+Add `analytics_gen` to your `dev_dependencies` and get packages:
+
 ```yaml
 dev_dependencies:
   analytics_gen: ^0.1.3
+```
+
+```bash
+dart pub get
 ```
 
 ### 2. Define Events (YAML Tracking Plan)
@@ -85,14 +85,14 @@ Create `events/auth.yaml`:
 ```yaml
 auth:
   login:
-    description: User logs in
+    description: "User logs in"
     parameters:
       method:
         type: string
-        description: Login method (email, google, apple)
-  
+        description: "Login method (email, google, apple)"
+
   logout:
-    description: User logs out
+    description: "User logs out"
     parameters: {}
 ```
 
@@ -101,13 +101,13 @@ To deprecate an event:
 ```yaml
 auth:
   login:
-    description: User logs in
+    description: "User logs in"
     deprecated: true
     replacement: auth.login_v2
     parameters:
       method:
         type: string
-        description: Login method (email, google, apple)
+        description: "Login method (email, google, apple)"
 ```
 
 ### 3. Generate Code
@@ -116,9 +116,9 @@ auth:
 dart run analytics_gen:generate --docs --exports
 ```
 
-This generates a clean, organized structure:
+This creates a stable, reviewable set of generated files:
 
-> Tip: run `dart run analytics_gen:generate --help` anytime to list every CLI flag and see usage examples.
+Tip: run `dart run analytics_gen:generate --help` anytime to list CLI options and usage examples.
 
 ```
 lib/src/analytics/generated/
@@ -140,20 +140,20 @@ void main() {
   // Initialize once
   Analytics.initialize(YourAnalyticsService());
   
-  // Use anywhere
+  // Use anywhere in your app
   Analytics.instance.logAuthLogin(method: 'email');
-Analytics.instance.logAuthLogout();
+  Analytics.instance.logAuthLogout();
 }
 ```
 
 > Important: accessing `Analytics.instance` before calling `Analytics.initialize` throws a descriptive `StateError`, keeping improper usage from silently failing.
 
-## Why This Structure?
+## Why this approach
 
-- **Readable**: Each domain lives in a separate file — easy to navigate and review
-- **Maintainable**: Changes to one domain do not affect others
-- **Scalable**: Adding new domains does not grow a single “god file”
-- **Clean imports**: A barrel file provides a single import point for all events
+- **Readable** — domain-per-file keeps each area focused and reviewable
+- **Maintainable** — changes to one domain aren’t scattered across the codebase
+- **Scalable** — new domains don’t bloat a single generated file
+- **Simple imports** — a barrel file provides one canonical import for generated events
 
 ## Configuration
 
@@ -172,9 +172,9 @@ analytics_gen:
   generate_plan: true
 ```
 
-When `generate_docs` is `true` or any export toggle is enabled, the CLI automatically runs those generators without requiring `--docs` or `--exports`. Pass `--no-docs` or `--no-exports` for a one-off override.
+When `generate_docs` or any export flag is enabled in the config, the CLI will run those generators automatically (no need to pass `--docs` or `--exports`). Use `--no-docs` or `--no-exports` to temporarily override config.
 
-Set `generate_plan` to `false` if you prefer to omit the runtime `Analytics.plan` metadata from the generated `analytics.dart` file.
+Set `generate_plan: false` if you prefer to omit the runtime `Analytics.plan` metadata from `analytics.dart`.
 
 ## YAML Schema
 
@@ -439,6 +439,8 @@ await adapter.logEventAsync(name: 'async_event');
 
 ## Testing
 
+Unit tests should initialize `Analytics` with `MockAnalyticsService` (or other adapters) and assert that generated methods call into providers correctly. Add `dart run analytics_gen:generate --validate-only` to CI to fail early on plan errors and invalid YAML.
+
 ```dart
 void main() {
   group('Analytics', () {
@@ -477,6 +479,14 @@ dart pub get
 dart run analytics_gen:generate --docs --exports
 dart run lib/main.dart
 ```
+
+## Contributing
+
+Contributions welcome! Please open issues for bugs or feature requests. To contribute:
+
+- Fork the repo and open a PR with targeted changes
+- Add unit tests for all new features and validations
+- Run `dart analyze` and `dart test` before submitting
 
 ## License
 
