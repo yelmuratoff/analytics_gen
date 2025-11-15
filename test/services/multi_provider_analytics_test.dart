@@ -149,6 +149,37 @@ void main() {
       expect(service2.totalEvents, equals(0)); // never allowed
       expect(service3.totalEvents, equals(2)); // both calls allowed
     });
+    
+  group('logEventAsync', () {
+    test('forwards events to all providers asynchronously', () async {
+      final asyncProvider = _AsyncLoggingProvider(service2);
+      final multiAsync = MultiProviderAnalytics([
+        service1,
+        asyncProvider,
+      ]);
+
+      await multiAsync.logEventAsync(name: 'async_test');
+
+      expect(service1.totalEvents, equals(1));
+      expect(service2.totalEvents, equals(1));
+    });
+  });
+
+    test('continues with other providers when async provider fails', () async {
+      final failing = _FailingAsyncAnalyticsService();
+      final errors = <Object>[];
+      final multiWithFailure = MultiProviderAnalytics(
+        [failing, service1],
+        onError: (error, _) => errors.add(error),
+      );
+
+      // Should not throw when awaiting
+      await multiWithFailure.logEventAsync(name: 'async_fail');
+
+      // Synchronous provider still receives event
+      expect(service1.totalEvents, equals(1));
+      expect(errors, isNotEmpty);
+    });
   });
 }
 
@@ -160,5 +191,38 @@ class _FailingAnalyticsService implements IAnalytics {
     AnalyticsParams? parameters,
   }) {
     throw Exception('Intentional failure');
+  }
+}
+
+/// An async-capable provider that executes logging after a short delay.
+class _AsyncLoggingProvider implements IAnalytics, IAsyncAnalytics {
+  final MockAnalyticsService _delegate;
+
+  _AsyncLoggingProvider(this._delegate);
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    _delegate.logEvent(name: name, parameters: parameters);
+  }
+
+  @override
+  Future<void> logEventAsync({required String name, AnalyticsParams? parameters}) async {
+    await Future.delayed(const Duration(milliseconds: 5));
+    _delegate.logEvent(name: name, parameters: parameters);
+  }
+
+  int get totalEvents => _delegate.totalEvents;
+}
+
+class _FailingAsyncAnalyticsService implements IAnalytics, IAsyncAnalytics {
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    // Synchronous path should succeed if used, but async path fails.
+    // We do nothing here to keep behaviour predictable in tests.
+  }
+
+  @override
+  Future<void> logEventAsync({required String name, AnalyticsParams? parameters}) {
+    return Future.error(Exception('Intentional async failure'));
   }
 }
