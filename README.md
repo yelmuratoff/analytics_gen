@@ -435,6 +435,10 @@ void main() {
 
 ## Example
 
+## Coverage
+
+[![](https://codecov.io/gh/yelmuratoff/analytics_gen/branch/main/graphs/sunburst.svg)](https://codecov.io/gh/yelmuratoff/analytics_gen/branch/main)
+
 See [`example/`](example/) for a complete working project.
 
 Run the example:
