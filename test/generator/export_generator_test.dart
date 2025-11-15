@@ -67,5 +67,86 @@ void main() {
       expect(csvFile.existsSync(), isTrue);
       expect(jsonFile.existsSync(), isFalse);
     });
+
+    test('skips export generation when no analytics events exist', () async {
+      final eventsDir = Directory(path.join(tempDir.path, 'events'));
+      eventsDir.createSync(recursive: true);
+
+      final logs = <String>[];
+      final generator = ExportGenerator(
+        config: AnalyticsConfig(
+          eventsPath: 'events',
+          generateCsv: true,
+        ),
+        projectRoot: tempDir.path,
+        log: logs.add,
+      );
+
+      await generator.generate();
+
+      final defaultAssets =
+          Directory(path.join(tempDir.path, 'assets', 'generated'));
+      expect(defaultAssets.existsSync(), isFalse);
+      expect(
+        logs,
+        contains('No analytics events found. Skipping export generation.'),
+      );
+    });
+
+    test('writes CSV/JSON/SQL to default assets path and logs each step', () async {
+      final eventsDir = Directory(path.join(tempDir.path, 'events'));
+      eventsDir.createSync(recursive: true);
+
+      final yamlFile = File(path.join(eventsDir.path, 'billing.yaml'));
+      await yamlFile.writeAsString(
+        'billing:\n'
+        '  purchase:\n'
+        '    description: Records purchase\n'
+        '    parameters: {}\n',
+      );
+
+      final logs = <String>[];
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        generateCsv: true,
+        generateJson: true,
+        generateSql: true,
+      );
+      final generator = ExportGenerator(
+        config: config,
+        projectRoot: tempDir.path,
+        log: logs.add,
+      );
+
+      await generator.generate();
+
+      final outputDir = path.join(tempDir.path, 'assets', 'generated');
+      final csvFile = File(path.join(outputDir, 'analytics_events.csv'));
+      final jsonFile = File(path.join(outputDir, 'analytics_events.json'));
+      final sqlFile = File(path.join(outputDir, 'create_database.sql'));
+
+      expect(csvFile.existsSync(), isTrue);
+      expect(jsonFile.existsSync(), isTrue);
+      expect(sqlFile.existsSync(), isTrue);
+
+      expect(
+        logs,
+        contains(
+          '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
+        ),
+      );
+      expect(
+        logs,
+        contains(
+          '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
+        ),
+      );
+      expect(
+        logs,
+        contains(
+          '✓ Generated SQL at: ${path.join(outputDir, 'create_database.sql')}',
+        ),
+      );
+    });
   });
 }
