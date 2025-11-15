@@ -69,6 +69,42 @@ void main() {
       expect(sql, contains('-- Fingerprint: ${metadata.fingerprint}'));
     });
 
+    test('escapes parameter descriptions and allowed values', () async {
+      final domains = <String, AnalyticsDomain>{
+        'billing': AnalyticsDomain(
+          name: 'billing',
+          events: [
+            AnalyticsEvent(
+              name: 'purchase',
+              description: 'Completes purchase',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'plan',
+                  type: 'string',
+                  isNullable: false,
+                  description: "Plan with 'quote' and comma, yes",
+                  allowedValues: ['basic', "premium,plus", "o'clock"],
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final outputPath = p.join(tempDir.path, 'create_database.sql');
+      final generator = SqlGenerator();
+
+      await generator.generate(domains, outputPath);
+      final sql = await File(outputPath).readAsString();
+
+      expect(
+        sql,
+        contains(
+          "VALUES (1, 'plan', 'string', 0, 'Plan with ''quote'' and comma, yes', 'basic, premium,plus, o''clock');",
+        ),
+      );
+    });
+
     test('writes reproducible SQL across runs', () async {
       final domains = <String, AnalyticsDomain>{
         'auth': AnalyticsDomain(
