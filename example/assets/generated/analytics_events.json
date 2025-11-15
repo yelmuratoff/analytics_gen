@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "fingerprint": "74b7c22b40f24619",
+    "fingerprint": "-1c1db37546dc4641",
     "total_domains": 3,
-    "total_events": 6,
-    "total_parameters": 12
+    "total_events": 7,
+    "total_parameters": 13
   },
   "domains": [
     {
       "name": "auth",
-      "event_count": 3,
-      "parameter_count": 3,
+      "event_count": 4,
+      "parameter_count": 4,
       "events": [
         {
           "name": "login",
@@ -23,6 +23,20 @@
               "type": "string",
               "nullable": false,
               "description": "Login method (email, google, apple)"
+            }
+          ]
+        },
+        {
+          "name": "login_v2",
+          "event_name": "auth: login_v2",
+          "description": "User logs in to the application (v2)",
+          "deprecated": false,
+          "parameters": [
+            {
+              "name": "method",
+              "type": "string",
+              "nullable": false,
+              "description": "Login method v2 (email, google, apple)"
             }
           ]
         },
@@ -85,7 +99,7 @@
           "deprecated": false,
           "parameters": [
             {
-              "name": "product_id",
+              "name": "currency",
               "type": "string",
               "nullable": false
             },
@@ -95,7 +109,7 @@
               "nullable": false
             },
             {
-              "name": "currency",
+              "name": "product_id",
               "type": "string",
               "nullable": false
             },
@@ -121,9 +135,10 @@
           "deprecated": false,
           "parameters": [
             {
-              "name": "screen_name",
-              "type": "string",
-              "nullable": false
+              "name": "duration_ms",
+              "type": "int",
+              "nullable": true,
+              "description": "Time spent on previous screen in milliseconds"
             },
             {
               "name": "previous_screen",
@@ -132,10 +147,9 @@
               "description": "Name of the previous screen"
             },
             {
-              "name": "duration_ms",
-              "type": "int",
-              "nullable": true,
-              "description": "Time spent on previous screen in milliseconds"
+              "name": "screen_name",
+              "type": "string",
+              "nullable": false
             }
           ]
         }

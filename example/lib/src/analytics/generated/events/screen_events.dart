@@ -10,20 +10,21 @@ mixin AnalyticsScreen on AnalyticsBase {
   /// User views a screen
   ///
   /// Parameters:
-  /// - `screen_name`: string
-  /// - `previous_screen`: string? - Name of the previous screen
   /// - `duration_ms`: int? - Time spent on previous screen in milliseconds
+  /// - `previous_screen`: string? - Name of the previous screen
+  /// - `screen_name`: string
   void logScreenView({
-    required String screenName,
-    String? previousScreen,
     int? durationMs,
+    String? previousScreen,
+    required String screenName,
   }) {
+
     logger.logEvent(
       name: "Screen: View",
       parameters: <String, Object?>{
-        "screen_name": screenName,
-        if (previousScreen != null) "previous_screen": previousScreen,
         if (durationMs != null) "duration_ms": durationMs,
+        if (previousScreen != null) "previous_screen": previousScreen,
+        "screen_name": screenName,
       },
     );
   }

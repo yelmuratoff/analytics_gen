@@ -1,7 +1,7 @@
 # Analytics Events Documentation
 
-Fingerprint: `74b7c22b40f24619`
-Domains: 3 | Events: 6 | Parameters: 12
+Fingerprint: `-1c1db37546dc4641`
+Domains: 3 | Events: 7 | Parameters: 13
 
 ## Table of Contents
 
@@ -12,16 +12,17 @@ Domains: 3 | Events: 6 | Parameters: 12
 ## Summary
 
 - **Total Domains**: 3
-- **Total Events**: 6
-- **Total Parameters**: 12
+- **Total Events**: 7
+- **Total Parameters**: 13
 
 ## auth
 
-Events: 3 | Parameters: 3
+Events: 4 | Parameters: 4
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
 | auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) |
+| auth: login_v2 | User logs in to the application (v2) | Active | `method` (string): Login method v2 (email, google, apple) |
 | auth: logout | User logs out | Active | - |
 | auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup |
 
@@ -32,12 +33,11 @@ Analytics.instance.logAuthLogin(
   method: 'example',
 );
 
-Analytics.instance.logAuthLogout();
-
-Analytics.instance.logAuthSignup(
+Analytics.instance.logAuthLoginV2(
   method: 'example',
-  referralCode: null,
 );
+
+Analytics.instance.logAuthLogout();
 
 ```
 
@@ -48,7 +48,7 @@ Events: 2 | Parameters: 6
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
 | purchase: cancelled | User cancelled a purchase | Active | `product_id` (string)<br>`reason` (string?): Reason for cancellation |
-| purchase: completed | User completed a purchase | Active | `product_id` (string)<br>`price` (double)<br>`currency` (string)<br>`quantity` (int): Number of items purchased |
+| purchase: completed | User completed a purchase | Active | `currency` (string)<br>`price` (double)<br>`product_id` (string)<br>`quantity` (int): Number of items purchased |
 
 ### Code Examples
 
@@ -59,9 +59,9 @@ Analytics.instance.logPurchaseCancelled(
 );
 
 Analytics.instance.logPurchaseCompleted(
-  productId: 'example',
-  price: 1.5,
   currency: 'example',
+  price: 1.5,
+  productId: 'example',
   quantity: 123,
 );
 
@@ -73,15 +73,15 @@ Events: 1 | Parameters: 3
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
-| Screen: View | User views a screen | Active | `screen_name` (string)<br>`previous_screen` (string?): Name of the previous screen<br>`duration_ms` (int?): Time spent on previous screen in milliseconds |
+| Screen: View | User views a screen | Active | `duration_ms` (int?): Time spent on previous screen in milliseconds<br>`previous_screen` (string?): Name of the previous screen<br>`screen_name` (string) |
 
 ### Code Examples
 
 ```dart
 Analytics.instance.logScreenView(
-  screenName: 'example',
-  previousScreen: null,
   durationMs: null,
+  previousScreen: null,
+  screenName: 'example',
 );
 
 ```

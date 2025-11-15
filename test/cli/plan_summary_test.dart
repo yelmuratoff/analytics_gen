@@ -5,7 +5,7 @@ import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
-import '../../bin/generate.dart' as cli;
+import '../../bin/src/plan_printer.dart' as plan;
 
 void main() {
   group('generate.dart plan summary', () {
@@ -40,7 +40,7 @@ void main() {
 
       await runZonedGuarded(
         () async {
-          await cli.printTrackingPlan(eventsPath, config, verbose: false);
+          await plan.printTrackingPlan(eventsPath, config, verbose: false);
         },
         (error, stack) => fail('Unexpected error: $error'),
         zoneSpecification: ZoneSpecification(

@@ -7,30 +7,6 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 /// Generated mixin for purchase analytics events
 mixin AnalyticsPurchase on AnalyticsBase {
-  /// User completed a purchase
-  ///
-  /// Parameters:
-  /// - `product_id`: string
-  /// - `price`: double
-  /// - `currency`: string
-  /// - `quantity`: int - Number of items purchased
-  void logPurchaseCompleted({
-    required String productId,
-    required double price,
-    required String currency,
-    required int quantity,
-  }) {
-    logger.logEvent(
-      name: "purchase: completed",
-      parameters: <String, Object?>{
-        "product_id": productId,
-        "price": price,
-        "currency": currency,
-        "quantity": quantity,
-      },
-    );
-  }
-
   /// User cancelled a purchase
   ///
   /// Parameters:
@@ -40,11 +16,37 @@ mixin AnalyticsPurchase on AnalyticsBase {
     required String productId,
     String? reason,
   }) {
+
     logger.logEvent(
       name: "purchase: cancelled",
       parameters: <String, Object?>{
         "product_id": productId,
         if (reason != null) "reason": reason,
+      },
+    );
+  }
+
+  /// User completed a purchase
+  ///
+  /// Parameters:
+  /// - `currency`: string
+  /// - `price`: double
+  /// - `product_id`: string
+  /// - `quantity`: int - Number of items purchased
+  void logPurchaseCompleted({
+    required String currency,
+    required double price,
+    required String productId,
+    required int quantity,
+  }) {
+
+    logger.logEvent(
+      name: "purchase: completed",
+      parameters: <String, Object?>{
+        "currency": currency,
+        "price": price,
+        "product_id": productId,
+        "quantity": quantity,
       },
     );
   }

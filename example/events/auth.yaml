@@ -7,11 +7,18 @@ auth:
       method:
         type: string
         description: Login method (email, google, apple)
-      
+
+  login_v2:
+    description: User logs in to the application (v2)
+    parameters:
+      method:
+        type: string
+        description: Login method v2 (email, google, apple)
+
   logout:
     description: User logs out
     parameters: {}
-    
+
   signup:
     description: User creates a new account
     parameters:

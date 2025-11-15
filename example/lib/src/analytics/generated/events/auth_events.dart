@@ -7,6 +7,7 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 /// Generated mixin for auth analytics events
 mixin AnalyticsAuth on AnalyticsBase {
+  @Deprecated('Use auth.login_v2 instead.')
   /// User logs in to the application
   ///
   /// Parameters:
@@ -14,8 +15,25 @@ mixin AnalyticsAuth on AnalyticsBase {
   void logAuthLogin({
     required String method,
   }) {
+
     logger.logEvent(
       name: "auth: login",
+      parameters: <String, Object?>{
+        "method": method,
+      },
+    );
+  }
+
+  /// User logs in to the application (v2)
+  ///
+  /// Parameters:
+  /// - `method`: string - Login method v2 (email, google, apple)
+  void logAuthLoginV2({
+    required String method,
+  }) {
+
+    logger.logEvent(
+      name: "auth: login_v2",
       parameters: <String, Object?>{
         "method": method,
       },
@@ -40,6 +58,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     required String method,
     String? referralCode,
   }) {
+
     logger.logEvent(
       name: "auth: signup",
       parameters: <String, Object?>{
