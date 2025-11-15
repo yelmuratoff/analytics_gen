@@ -249,6 +249,7 @@ screen:
 
 - `dart run analytics_gen:generate --validate-only` (or any run that parses your YAML) now enforces the same uniqueness constraint, so duplicate event names fail fast before any generated files are written.
 - Since the parser sorts files, domains, and events before visiting them, every validation failure is predictable and repeatable—no ordering surprises in CI or on different machines.
+- `dart run analytics_gen:generate --plan` prints the parsed tracking plan (domains, events, parameters, and fingerprint) so you can inspect instrumentation without writing any generated files.
 
 ## CLI Commands
 
@@ -276,6 +277,9 @@ dart run analytics_gen:generate --no-verbose
 
 # Validate YAML only (no files written)
 dart run analytics_gen:generate --validate-only
+
+# Print the parsed tracking plan (no files written)
+dart run analytics_gen:generate --plan
 ```
 
 ## Generated Files

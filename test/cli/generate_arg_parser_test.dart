@@ -20,6 +20,16 @@ void main() {
       expect(results['verbose'], isTrue);
     });
 
+    test('plan flag defaults to false', () {
+      final results = parser.parse(const <String>[]);
+      expect(results['plan'], isFalse);
+    });
+
+    test('plan flag enables --plan', () {
+      final results = parser.parse(const <String>['--plan']);
+      expect(results['plan'], isTrue);
+    });
+
     test('supports docs-only generation via --docs --no-code', () {
       final results = parser.parse(const <String>['--docs', '--no-code']);
 

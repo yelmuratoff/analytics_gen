@@ -9,6 +9,7 @@ import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 
 ArgParser createArgParser() {
@@ -24,6 +25,12 @@ ArgParser createArgParser() {
       abbr: 'w',
       negatable: false,
       help: 'Watch for changes and regenerate automatically',
+    )
+    ..addFlag(
+      'plan',
+      abbr: 'p',
+      negatable: false,
+      help: 'Print the parsed tracking plan and exit.',
     )
     ..addFlag(
       'code',
@@ -81,7 +88,27 @@ Future<void> main(List<String> arguments) async {
     final generateExports = resolveExportsFlag(results, config);
     final verbose = results['verbose'] as bool;
     final watch = results['watch'] as bool;
+    final planOnly = results['plan'] as bool;
     final validateOnly = results['validate-only'] as bool;
+
+    if (planOnly && watch) {
+      print('Error: --plan cannot be used together with --watch.');
+      exit(1);
+    }
+
+    if (planOnly && validateOnly) {
+      print('Error: --plan cannot be used together with --validate-only.');
+      exit(1);
+    }
+
+    if (planOnly) {
+      await printTrackingPlan(
+        projectRoot,
+        config,
+        verbose: verbose,
+      );
+      return;
+    }
 
     if (validateOnly && watch) {
       print('Error: --validate-only cannot be used together with --watch.');
@@ -228,6 +255,78 @@ Future<void> _validateTrackingPlan(
     }
   } catch (e, stack) {
     print('✗ Validation failed: $e');
+    if (verbose) {
+      print('Stack trace: $stack');
+    }
+    exit(1);
+  }
+}
+
+/// Prints the parsed tracking plan in a readable form and exits.
+Future<void> printTrackingPlan(
+  String projectRoot,
+  AnalyticsConfig config, {
+  required bool verbose,
+}) async {
+  print('╔════════════════════════════════════════════════╗');
+  print('║   Analytics Gen - Tracking Plan Overview       ║');
+  print('╚════════════════════════════════════════════════╝');
+  print('');
+
+  final parser = YamlParser(
+    eventsPath: path.join(projectRoot, config.eventsPath),
+    log: verbose ? (message) => print(message) : null,
+  );
+
+  try {
+    final domains = await parser.parseEvents();
+
+    if (domains.isEmpty) {
+      print('No analytics events are defined yet.');
+      return;
+    }
+
+    final metadata = GenerationMetadata.fromDomains(domains);
+
+    print('Fingerprint: ${metadata.fingerprint}');
+    print(
+      'Domains: ${metadata.totalDomains} | '
+      'Events: ${metadata.totalEvents} | '
+      'Parameters: ${metadata.totalParameters}',
+    );
+
+    final sortedDomains = domains.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    for (final entry in sortedDomains) {
+      final domain = entry.value;
+      print('');
+      print(
+        '- ${domain.name} '
+        '(${domain.eventCount} events, ${domain.parameterCount} parameters)',
+      );
+
+      for (final event in domain.events) {
+        final effectiveName =
+            event.customEventName ?? '${domain.name}: ${event.name}';
+        final status = event.deprecated
+            ? 'DEPRECATED${event.replacement != null ? ' -> ${event.replacement}' : ''}'
+            : 'Active';
+        final params = event.parameters.map((param) {
+          final nullableSuffix = param.isNullable ? '?' : '';
+          return '${param.name} (${param.type}$nullableSuffix)';
+        }).join(', ');
+
+        print('    • $effectiveName [$status]');
+        if (params.isEmpty) {
+          print('      - No parameters');
+        } else {
+          print('      - Parameters: $params');
+        }
+      }
+    }
+  } catch (e, stack) {
+    print('✗ Unable to print tracking plan: $e');
     if (verbose) {
       print('Stack trace: $stack');
     }
