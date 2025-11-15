@@ -108,5 +108,43 @@ void main() {
         contains('✓ Generated SQLite database at: $dbPath'),
       );
     });
+
+    test('deletes stale database and logs failure when sqlite3 errors', () async {
+      final logs = <String>[];
+      final dbPath = p.join(tempDir.path, 'analytics_events.db');
+      File(dbPath).writeAsStringSync('stale content');
+
+      Future<ProcessResult> fakeRun(
+        String executable,
+        List<String> arguments,
+      ) async {
+        if (executable == 'sqlite3' &&
+            arguments.length == 1 &&
+            arguments[0] == '--version') {
+          return ProcessResult(0, 0, '3.45.0', '');
+        }
+
+        if (executable == 'sqlite3' && arguments.length == 2) {
+          return ProcessResult(0, 1, '', 'creation failed');
+        }
+
+        return ProcessResult(0, 1, '', 'unexpected command');
+      }
+
+      final generator = SqliteGenerator(
+        log: logs.add,
+        runProcess: fakeRun,
+      );
+
+      await generator.generate(domains, tempDir.path);
+
+      expect(File(dbPath).existsSync(), isFalse);
+      final logOutput = logs.join('\n');
+      expect(
+        logOutput,
+        contains('⚠ Failed to create database: creation failed'),
+      );
+      expect(logOutput, contains('SQL script available at:'));
+    });
   });
 }
