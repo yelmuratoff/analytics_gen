@@ -104,15 +104,18 @@ final class MultiProviderAnalytics implements IAnalytics, IAsyncAnalytics {
         // back through the failure hooks.
         final asyncProvider = provider as IAsyncAnalytics;
         pending.add(asyncProvider
-          .logEventAsync(name: name, parameters: parameters)
+            .logEventAsync(name: name, parameters: parameters)
             .catchError((error, stackTrace) {
-          _handleProviderFailure(provider, name, parameters, error, stackTrace as StackTrace);
+          _handleProviderFailure(
+              provider, name, parameters, error, stackTrace as StackTrace);
         }));
       } else {
         // Wrap sync logging in a microtask so async callers don't block.
-        pending.add(Future.microtask(() => provider.logEvent(name: name, parameters: parameters))
+        pending.add(Future.microtask(
+                () => provider.logEvent(name: name, parameters: parameters))
             .catchError((error, stackTrace) {
-          _handleProviderFailure(provider, name, parameters, error, stackTrace as StackTrace);
+          _handleProviderFailure(
+              provider, name, parameters, error, stackTrace as StackTrace);
         }));
       }
     }

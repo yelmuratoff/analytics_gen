@@ -149,21 +149,21 @@ void main() {
       expect(service2.totalEvents, equals(0)); // never allowed
       expect(service3.totalEvents, equals(2)); // both calls allowed
     });
-    
-  group('logEventAsync', () {
-    test('forwards events to all providers asynchronously', () async {
-      final asyncProvider = _AsyncLoggingProvider(service2);
-      final multiAsync = MultiProviderAnalytics([
-        service1,
-        asyncProvider,
-      ]);
 
-      await multiAsync.logEventAsync(name: 'async_test');
+    group('logEventAsync', () {
+      test('forwards events to all providers asynchronously', () async {
+        final asyncProvider = _AsyncLoggingProvider(service2);
+        final multiAsync = MultiProviderAnalytics([
+          service1,
+          asyncProvider,
+        ]);
 
-      expect(service1.totalEvents, equals(1));
-      expect(service2.totalEvents, equals(1));
+        await multiAsync.logEventAsync(name: 'async_test');
+
+        expect(service1.totalEvents, equals(1));
+        expect(service2.totalEvents, equals(1));
+      });
     });
-  });
 
     test('continues with other providers when async provider fails', () async {
       final failing = _FailingAsyncAnalyticsService();
@@ -206,7 +206,8 @@ class _AsyncLoggingProvider implements IAnalytics, IAsyncAnalytics {
   }
 
   @override
-  Future<void> logEventAsync({required String name, AnalyticsParams? parameters}) async {
+  Future<void> logEventAsync(
+      {required String name, AnalyticsParams? parameters}) async {
     await Future.delayed(const Duration(milliseconds: 5));
     _delegate.logEvent(name: name, parameters: parameters);
   }
@@ -222,7 +223,8 @@ class _FailingAsyncAnalyticsService implements IAnalytics, IAsyncAnalytics {
   }
 
   @override
-  Future<void> logEventAsync({required String name, AnalyticsParams? parameters}) {
+  Future<void> logEventAsync(
+      {required String name, AnalyticsParams? parameters}) {
     return Future.error(Exception('Intentional async failure'));
   }
 }
