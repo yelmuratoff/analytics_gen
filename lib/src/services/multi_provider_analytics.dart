@@ -2,6 +2,10 @@ import 'dart:io';
 
 import '../core/analytics_interface.dart';
 
+/// Function used to check whether an event (name + params) should be
+/// forwarded to a particular provider.
+typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
+
 /// Analytics service that forwards events to multiple providers.
 ///
 /// This class is immutable. Use [addProvider] or [removeProvider]
@@ -26,6 +30,10 @@ final class MultiProviderAnalytics implements IAnalytics {
   /// Use this for metrics, logging, or alerting with full context.
   final void Function(MultiProviderAnalyticsFailure failure)? onProviderFailure;
 
+  /// Optional per-provider filters: if a filter returns false the provider
+  /// will not receive that event.
+  final Map<IAnalytics, EventPredicate?> _providerFilters;
+
   /// Creates an immutable multi-provider analytics service.
   ///
   /// The [providers] list is copied and made unmodifiable to ensure immutability.
@@ -33,7 +41,9 @@ final class MultiProviderAnalytics implements IAnalytics {
     List<IAnalytics> providers, {
     this.onError,
     this.onProviderFailure,
-  }) : _providers = List.unmodifiable(providers);
+    Map<IAnalytics, EventPredicate?>? providerFilters,
+  })  : _providers = List.unmodifiable(providers),
+        _providerFilters = Map.unmodifiable(providerFilters ?? const {});
 
   @override
   void logEvent({
@@ -41,6 +51,8 @@ final class MultiProviderAnalytics implements IAnalytics {
     AnalyticsParams? parameters,
   }) {
     for (final provider in _providers) {
+      final predicate = _providerFilters[provider];
+      if (predicate != null && !predicate(name, parameters)) continue;
       try {
         provider.logEvent(name: name, parameters: parameters);
       } on SocketException catch (error, stackTrace) {
@@ -101,11 +113,21 @@ final class MultiProviderAnalytics implements IAnalytics {
   /// ```dart
   /// final updated = analytics.addProvider(NewProvider());
   /// ```
-  MultiProviderAnalytics addProvider(IAnalytics provider) {
+  MultiProviderAnalytics addProvider(
+    IAnalytics provider, {
+    EventPredicate? providerFilter,
+  }) {
+    final newProviders = [..._providers, provider];
+    final newProviderFilters = Map<IAnalytics, EventPredicate?>.from(_providerFilters);
+    if (providerFilter != null) {
+      newProviderFilters[provider] = providerFilter;
+    }
+
     return MultiProviderAnalytics(
-      [..._providers, provider],
+      newProviders,
       onError: onError,
       onProviderFailure: onProviderFailure,
+      providerFilters: newProviderFilters,
     );
   }
 
@@ -118,10 +140,15 @@ final class MultiProviderAnalytics implements IAnalytics {
   /// final updated = analytics.removeProvider(oldProvider);
   /// ```
   MultiProviderAnalytics removeProvider(IAnalytics provider) {
+    final newProviders = _providers.where((p) => p != provider).toList();
+    final newProviderFilters = Map<IAnalytics, EventPredicate?>.from(_providerFilters);
+    newProviderFilters.remove(provider);
+
     return MultiProviderAnalytics(
-      _providers.where((p) => p != provider).toList(),
+      newProviders,
       onError: onError,
       onProviderFailure: onProviderFailure,
+      providerFilters: newProviderFilters,
     );
   }
 }

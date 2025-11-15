@@ -40,10 +40,8 @@ final class StringUtils {
   static String toCamelCase(String text) {
     if (text.isEmpty) return text;
 
-    final parts = text
-        .split(RegExp(r'[_-]'))
-        .where((part) => part.isNotEmpty)
-        .toList();
+    final parts =
+        text.split(RegExp(r'[_-]')).where((part) => part.isNotEmpty).toList();
 
     if (parts.isEmpty) return text;
 

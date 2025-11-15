@@ -124,6 +124,31 @@ void main() {
         returnsNormally,
       );
     });
+
+    test('respects provider filters', () {
+      // Arrange
+      final service3 = MockAnalyticsService();
+
+      // Only service1 and service3 receive events where name contains 'allowed'
+      final filteredMulti = MultiProviderAnalytics([
+        service1,
+        service2,
+        service3,
+      ], providerFilters: {
+        service1: (name, _) => name.contains('allowed'),
+        service2: (name, _) => false,
+        service3: (name, _) => true,
+      });
+
+      // Act
+      filteredMulti.logEvent(name: 'allowed_event');
+      filteredMulti.logEvent(name: 'denied_event');
+
+      // Assert
+      expect(service1.totalEvents, equals(1)); // only allowed_event
+      expect(service2.totalEvents, equals(0)); // never allowed
+      expect(service3.totalEvents, equals(2)); // both calls allowed
+    });
   });
 }
 

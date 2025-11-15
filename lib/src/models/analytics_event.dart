@@ -33,8 +33,7 @@ final class AnalyticsParameter {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(
+  int get hashCode => Object.hash(
         name,
         type,
         isNullable,
@@ -79,8 +78,7 @@ final class AnalyticsEvent {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(
+  int get hashCode => Object.hash(
         name,
         description,
         customEventName,

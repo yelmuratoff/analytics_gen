@@ -24,8 +24,8 @@ final class MockAnalyticsService implements IAnalytics {
     required String name,
     AnalyticsParams? parameters,
   }) {
-    final normalizedParameters =
-        Map<String, Object?>.unmodifiable(parameters ?? const <String, Object?>{});
+    final normalizedParameters = Map<String, Object?>.unmodifiable(
+        parameters ?? const <String, Object?>{});
 
     final record = RecordedAnalyticsEvent(
       name: name,

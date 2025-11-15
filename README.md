@@ -376,6 +376,23 @@ final multiProvider = MultiProviderAnalytics(
 
 `onProviderFailure` receives a `MultiProviderAnalyticsFailure` with the failing provider, event name, parameters, error, and stack trace so you can build observability around lost events.
 
+### Provider Filters (Selective forwarding)
+
+You can optionally control which providers receive each event by passing `providerFilters` into `MultiProviderAnalytics`. Filters are predicates of the event name and parameters; returning `false` prevents the provider from receiving that event.
+
+```dart
+final filtered = MultiProviderAnalytics([
+  firebase,
+  amplitude,
+], providerFilters: {
+  firebase: (name, params) => name.startsWith('screen'),
+  amplitude: (name, params) => true, // receives everything
+});
+
+filtered.logEvent(name: 'screen_view'); // sent to firebase + amplitude
+filtered.logEvent(name: 'auth_login');   // only sent to amplitude
+```
+
 ### Custom Provider
 
 ```dart
@@ -398,6 +415,17 @@ class FirebaseAnalyticsService implements IAnalytics {
 
 - Keys are always `String` in snake_case.
 - Values should be JSON-serializable (String, num, bool, null, List, Map) or simple objects supported by your analytics SDK.
+
+### Async adapters
+
+Some providers expose `Future` based APIs. We provide `IAsyncAnalytics` and
+`AsyncAnalyticsAdapter`, which lets you await delivery for synchronous
+providers or adapt sync implementations into async flows.
+
+```dart
+final adapter = AsyncAnalyticsAdapter(mockService);
+await adapter.logEventAsync(name: 'async_event');
+```
 
 ### Sync vs Async logging
 

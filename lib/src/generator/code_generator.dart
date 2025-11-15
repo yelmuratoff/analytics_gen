@@ -264,7 +264,6 @@ final class CodeGenerator {
     return 'Use ${event.replacement} instead.';
   }
 
-
   /// Converts snake_case or kebab-case to camelCase
   String _toCamelCase(String text) {
     return StringUtils.toCamelCase(text);
@@ -436,7 +435,8 @@ final class CodeGenerator {
   ///
   /// This avoids touching modified times and prevents unnecessary git
   /// diffs when regenerating code with no changes.
-  Future<void> _writeFileIfContentChanged(String filePath, String contents) async {
+  Future<void> _writeFileIfContentChanged(
+      String filePath, String contents) async {
     await writeFileIfContentChanged(filePath, contents);
   }
 

@@ -18,11 +18,13 @@ final class JsonGenerator {
 
     // Pretty JSON
     final prettyJson = const JsonEncoder.withIndent('  ').convert(data);
-    await writeFileIfContentChanged('$outputDir/analytics_events.json', prettyJson);
+    await writeFileIfContentChanged(
+        '$outputDir/analytics_events.json', prettyJson);
 
     // Minified JSON
     final minifiedJson = jsonEncode(data);
-    await writeFileIfContentChanged('$outputDir/analytics_events.min.json', minifiedJson);
+    await writeFileIfContentChanged(
+        '$outputDir/analytics_events.min.json', minifiedJson);
   }
 
   /// Builds the JSON data structure

@@ -10,10 +10,12 @@ library;
 // Core interfaces and base classes
 export 'src/core/analytics_base.dart';
 export 'src/core/analytics_interface.dart';
+export 'src/core/async_analytics_interface.dart';
 
 // Service implementations
 export 'src/services/mock_analytics_service.dart';
 export 'src/services/multi_provider_analytics.dart';
+export 'src/services/async_analytics_adapter.dart';
 
 // Configuration
 export 'src/config/analytics_config.dart';

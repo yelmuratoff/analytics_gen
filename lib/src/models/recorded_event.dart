@@ -38,6 +38,5 @@ final class RecordedAnalyticsEvent {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(name, timestamp, _mapEq.hash(parameters));
+  int get hashCode => Object.hash(name, timestamp, _mapEq.hash(parameters));
 }

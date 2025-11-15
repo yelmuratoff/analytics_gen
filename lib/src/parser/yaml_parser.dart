@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:yaml/yaml.dart';
 
 import '../models/analytics_event.dart';
+import '../core/exceptions.dart';
 import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 
@@ -78,9 +79,10 @@ final class YamlParser {
         // Enforce snake_case, filesystem-safe domain names
         final isValidDomain = RegExp(r'^[a-z0-9_]+$').hasMatch(domainKey);
         if (!isValidDomain) {
-          throw FormatException(
+          throw AnalyticsParseException(
             'Domain "$domainKey" in ${file.path} must use snake_case '
             'with lowercase letters, digits and underscores only.',
+            filePath: file.path,
           );
         }
 
@@ -139,10 +141,11 @@ final class YamlParser {
       final eventName = entry.key.toString();
       final value = entry.value;
 
-      if (value is! YamlMap) {
-        throw FormatException(
-          'Event "$domainName.$eventName" in $filePath must be a map.',
-        );
+          if (value is! YamlMap) {
+            throw AnalyticsParseException(
+              'Event "$domainName.$eventName" in $filePath must be a map.',
+              filePath: filePath,
+            );
       }
 
       final eventData = value;
@@ -155,9 +158,10 @@ final class YamlParser {
 
       final rawParameters = eventData['parameters'];
       if (rawParameters != null && rawParameters is! YamlMap) {
-        throw FormatException(
-          'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
-        );
+            throw AnalyticsParseException(
+              'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
+              filePath: filePath,
+            );
       }
 
       final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
@@ -165,6 +169,7 @@ final class YamlParser {
         parametersYaml,
         domainName: domainName,
         eventName: eventName,
+        filePath: filePath,
       );
 
       events.add(
@@ -187,6 +192,7 @@ final class YamlParser {
     YamlMap parametersYaml, {
     required String domainName,
     required String eventName,
+    required String filePath,
   }) {
     final parameters = <AnalyticsParameter>[];
     final seenRawNames = <String>{};
@@ -198,25 +204,28 @@ final class YamlParser {
     for (final entry in sortedEntries) {
       final paramName = entry.key.toString();
       if (!_isValidParameterName(paramName)) {
-        throw FormatException(
-          'Parameter "$paramName" in $domainName.$eventName must use '
-          'snake_case (lowercase letters, digits, underscores, starting with '
-          'a letter).',
-        );
+            throw AnalyticsParseException(
+              'Parameter "$paramName" in $domainName.$eventName must use '
+              'snake_case (lowercase letters, digits, underscores, starting with '
+              'a letter).',
+              filePath: filePath,
+            );
       }
       if (!seenRawNames.add(paramName)) {
-        throw FormatException(
-          'Duplicate parameter "$paramName" found in $domainName.$eventName.',
-        );
+            throw AnalyticsParseException(
+              'Duplicate parameter "$paramName" found in $domainName.$eventName.',
+              filePath: filePath,
+            );
       }
 
       final camelParamName = StringUtils.toCamelCase(paramName);
       final existingParam = camelNameToOriginal[camelParamName];
       if (existingParam != null) {
-        throw FormatException(
-          'Parameter "$paramName" in $domainName.$eventName conflicts '
-          'with "$existingParam" after camelCase normalization.',
-        );
+            throw AnalyticsParseException(
+              'Parameter "$paramName" in $domainName.$eventName conflicts '
+              'with "$existingParam" after camelCase normalization.',
+              filePath: filePath,
+            );
       }
       camelNameToOriginal[camelParamName] = paramName;
 
@@ -248,9 +257,10 @@ final class YamlParser {
         final rawAllowed = paramValue['allowed_values'];
         if (rawAllowed != null) {
           if (rawAllowed is! YamlList) {
-            throw FormatException(
-              'allowed_values for parameter "$paramName" must be a list.',
-            );
+                throw AnalyticsParseException(
+                  'allowed_values for parameter "$paramName" must be a list.',
+                  filePath: filePath,
+                );
           }
           allowedValues = rawAllowed.map((e) => e.toString()).toList();
         }
@@ -290,11 +300,12 @@ final class YamlParser {
         final conflictDomain = seen[actualName];
 
         if (conflictDomain != null) {
-          throw FormatException(
-            'Duplicate analytics event name "$actualName" found in domains '
-            '"$conflictDomain" and "$domainName". '
-            'Event names (custom_event_name or "<domain>: <event>") must be unique.',
-          );
+              throw AnalyticsParseException(
+                'Duplicate analytics event name "$actualName" found in domains '
+                '"$conflictDomain" and "$domainName". '
+                'Event names (custom_event_name or "<domain>: <event>") must be unique.',
+                filePath: null,
+              );
         }
 
         seen[actualName] = domainName;

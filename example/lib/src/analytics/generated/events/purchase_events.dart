@@ -12,11 +12,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// Parameters:
   /// - `product_id`: string
   /// - `reason`: string? - Reason for cancellation
-  void logPurchaseCancelled({
-    required String productId,
-    String? reason,
-  }) {
-
+  void logPurchaseCancelled({required String productId, String? reason}) {
     logger.logEvent(
       name: "purchase: cancelled",
       parameters: <String, Object?>{
@@ -39,7 +35,6 @@ mixin AnalyticsPurchase on AnalyticsBase {
     required String productId,
     required int quantity,
   }) {
-
     logger.logEvent(
       name: "purchase: completed",
       parameters: <String, Object?>{
@@ -50,5 +45,4 @@ mixin AnalyticsPurchase on AnalyticsBase {
       },
     );
   }
-
 }
