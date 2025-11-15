@@ -141,11 +141,11 @@ final class YamlParser {
       final eventName = entry.key.toString();
       final value = entry.value;
 
-          if (value is! YamlMap) {
-            throw AnalyticsParseException(
-              'Event "$domainName.$eventName" in $filePath must be a map.',
-              filePath: filePath,
-            );
+      if (value is! YamlMap) {
+        throw AnalyticsParseException(
+          'Event "$domainName.$eventName" in $filePath must be a map.',
+          filePath: filePath,
+        );
       }
 
       final eventData = value;
@@ -158,10 +158,10 @@ final class YamlParser {
 
       final rawParameters = eventData['parameters'];
       if (rawParameters != null && rawParameters is! YamlMap) {
-            throw AnalyticsParseException(
-              'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
-              filePath: filePath,
-            );
+        throw AnalyticsParseException(
+          'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
+          filePath: filePath,
+        );
       }
 
       final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
@@ -204,28 +204,28 @@ final class YamlParser {
     for (final entry in sortedEntries) {
       final paramName = entry.key.toString();
       if (!_isValidParameterName(paramName)) {
-            throw AnalyticsParseException(
-              'Parameter "$paramName" in $domainName.$eventName must use '
-              'snake_case (lowercase letters, digits, underscores, starting with '
-              'a letter).',
-              filePath: filePath,
-            );
+        throw AnalyticsParseException(
+          'Parameter "$paramName" in $domainName.$eventName must use '
+          'snake_case (lowercase letters, digits, underscores, starting with '
+          'a letter).',
+          filePath: filePath,
+        );
       }
       if (!seenRawNames.add(paramName)) {
-            throw AnalyticsParseException(
-              'Duplicate parameter "$paramName" found in $domainName.$eventName.',
-              filePath: filePath,
-            );
+        throw AnalyticsParseException(
+          'Duplicate parameter "$paramName" found in $domainName.$eventName.',
+          filePath: filePath,
+        );
       }
 
       final camelParamName = StringUtils.toCamelCase(paramName);
       final existingParam = camelNameToOriginal[camelParamName];
       if (existingParam != null) {
-            throw AnalyticsParseException(
-              'Parameter "$paramName" in $domainName.$eventName conflicts '
-              'with "$existingParam" after camelCase normalization.',
-              filePath: filePath,
-            );
+        throw AnalyticsParseException(
+          'Parameter "$paramName" in $domainName.$eventName conflicts '
+          'with "$existingParam" after camelCase normalization.',
+          filePath: filePath,
+        );
       }
       camelNameToOriginal[camelParamName] = paramName;
 
@@ -257,10 +257,10 @@ final class YamlParser {
         final rawAllowed = paramValue['allowed_values'];
         if (rawAllowed != null) {
           if (rawAllowed is! YamlList) {
-                throw AnalyticsParseException(
-                  'allowed_values for parameter "$paramName" must be a list.',
-                  filePath: filePath,
-                );
+            throw AnalyticsParseException(
+              'allowed_values for parameter "$paramName" must be a list.',
+              filePath: filePath,
+            );
           }
           allowedValues = rawAllowed.map((e) => e.toString()).toList();
         }
@@ -300,12 +300,12 @@ final class YamlParser {
         final conflictDomain = seen[actualName];
 
         if (conflictDomain != null) {
-              throw AnalyticsParseException(
-                'Duplicate analytics event name "$actualName" found in domains '
-                '"$conflictDomain" and "$domainName". '
-                'Event names (custom_event_name or "<domain>: <event>") must be unique.',
-                filePath: null,
-              );
+          throw AnalyticsParseException(
+            'Duplicate analytics event name "$actualName" found in domains '
+            '"$conflictDomain" and "$domainName". '
+            'Event names (custom_event_name or "<domain>: <event>") must be unique.',
+            filePath: null,
+          );
         }
 
         seen[actualName] = domainName;

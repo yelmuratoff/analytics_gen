@@ -7,7 +7,8 @@ void main() {
       final mock = MockAnalyticsService();
       final asyncAdapter = AsyncAnalyticsAdapter(mock);
 
-      await asyncAdapter.logEventAsync(name: 'async_event', parameters: {'k': 'v'});
+      await asyncAdapter
+          .logEventAsync(name: 'async_event', parameters: {'k': 'v'});
 
       expect(mock.totalEvents, equals(1));
       expect(mock.records.first.name, equals('async_event'));

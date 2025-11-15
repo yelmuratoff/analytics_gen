@@ -118,7 +118,8 @@ final class MultiProviderAnalytics implements IAnalytics {
     EventPredicate? providerFilter,
   }) {
     final newProviders = [..._providers, provider];
-    final newProviderFilters = Map<IAnalytics, EventPredicate?>.from(_providerFilters);
+    final newProviderFilters =
+        Map<IAnalytics, EventPredicate?>.from(_providerFilters);
     if (providerFilter != null) {
       newProviderFilters[provider] = providerFilter;
     }
@@ -141,7 +142,8 @@ final class MultiProviderAnalytics implements IAnalytics {
   /// ```
   MultiProviderAnalytics removeProvider(IAnalytics provider) {
     final newProviders = _providers.where((p) => p != provider).toList();
-    final newProviderFilters = Map<IAnalytics, EventPredicate?>.from(_providerFilters);
+    final newProviderFilters =
+        Map<IAnalytics, EventPredicate?>.from(_providerFilters);
     newProviderFilters.remove(provider);
 
     return MultiProviderAnalytics(

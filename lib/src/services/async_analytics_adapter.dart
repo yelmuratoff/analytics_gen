@@ -15,6 +15,7 @@ final class AsyncAnalyticsAdapter implements IAsyncAnalytics {
     AnalyticsParams? parameters,
   }) async {
     // Execute sync logging in a microtask to avoid blocking the caller's frame.
-    await Future.microtask(() => _delegate.logEvent(name: name, parameters: parameters));
+    await Future.microtask(
+        () => _delegate.logEvent(name: name, parameters: parameters));
   }
 }
