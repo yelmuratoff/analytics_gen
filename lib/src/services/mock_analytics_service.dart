@@ -36,7 +36,7 @@ final class MockAnalyticsService implements IAnalytics {
     _records.add(record);
 
     if (verbose) {
-      print('[Analytics] $name ${normalizedParameters}');
+      print('[Analytics] $name $normalizedParameters');
     }
   }
 
