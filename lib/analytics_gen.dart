@@ -20,3 +20,4 @@ export 'src/config/analytics_config.dart';
 
 // Models (useful for advanced usage)
 export 'src/models/analytics_event.dart';
+export 'src/models/recorded_event.dart';

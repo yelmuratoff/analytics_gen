@@ -319,6 +319,8 @@ Repeated runs reuse the same fingerprint and totals, so docs/JSON/SQL files stay
 
 ### Mock Service (Testing)
 
+Mock service now surfaces typed `RecordedAnalyticsEvent` snapshots through `records`, while the map-based helpers (`getEventsByName`) remain for legacy checks.
+
 ```dart
 final mockService = MockAnalyticsService(verbose: true);
 Analytics.initialize(mockService);
@@ -326,13 +328,17 @@ Analytics.initialize(mockService);
 // Verify in tests
 expect(mockService.totalEvents, equals(1));
 expect(
-  mockService.getEventsByName('login'),
+  mockService.records.where((event) => event.name == 'login'),
   hasLength(1),
 );
 
-// Returns List<Map<String, Object?>> so you can inspect parameters directly.
-final first = mockService.getEventsByName('login').first;
-expect(first['parameters'], containsPair('method', 'email'));
+// Typed snapshots make structured assertions effortless.
+final record = mockService.records.single;
+expect(record.parameters, containsPair('method', 'email'));
+
+// Legacy map view still mirrors the recorded payload.
+final legacy = mockService.getEventsByName('login').first;
+expect(legacy['parameters'], containsPair('method', 'email'));
 ```
 
 ### Multi-Provider

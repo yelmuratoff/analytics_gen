@@ -82,6 +82,8 @@ void main() {
       final event = service.events.first;
       expect(event.containsKey('timestamp'), isTrue);
       expect(event['timestamp'], isNotEmpty);
+      final record = service.records.first;
+      expect(record.timestamp, isA<DateTime>());
     });
 
     test('handles null parameters', () {
@@ -100,6 +102,27 @@ void main() {
       // Assert
       final event = service.events.first;
       expect(event['parameters'], equals({}));
+    });
+
+    test('records expose typed snapshots', () {
+      service.logEvent(name: 'typed', parameters: {'key': 'value'});
+
+      expect(service.records, hasLength(1));
+      final record = service.records.first;
+      expect(record, isA<RecordedAnalyticsEvent>());
+      expect(record.name, equals('typed'));
+      expect(record.parameters, containsPair('key', 'value'));
+    });
+
+    test('records and parameters are immutable', () {
+      service.logEvent(name: 'immutable');
+
+      final records = service.records;
+      expect(() => records.add(records.first), throwsUnsupportedError);
+      expect(
+        () => service.records.first.parameters['foo'] = 'bar',
+        throwsUnsupportedError,
+      );
     });
   });
 }

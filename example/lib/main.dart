@@ -55,13 +55,12 @@ void main() {
   print('Total events logged: ${mockService.totalEvents}');
   print('\nAll logged events:');
 
-  for (var i = 0; i < mockService.events.length; i++) {
-    final event = mockService.events[i];
-    print('\n${i + 1}. ${event['name']}');
-    final params = event['parameters'] as Map<String, dynamic>;
-    if (params.isNotEmpty) {
+  for (var i = 0; i < mockService.records.length; i++) {
+    final record = mockService.records[i];
+    print('\n${i + 1}. ${record.name}');
+    if (record.parameters.isNotEmpty) {
       print('   Parameters:');
-      params.forEach((key, value) {
+      record.parameters.forEach((key, value) {
         print('   - $key: $value');
       });
     }

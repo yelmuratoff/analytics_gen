@@ -185,9 +185,12 @@ void main() {
   
   // Verify in tests
   print('Total events: ${mockService.totalEvents}');
-  print("Login events: ${mockService.getEventsByName('auth: login').length}");
-  final loginEvent = mockService.getEventsByName('auth: login').first;
-  print("First login params: ${loginEvent['parameters']}");
+  final loginEvents = mockService.records
+      .where((event) => event.name == 'auth: login')
+      .length;
+  print('Login events: $loginEvents');
+  final loginRecord = mockService.records.first;
+  print('First login params: ${loginRecord.parameters}');
 }
 ```
 
