@@ -172,5 +172,135 @@ void main() {
         isTrue,
       );
     });
+
+    test('skips generation and logs when no analytics events exist', () async {
+      final logs = <String>[];
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+        log: logs.add,
+      );
+
+      await generator.generate();
+
+      final outputDir =
+          Directory(p.join(tempProject.path, 'lib', config.outputPath));
+      expect(outputDir.existsSync(), isFalse);
+      expect(
+        logs,
+        contains('No analytics events found. Skipping generation.'),
+      );
+    });
+
+    test('documents parameter descriptions, optional checks, and replacement text',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'billing.yaml'));
+      await eventsFile.writeAsString(
+        'billing:\n'
+        '  purchase:\n'
+        '    description: Completes a purchase\n'
+        '    deprecated: true\n'
+        '    replacement: legacy_event\n'
+        '    parameters:\n'
+        '      method:\n'
+        "        type: 'string?'\n"
+        "        description: Payment method description\n",
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final billingFile = File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'billing_events.dart'),
+      );
+      final billingContent = await billingFile.readAsString();
+
+      expect(billingContent, contains("Use legacy_event instead."));
+      expect(
+        billingContent,
+        contains('`method`: string? - Payment method description'),
+      );
+      expect(
+        billingContent,
+        contains('if (method != null) "method": method,'),
+      );
+    });
+
+    test('generates multi-domain analytics class with plan metadata', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'multi.yaml'));
+      await eventsFile.writeAsString(
+        '''
+alpha:
+  custom_event:
+    description: Alpha event
+    event_name: alpha.custom_event
+    parameters:
+      detail:
+        type: string
+        description: Detailed info
+beta:
+  first:
+    description: Beta event
+gamma:
+  tap:
+    description: Gamma event
+delta:
+  hit:
+    description: Delta event
+''',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final analyticsFile = File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'analytics.dart'),
+      );
+      final analyticsContent = await analyticsFile.readAsString();
+
+      expect(
+        analyticsContent,
+        contains(
+          ' with\n'
+          '    AnalyticsAlpha,\n'
+          '    AnalyticsBeta,\n'
+          '    AnalyticsDelta,\n'
+          '    AnalyticsGamma',
+        ),
+      );
+      expect(
+        analyticsContent,
+        contains("customEventName: 'alpha.custom_event'"),
+      );
+      expect(
+        analyticsContent,
+        contains("description: 'Detailed info'"),
+      );
+    });
+
+    test('buildAnalyticsMixinClause returns newline when no mixins', () {
+      expect(buildAnalyticsMixinClause([]), '\n');
+    });
   });
 }

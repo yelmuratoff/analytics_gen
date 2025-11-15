@@ -306,22 +306,7 @@ final class CodeGenerator {
 
     // Class declaration
     buffer.write('final class Analytics extends AnalyticsBase');
-
-    if (mixins.isNotEmpty) {
-      if (mixins.length > 3) {
-        // Multi-line format for many mixins
-        buffer.writeln(' with');
-        for (var i = 0; i < mixins.length; i++) {
-          final comma = i < mixins.length - 1 ? ',' : '';
-          buffer.writeln('    ${mixins[i]}$comma');
-        }
-      } else {
-        // Single line for few mixins
-        buffer.writeln(' with ${mixins.join(', ')}');
-      }
-    } else {
-      buffer.writeln();
-    }
+    buffer.write(buildAnalyticsMixinClause(mixins));
 
     buffer.writeln('{');
     if (config.generatePlan) {
@@ -480,4 +465,22 @@ final class CodeGenerator {
     }
     await eventsDirectory.create(recursive: true);
   }
+}
+
+String buildAnalyticsMixinClause(List<String> mixins) {
+  if (mixins.isEmpty) {
+    return '\n';
+  }
+
+  if (mixins.length > 3) {
+    final buffer = StringBuffer();
+    buffer.writeln(' with');
+    for (var i = 0; i < mixins.length; i++) {
+      final comma = i < mixins.length - 1 ? ',' : '';
+      buffer.writeln('    ${mixins[i]}$comma');
+    }
+    return buffer.toString();
+  }
+
+  return ' with ${mixins.join(', ')}\n';
 }
