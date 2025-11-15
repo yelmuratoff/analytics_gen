@@ -13,6 +13,12 @@
     <a href="https://github.com/yelmuratoff/analytics_gen">
       <img src="https://img.shields.io/github/stars/yelmuratoff/analytics_gen?style=for-the-badge&logo=github&labelColor=000000&color=DF4926" alt="GitHub stars">
     </a>
+    <a href="https://github.com/yelmuratoff/analytics_gen/actions/workflows/ci.yml">
+      <img src="https://img.shields.io/github/actions/workflow/status/yelmuratoff/analytics_gen/ci.yml?branch=main&style=for-the-badge&logo=github&labelColor=000000" alt="CI status">
+    </a>
+    <a href="https://codecov.io/gh/yelmuratoff/analytics_gen">
+      <img src="https://img.shields.io/codecov/c/github/yelmuratoff/analytics_gen?style=for-the-badge&logo=codecov&labelColor=000000" alt="coverage">
+    </a>
   </p>
 
   <p>
@@ -22,11 +28,34 @@
     <a href="https://pub.dev/packages/analytics_gen/score">
       <img src="https://img.shields.io/pub/points/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub points">
     </a>
-    <!-- <a href="https://pub.dev/packages/analytics_gen/downloads">
+    <a href="https://pub.dev/packages/analytics_gen/downloads">
       <img src="https://img.shields.io/pub/dm/analytics_gen?style=for-the-badge&logo=flutter&labelColor=000000&color=DF4926" alt="Pub downloads">
-    </a> -->
+    </a>
   </p>
 </div>
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Key features](#key-features)
+- [When to use](#when-to-use)
+- [Quick Start](#quick-start)
+  - [Install](#1-install)
+  - [Define events](#2-define-events-yaml-tracking-plan)
+  - [Generate code](#3-generate-code)
+- [Why this approach](#why-this-approach)
+- [Configuration](#configuration)
+- [YAML Schema](#yaml-schema)
+- [Validation Guarantees](#validation-guarantees)
+- [CLI quick commands](#cli-quick-commands)
+- [Generated Files](#generated-files)
+- [Analytics Providers](#analytics-providers)
+- [Deterministic Output](#deterministic-output)
+- [Testing](#testing)
+- [Example](#example)
+- [Contributing](#contributing)
+- [FAQ](#faq)
+- [License](#license)
 
 ## Overview
 
