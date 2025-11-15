@@ -222,23 +222,15 @@ final class DocsGenerator {
       return 'null';
     }
 
-    switch (type.toLowerCase()) {
-      case 'int':
-        return '123';
-      case 'bool':
-        return 'true';
-      case 'double':
-      case 'float':
-        return '1.5';
-      case 'string':
-        return "'example'";
-      case 'map':
-        return "{'key': 'value'}";
-      case 'list':
-        return "['item1', 'item2']";
-      default:
-        return 'value';
-    }
+    return switch (type.toLowerCase()) {
+      'int' => '123',
+      'bool' => 'true',
+      'double' || 'float' => '1.5',
+      'string' => "'example'",
+      'map' => "{'key': 'value'}",
+      'list' => "['item1', 'item2']",
+      _ => 'value',
+    };
   }
 
   String _formatEventStatus(AnalyticsEvent event) {

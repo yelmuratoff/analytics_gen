@@ -129,6 +129,107 @@ void main() {
       expect(firstEventIndex, lessThan(lastEventIndex));
     });
 
+    test('skips documentation generation when no events exist', () async {
+      final logs = <String>[];
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+      );
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+        log: logs.add,
+      );
+
+      await generator.generate();
+
+      expect(
+        File(p.join(tempProject.path, 'analytics_docs.md')).existsSync(),
+        isFalse,
+      );
+      expect(
+        logs,
+        contains(
+          'No analytics events found. Skipping documentation generation.',
+        ),
+      );
+    });
+
+    test('documents allowed values and map/list examples with custom path',
+        () async {
+      final eventsFile =
+          File(p.join(tempProject.path, 'events', 'billing.yaml'));
+      await eventsFile.writeAsString(
+        'billing:\n'
+        '  purchase:\n'
+        '    description: Complex purchase\n'
+        '    parameters:\n'
+        '      type_option:\n'
+        '        type: string\n'
+        '        description: Payment type\n'
+        '        allowed_values: [email, manual]\n'
+        '      attributes: map\n'
+        '      items: list\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/custom_documentation.md',
+        generateDocs: true,
+      );
+      final logs = <String>[];
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+        log: logs.add,
+      );
+
+      await generator.generate();
+
+      final docsFile = File(p.join(tempProject.path, config.docsPath!));
+      expect(docsFile.existsSync(), isTrue);
+
+      final content = await docsFile.readAsString();
+      expect(content, contains('(allowed: email, manual)'));
+      expect(content, contains("{'key': 'value'}"));
+      expect(content, contains("['item1', 'item2']"));
+      expect(content, contains('Analytics.instance.logBillingPurchase('));
+      expect(
+        logs.join('\n'),
+        contains('✓ Generated analytics documentation at:'),
+      );
+    });
+
+    test('falls back to default analytics_docs.md when docsPath omitted',
+        () async {
+      final eventsFile =
+          File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Default docs path\n'
+        '    parameters: {}\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        generateDocs: true,
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final defaultPath = p.join(tempProject.path, 'analytics_docs.md');
+      expect(File(defaultPath).existsSync(), isTrue);
+
+      final content = await File(defaultPath).readAsString();
+      expect(content, contains('# Analytics Events Documentation'));
+    });
+
     test('escapes markdown table cells with pipes and newlines', () async {
       final eventsFile =
           File(p.join(tempProject.path, 'events', 'purchase.yaml'));
