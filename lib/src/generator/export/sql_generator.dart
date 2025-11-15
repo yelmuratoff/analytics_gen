@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../../util/file_utils.dart';
 
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
@@ -21,7 +21,7 @@ final class SqlGenerator {
     _writeData(buffer, domains);
     _writeViews(buffer);
 
-    await File(outputPath).writeAsString(buffer.toString());
+    await writeFileIfContentChanged(outputPath, buffer.toString());
   }
 
   void _writeHeader(StringBuffer buffer, GenerationMetadata metadata) {

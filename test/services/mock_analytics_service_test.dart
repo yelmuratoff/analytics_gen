@@ -124,5 +124,18 @@ void main() {
         throwsUnsupportedError,
       );
     });
+
+    test('last and lastEventName helpers return recent event', () {
+      expect(service.last, isNull);
+      expect(service.lastEventName, isNull);
+
+      service.logEvent(name: 'first');
+      expect(service.last?.name, equals('first'));
+      expect(service.lastEventName, equals('first'));
+
+      service.logEvent(name: 'second');
+      expect(service.last?.name, equals('second'));
+      expect(service.lastEventName, equals('second'));
+    });
   });
 }

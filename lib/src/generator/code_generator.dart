@@ -8,6 +8,7 @@ import '../parser/yaml_parser.dart';
 import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
+import '../util/file_utils.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -83,7 +84,7 @@ final class CodeGenerator {
     // Write to file
     final fileName = '${domainName}_events.dart';
     final filePath = path.join(eventsDir, fileName);
-    await File(filePath).writeAsString(buffer.toString());
+    await _writeFileIfContentChanged(filePath, buffer.toString());
   }
 
   /// Generates barrel file that exports all domain event files
@@ -103,7 +104,7 @@ final class CodeGenerator {
     }
 
     final barrelPath = path.join(outputDir, 'generated_events.dart');
-    await File(barrelPath).writeAsString(buffer.toString());
+    await _writeFileIfContentChanged(barrelPath, buffer.toString());
   }
 
   /// Generates a mixin for a single domain
@@ -182,18 +183,13 @@ final class CodeGenerator {
               .join(', ');
           final joinedValues = allowedValues.join(', ');
 
-          buffer.writeln('    const $constName = <String>{$encodedValues};');
-
-          final condition = param.isNullable
-              ? 'if ($camelParam != null && !$constName.contains($camelParam)) {'
-              : 'if (!$constName.contains($camelParam)) {';
-          buffer.writeln('    $condition');
-          buffer.writeln('      throw ArgumentError.value(');
-          buffer.writeln('        $camelParam,');
-          buffer.writeln("        '$camelParam',");
-          buffer.writeln("        'must be one of $joinedValues',");
-          buffer.writeln('      );');
-          buffer.writeln('    }');
+          buffer.write(_generateAllowedValuesCheck(
+            camelParam: camelParam,
+            constName: constName,
+            encodedValues: encodedValues,
+            joinedValues: joinedValues,
+            isNullable: param.isNullable,
+          ));
         }
       }
     } else {
@@ -226,6 +222,31 @@ final class CodeGenerator {
     buffer.writeln('  }');
     buffer.writeln();
 
+    return buffer.toString();
+  }
+
+  /// Helper to generate allowed-values validation snippet for a parameter.
+  String _generateAllowedValuesCheck({
+    required String camelParam,
+    required String constName,
+    required String encodedValues,
+    required String joinedValues,
+    required bool isNullable,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('    const $constName = <String>{$encodedValues};');
+
+    final condition = isNullable
+        ? 'if ($camelParam != null && !$constName.contains($camelParam)) {'
+        : 'if (!$constName.contains($camelParam)) {';
+
+    buffer.writeln('    $condition');
+    buffer.writeln('      throw ArgumentError.value(');
+    buffer.writeln('        $camelParam,');
+    buffer.writeln("        '$camelParam',");
+    buffer.writeln("        'must be one of $joinedValues',");
+    buffer.writeln('      );');
+    buffer.writeln('    }');
     return buffer.toString();
   }
 
@@ -344,8 +365,7 @@ final class CodeGenerator {
       config.outputPath,
       'analytics.dart',
     );
-    final analyticsFile = File(analyticsPath);
-    await analyticsFile.writeAsString(buffer.toString());
+    await _writeFileIfContentChanged(analyticsPath, buffer.toString());
 
     log?.call('✓ Generated Analytics class at: $analyticsPath');
   }
@@ -410,6 +430,14 @@ final class CodeGenerator {
     buffer.writeln('          ],');
     buffer.writeln('        ),');
     return buffer.toString();
+  }
+
+  /// Writes a file only if its contents differ from the existing file.
+  ///
+  /// This avoids touching modified times and prevents unnecessary git
+  /// diffs when regenerating code with no changes.
+  Future<void> _writeFileIfContentChanged(String filePath, String contents) async {
+    await writeFileIfContentChanged(filePath, contents);
   }
 
   String _analyticsParameterPlanEntry(AnalyticsParameter param) {

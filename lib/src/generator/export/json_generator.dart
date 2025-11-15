@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
+// dart:io not required directly since file utils handle IO
+import '../../util/file_utils.dart';
 
 import '../../models/analytics_event.dart';
 import '../generation_metadata.dart';
@@ -17,12 +18,11 @@ final class JsonGenerator {
 
     // Pretty JSON
     final prettyJson = const JsonEncoder.withIndent('  ').convert(data);
-    await File('$outputDir/analytics_events.json').writeAsString(prettyJson);
+    await writeFileIfContentChanged('$outputDir/analytics_events.json', prettyJson);
 
     // Minified JSON
     final minifiedJson = jsonEncode(data);
-    await File('$outputDir/analytics_events.min.json')
-        .writeAsString(minifiedJson);
+    await writeFileIfContentChanged('$outputDir/analytics_events.min.json', minifiedJson);
   }
 
   /// Builds the JSON data structure

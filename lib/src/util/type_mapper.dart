@@ -4,28 +4,26 @@
 final class DartTypeMapper {
   const DartTypeMapper._();
 
+  static const Map<String, String> _kTypeMap = {
+    'int': 'int',
+    'bool': 'bool',
+    'float': 'double',
+    'double': 'double',
+    'string': 'String',
+    'map': 'Map<String, dynamic>',
+    'list': 'List<dynamic>',
+    'datetime': 'DateTime',
+    'date': 'DateTime',
+    'uri': 'Uri',
+    'number': 'num',
+  };
+
   /// Converts a YAML type to its corresponding Dart type.
   ///
-  /// Supports common analytics parameter types and custom types.
-  ///
-  /// Examples:
-  /// - `int` → `int`
-  /// - `string` → `String`
-  /// - `float` → `double`
-  /// - `map` → `Map<String, dynamic>`
-  /// - `CustomType` → `CustomType` (passthrough)
+  /// Uses a small lookup table and falls back to returning the original
+  /// string for custom types (preserves casing in that case).
   static String toDartType(String yamlType) {
-    final trimmed = yamlType.trim();
-    return switch (trimmed.toLowerCase()) {
-      'int' => 'int',
-      'bool' => 'bool',
-      'float' || 'double' => 'double',
-      'string' => 'String',
-      'map' => 'Map<String, dynamic>',
-      'list' => 'List<dynamic>',
-      'datetime' || 'date' => 'DateTime',
-      'uri' => 'Uri',
-      _ => trimmed, // Pass through custom types unchanged
-    };
+    final key = yamlType.trim().toLowerCase();
+    return _kTypeMap[key] ?? yamlType.trim();
   }
 }

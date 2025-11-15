@@ -60,4 +60,11 @@ final class MockAnalyticsService implements IAnalytics {
 
   /// Returns total number of logged events
   int get totalEvents => _records.length;
+
+  /// Returns the most recently logged event or null if no events have been
+  /// recorded. Useful in tests.
+  RecordedAnalyticsEvent? get last => _records.isEmpty ? null : _records.last;
+
+  /// Returns the most recent event name or null.
+  String? get lastEventName => last?.name;
 }

@@ -1,4 +1,5 @@
-import 'dart:io';
+// dart:io not required directly
+import '../../util/file_utils.dart';
 
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
@@ -43,7 +44,7 @@ final class CsvGenerator {
       }
     }
 
-    await File(outputPath).writeAsString(buffer.toString());
+    await writeFileIfContentChanged(outputPath, buffer.toString());
   }
 
   /// Escapes CSV values

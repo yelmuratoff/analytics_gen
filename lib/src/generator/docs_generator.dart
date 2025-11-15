@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../util/file_utils.dart';
 
 import 'package:path/path.dart' as path;
 
@@ -49,9 +49,7 @@ final class DocsGenerator {
         ? path.join(projectRoot, config.docsPath!)
         : path.join(projectRoot, 'analytics_docs.md');
 
-    final outputFile = File(outputPath);
-    await outputFile.parent.create(recursive: true);
-    await outputFile.writeAsString(markdown);
+    await writeFileIfContentChanged(outputPath, markdown);
 
     log?.call('✓ Generated analytics documentation at: $outputPath');
 
