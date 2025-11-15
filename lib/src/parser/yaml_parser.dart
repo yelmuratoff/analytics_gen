@@ -145,8 +145,8 @@ final class YamlParser {
 
       final eventData = value;
 
-      final description = eventData['description'] as String? ??
-          'No description provided';
+      final description =
+          eventData['description'] as String? ?? 'No description provided';
       final customEventName = eventData['event_name'] as String?;
       final deprecated = eventData['deprecated'] as bool? ?? false;
       final replacement = eventData['replacement'] as String?;
@@ -199,7 +199,9 @@ final class YamlParser {
           // Fallback: Find type key (anything except 'description')
           final typeKey = paramValue.keys
               .where(
-                (k) => k.toString() != 'description' && k.toString() != 'allowed_values',
+                (k) =>
+                    k.toString() != 'description' &&
+                    k.toString() != 'allowed_values',
               )
               .firstOrNull;
           paramType = typeKey?.toString() ?? 'dynamic';
@@ -262,7 +264,7 @@ final class YamlParser {
     }
   }
 
-  /// Actual event name used when logging (custom or default "<domain>: <event>").
+  /// Actual event name used when logging (custom or default `<domain>: <event>`).
   String _resolveEventName(String domainName, AnalyticsEvent event) {
     return event.customEventName ?? '$domainName: ${event.name}';
   }
