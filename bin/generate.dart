@@ -4,6 +4,7 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 
+import 'package:analytics_gen/src/cli/watch_scheduler.dart';
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
@@ -324,13 +325,11 @@ Future<void> _watchMode(
     exit(1);
   }
 
-  await for (final event in eventsDir.watch(recursive: true)) {
-    if (event.path.endsWith('.yaml') || event.path.endsWith('.yml')) {
+  final scheduler = WatchRegenerationScheduler(
+    onGenerate: () async {
       print('');
-      print('Change detected: ${path.basename(event.path)}');
       print('Regenerating...');
       print('');
-
       await _generate(
         projectRoot,
         config,
@@ -339,6 +338,18 @@ Future<void> _watchMode(
         generateExports: generateExports,
         verbose: verbose,
       );
+    },
+  );
+
+  try {
+    await for (final event in eventsDir.watch(recursive: true)) {
+      if (event.path.endsWith('.yaml') || event.path.endsWith('.yml')) {
+        print('');
+        print('Change detected: ${path.basename(event.path)}');
+        scheduler.schedule();
+      }
     }
+  } finally {
+    scheduler.dispose();
   }
 }

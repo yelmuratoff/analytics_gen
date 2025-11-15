@@ -1,18 +1,11 @@
 # TODO – `analytics_gen`
 
-High-level focus: build on the existing generator by adding stricter parameter validation and more accurate typing, then document and test those improvements.
-
 ## Active Work Items
-- [x] Add runtime guards for parameters that declare `allowed_values` so invalid calls fail fast.
-- [x] Respect literal YAML `type` names when generating method signatures so custom/documented types are preserved.
-- [x] Cover the new behavior with code generator tests that assert the guard logic and custom types show up in generated files.
-- [x] Document the new validation/type guarantees in `README.md` so users know how to rely on them.
+- [x] Clean the export output directory before each generation so toggling formats never leaves stale artifacts.
+- [x] Emit the generated tracking plan as runtime metadata (`Analytics.plan`) so apps can inspect events/domains without re-parsing YAML.
+- [x] Debounce watch mode regenerations so a single file save only triggers one code run across repeated file-system events.
+- [x] Back up each new guarantee with targeted tests and update the README so users know about the new behaviors.
 
-## Next Work Items
-- [x] Enforce snake_case parameter names (start with a letter, lowercase, digits/underscores) so generated methods always receive valid Dart identifiers.
-- [x] Reject duplicate parameter names per event and document these naming rules in `README.md`.
-
-## Process
-- Update this TODO after completing each item (check the box and record the test/README coverage), so the plan stays accurate.
-- Every code change must be accompanied by a focused unit test and README mention as requested.
-- Tests: `dart test` (at least the relevant suites) before finishing the work.
+## Notes
+- Tests should cover the new export cleanup and analytics plan metadata, plus a focused unit test exercise for the new watch scheduler.
+- README updates need to mention the runtime plan constant and the refined watch/export behaviors.

@@ -323,6 +323,8 @@ final class CodeGenerator {
     }
 
     buffer.writeln('{');
+    buffer.write(_generateAnalyticsPlanField(domains));
+    buffer.writeln();
 
     // Singleton implementation
     buffer
@@ -363,6 +365,92 @@ final class CodeGenerator {
     await analyticsFile.writeAsString(buffer.toString());
 
     log?.call('✓ Generated Analytics class at: $analyticsPath');
+  }
+
+  String _generateAnalyticsPlanField(Map<String, AnalyticsDomain> domains) {
+    final buffer = StringBuffer();
+    buffer.writeln('  /// Runtime view of the generated tracking plan.');
+    buffer.writeln(
+      '  static const List<AnalyticsDomain> plan = <AnalyticsDomain>[',
+    );
+
+    final sortedDomains = domains.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    for (final entry in sortedDomains) {
+      buffer.write(_analyticsDomainPlanEntry(entry.value));
+    }
+
+    buffer.writeln('  ];');
+    return buffer.toString();
+  }
+
+  String _analyticsDomainPlanEntry(AnalyticsDomain domain) {
+    final buffer = StringBuffer();
+    buffer.writeln('    const AnalyticsDomain(');
+    buffer.writeln("      name: '${_escapeSingleQuoted(domain.name)}',");
+    buffer.writeln('      events: const <AnalyticsEvent>[');
+
+    for (final event in domain.events) {
+      buffer.write(_analyticsEventPlanEntry(event));
+    }
+
+    buffer.writeln('      ],');
+    buffer.writeln('    ),');
+    return buffer.toString();
+  }
+
+  String _analyticsEventPlanEntry(AnalyticsEvent event) {
+    final buffer = StringBuffer();
+    buffer.writeln('        const AnalyticsEvent(');
+    buffer.writeln("          name: '${_escapeSingleQuoted(event.name)}',");
+    buffer.writeln(
+      "          description: '${_escapeSingleQuoted(event.description)}',",
+    );
+    if (event.customEventName != null) {
+      buffer.writeln(
+        "          customEventName: '${_escapeSingleQuoted(event.customEventName!)}',",
+      );
+    }
+    buffer.writeln('          deprecated: ${event.deprecated},');
+    if (event.replacement != null) {
+      buffer.writeln(
+        "          replacement: '${_escapeSingleQuoted(event.replacement!)}',",
+      );
+    }
+    buffer.writeln('          parameters: const <AnalyticsParameter>[');
+
+    for (final param in event.parameters) {
+      buffer.write(_analyticsParameterPlanEntry(param));
+    }
+
+    buffer.writeln('          ],');
+    buffer.writeln('        ),');
+    return buffer.toString();
+  }
+
+  String _analyticsParameterPlanEntry(AnalyticsParameter param) {
+    final buffer = StringBuffer();
+    buffer.writeln('            const AnalyticsParameter(');
+    buffer.writeln("              name: '${_escapeSingleQuoted(param.name)}',");
+    buffer.writeln("              type: '${_escapeSingleQuoted(param.type)}',");
+    buffer.writeln('              isNullable: ${param.isNullable},');
+    if (param.description != null) {
+      buffer.writeln(
+        "              description: '${_escapeSingleQuoted(param.description!)}',",
+      );
+    }
+    if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
+      buffer.writeln('              allowedValues: const <String>[');
+      for (final value in param.allowedValues!) {
+        buffer.writeln(
+          "                '${_escapeSingleQuoted(value)}',",
+        );
+      }
+      buffer.writeln('              ],');
+    }
+    buffer.writeln('            ),');
+    return buffer.toString();
   }
 
   /// Removes stale generated files so deleted domains do not linger.

@@ -47,7 +47,9 @@ This removes hand‑written string keys, reduces tracking drift between platform
 - **Clean structure by domain**: Each domain (`auth`, `screen`, `purchase`, etc.) lives in its own generated file
 - **Multi-provider support**: Fan out a single event call to multiple analytics backends
 - **Export formats**: Generate CSV, JSON, SQL, and SQLite representations of your tracking plan
-- **Watch mode**: Optional file watcher to regenerate when YAML changes
+- **Clean exports**: Each generation wipes the configured exports folder first so toggling formats never leaves stale artifacts
+- **Runtime plan access**: Read-only `Analytics.plan` mirrors the generated domains/events/parameters so you can programmatically verify instrumentation.
+- **Watch mode**: Optional file watcher that debounces filesystem noise so a single save triggers only one regeneration
 - **Deterministic output**: Sorted generation plus content fingerprints keep diffs stable across machines
 - **Self-cleaning output**: Each run wipes the generated `events/` directory so domains you delete from YAML never linger in source control
 - **Lifecycle-aware docs**: Generated Markdown docs expose a Status column so deprecated events and their replacements are obvious to product/data teams

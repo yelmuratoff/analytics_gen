@@ -45,6 +45,9 @@ final class ExportGenerator {
         : path.join(projectRoot, 'assets', 'generated');
 
     final outputDirectory = Directory(outputDir);
+    if (outputDirectory.existsSync()) {
+      await outputDirectory.delete(recursive: true);
+    }
     await outputDirectory.create(recursive: true);
 
     // Generate configured formats

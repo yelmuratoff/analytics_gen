@@ -76,6 +76,12 @@ void main() {
       final analyticsContent = await analyticsFile.readAsString();
       expect(analyticsContent, contains('final class Analytics extends'));
       expect(analyticsContent, contains('Analytics.initialize'));
+      expect(
+        analyticsContent,
+        contains('static const List<AnalyticsDomain> plan ='),
+      );
+      expect(analyticsContent, contains("name: 'auth'"));
+      expect(analyticsContent, contains('const AnalyticsParameter('));
 
       // Ensure logging used the injectable logger
       expect(
