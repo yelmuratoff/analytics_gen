@@ -100,7 +100,9 @@ void main() {
       expect(withCustom, isNot(equals(withReplacement)));
     });
 
-    test('AnalyticsEvent deep-compare parameters when lists are different objects', () {
+    test(
+        'AnalyticsEvent deep-compare parameters when lists are different objects',
+        () {
       const paramsA = [
         AnalyticsParameter(name: 'method', type: 'string', isNullable: false),
       ];
@@ -124,7 +126,11 @@ void main() {
 
       // differing nested parameter values make events unequal
       const paramsC = [
-        AnalyticsParameter(name: 'method', type: 'string', isNullable: false, allowedValues: ['A']),
+        AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['A']),
       ];
       const e3 = AnalyticsEvent(
         name: 'login',
