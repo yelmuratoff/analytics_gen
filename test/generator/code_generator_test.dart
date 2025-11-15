@@ -84,6 +84,49 @@ void main() {
       );
     });
 
+    test('guards parameters with allowed_values and preserves custom types',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method:\n'
+        '        type: string\n'
+        '        allowed_values: [email, google]\n'
+        '      timestamp: DateTime\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(
+        authContent,
+        contains("const allowedMethodValues = <String>{'email', 'google'};"),
+      );
+      expect(
+        authContent,
+        contains('if (!allowedMethodValues.contains(method)) {'),
+      );
+      expect(authContent, contains('throw ArgumentError.value('));
+      expect(authContent, contains('required DateTime timestamp,'));
+    });
+
     test('removes stale domain files before regenerating', () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(

@@ -230,6 +230,11 @@ screen:
 - `map` (Map<String, dynamic>)
 - `list` (List<dynamic>)
 - Add `?` for nullable: `string?`, `int?`
+- Custom Dart types (e.g., `DateTime`, `Uri`, `MyEnum`) are emitted exactly as declared, so you retain compile-time checking without extra YAML tricks.
+
+### Parameter Validation
+
+- Declare `allowed_values` for a parameter to auto-generate a runtime guard that throws an `ArgumentError` if your app passes anything outside that list. This keeps your analytics payloads consistent with the tracking plan and surfaces mistakes during development (and CI when you run `dart test` or `dart run analytics_gen:generate`).
 
 ### Domain Naming
 

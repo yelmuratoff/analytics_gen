@@ -166,6 +166,33 @@ final class CodeGenerator {
         buffer.writeln('    $required$nullableType $camelParam,');
       }
       buffer.writeln('  }) {');
+      buffer.writeln();
+
+      for (final param in event.parameters) {
+        final allowedValues = param.allowedValues;
+        if (allowedValues != null && allowedValues.isNotEmpty) {
+          final camelParam = _toCamelCase(param.name);
+          final constName =
+              'allowed${StringUtils.capitalizePascal(camelParam)}Values';
+          final encodedValues = allowedValues
+              .map((value) => '\'${_escapeSingleQuoted(value)}\'')
+              .join(', ');
+          final joinedValues = allowedValues.join(', ');
+
+          buffer.writeln('    const $constName = <String>{$encodedValues};');
+
+          final condition = param.isNullable
+              ? 'if ($camelParam != null && !$constName.contains($camelParam)) {'
+              : 'if (!$constName.contains($camelParam)) {';
+          buffer.writeln('    $condition');
+          buffer.writeln('      throw ArgumentError.value(');
+          buffer.writeln('        $camelParam,');
+          buffer.writeln("        '$camelParam',");
+          buffer.writeln("        'must be one of $joinedValues',");
+          buffer.writeln('      );');
+          buffer.writeln('    }');
+        }
+      }
     } else {
       buffer.writeln(') {');
     }
@@ -211,7 +238,8 @@ final class CodeGenerator {
 
   /// Maps YAML type names to Dart type names
   String _mapYamlTypeToDart(String yamlType) {
-    switch (yamlType.toLowerCase()) {
+    final trimmed = yamlType.trim();
+    switch (trimmed.toLowerCase()) {
       case 'int':
         return 'int';
       case 'bool':
@@ -225,14 +253,23 @@ final class CodeGenerator {
         return 'Map<String, dynamic>';
       case 'list':
         return 'List<dynamic>';
+      case 'datetime':
+      case 'date':
+        return 'DateTime';
+      case 'uri':
+        return 'Uri';
       default:
-        return 'dynamic';
+        return trimmed;
     }
   }
 
   /// Converts snake_case or kebab-case to camelCase
   String _toCamelCase(String text) {
     return StringUtils.toCamelCase(text);
+  }
+
+  String _escapeSingleQuoted(String value) {
+    return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
   }
 
   /// Generates Analytics singleton class with all domain mixins
