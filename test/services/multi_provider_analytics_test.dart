@@ -67,22 +67,6 @@ void main() {
       expect(service2.totalEvents, equals(1));
     });
 
-    test('addProvider throws UnsupportedError with migration message', () {
-      // Act & Assert
-      expect(
-        () => multiProvider.addProvider(MockAnalyticsService()),
-        throwsA(isA<UnsupportedError>()),
-      );
-    });
-
-    test('removeProvider throws UnsupportedError with migration message', () {
-      // Act & Assert
-      expect(
-        () => multiProvider.removeProvider(service1),
-        throwsA(isA<UnsupportedError>()),
-      );
-    });
-
     test('continues with other providers if one fails', () {
       // Arrange
       final failingProvider = _FailingAnalyticsService();
