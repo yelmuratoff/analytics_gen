@@ -30,4 +30,4 @@ jobs:
            run: dart analyze
 
          - name: Run tests (no coverage) to validate for SDK ${{ matrix.sdk }}
-           run: dart test --no-pub --platform vm
+           run: dart test --platform vm

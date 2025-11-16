@@ -8,20 +8,9 @@ on:
 
 jobs:
    publish:
-      name: Publish
-      runs-on: ubuntu-latest
       permissions:
-         contents: read
          id-token: write
-
-      steps:
-         - name: Checkout repository
-           uses: actions/checkout@v4
-
-         - name: Publish to pub.dev
-           # Reuse the upstream publish workflow from the dart-lang/setup-dart repo which handles OIDC auth
-           uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
-           with:
-              # If your package lives at the repo root (most common), leave working-directory alone
-              working-directory: .
-              sdk: stable
+         contents: read
+      uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+      with:
+         working-directory: .
