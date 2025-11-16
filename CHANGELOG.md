@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2025-11-16
+- The entire package is 100% tested.
+- Github Actions have been added for code review and testing.
+- Improved documentation with usage examples.
+
 ## [0.1.4] - 2025-11-15
 - Library vs CLI logging cleanup: internal generators and parsers now emit logs only when a verbose callback is provided, while the CLI keeps the rich user-friendly output.
 - Core models (`AnalyticsParameter`, `AnalyticsEvent`, `AnalyticsDomain`) implement value semantics and have dedicated equality tests.
