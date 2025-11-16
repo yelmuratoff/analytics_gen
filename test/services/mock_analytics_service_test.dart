@@ -1,5 +1,6 @@
 import 'package:analytics_gen/analytics_gen.dart';
 import 'package:test/test.dart';
+import 'dart:async';
 
 void main() {
   group('MockAnalyticsService', () {
@@ -136,6 +137,45 @@ void main() {
       service.logEvent(name: 'second');
       expect(service.last?.name, equals('second'));
       expect(service.lastEventName, equals('second'));
+    });
+
+    test('prints to console when verbose is true', () async {
+      final lines = <String>[];
+      final verboseService = MockAnalyticsService(verbose: true);
+
+      await runZonedGuarded(
+        () async {
+          verboseService.logEvent(name: 'verbose_event', parameters: {'k': 'v'});
+        },
+        (err, st) => fail('Unexpected error: $err'),
+        zoneSpecification: ZoneSpecification(
+          print: (self, parent, zone, line) {
+            lines.add(line);
+          },
+        ),
+      );
+
+      expect(lines, isNotEmpty);
+      expect(lines.any((l) => l.contains('[Analytics] verbose_event')), isTrue);
+      expect(lines.any((l) => l.contains('{k: v}')), isTrue);
+    });
+
+    test('does not print to console when verbose is false', () async {
+      final lines = <String>[];
+
+      await runZonedGuarded(
+        () async {
+          service.logEvent(name: 'silent');
+        },
+        (err, st) => fail('Unexpected error: $err'),
+        zoneSpecification: ZoneSpecification(
+          print: (self, parent, zone, line) {
+            lines.add(line);
+          },
+        ),
+      );
+
+      expect(lines, isEmpty);
     });
   });
 }
