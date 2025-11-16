@@ -2,8 +2,6 @@
 ///
 /// Not exported from the public API.
 final class DartTypeMapper {
-  const DartTypeMapper._();
-
   static const Map<String, String> _kTypeMap = {
     'int': 'int',
     'bool': 'bool',

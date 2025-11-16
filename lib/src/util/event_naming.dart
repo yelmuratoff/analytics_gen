@@ -3,8 +3,6 @@ import 'string_utils.dart';
 
 /// Shared naming helpers used by generators, parsers, and exports.
 final class EventNaming {
-  const EventNaming._();
-
   /// Resolves the actual analytics event name used when logging.
   static String resolveEventName(
     String domainName,

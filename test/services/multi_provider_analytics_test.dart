@@ -94,7 +94,8 @@ void main() {
         service1,
       ], onError: (error, _) => errors.add(error));
 
-      expect(() => multiWithSocketFailure.logEvent(name: 'test'), returnsNormally);
+      expect(
+          () => multiWithSocketFailure.logEvent(name: 'test'), returnsNormally);
       expect(service1.totalEvents, equals(1));
       expect(errors, isNotEmpty);
       expect(errors.first, isA<SocketException>());
@@ -107,7 +108,8 @@ void main() {
         service1,
       ], onError: (error, _) => errors.add(error));
 
-      expect(() => multiWithFormatFailure.logEvent(name: 'test'), returnsNormally);
+      expect(
+          () => multiWithFormatFailure.logEvent(name: 'test'), returnsNormally);
       expect(service1.totalEvents, equals(1));
       expect(errors, isNotEmpty);
       expect(errors.first, isA<FormatException>());
@@ -233,7 +235,8 @@ void main() {
         expect(service2.totalEvents, equals(0));
       });
 
-      test('reports failure details when async provider fails via onProviderFailure',
+      test(
+          'reports failure details when async provider fails via onProviderFailure',
           () async {
         final failing = _FailingAsyncAnalyticsService();
         final failures = <MultiProviderAnalyticsFailure>[];

@@ -2,8 +2,6 @@
 ///
 /// Not exported from the public API.
 final class StringUtils {
-  const StringUtils._();
-
   /// Capitalizes the first letter and converts snake_case to PascalCase.
   ///
   /// Handles edge cases like leading/trailing underscores and multiple consecutive underscores.
