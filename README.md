@@ -71,14 +71,14 @@ This removes brittle, hand‑written string keys, prevents drift across platform
 
 ## Key features
 
-- **Type‑safe analytics** — compile‑time checking of event names and parameter types
-- **YAML → Dart generation** — write your plan once; emit strongly‑typed methods
-- **Domain-per-file** — a clean file per domain for readable diffs and code review
-- **Multi‑provider support** — fan‑out events to multiple analytics backends
-- **Exports & docs** — optional CSV/JSON/SQL/SQLite and generated Markdown for stakeholders
-- **Deterministic output** — fingerprinted and sorted generation prevents noisy diffs
-- **Watch mode & cleanup** — safe incremental regeneration; outputs cleaned before emit
-- **Runtime plan** — generated `Analytics.plan` makes plan metadata available at runtime
+- **Type‑safe analytics** - compile‑time checking of event names and parameter types
+- **YAML → Dart generation** - write your plan once; emit strongly‑typed methods
+- **Domain-per-file** - a clean file per domain for readable diffs and code review
+- **Multi‑provider support** - fan‑out events to multiple analytics backends
+- **Exports & docs** - optional CSV/JSON/SQL/SQLite and generated Markdown for stakeholders
+- **Deterministic output** - fingerprinted and sorted generation prevents noisy diffs
+- **Watch mode & cleanup** - safe incremental regeneration; outputs cleaned before emit
+- **Runtime plan** - generated `Analytics.plan` makes plan metadata available at runtime
 
 ## When to use
 
@@ -168,7 +168,7 @@ import 'src/analytics/generated/analytics.dart';
 void main() {
   // Initialize once
   Analytics.initialize(YourAnalyticsService());
-  
+
   // Use anywhere in your app
   Analytics.instance.logAuthLogin(method: 'email');
   Analytics.instance.logAuthLogout();
@@ -179,10 +179,10 @@ void main() {
 
 ## Why this approach
 
-- **Readable** — domain-per-file keeps each area focused and reviewable
-- **Maintainable** — changes to one domain aren’t scattered across the codebase
-- **Scalable** — new domains don’t bloat a single generated file
-- **Simple imports** — a barrel file provides one canonical import for generated events
+- **Readable** - domain-per-file keeps each area focused and reviewable
+- **Maintainable** - changes to one domain aren't scattered across the codebase
+- **Scalable** - new domains don't bloat a single generated file
+- **Simple imports** - a barrel file provides one canonical import for generated events
 
 ## Configuration
 
@@ -275,12 +275,12 @@ screen:
 
 - Domain keys (top-level YAML keys) must be snake_case, using only lowercase letters, digits, and underscores (e.g. `auth`, `screen_navigation`).
 - This keeps generated file and class names stable and filesystem‑safe.
-- Each event's effective name—either the optional `event_name` override or the default `<domain>: <event>` string—must be unique across your entire tracking plan. Duplicate names cause the parser to throw a `FormatException`, which surfaces immediately when you run the generator (including `--validate-only`), preventing conflicting analytics payloads from being emitted.
+- Each event's effective name-either the optional `event_name` override or the default `<domain>: <event>` string-must be unique across your entire tracking plan. Duplicate names cause the parser to throw a `FormatException`, which surfaces immediately when you run the generator (including `--validate-only`), preventing conflicting analytics payloads from being emitted.
 
 ## Validation Guarantees
 
 - `dart run analytics_gen:generate --validate-only` (or any run that parses your YAML) now enforces the same uniqueness constraint, so duplicate event names fail fast before any generated files are written.
-- Since the parser sorts files, domains, and events before visiting them, every validation failure is predictable and repeatable—no ordering surprises in CI or on different machines.
+- Since the parser sorts files, domains, and events before visiting them, every validation failure is predictable and repeatable-no ordering surprises in CI or on different machines.
 - `dart run analytics_gen:generate --plan` prints the parsed tracking plan (domains, events, parameters, and fingerprint) so you can inspect instrumentation without writing any generated files.
 
 ## CLI Commands
@@ -427,9 +427,9 @@ filtered.logEvent(name: 'auth_login');   // only sent to amplitude
 ```dart
 class FirebaseAnalyticsService implements IAnalytics {
   final FirebaseAnalytics _firebase;
-  
+
   FirebaseAnalyticsService(this._firebase);
-  
+
   @override
   void logEvent({
     required String name,
@@ -474,15 +474,15 @@ Unit tests should initialize `Analytics` with `MockAnalyticsService` (or other a
 void main() {
   group('Analytics', () {
     late MockAnalyticsService analytics;
-    
+
     setUp(() {
       analytics = MockAnalyticsService();
       Analytics.initialize(analytics);
     });
-    
+
     test('logs login event', () {
       Analytics.instance.logAuthLogin(method: 'email');
-      
+
       expect(analytics.totalEvents, equals(1));
       final event = analytics.events.first;
       expect(event['name'], equals('auth: login'));
@@ -523,14 +523,14 @@ Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) for det
 
 ## FAQ
 
-**Why YAML instead of defining events directly in Dart?**  
-YAML keeps the tracking plan tooling‑agnostic: product and analytics teams can read and edit it, and you can export the same source of truth to code, docs, and data formats.
+- **Why YAML instead of defining events directly in Dart?**  
+   YAML keeps the tracking plan tooling‑agnostic: product and analytics teams can read and edit it, and you can export the same source of truth to code, docs, and data formats.
 
-**Can I migrate existing events?**  
-Yes. Start by describing your current events in YAML, generate Dart code, then gradually replace existing manual `logEvent` calls with the generated methods.
+- **Can I migrate existing events?** 
+   Yes. Start by describing your current events in YAML, generate Dart code, then gradually replace existing manual `logEvent` calls with the generated methods.
 
-**Does this lock me into a single analytics provider?**  
-No. You implement `IAnalytics` adapters for each provider and can use `MultiProviderAnalytics` to send the same event to several backends.
+- **Does this lock me into a single analytics provider?** 
+   No. You implement `IAnalytics` adapters for each provider and can use `MultiProviderAnalytics` to send the same event to several backends.
 
-**Is this safe to commit to source control?**  
-Yes. The YAML definitions and generated code are designed to be code‑review friendly and should live in your repo alongside application code.
+- **Is this safe to commit to source control?** 
+   Yes. The YAML definitions and generated code are designed to be code‑review friendly and should live in your repo alongside application code.
