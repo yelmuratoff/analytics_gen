@@ -145,7 +145,8 @@ void main() {
 
       await runZonedGuarded(
         () async {
-          verboseService.logEvent(name: 'verbose_event', parameters: {'k': 'v'});
+          verboseService
+              .logEvent(name: 'verbose_event', parameters: {'k': 'v'});
         },
         (err, st) => fail('Unexpected error: $err'),
         zoneSpecification: ZoneSpecification(

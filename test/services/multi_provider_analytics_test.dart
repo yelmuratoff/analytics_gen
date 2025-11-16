@@ -1,4 +1,5 @@
 import 'package:analytics_gen/analytics_gen.dart';
+import 'dart:io';
 import 'package:test/test.dart';
 
 void main() {
@@ -86,6 +87,32 @@ void main() {
       expect(errors, isNotEmpty);
     });
 
+    test('continues with other providers when SocketException is thrown', () {
+      final socketFailing = _FailingSocketAnalyticsService();
+      final multiWithSocketFailure = MultiProviderAnalytics([
+        socketFailing,
+        service1,
+      ], onError: (error, _) => errors.add(error));
+
+      expect(() => multiWithSocketFailure.logEvent(name: 'test'), returnsNormally);
+      expect(service1.totalEvents, equals(1));
+      expect(errors, isNotEmpty);
+      expect(errors.first, isA<SocketException>());
+    });
+
+    test('continues with other providers when FormatException is thrown', () {
+      final formatFailing = _FailingFormatAnalyticsService();
+      final multiWithFormatFailure = MultiProviderAnalytics([
+        formatFailing,
+        service1,
+      ], onError: (error, _) => errors.add(error));
+
+      expect(() => multiWithFormatFailure.logEvent(name: 'test'), returnsNormally);
+      expect(service1.totalEvents, equals(1));
+      expect(errors, isNotEmpty);
+      expect(errors.first, isA<FormatException>());
+    });
+
     test('reports failure details for logging/metrics hooks', () {
       // Arrange
       final failingProvider = _FailingAnalyticsService();
@@ -150,6 +177,25 @@ void main() {
       expect(service3.totalEvents, equals(2)); // both calls allowed
     });
 
+    test('addProvider preserves providerFilter passed in', () {
+      final service3 = MockAnalyticsService();
+
+      final updated = multiProvider.addProvider(
+        service3,
+        providerFilter: (name, _) => name == 'allowed',
+      );
+
+      // Original unchanged
+      expect(multiProvider.providerCount, equals(2));
+      expect(updated.providerCount, equals(3));
+
+      updated.logEvent(name: 'allowed');
+      expect(service3.totalEvents, equals(1));
+
+      updated.logEvent(name: 'denied');
+      expect(service3.totalEvents, equals(1));
+    });
+
     group('logEventAsync', () {
       test('forwards events to all providers asynchronously', () async {
         final asyncProvider = _AsyncLoggingProvider(service2);
@@ -162,6 +208,71 @@ void main() {
 
         expect(service1.totalEvents, equals(1));
         expect(service2.totalEvents, equals(1));
+      });
+
+      test('respects provider filters in async path', () async {
+        final asyncProvider = _AsyncLoggingProvider(service2);
+
+        final multiAsync = MultiProviderAnalytics([
+          service1,
+          asyncProvider,
+        ], providerFilters: {
+          service1: (name, _) => name == 'allowed',
+          asyncProvider: (name, _) => false,
+        });
+
+        await multiAsync.logEventAsync(name: 'allowed');
+
+        // service1 should receive the event; asyncProvider should be filtered out
+        expect(service1.totalEvents, equals(1));
+        expect(service2.totalEvents, equals(0));
+
+        await multiAsync.logEventAsync(name: 'denied');
+        // no additional events delivered
+        expect(service1.totalEvents, equals(1));
+        expect(service2.totalEvents, equals(0));
+      });
+
+      test('reports failure details when async provider fails via onProviderFailure',
+          () async {
+        final failing = _FailingAsyncAnalyticsService();
+        final failures = <MultiProviderAnalyticsFailure>[];
+        final errors = <Object>[];
+
+        final multiWithFailure = MultiProviderAnalytics(
+          [failing, service1],
+          onError: (error, _) => errors.add(error),
+          onProviderFailure: (failure) => failures.add(failure),
+        );
+
+        await multiWithFailure.logEventAsync(name: 'async_fail');
+
+        expect(service1.totalEvents, equals(1));
+        expect(failures, isNotEmpty);
+        expect(failures.single.provider, equals(failing));
+        expect(failures.single.stackTrace, isA<StackTrace>());
+        expect(errors, isNotEmpty);
+      });
+
+      test('reports failure details when non-async provider fails in microtask',
+          () async {
+        final failing = _FailingAnalyticsService();
+        final failures = <MultiProviderAnalyticsFailure>[];
+        final errors = <Object>[];
+
+        final multiWithFailure = MultiProviderAnalytics(
+          [failing, service1],
+          onError: (error, _) => errors.add(error),
+          onProviderFailure: (failure) => failures.add(failure),
+        );
+
+        await multiWithFailure.logEventAsync(name: 'microtask_fail');
+
+        expect(service1.totalEvents, equals(1));
+        expect(failures, isNotEmpty);
+        expect(failures.single.provider, equals(failing));
+        expect(failures.single.stackTrace, isA<StackTrace>());
+        expect(errors, isNotEmpty);
       });
     });
 
@@ -226,5 +337,21 @@ class _FailingAsyncAnalyticsService implements IAnalytics, IAsyncAnalytics {
   Future<void> logEventAsync(
       {required String name, AnalyticsParams? parameters}) {
     return Future.error(Exception('Intentional async failure'));
+  }
+}
+
+/// Provider that throws a [SocketException] to simulate network errors.
+class _FailingSocketAnalyticsService implements IAnalytics {
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    throw SocketException('Network failure');
+  }
+}
+
+/// Provider that throws a [FormatException] to simulate validation errors.
+class _FailingFormatAnalyticsService implements IAnalytics {
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    throw FormatException('Invalid event');
   }
 }
