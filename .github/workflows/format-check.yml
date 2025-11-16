@@ -1,0 +1,25 @@
+name: Format check
+
+on:
+   pull_request:
+      branches: [main]
+
+jobs:
+   dart-format-check:
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout repository
+           uses: actions/checkout@v4
+
+         - name: Set up Dart
+           uses: dart-lang/setup-dart@v1
+           with:
+              sdk: stable
+
+         - name: Get dependencies
+           run: dart pub get
+
+         - name: Check dart format
+           run: |
+              if [[ -n "$(dart format --output=none --set-exit-if-changed . 2>/dev/null)" ]]; then
+                echo "Dart format check failed. Run 'dart format .' locally to fix."; exit 1; fi

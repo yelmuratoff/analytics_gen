@@ -1,0 +1,33 @@
+name: Lint & Analysis
+
+on:
+   push:
+      branches: [main]
+   pull_request:
+      branches: [main]
+
+jobs:
+   analyze:
+      name: Analyze (matrix Dart versions)
+      runs-on: ubuntu-latest
+      strategy:
+         matrix:
+            sdk: [stable, beta, dev]
+
+      steps:
+         - name: Checkout repository
+           uses: actions/checkout@v4
+
+         - name: Set up Dart ${{ matrix.sdk }}
+           uses: dart-lang/setup-dart@v1
+           with:
+              sdk: ${{ matrix.sdk }}
+
+         - name: Get dependencies
+           run: dart pub get
+
+         - name: Run static analyzer
+           run: dart analyze
+
+         - name: Run tests (no coverage) to validate for SDK ${{ matrix.sdk }}
+           run: dart test --no-pub --platform vm
