@@ -12,11 +12,7 @@ jobs:
       runs-on: ubuntu-latest
       permissions:
          contents: read
-         id-token: write # Required for authentication using OIDC
-      # To require a GitHub Actions environment (with configured approval or secrets),
-      # set the environment name here. If you want to require an environment, create it
-      # in your repo settings (e.g., 'production' or 'pub-dev') then use it below.
-      environment: "production"
+         id-token: write
 
       steps:
          - name: Checkout repository
