@@ -196,9 +196,11 @@ void main() {
       );
     });
 
-    test('documents parameter descriptions, optional checks, and replacement text',
+    test(
+        'documents parameter descriptions, optional checks, and replacement text',
         () async {
-      final eventsFile = File(p.join(tempProject.path, 'events', 'billing.yaml'));
+      final eventsFile =
+          File(p.join(tempProject.path, 'events', 'billing.yaml'));
       await eventsFile.writeAsString(
         'billing:\n'
         '  purchase:\n'

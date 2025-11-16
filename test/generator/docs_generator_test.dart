@@ -202,8 +202,7 @@ void main() {
 
     test('falls back to default analytics_docs.md when docsPath omitted',
         () async {
-      final eventsFile =
-          File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(
         'auth:\n'
         '  login:\n'

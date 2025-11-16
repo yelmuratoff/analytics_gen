@@ -109,7 +109,8 @@ void main() {
       );
     });
 
-    test('deletes stale database and logs failure when sqlite3 errors', () async {
+    test('deletes stale database and logs failure when sqlite3 errors',
+        () async {
       final logs = <String>[];
       final dbPath = p.join(tempDir.path, 'analytics_events.db');
       File(dbPath).writeAsStringSync('stale content');

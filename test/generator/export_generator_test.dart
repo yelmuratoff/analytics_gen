@@ -93,7 +93,8 @@ void main() {
       );
     });
 
-    test('writes CSV/JSON/SQL to default assets path and logs each step', () async {
+    test('writes CSV/JSON/SQL to default assets path and logs each step',
+        () async {
       final eventsDir = Directory(path.join(tempDir.path, 'events'));
       eventsDir.createSync(recursive: true);
 
