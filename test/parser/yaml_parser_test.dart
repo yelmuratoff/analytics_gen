@@ -1,8 +1,19 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
+
+// Helper type used in tests to create map keys that stringify to the same
+// value while remaining distinct map keys (Dart object identity).
+class KeyWithToString {
+  final String id;
+  KeyWithToString(this.id);
+
+  @override
+  String toString() => 'dup';
+}
 
 void main() {
   group('YamlParser', () {
@@ -105,15 +116,35 @@ void main() {
     });
 
     test('returns empty map when events directory does not exist', () async {
-      final parser = YamlParser(eventsPath: '/nonexistent/path');
+      final messages = <String>[];
+      final parser =
+          YamlParser(eventsPath: '/nonexistent/path', log: messages.add);
       final domains = await parser.parseEvents();
       expect(domains, isEmpty);
+      expect(messages, contains(contains('Events directory not found')));
     });
 
     test('returns empty map when no YAML files found', () async {
-      final parser = YamlParser(eventsPath: eventsPath);
+      final messages = <String>[];
+      final parser = YamlParser(eventsPath: eventsPath, log: messages.add);
       final domains = await parser.parseEvents();
       expect(domains, isEmpty);
+      expect(messages, contains(contains('No YAML files found')));
+    });
+
+    test('logs and skips files that do not contain a top-level YamlMap',
+        () async {
+      final yamlFile = File(path.join(eventsPath, 'not_map.yaml'));
+      await yamlFile.writeAsString('- list_item\n- second_item\n');
+
+      final messages = <String>[];
+      final parser = YamlParser(eventsPath: eventsPath, log: messages.add);
+
+      final domains = await parser.parseEvents();
+      expect(domains, isEmpty);
+      expect(messages, hasLength(2));
+      expect(messages.any((m) => m.contains('does not contain a YamlMap')),
+          isTrue);
     });
 
     test('throws when domain value is not a map', () async {
@@ -224,6 +255,95 @@ void main() {
       );
     });
 
+    test('duplicate parameter raw names via YAML loader throws', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters:\n'
+        '      a: string\n'
+        '      a: int\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(isA<YamlException>()),
+      );
+    });
+
+    test('throws when duplicate parameter raw names defined (via objects)',
+        () async {
+      // Create two distinct keys whose `toString()` values are equal — this
+      // mirrors the string duplication check in `seenRawNames` while avoiding
+      // the YAML loader's duplicate-key error.
+      // keys are created using the top-level KeyWithToString helper.
+
+      final parameters = <Object, Object>{
+        KeyWithToString('a'): 'string',
+        KeyWithToString('b'): 'int',
+      };
+
+      final yamlMap = YamlMap.wrap(parameters);
+
+      expect(
+        () => YamlParser.parseParametersFromYaml(
+          yamlMap,
+          domainName: 'auth',
+          eventName: 'dup',
+          filePath: 'file.yaml',
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Duplicate parameter "dup"'),
+          ),
+        ),
+      );
+    });
+
+    test('fallback type key when explicit type is missing', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters:\n'
+        '      color:\n'
+        '        string: true\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+      final domains = await parser.parseEvents();
+
+      final param = domains['auth']!.events.first.parameters.first;
+      expect(param.type, equals('string'));
+    });
+
+    test('throws when allowed_values is not a list', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters:\n'
+        '      method:\n'
+        '        type: string\n'
+        '        allowed_values: 1\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(isA<FormatException>()
+            .having((e) => e.message, 'message', contains('allowed_values'))),
+      );
+    });
+
     test('throws when domain name is not snake_case', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
       await yamlFile
@@ -240,6 +360,24 @@ void main() {
             contains('must use snake_case'),
           ),
         ),
+      );
+    });
+
+    test('throws StateError when duplicate domain defined across files',
+        () async {
+      final yamlFile = File(path.join(eventsPath, 'file1.yaml'));
+      await yamlFile.writeAsString('auth:\n  login:\n    description: Test\n');
+
+      final yamlFile2 = File(path.join(eventsPath, 'file2.yaml'));
+      await yamlFile2
+          .writeAsString('auth:\n  logout:\n    description: Test2\n');
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(isA<StateError>()
+            .having((e) => e.message, 'message', contains('Duplicate domain'))),
       );
     });
 

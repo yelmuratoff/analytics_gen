@@ -289,6 +289,27 @@ final class YamlParser {
     return parameters;
   }
 
+  /// Public helper used by tests to exercise parameter parsing logic
+  /// without traversing the full YAML loader pipeline.
+  ///
+  /// This is primarily used to simulate unusual keys that may be valid
+  /// in a YamlMap (for example, keys that return the same `toString()`
+  /// value) and ensure duplicate checks still work as intended.
+  static List<AnalyticsParameter> parseParametersFromYaml(
+    YamlMap parametersYaml, {
+    required String domainName,
+    required String eventName,
+    required String filePath,
+  }) {
+    final parser = YamlParser(eventsPath: '.', log: null);
+    return parser._parseParameters(
+      parametersYaml,
+      domainName: domainName,
+      eventName: eventName,
+      filePath: filePath,
+    );
+  }
+
   /// Ensures every resolved [AnalyticsEvent] name is unique across domains.
   void _validateUniqueEventNames(Map<String, AnalyticsDomain> domains) {
     final seen = <String, String>{};
