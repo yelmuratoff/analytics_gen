@@ -16,10 +16,5 @@ jobs:
            with:
               sdk: stable
 
-         - name: Get dependencies
-           run: dart pub get
-
          - name: Check dart format
-           run: |
-              if [[ -n "$(dart format --output=none --set-exit-if-changed . 2>/dev/null)" ]]; then
-                echo "Dart format check failed. Run 'dart format .' locally to fix."; exit 1; fi
+           run: dart format --output=none --set-exit-if-changed .

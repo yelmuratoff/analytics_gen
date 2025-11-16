@@ -21,9 +21,6 @@ jobs:
          - name: Install dependencies
            run: dart pub get
 
-         - name: Ensure coverage tool available
-           run: dart pub get
-
          - name: Run tests with coverage
            run: dart test --coverage=coverage
 
@@ -48,5 +45,5 @@ jobs:
            env:
               CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
            with:
-              file: coverage/lcov.info
+              files: coverage/lcov.info
               fail_ci_if_error: false
