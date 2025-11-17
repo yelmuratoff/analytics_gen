@@ -100,7 +100,7 @@ Add `analytics_gen` to your `dev_dependencies` and get packages:
 
 ```yaml
 dev_dependencies:
-  analytics_gen: ^0.1.5
+  analytics_gen: ^0.1.6
 ```
 
 ```bash

@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.6] - Unreleased
+## [0.1.6] - 2025-11-17
  - Add `include_event_description` config option to optionally include an
    event's `description` property inside the emitted `logger.logEvent`
    parameters map. This flag defaults to `false` to preserve existing

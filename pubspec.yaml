@@ -1,6 +1,6 @@
 name: analytics_gen
 description: Type-safe analytics event tracking with code generation from YAML configuration. Supports multiple providers, testing utilities, and export formats.
-version: 0.1.5
+version: 0.1.6
 repository: https://github.com/yelmuratoff/analytics_gen
 issue_tracker: https://github.com/yelmuratoff/analytics_gen/issues
 
