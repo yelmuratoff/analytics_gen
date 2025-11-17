@@ -2,6 +2,7 @@ Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement
 auth,login,auth: login,User logs in to the application,"method (string): Login method (email, google, apple)",true,auth.login_v2
 auth,login_v2,auth: login_v2,User logs in to the application (v2),"method (string): Login method v2 (email, google, apple)",false,
 auth,logout,auth: logout,User logs out,,false,
+auth,phone_login,Auth: Phone,When user logs in via phone,user_exists (bool?): Whether the user exists or not,false,
 auth,signup,auth: signup,User creates a new account,method (string); referral_code (string?): Optional referral code used during signup,false,
 purchase,cancelled,purchase: cancelled,User cancelled a purchase,product_id (string); reason (string?): Reason for cancellation,false,
 purchase,completed,purchase: completed,User completed a purchase,currency (string); price (double); product_id (string); quantity (int): Number of items purchased,false,

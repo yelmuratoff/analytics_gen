@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "fingerprint": "-16b6279a2f73b424",
+    "fingerprint": "-3889fe4dbbfad68f",
     "total_domains": 3,
-    "total_events": 7,
-    "total_parameters": 13
+    "total_events": 8,
+    "total_parameters": 14
   },
   "domains": [
     {
       "name": "auth",
-      "event_count": 4,
-      "parameter_count": 4,
+      "event_count": 5,
+      "parameter_count": 5,
       "events": [
         {
           "name": "login",
@@ -46,6 +46,20 @@
           "description": "User logs out",
           "deprecated": false,
           "parameters": []
+        },
+        {
+          "name": "phone_login",
+          "event_name": "Auth: Phone",
+          "description": "When user logs in via phone",
+          "deprecated": false,
+          "parameters": [
+            {
+              "name": "user_exists",
+              "type": "bool",
+              "nullable": true,
+              "description": "Whether the user exists or not"
+            }
+          ]
         },
         {
           "name": "signup",

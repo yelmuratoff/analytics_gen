@@ -1,7 +1,7 @@
 # Analytics Events Documentation
 
-Fingerprint: `-16b6279a2f73b424`
-Domains: 3 | Events: 7 | Parameters: 13
+Fingerprint: `-3889fe4dbbfad68f`
+Domains: 3 | Events: 8 | Parameters: 14
 
 ## Table of Contents
 
@@ -12,18 +12,19 @@ Domains: 3 | Events: 7 | Parameters: 13
 ## Summary
 
 - **Total Domains**: 3
-- **Total Events**: 7
-- **Total Parameters**: 13
+- **Total Events**: 8
+- **Total Parameters**: 14
 
 ## auth
 
-Events: 4 | Parameters: 4
+Events: 5 | Parameters: 5
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
 | auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) |
 | auth: login_v2 | User logs in to the application (v2) | Active | `method` (string): Login method v2 (email, google, apple) |
 | auth: logout | User logs out | Active | - |
+| Auth: Phone | When user logs in via phone | Active | `user_exists` (bool?): Whether the user exists or not |
 | auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup |
 
 ### Code Examples

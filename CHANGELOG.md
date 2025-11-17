@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.1.6] - Unreleased
+ - Add `include_event_description` config option to optionally include an
+   event's `description` property inside the emitted `logger.logEvent`
+   parameters map. This flag defaults to `false` to preserve existing
+   behavior; enable it via `analytics_gen.yaml` (key: `include_event_description`).
+   - The code generator now inserts a `'description'` key for events that
+     have a non-empty description when the flag is enabled.
+   - The example config and `README.md` were updated to document this flag.
+   - Unit tests assert that descriptions are properly included when enabled
+     and omitted otherwise.
 - Support interpolated placeholders in custom `event_name` strings
   - You can now include parameter placeholders in `event_name` using
     `{parameter_name}` and the code generator will replace them with

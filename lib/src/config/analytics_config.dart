@@ -27,6 +27,10 @@ final class AnalyticsConfig {
   /// Whether to include the runtime tracking plan in generated code.
   final bool generatePlan;
 
+  /// Whether to include the event 'description' as a parameter when logging
+  /// events.
+  final bool includeEventDescription;
+
   const AnalyticsConfig({
     this.eventsPath = 'events',
     this.outputPath = 'src/analytics/generated',
@@ -37,6 +41,7 @@ final class AnalyticsConfig {
     this.generateSql = false,
     this.generateDocs = false,
     this.generatePlan = true,
+    this.includeEventDescription = false,
   });
 
   /// Creates config from YAML map
@@ -53,6 +58,8 @@ final class AnalyticsConfig {
       generateSql: config['generate_sql'] as bool? ?? false,
       generateDocs: config['generate_docs'] as bool? ?? false,
       generatePlan: config['generate_plan'] as bool? ?? true,
+      includeEventDescription:
+          config['include_event_description'] as bool? ?? false,
     );
   }
 

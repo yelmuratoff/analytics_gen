@@ -20,6 +20,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
     logger.logEvent(
       name: "purchase: cancelled",
       parameters: <String, Object?>{
+        'description': 'User cancelled a purchase',
         "product_id": productId,
         if (reason != null) "reason": reason,
       },
@@ -43,6 +44,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
     logger.logEvent(
       name: "purchase: completed",
       parameters: <String, Object?>{
+        'description': 'User completed a purchase',
         "currency": currency,
         "price": price,
         "product_id": productId,

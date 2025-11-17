@@ -181,6 +181,43 @@ void main() {
           contains('if (durationMs != null) "duration_ms": durationMs,'));
     });
 
+    test('includes event description in parameters when enabled', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  phone_login:\n'
+        '    description: When user logs in via phone\n'
+        '    parameters:\n'
+        '      user_exists: bool?\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+        includeEventDescription: true,
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(
+        authContent,
+        contains("'description': 'When user logs in via phone',"),
+      );
+      // Should still write the optional parameter
+      expect(authContent,
+          contains('if (userExists != null) "user_exists": userExists,'));
+    });
+
     test('removes stale domain files before regenerating', () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(

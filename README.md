@@ -199,6 +199,10 @@ analytics_gen:
   generate_json: true
   generate_sql: true
   generate_plan: true
+  # When true, event descriptions are included in the emitted
+  # `logger.logEvent` parameters under the key `description`. Defaults to
+  # `false`.
+  # include_event_description: false
 ```
 
 When `generate_docs` or any export flag is enabled in the config, the CLI will run those generators automatically (no need to pass `--docs` or `--exports`). Use `--no-docs` or `--no-exports` to temporarily override config.

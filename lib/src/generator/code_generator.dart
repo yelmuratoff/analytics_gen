@@ -142,6 +142,13 @@ final class CodeGenerator {
     buffer.writeln('  /// ${event.description}');
     buffer.writeln('  ///');
 
+    // We'll add the event 'description' to the logged parameters if the
+    // configuration enables it and the description is present. This does not
+    // affect the method signature - it's only an additional parameter in the
+    // logged map.
+    final includeDescription =
+        config.includeEventDescription && event.description.isNotEmpty;
+
     if (event.parameters.isNotEmpty) {
       buffer.writeln('  /// Parameters:');
       for (final param in event.parameters) {
@@ -207,8 +214,15 @@ final class CodeGenerator {
     buffer.writeln('    logger.logEvent(');
     buffer.writeln('      name: "$interpolatedEventName",');
 
-    if (event.parameters.isNotEmpty) {
+    if (event.parameters.isNotEmpty || includeDescription) {
       buffer.writeln('      parameters: <String, Object?>{');
+
+      // Always include the description at the beginning when enabled.
+      if (includeDescription) {
+        buffer.writeln(
+          "        'description': '${_escapeSingleQuoted(event.description)}',",
+        );
+      }
       for (final param in event.parameters) {
         final camelParam = _toCamelCase(param.name);
         if (param.isNullable) {

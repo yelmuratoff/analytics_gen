@@ -22,6 +22,7 @@ mixin AnalyticsScreen on AnalyticsBase {
     logger.logEvent(
       name: "Screen: ${screenName}",
       parameters: <String, Object?>{
+        'description': 'User views a screen',
         if (durationMs != null) "duration_ms": durationMs,
         if (previousScreen != null) "previous_screen": previousScreen,
         "screen_name": screenName,

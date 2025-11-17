@@ -54,6 +54,20 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
           ],
         ),
         AnalyticsEvent(
+          name: 'phone_login',
+          description: 'When user logs in via phone',
+          customEventName: 'Auth: Phone',
+          deprecated: false,
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'user_exists',
+              type: 'bool',
+              isNullable: true,
+              description: 'Whether the user exists or not',
+            ),
+          ],
+        ),
+        AnalyticsEvent(
           name: 'signup',
           description: 'User creates a new account',
           deprecated: false,

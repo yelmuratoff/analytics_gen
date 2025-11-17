@@ -19,6 +19,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     logger.logEvent(
       name: "auth: login",
       parameters: <String, Object?>{
+        'description': 'User logs in to the application',
         "method": method,
       },
     );
@@ -35,6 +36,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     logger.logEvent(
       name: "auth: login_v2",
       parameters: <String, Object?>{
+        'description': 'User logs in to the application (v2)',
         "method": method,
       },
     );
@@ -45,7 +47,26 @@ mixin AnalyticsAuth on AnalyticsBase {
   void logAuthLogout() {
     logger.logEvent(
       name: "auth: logout",
-      parameters: const {},
+      parameters: <String, Object?>{
+        'description': 'User logs out',
+      },
+    );
+  }
+
+  /// When user logs in via phone
+  ///
+  /// Parameters:
+  /// - `user_exists`: bool? - Whether the user exists or not
+  void logAuthPhoneLogin({
+    bool? userExists,
+  }) {
+
+    logger.logEvent(
+      name: "Auth: Phone",
+      parameters: <String, Object?>{
+        'description': 'When user logs in via phone',
+        if (userExists != null) "user_exists": userExists,
+      },
     );
   }
 
@@ -62,6 +83,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     logger.logEvent(
       name: "auth: signup",
       parameters: <String, Object?>{
+        'description': 'User creates a new account',
         "method": method,
         if (referralCode != null) "referral_code": referralCode,
       },

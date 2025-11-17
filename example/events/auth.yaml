@@ -26,3 +26,11 @@ auth:
       referral_code:
         type: string?
         description: Optional referral code used during signup
+
+  phone_login:
+    description: When user logs in via phone
+    event_name: "Auth: Phone"
+    parameters:
+      user_exists:
+        bool?:
+        description: Whether the user exists or not
