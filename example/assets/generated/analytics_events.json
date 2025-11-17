@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fingerprint": "-1c1db37546dc4641",
+    "fingerprint": "-16b6279a2f73b424",
     "total_domains": 3,
     "total_events": 7,
     "total_parameters": 13
@@ -130,7 +130,7 @@
       "events": [
         {
           "name": "view",
-          "event_name": "Screen: View",
+          "event_name": "Screen: {screen_name}",
           "description": "User views a screen",
           "deprecated": false,
           "parameters": [

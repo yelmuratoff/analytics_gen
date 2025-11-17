@@ -1,5 +1,5 @@
 -- Analytics Events Database Schema
--- Fingerprint: -1c1db37546dc4641 (domains=3, events=7, parameters=13)
+-- Fingerprint: -16b6279a2f73b424 (domains=3, events=7, parameters=13)
 
 -- Create domains table
 CREATE TABLE IF NOT EXISTS domains (
@@ -60,7 +60,7 @@ INSERT INTO parameters (event_id, name, type, nullable, description, allowed_val
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (6, 'price', 'double', 0, NULL, NULL);
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (6, 'product_id', 'string', 0, NULL, NULL);
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (6, 'quantity', 'int', 0, 'Number of items purchased', NULL);
-INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (7, 3, 'view', 'Screen: View', 'User views a screen', 0, NULL);
+INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (7, 3, 'view', 'Screen: {screen_name}', 'User views a screen', 0, NULL);
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (7, 'duration_ms', 'int', 1, 'Time spent on previous screen in milliseconds', NULL);
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (7, 'previous_screen', 'string', 1, 'Name of the previous screen', NULL);
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (7, 'screen_name', 'string', 0, NULL, NULL);

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - Unreleased
+- Support interpolated placeholders in custom `event_name` strings
+  - You can now include parameter placeholders in `event_name` using
+    `{parameter_name}` and the code generator will replace them with
+    Dart string interpolation in generated methods (for example,
+    `"Screen: {screen_name}"` → `"Screen: ${screenName}"`).
+  - The raw `event_name` still appears unchanged in docs/exports so
+    metadata remains stable across teams and exports.
+  - If a placeholder doesn't match a parameter, it is preserved as-is
+    (no silent mutations), so designs and engineers can detect typos
+    or handle advanced use cases explicitly.
+
 ## [0.1.5] - 2025-11-16
 - The entire package is 100% tested.
 - Github Actions have been added for code review and testing.

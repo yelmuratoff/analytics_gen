@@ -1,7 +1,7 @@
 screen:
   view:
     description: User views a screen
-    event_name: "Screen: View"
+    event_name: "Screen: {screen_name}"
     parameters:
       screen_name: string
       previous_screen:

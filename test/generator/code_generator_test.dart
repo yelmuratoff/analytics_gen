@@ -137,6 +137,50 @@ void main() {
       expect(authContent, contains('required DateTime timestamp,'));
     });
 
+    test('replaces placeholders in custom event_name with Dart interpolation',
+        () async {
+      final eventsFile =
+          File(p.join(tempProject.path, 'events', 'screen.yaml'));
+      await eventsFile.writeAsString(
+        'screen:\n'
+        '  view:\n'
+        '    description: User views a screen\n'
+        '    event_name: "Screen: {screen_name}"\n'
+        '    parameters:\n'
+        '      screen_name: string\n'
+        '      previous_screen:\n'
+        '        type: string?\n'
+        '        description: Name of the previous screen\n'
+        '      duration_ms:\n'
+        '        type: int?\n'
+        '        description: Time spent on previous screen in milliseconds\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      await generator.generate();
+
+      final screenContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'screen_events.dart'),
+      ).readAsString();
+
+      // The event name should use Dart interpolation of the parameter.
+      expect(screenContent, contains('name: "Screen: \${screenName}",'));
+      // Parameters should keep their documentation and usage
+      expect(screenContent, contains('required String screenName,'));
+      expect(screenContent,
+          contains('if (durationMs != null) "duration_ms": durationMs,'));
+    });
+
     test('removes stale domain files before regenerating', () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(

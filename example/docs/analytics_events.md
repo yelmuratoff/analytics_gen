@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Fingerprint: `-1c1db37546dc4641`
+Fingerprint: `-16b6279a2f73b424`
 Domains: 3 | Events: 7 | Parameters: 13
 
 ## Table of Contents
@@ -73,7 +73,7 @@ Events: 1 | Parameters: 3
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
-| Screen: View | User views a screen | Active | `duration_ms` (int?): Time spent on previous screen in milliseconds<br>`previous_screen` (string?): Name of the previous screen<br>`screen_name` (string) |
+| Screen: {screen_name} | User views a screen | Active | `duration_ms` (int?): Time spent on previous screen in milliseconds<br>`previous_screen` (string?): Name of the previous screen<br>`screen_name` (string) |
 
 ### Code Examples
 

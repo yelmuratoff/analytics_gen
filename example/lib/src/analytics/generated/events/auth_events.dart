@@ -12,10 +12,15 @@ mixin AnalyticsAuth on AnalyticsBase {
   ///
   /// Parameters:
   /// - `method`: string - Login method (email, google, apple)
-  void logAuthLogin({required String method}) {
+  void logAuthLogin({
+    required String method,
+  }) {
+
     logger.logEvent(
       name: "auth: login",
-      parameters: <String, Object?>{"method": method},
+      parameters: <String, Object?>{
+        "method": method,
+      },
     );
   }
 
@@ -23,17 +28,25 @@ mixin AnalyticsAuth on AnalyticsBase {
   ///
   /// Parameters:
   /// - `method`: string - Login method v2 (email, google, apple)
-  void logAuthLoginV2({required String method}) {
+  void logAuthLoginV2({
+    required String method,
+  }) {
+
     logger.logEvent(
       name: "auth: login_v2",
-      parameters: <String, Object?>{"method": method},
+      parameters: <String, Object?>{
+        "method": method,
+      },
     );
   }
 
   /// User logs out
   ///
   void logAuthLogout() {
-    logger.logEvent(name: "auth: logout", parameters: const {});
+    logger.logEvent(
+      name: "auth: logout",
+      parameters: const {},
+    );
   }
 
   /// User creates a new account
@@ -41,7 +54,11 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// Parameters:
   /// - `method`: string
   /// - `referral_code`: string? - Optional referral code used during signup
-  void logAuthSignup({required String method, String? referralCode}) {
+  void logAuthSignup({
+    required String method,
+    String? referralCode,
+  }) {
+
     logger.logEvent(
       name: "auth: signup",
       parameters: <String, Object?>{
@@ -50,4 +67,5 @@ mixin AnalyticsAuth on AnalyticsBase {
       },
     );
   }
+
 }

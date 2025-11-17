@@ -198,8 +198,14 @@ final class CodeGenerator {
 
     // Method body
     final eventName = EventNaming.resolveEventName(domainName, event);
+    // Replace parameter placeholders like {screen_name} with Dart-style
+    // string interpolation using the generated camelCase parameter name.
+    final interpolatedEventName = _replacePlaceholdersWithInterpolation(
+      eventName,
+      event.parameters,
+    );
     buffer.writeln('    logger.logEvent(');
-    buffer.writeln('      name: "$eventName",');
+    buffer.writeln('      name: "$interpolatedEventName",');
 
     if (event.parameters.isNotEmpty) {
       buffer.writeln('      parameters: <String, Object?>{');
@@ -271,6 +277,25 @@ final class CodeGenerator {
 
   String _escapeSingleQuoted(String value) {
     return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
+  }
+
+  /// Converts placeholders in an event name from the analytics config
+  /// (e.g. "Screen: {screen_name}") to Dart string interpolation using the
+  /// generated camelCase parameter names (e.g. "Screen: ${screenName}").
+  String _replacePlaceholdersWithInterpolation(
+    String eventName,
+    List<AnalyticsParameter> parameters,
+  ) {
+    final placeholder = RegExp(r"\{([^}]+)\}");
+
+    return eventName.replaceAllMapped(placeholder, (match) {
+      final key = match.group(1)!;
+      final found = parameters.where((p) => p.name == key).toList();
+      if (found.isEmpty) return match.group(0)!;
+
+      final camel = _toCamelCase(found.first.name);
+      return '\${$camel}';
+    });
   }
 
   /// Generates Analytics singleton class with all domain mixins

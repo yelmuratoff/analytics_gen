@@ -18,8 +18,9 @@ mixin AnalyticsScreen on AnalyticsBase {
     String? previousScreen,
     required String screenName,
   }) {
+
     logger.logEvent(
-      name: "Screen: View",
+      name: "Screen: ${screenName}",
       parameters: <String, Object?>{
         if (durationMs != null) "duration_ms": durationMs,
         if (previousScreen != null) "previous_screen": previousScreen,
@@ -27,4 +28,5 @@ mixin AnalyticsScreen on AnalyticsBase {
       },
     );
   }
+
 }

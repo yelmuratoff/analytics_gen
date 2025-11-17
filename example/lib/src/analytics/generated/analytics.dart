@@ -12,8 +12,8 @@ import 'generated_events.dart';
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
-final class Analytics extends AnalyticsBase
-    with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen {
+final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen
+{
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
     AnalyticsDomain(
@@ -50,7 +50,8 @@ final class Analytics extends AnalyticsBase
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
-          parameters: <AnalyticsParameter>[],
+          parameters: <AnalyticsParameter>[
+          ],
         ),
         AnalyticsEvent(
           name: 'signup',
@@ -129,7 +130,7 @@ final class Analytics extends AnalyticsBase
         AnalyticsEvent(
           name: 'view',
           description: 'User views a screen',
-          customEventName: 'Screen: View',
+          customEventName: 'Screen: {screen_name}',
           deprecated: false,
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
@@ -176,3 +177,4 @@ final class Analytics extends AnalyticsBase
   @override
   IAnalytics get logger => ensureAnalyticsInitialized(_analytics);
 }
+

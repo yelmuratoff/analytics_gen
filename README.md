@@ -258,6 +258,59 @@ screen:
       screen_name: string
 ```
 
+Note: you can include parameter placeholders in `event_name` that will be
+replaced with the generated Dart parameter variables when code is emitted.
+This makes it safe to include contextual values (like the active screen name)
+in legacy or provider-specific strings while preserving a type-safe API.
+
+Example with placeholder interpolation:
+
+```yaml
+screen:
+  view:
+    description: Screen viewed
+    event_name: "Screen: {screen_name}"
+    parameters:
+      screen_name: string
+      previous_screen:
+        type: string?
+        description: Name of the previous screen
+      duration_ms:
+        type: int?
+        description: Time spent on previous screen in milliseconds
+```
+
+Generated Dart snippet (truncated):
+
+```dart
+void logScreenView({
+  int? durationMs,
+  String? previousScreen,
+  required String screenName,
+}) {
+  logger.logEvent(
+    name: "Screen: ${screenName}",
+    parameters: <String, Object?>{
+      if (durationMs != null) "duration_ms": durationMs,
+      if (previousScreen != null) "previous_screen": previousScreen,
+      "screen_name": screenName,
+    },
+  );
+}
+```
+
+Notes & behavior:
+- Placeholders are written in the YAML using `{parameter_name}` (snake_case).
+- During generation the placeholder is replaced by the camelCase parameter
+  variable (e.g. `{screen_name}` -> `${screenName}`) so you can use the
+  variable directly in the emitted string.
+- If a placeholder does not match any parameter name exactly, it is left
+  unchanged so your logs are predictable and explicit validation is not
+  attempted at generation time.
+- This interpolation happens only in the generated Dart logger call — the
+  raw `event_name` is still used for exports and documentation so your
+  tracking plan remain unchanged.
+
 ### Supported Types
 
 - `int`, `string`, `bool`, `double`, `float`
