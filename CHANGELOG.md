@@ -2,12 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.6] - 2025-11-17
+## [Unreleased]
 - Flexible naming strategy block with per-event/parameter overrides:
   - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
   - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.
   - Parameters gained `identifier` (for generated Dart APIs) and `param_name` (for the wire payload). Code generation, docs, and exports respect the new fields and continue validating collisions after camelCase normalization.
   - CSV/JSON/SQL/SQLite exports, docs, the CLI plan printer, and runtime uniqueness checks all use the configured naming strategy so watchdogs stay consistent across layers.
+
+## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an
   event's `description` property inside the emitted `logger.logEvent`
    parameters map. This flag defaults to `false` to preserve existing
