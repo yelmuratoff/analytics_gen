@@ -39,6 +39,22 @@ abstract class UserPropertiesCapability implements AnalyticsCapability {
 
 const userPropertiesKey =
     CapabilityKey<UserPropertiesCapability>('user_properties');
+
+abstract class RevenueCapability implements AnalyticsCapability {
+  void logRevenue({
+    required String productId,
+    required double value,
+    String? currency,
+  });
+}
+
+const revenueKey = CapabilityKey<RevenueCapability>('revenue');
+
+abstract class PushTokenCapability implements AnalyticsCapability {
+  Future<void> setPushToken(String token);
+}
+
+const pushTokenKey = CapabilityKey<PushTokenCapability>('push_tokens');
 ```
 
 ### 2. Expose it from a provider
@@ -50,10 +66,10 @@ class FirebaseAnalyticsService
   final CapabilityRegistry _capabilities = CapabilityRegistry();
 
   FirebaseAnalyticsService(this._firebase) {
-    _capabilities.register(
-      userPropertiesKey,
-      _FirebaseUserProperties(_firebase),
-    );
+    _capabilities
+      ..register(userPropertiesKey, _FirebaseUserProperties(_firebase))
+      ..register(revenueKey, _FirebaseRevenue(_firebase))
+      ..register(pushTokenKey, _FirebasePushTokens(_firebase));
   }
 
   @override
@@ -77,9 +93,40 @@ final class _FirebaseUserProperties implements UserPropertiesCapability {
   void clearUserProperty(String name) =>
       _firebase.setUserProperty(name: name, value: null);
 }
+
+final class _FirebaseRevenue implements RevenueCapability {
+  final FirebaseAnalytics _firebase;
+  _FirebaseRevenue(this._firebase);
+
+  @override
+  void logRevenue({
+    required String productId,
+    required double value,
+    String? currency,
+  }) {
+    _firebase.logEvent(
+      name: 'revenue',
+      parameters: {
+        'product_id': productId,
+        'value': value,
+        if (currency != null) 'currency': currency,
+      },
+    );
+  }
+}
+
+final class _FirebasePushTokens implements PushTokenCapability {
+  final FirebaseAnalytics _firebase;
+  _FirebasePushTokens(this._firebase);
+
+  @override
+  Future<void> setPushToken(String token) =>
+      _firebase.setPushToken(token);
+}
 ```
 
-Providers that do not register the capability simply omit it—no stubs, no extra interfaces.
+- Register as many capabilities as you need: the registry is just a typed map.
+- Providers that do not implement a capability simply omit registration—no stubs or empty implementations required.
 
 ### 3. Consume it in application code
 
@@ -98,6 +145,13 @@ void markPremiumUser() {
 - Compare capabilities to feature flags: only providers that implement the feature will expose it; everyone else keeps the simpler interface.
 - Highlight that capabilities are regular Dart objects—no reflection or code generation.
 - Emphasize testing: wire `MockAnalyticsService` with a fake capability to assert behavior in unit tests.
+
+### Naming Capabilities Consistently
+
+- Use `lowerCamelCase` for the constant (`userPropertiesKey`) and give it a descriptive string identifier (`'user_properties'`). This matches Dart style guidelines and keeps IDE auto-complete predictable.
+- For teams that prefer screaming snake case, pick one convention and hold the line—`user_propertiesKey` vs `USER_PROPERTIES_KEY` mismatches make diffs noisy.
+- Align capability interface names with domain language (`UserPropertiesCapability`, `RevenueCapability`, `PushTokenCapability`). Avoid generic labels like `ExtraCapability`.
+- Document every capability key in the provider module so newcomers know what exists already before adding duplicates.
 
 ## Testing Patterns
 
