@@ -8,6 +8,19 @@ This guide is the fast path for engineers joining a project that uses `analytics
 - `analytics_gen` listed under `dev_dependencies` in `pubspec.yaml`.
 - Access to the repository so you can read `events/*.yaml` and `analytics_gen.yaml`.
 
+### Optional: Kick the tires with the example app
+
+If you have not seen the output before, run the bundled sample first:
+
+```bash
+cd example
+dart pub get
+dart run analytics_gen:generate --docs --exports
+dart run lib/main.dart
+```
+
+This mirrors the workflow you will follow in your app and gives you a safe sandbox to inspect generated files before editing production YAML.
+
 ## Step 1 – Describe the tracking plan
 
 1. Create or update the domain file under `events/`. Each file covers one domain (e.g., `auth.yaml`, `screen.yaml`) and should use snake_case keys unless your team intentionally opts out via naming config.
