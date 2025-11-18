@@ -45,6 +45,17 @@ Configured under `analytics_gen.naming`:
 
 **Uniqueness enforcement** is performed on the resolved identifier (override > template). Duplicate identifiers abort generation so no two YAML entries can emit the same analytics payload.
 
+### Migrating from legacy naming
+
+Many teams inherit plans with camelCase or kebab-case. Recommended path:
+
+1. **Freeze identifiers** – set `identifier_template` (or per-event `identifier`) to the legacy strings so analytics payloads stay stable.
+2. **Disable enforcement temporarily** – set `enforce_snake_case_*: false` so the parser ingests existing YAML without blocking.
+3. **Normalize domain-by-domain** – pick a domain (`marketingLaunch` → `marketing_launch`), rename the YAML key, and update `identifier` only if the canonical string should change. Regenerate + review artifacts each time.
+4. **Re-enable enforcement** – once every domain/parameter follows snake_case, flip the flags back to `true` to prevent regressions.
+
+Document the migration in `analytics_gen.yaml` comments or README so future contributors know why the temporary relaxation existed.
+
 ## Placeholder Interpolation
 
 Placeholders declared in `event_name` (`"Screen: {screen_name}"`) map to generated Dart variables:
@@ -78,6 +89,7 @@ CI should call `--validate-only` to catch these failures without touching genera
 
 - `allowed_values` produces runtime assertions in generated methods. Passing a disallowed value throws `ArgumentError` immediately, making mistakes obvious in tests.
 - Deprecated events include their replacement in generated documentation and mixin comments so you can migrate safely.
+- Custom types (e.g., `DateTime`, `Uri`) pass through unchanged. Ensure your providers can serialize them; otherwise, transform to primitives before logging (e.g., convert `DateTime` to ISO 8601 strings). Add unit tests exercising provider adapters so unsupported types fail fast instead of silently dropping data.
 
 ## Deterministic Outputs
 
