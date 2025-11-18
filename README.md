@@ -156,6 +156,8 @@ Contributions welcome! Please:
 3. Run `dart analyze`, `dart test`, and the generator before submitting.
 4. Document user-facing changes in the README or the relevant doc under `docs/`.
 
+Every PR description flows through `.github/pull_request_template.md`, which links directly to [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, docs/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.
+
 ## FAQ
 
 - **Why YAML instead of defining events directly in Dart?**  

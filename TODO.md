@@ -3,7 +3,7 @@
 ## Active Work Items
 
 ### Documentation split + review guardrails
-- [ ] Wire a PR template (or CI reminder) that links to the new checklist so contributors cannot skip the required review steps.
+- [x] Wire a PR template (or CI reminder) that links to the new checklist so contributors cannot skip the required review steps. _PR template added under `.github/` with guardrail tests._
 
 ### Runtime & API surface
 - [ ] Evaluate whether `IAnalytics.logEvent` should expose an async variant by default (beyond `AsyncAnalyticsAdapter`) or if stronger documentation around handling heavy providers suffices. Outcome: either design/implement async hooks or add guidance in docs + example usage.
