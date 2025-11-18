@@ -128,6 +128,49 @@ The generated mixins call `Analytics.instance.logEvent(...)`. You are in control
 
 Mock + async adapters (`MockAnalyticsService`, `AsyncAnalyticsAdapter`) are included for tests and await-heavy flows.
 
+## Synchronous Logging & Async Providers
+
+`IAnalytics.logEvent` stays synchronous on purpose:
+
+- UI instrumentation should be fire-and-forget so frames are never blocked by analytics I/O.
+- Generated methods are widely sprinkled across apps; forcing `await` would leak runtime coupling into feature code.
+- Tests remain simple because `MockAnalyticsService` records events immediately.
+
+When a provider must await network flushes or heavy batching, queue that work behind an adapter instead of changing the base interface. A reference pattern:
+
+```dart
+final class QueueingAnalytics implements IAnalytics {
+  QueueingAnalytics(this._asyncAnalytics);
+
+  final IAsyncAnalytics _asyncAnalytics;
+  final _pending = <Future<void>>[];
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    _pending.add(
+      _asyncAnalytics.logEventAsync(name: name, parameters: parameters),
+    );
+  }
+
+  Future<void> flush() => Future.wait(_pending);
+}
+
+final asyncProvider = AsyncAnalyticsAdapter(
+  MultiProviderAnalytics([
+    FirebaseAnalyticsService(firebase),
+    AmplitudeService(amplitude),
+  ]),
+);
+
+Analytics.initialize(QueueingAnalytics(asyncProvider));
+```
+
+- The UI still calls synchronous generated methods.
+- `QueueingAnalytics` tracks outstanding futures so diagnostics/tests can `await` `flush()`.
+- `AsyncAnalyticsAdapter` wires into existing synchronous providers, which keeps compatibility with code gen.
+
+This same pattern appears in `example/lib/main.dart`, where the async adapter is exercised alongside the synchronous runtime.
+
 ## Example
 
 The [`example/`](example/) directory shows a working tracking plan + app integration.

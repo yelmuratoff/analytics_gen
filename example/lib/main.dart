@@ -1,7 +1,7 @@
 import 'package:analytics_gen/analytics_gen.dart';
 import 'src/analytics/generated/analytics.dart';
 
-void main() {
+Future<void> main() async {
   // Initialize analytics with a mock service for demonstration
   final mockService = MockAnalyticsService(verbose: true);
   Analytics.initialize(mockService);
@@ -48,6 +48,15 @@ void main() {
     productId: 'premium_yearly',
     reason: 'Too expensive',
   );
+
+  // Example 7: Async logging when a caller prefers awaiting delivery
+  print('\n7. Logging via AsyncAnalyticsAdapter (awaited)');
+  final asyncAdapter = AsyncAnalyticsAdapter(mockService);
+  await asyncAdapter.logEventAsync(
+    name: 'example_async_event',
+    parameters: {'flow': 'awaited'},
+  );
+  print('   Async logEventAsync call completed.');
 
   // Display summary
   print('\n${'═' * 50}');

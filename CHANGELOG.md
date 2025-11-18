@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - Add a PR template that links to the Code Review checklist so contributors must
   explicitly confirm regeneration + docs/exports review before requesting feedback.
+- Documented why `IAnalytics.logEvent` stays synchronous and added queueing +
+  `AsyncAnalyticsAdapter` examples/tests so contributors know how to await heavy
+  providers without changing the base interface.
 - Flexible naming strategy block with per-event/parameter overrides:
   - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
   - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.

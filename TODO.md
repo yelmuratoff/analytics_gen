@@ -6,7 +6,7 @@
 - [x] Wire a PR template (or CI reminder) that links to the new checklist so contributors cannot skip the required review steps. _PR template added under `.github/` with guardrail tests._
 
 ### Runtime & API surface
-- [ ] Evaluate whether `IAnalytics.logEvent` should expose an async variant by default (beyond `AsyncAnalyticsAdapter`) or if stronger documentation around handling heavy providers suffices. Outcome: either design/implement async hooks or add guidance in docs + example usage.
+- [x] Evaluate whether `IAnalytics.logEvent` should expose an async variant by default (beyond `AsyncAnalyticsAdapter`) or if stronger documentation around handling heavy providers suffices. _Kept the synchronous interface + added README/Onboarding guidance and example usage + tests, emphasizing queueing patterns via `AsyncAnalyticsAdapter`._
 - [ ] Investigate native batch logging support (buffer + flush strategies) so apps can optimize network usage without hand-rolling adapters. Define API shape + provider contract if feasible.
 - [ ] Revisit provider capability ergonomics to reduce boilerplate (templates, mixins, or helper base classes) and ensure the abstraction does not feel like lock-in. Could be documentation with ready-to-copy snippets or new helpers.
 
