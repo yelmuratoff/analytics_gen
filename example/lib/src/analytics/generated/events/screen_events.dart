@@ -7,6 +7,23 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 /// Generated mixin for screen analytics events
 mixin AnalyticsScreen on AnalyticsBase {
+  /// Legacy backend identifier kept for parity
+  ///
+  /// Parameters:
+  /// - `legacy-screen-code`: string - Three-letter code provided by data team
+  void logScreenLegacyView({
+    required String legacyScreenCode,
+  }) {
+
+    logger.logEvent(
+      name: "Screen: Legacy",
+      parameters: <String, Object?>{
+        'description': 'Legacy backend identifier kept for parity',
+        "legacy-screen-code": legacyScreenCode,
+      },
+    );
+  }
+
   /// User views a screen
   ///
   /// Parameters:

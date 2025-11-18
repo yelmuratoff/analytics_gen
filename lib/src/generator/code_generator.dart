@@ -173,7 +173,7 @@ final class CodeGenerator {
         final dartType = DartTypeMapper.toDartType(param.type);
         final nullableType = param.isNullable ? '$dartType?' : dartType;
         final required = param.isNullable ? '' : 'required ';
-        final camelParam = _toCamelCase(param.name);
+        final camelParam = _toCamelCase(param.codeName);
         buffer.writeln('    $required$nullableType $camelParam,');
       }
       buffer.writeln('  }) {');
@@ -182,7 +182,7 @@ final class CodeGenerator {
       for (final param in event.parameters) {
         final allowedValues = param.allowedValues;
         if (allowedValues != null && allowedValues.isNotEmpty) {
-          final camelParam = _toCamelCase(param.name);
+          final camelParam = _toCamelCase(param.codeName);
           final constName =
               'allowed${StringUtils.capitalizePascal(camelParam)}Values';
           final encodedValues = allowedValues
@@ -204,7 +204,8 @@ final class CodeGenerator {
     }
 
     // Method body
-    final eventName = EventNaming.resolveEventName(domainName, event);
+    final eventName =
+        EventNaming.resolveEventName(domainName, event, config.naming);
     // Replace parameter placeholders like {screen_name} with Dart-style
     // string interpolation using the generated camelCase parameter name.
     final interpolatedEventName = _replacePlaceholdersWithInterpolation(
@@ -224,7 +225,7 @@ final class CodeGenerator {
         );
       }
       for (final param in event.parameters) {
-        final camelParam = _toCamelCase(param.name);
+        final camelParam = _toCamelCase(param.codeName);
         if (param.isNullable) {
           buffer.writeln(
             '        if ($camelParam != null) "${param.name}": $camelParam,',
@@ -433,6 +434,11 @@ final class CodeGenerator {
     buffer.writeln(
       "          description: '${_escapeSingleQuoted(event.description)}',",
     );
+    if (event.identifier != null) {
+      buffer.writeln(
+        "          identifier: '${_escapeSingleQuoted(event.identifier!)}',",
+      );
+    }
     if (event.customEventName != null) {
       buffer.writeln(
         "          customEventName: '${_escapeSingleQuoted(event.customEventName!)}',",
@@ -468,6 +474,11 @@ final class CodeGenerator {
     final buffer = StringBuffer();
     buffer.writeln('            AnalyticsParameter(');
     buffer.writeln("              name: '${_escapeSingleQuoted(param.name)}',");
+    if (param.codeName != param.name) {
+      buffer.writeln(
+        "              codeName: '${_escapeSingleQuoted(param.codeName)}',",
+      );
+    }
     buffer.writeln("              type: '${_escapeSingleQuoted(param.type)}',");
     buffer.writeln('              isNullable: ${param.isNullable},');
     if (param.description != null) {

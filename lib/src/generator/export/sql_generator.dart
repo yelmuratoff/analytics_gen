@@ -1,11 +1,16 @@
 import '../../util/file_utils.dart';
 
+import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../generation_metadata.dart';
 
 /// Generates SQL schema and data inserts for analytics events.
 final class SqlGenerator {
+  final NamingStrategy naming;
+
+  SqlGenerator({required this.naming});
+
   /// Generates SQL file with schema and data
   Future<void> generate(
     Map<String, AnalyticsDomain> domains,
@@ -110,7 +115,8 @@ final class SqlGenerator {
       final dId = domainIdMap[domain.name]!;
 
       for (final event in domain.events) {
-        final eventName = EventNaming.resolveEventName(domain.name, event);
+        final eventName =
+            EventNaming.resolveEventName(domain.name, event, naming);
         buffer.writeln(
           "INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) "
           "VALUES ($eventId, $dId, '${_escape(event.name)}', "

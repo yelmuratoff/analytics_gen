@@ -1,3 +1,5 @@
+import 'naming_strategy.dart';
+
 /// Configuration for analytics code generation
 final class AnalyticsConfig {
   /// Path to directory containing YAML event files (relative to project root)
@@ -31,6 +33,9 @@ final class AnalyticsConfig {
   /// events.
   final bool includeEventDescription;
 
+  /// Naming controls applied across parsing and generation.
+  final NamingStrategy naming;
+
   const AnalyticsConfig({
     this.eventsPath = 'events',
     this.outputPath = 'src/analytics/generated',
@@ -42,6 +47,7 @@ final class AnalyticsConfig {
     this.generateDocs = false,
     this.generatePlan = true,
     this.includeEventDescription = false,
+    this.naming = const NamingStrategy(),
   });
 
   /// Creates config from YAML map
@@ -60,6 +66,7 @@ final class AnalyticsConfig {
       generatePlan: config['generate_plan'] as bool? ?? true,
       includeEventDescription:
           config['include_event_description'] as bool? ?? false,
+      naming: NamingStrategy.fromYaml(config['naming'] as Map?),
     );
   }
 

@@ -29,6 +29,7 @@ final class DocsGenerator {
     final parser = YamlParser(
       eventsPath: path.join(projectRoot, config.eventsPath),
       log: log,
+      naming: config.naming,
     );
     final domains = await parser.parseEvents();
 
@@ -126,7 +127,7 @@ final class DocsGenerator {
         } else {
           buffer.writeln('Analytics.instance.$methodName(');
           for (final param in firstEvent.parameters) {
-            final camelParam = _toCamelCase(param.name);
+            final camelParam = _toCamelCase(param.codeName);
             buffer.writeln('  $camelParam: value,');
           }
           buffer.writeln(');');
@@ -155,7 +156,8 @@ final class DocsGenerator {
     buffer.writeln('|-------|-------------|--------|------------|');
 
     for (final event in domain.events) {
-      final eventName = EventNaming.resolveEventName(domainName, event);
+      final eventName =
+          EventNaming.resolveEventName(domainName, event, config.naming);
       final params = event.parameters.isEmpty
           ? '-'
           : event.parameters.map((p) {
@@ -197,7 +199,7 @@ final class DocsGenerator {
       } else {
         buffer.writeln('Analytics.instance.$methodName(');
         for (final param in event.parameters) {
-          final camelParam = _toCamelCase(param.name);
+          final camelParam = _toCamelCase(param.codeName);
           final example = _getExampleValue(param.type, param.isNullable);
           buffer.writeln('  $camelParam: $example,');
         }

@@ -1,11 +1,16 @@
 // dart:io not required directly
 import '../../util/file_utils.dart';
 
-import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
+import '../../config/naming_strategy.dart';
+import '../../models/analytics_event.dart';
 
 /// Generates Excel-compatible CSV export of analytics events.
 final class CsvGenerator {
+  final NamingStrategy naming;
+
+  CsvGenerator({required this.naming});
+
   /// Generates CSV file from analytics domains
   Future<void> generate(
     Map<String, AnalyticsDomain> domains,
@@ -21,7 +26,8 @@ final class CsvGenerator {
     // Data rows
     for (final domain in domains.values) {
       for (final event in domain.events) {
-        final eventName = EventNaming.resolveEventName(domain.name, event);
+        final eventName =
+            EventNaming.resolveEventName(domain.name, event, naming);
         final parameters = event.parameters.map((p) {
           final typeStr = '${p.name} (${p.type}${p.isNullable ? '?' : ''})';
           final desc = p.description != null ? ': ${p.description}' : '';

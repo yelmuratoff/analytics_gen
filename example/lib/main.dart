@@ -38,7 +38,7 @@ void main() {
   Analytics.instance.logPurchaseCompleted(
     productId: 'premium_monthly',
     price: 9.99,
-    currency: 'USD',
+    currencyCode: 'USD',
     quantity: 1,
   );
 

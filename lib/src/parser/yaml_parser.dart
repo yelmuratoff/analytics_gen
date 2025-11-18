@@ -2,8 +2,9 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import '../models/analytics_event.dart';
 import '../core/exceptions.dart';
+import '../config/naming_strategy.dart';
+import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 
@@ -11,11 +12,13 @@ import '../util/string_utils.dart';
 final class YamlParser {
   final String eventsPath;
   final void Function(String message)? log;
+  final NamingStrategy naming;
 
   YamlParser({
     required this.eventsPath,
     this.log,
-  });
+    NamingStrategy? naming,
+  }) : naming = naming ?? const NamingStrategy();
 
   /// Parses all YAML files in the events directory and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents() async {
@@ -23,6 +26,7 @@ final class YamlParser {
     await for (final domain in loadAnalyticsDomains(
       eventsPath: eventsPath,
       log: log,
+      naming: naming,
     )) {
       domains[domain.name] = domain;
     }
@@ -35,8 +39,10 @@ final class YamlParser {
   /// Internal helper to load domains as a stream while allowing reuse in tests.
   static Stream<AnalyticsDomain> loadAnalyticsDomains({
     required String eventsPath,
+    NamingStrategy? naming,
     void Function(String message)? log,
   }) async* {
+    final strategy = naming ?? const NamingStrategy();
     final eventsDir = Directory(eventsPath);
 
     if (!eventsDir.existsSync()) {
@@ -77,11 +83,12 @@ final class YamlParser {
         final domainKey = key.toString();
 
         // Enforce snake_case, filesystem-safe domain names
-        final isValidDomain = RegExp(r'^[a-z0-9_]+$').hasMatch(domainKey);
+        final isValidDomain = strategy.isValidDomain(domainKey);
         if (!isValidDomain) {
           throw AnalyticsParseException(
-            'Domain "$domainKey" in ${file.path} must use snake_case '
-            'with lowercase letters, digits and underscores only.',
+            'Domain "$domainKey" in ${file.path} violates the configured '
+            'naming strategy. Update analytics_gen.naming.enforce_snake_case_domains '
+            'or rename the domain.',
             filePath: file.path,
           );
         }
@@ -113,7 +120,11 @@ final class YamlParser {
       final source = entry.value;
       final eventsYaml = source.yaml;
 
-      final parser = YamlParser(eventsPath: eventsPath, log: log);
+      final parser = YamlParser(
+        eventsPath: eventsPath,
+        log: log,
+        naming: strategy,
+      );
       final events = parser._parseEventsForDomain(
         domainName,
         eventsYaml,
@@ -153,6 +164,7 @@ final class YamlParser {
       final description =
           eventData['description'] as String? ?? 'No description provided';
       final customEventName = eventData['event_name'] as String?;
+      final identifier = eventData['identifier'] as String?;
       final deprecated = eventData['deprecated'] as bool? ?? false;
       final replacement = eventData['replacement'] as String?;
 
@@ -176,6 +188,7 @@ final class YamlParser {
         AnalyticsEvent(
           name: eventName,
           description: description,
+          identifier: identifier,
           customEventName: customEventName,
           deprecated: deprecated,
           replacement: replacement,
@@ -196,40 +209,66 @@ final class YamlParser {
   }) {
     final parameters = <AnalyticsParameter>[];
     final seenRawNames = <String>{};
+    final seenAnalyticsNames = <String>{};
     final camelNameToOriginal = <String, String>{};
 
     final sortedEntries = parametersYaml.entries.toList()
       ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
 
     for (final entry in sortedEntries) {
-      final paramName = entry.key.toString();
-      if (!_isValidParameterName(paramName)) {
+      final rawName = entry.key.toString();
+      if (!seenRawNames.add(rawName)) {
         throw AnalyticsParseException(
-          'Parameter "$paramName" in $domainName.$eventName must use '
-          'snake_case (lowercase letters, digits, underscores, starting with '
-          'a letter).',
-          filePath: filePath,
-        );
-      }
-      if (!seenRawNames.add(paramName)) {
-        throw AnalyticsParseException(
-          'Duplicate parameter "$paramName" found in $domainName.$eventName.',
+          'Duplicate parameter "$rawName" found in $domainName.$eventName.',
           filePath: filePath,
         );
       }
 
-      final camelParamName = StringUtils.toCamelCase(paramName);
+      final paramValue = entry.value;
+      final identifierOverride =
+          paramValue is YamlMap ? paramValue['identifier'] as String? : null;
+      final wireNameOverride =
+          paramValue is YamlMap ? paramValue['param_name'] as String? : null;
+
+      final codeIdentifier = identifierOverride ?? rawName;
+      final analyticsName = wireNameOverride ?? rawName;
+
+      if (codeIdentifier.isEmpty) {
+        throw AnalyticsParseException(
+          'Parameter "$rawName" in $domainName.$eventName must declare a '
+          'non-empty identifier.',
+          filePath: filePath,
+        );
+      }
+
+      if (!naming.isValidParameterIdentifier(codeIdentifier)) {
+        throw AnalyticsParseException(
+          'Parameter identifier "$codeIdentifier" in $domainName.$eventName '
+          'violates the configured naming strategy. Update '
+          'analytics_gen.naming.enforce_snake_case_parameters or define a '
+          'different `identifier`.',
+          filePath: filePath,
+        );
+      }
+
+      if (!seenAnalyticsNames.add(analyticsName)) {
+        throw AnalyticsParseException(
+          'Duplicate analytics parameter "$analyticsName" found in '
+          '$domainName.$eventName.',
+          filePath: filePath,
+        );
+      }
+
+      final camelParamName = StringUtils.toCamelCase(codeIdentifier);
       final existingParam = camelNameToOriginal[camelParamName];
       if (existingParam != null) {
         throw AnalyticsParseException(
-          'Parameter "$paramName" in $domainName.$eventName conflicts '
-          'with "$existingParam" after camelCase normalization.',
+          'Parameter identifier "$codeIdentifier" in $domainName.$eventName '
+          'conflicts with "$existingParam" after camelCase normalization.',
           filePath: filePath,
         );
       }
-      camelNameToOriginal[camelParamName] = paramName;
-
-      final paramValue = entry.value;
+      camelNameToOriginal[camelParamName] = codeIdentifier;
 
       String paramType;
       String? description;
@@ -248,7 +287,9 @@ final class YamlParser {
               .where(
                 (k) =>
                     k.toString() != 'description' &&
-                    k.toString() != 'allowed_values',
+                    k.toString() != 'allowed_values' &&
+                    k.toString() != 'identifier' &&
+                    k.toString() != 'param_name',
               )
               .firstOrNull;
           paramType = typeKey?.toString() ?? 'dynamic';
@@ -258,7 +299,7 @@ final class YamlParser {
         if (rawAllowed != null) {
           if (rawAllowed is! YamlList) {
             throw AnalyticsParseException(
-              'allowed_values for parameter "$paramName" must be a list.',
+              'allowed_values for parameter "$rawName" must be a list.',
               filePath: filePath,
             );
           }
@@ -277,7 +318,8 @@ final class YamlParser {
 
       parameters.add(
         AnalyticsParameter(
-          name: paramName,
+          name: analyticsName,
+          codeName: codeIdentifier,
           type: paramType,
           isNullable: isNullable,
           description: description,
@@ -310,34 +352,31 @@ final class YamlParser {
     );
   }
 
-  /// Ensures every resolved [AnalyticsEvent] name is unique across domains.
+  /// Ensures every resolved [AnalyticsEvent] identifier is unique across domains.
   void _validateUniqueEventNames(Map<String, AnalyticsDomain> domains) {
     final seen = <String, String>{};
 
     for (final entry in domains.entries) {
       final domainName = entry.key;
       for (final event in entry.value.events) {
-        final actualName = EventNaming.resolveEventName(domainName, event);
-        final conflictDomain = seen[actualName];
+        final actualIdentifier =
+            EventNaming.resolveIdentifier(domainName, event, naming);
+        final conflictDomain = seen[actualIdentifier];
 
         if (conflictDomain != null) {
           throw AnalyticsParseException(
-            'Duplicate analytics event name "$actualName" found in domains '
-            '"$conflictDomain" and "$domainName". '
-            'Event names (custom_event_name or "<domain>: <event>") must be unique.',
+            'Duplicate analytics event identifier "$actualIdentifier" found '
+            'in domains "$conflictDomain" and "$domainName". '
+            'Provide a custom `identifier` or update '
+            '`analytics_gen.naming.identifier_template` to make identifiers unique.',
             filePath: null,
           );
         }
 
-        seen[actualName] = domainName;
+        seen[actualIdentifier] = domainName;
       }
     }
   }
-}
-
-bool _isValidParameterName(String name) {
-  final regex = RegExp(r'^[a-z][a-z0-9_]*$');
-  return regex.hasMatch(name);
 }
 
 final class _DomainSource {

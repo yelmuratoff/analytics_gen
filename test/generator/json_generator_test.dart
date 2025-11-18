@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/json_generator.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
@@ -44,7 +45,7 @@ void main() {
         ),
       };
 
-      final generator = JsonGenerator();
+      final generator = JsonGenerator(naming: const NamingStrategy());
       await generator.generate(domains, tempDir.path);
 
       final prettyFile = File(p.join(tempDir.path, 'analytics_events.json'));
@@ -112,7 +113,7 @@ void main() {
         ),
       };
 
-      final generator = JsonGenerator();
+      final generator = JsonGenerator(naming: const NamingStrategy());
       await generator.generate(domains, tempDir.path);
 
       final prettyFirst =

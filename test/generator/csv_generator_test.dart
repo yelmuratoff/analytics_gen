@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/csv_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:path/path.dart' as p;
@@ -43,7 +44,8 @@ void main() {
       };
 
       final csvPath = p.join(tempDir.path, 'analytics_events.csv');
-      await CsvGenerator().generate(domains, csvPath);
+      await CsvGenerator(naming: const NamingStrategy())
+          .generate(domains, csvPath);
 
       final csvContent = await File(csvPath).readAsString();
 

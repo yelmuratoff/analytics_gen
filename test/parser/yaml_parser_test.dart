@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as path;
@@ -115,6 +116,26 @@ void main() {
       expect(param.allowedValues, equals(['email', 'google', 'apple']));
     });
 
+    test('applies param_name override for analytics key', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      tracking_id:\n'
+        '        type: string\n'
+        '        param_name: tracking-id\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+      final domains = await parser.parseEvents();
+
+      final param = domains['auth']!.events.first.parameters.first;
+      expect(param.name, equals('tracking-id'));
+      expect(param.codeName, equals('tracking_id'));
+    });
+
     test('returns empty map when events directory does not exist', () async {
       final messages = <String>[];
       final parser =
@@ -224,10 +245,33 @@ void main() {
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            contains('must use snake_case'),
+            contains('violates the configured naming strategy'),
           ),
         ),
       );
+    });
+
+    test('allows legacy parameter names when enforcement disabled', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: Test\n'
+        '    parameters:\n'
+        '      User-ID:\n'
+        '        type: string\n'
+        '        identifier: user_id\n',
+      );
+
+      final parser = YamlParser(
+        eventsPath: eventsPath,
+        naming: const NamingStrategy(enforceSnakeCaseParameters: false),
+      );
+
+      final domains = await parser.parseEvents();
+      final param = domains['auth']!.events.first.parameters.first;
+      expect(param.name, equals('User-ID'));
+      expect(param.codeName, equals('user_id'));
     });
 
     test('throws when parameter names conflict after camelCase', () async {
@@ -357,7 +401,7 @@ void main() {
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            contains('must use snake_case'),
+            contains('violates the configured naming strategy'),
           ),
         ),
       );
@@ -433,7 +477,7 @@ void main() {
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            contains('Duplicate analytics event name "user.login"'),
+            contains('Duplicate analytics event identifier "user.login"'),
           ),
         ),
       );
@@ -466,10 +510,37 @@ void main() {
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            contains('Duplicate analytics event name "auth: login"'),
+            contains('Duplicate analytics event identifier "auth: login"'),
           ),
         ),
       );
+    });
+
+    test('allows duplicate event names when identifiers differ', () async {
+      final authFile = File(path.join(eventsPath, 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    event_name: user.login\n'
+        '    identifier: auth.login\n'
+        '    parameters: {}\n',
+      );
+
+      final purchaseFile = File(path.join(eventsPath, 'purchase.yaml'));
+      await purchaseFile.writeAsString(
+        'purchase:\n'
+        '  complete:\n'
+        '    description: Purchase completed\n'
+        '    event_name: user.login\n'
+        '    identifier: purchase.complete\n'
+        '    parameters: {}\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+      final domains = await parser.parseEvents();
+
+      expect(domains.length, equals(2));
     });
   });
 }

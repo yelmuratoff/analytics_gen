@@ -105,7 +105,24 @@ analytics_gen:
   generate_csv: true
   generate_json: true
   generate_sql: true
+  generate_plan: true
+  include_event_description: true
+  naming:
+    # Keep domains snake_case (stable file names) but allow legacy-friendly aliases
+    enforce_snake_case_domains: true
+    enforce_snake_case_parameters: true
+    event_name_template: '{domain_alias}: {event}'
+    identifier_template: '{domain}.{event}'
+    domain_aliases:
+      screen: 'Screen Domain'
+      purchase: 'Purchase Flow'
 ```
+
+The `naming` block keeps snake_case defaults while giving you escape hatches for real-world legacy systems:
+
+- Auto-generated event names without a custom `event_name` use `{domain_alias}` so dashboards read `Screen Domain: view` instead of `screen: view`.
+- You can duplicate the logged string across domains while keeping the canonical `identifier` unique, so migrations stay safe.
+- Per-parameter `identifier` / `param_name` overrides keep Dart APIs ergonomic (`trackingToken`) while emitting the exact wire key your backend expects (`tracking-token`).
 
 ## Defining Events
 
@@ -115,17 +132,25 @@ Create YAML files in the `events/` directory. Each file represents a domain:
 
 ```yaml
 auth:
-  login:
-    description: User logs in to the application
+  phone_login:
+    description: When user logs in via phone
+    event_name: "Auth: Phone {phone_country}"
+    identifier: auth.phone_login
     parameters:
-      method:
+      phone_country:
         type: string
-        description: Login method (email, google, apple)
-      
-  logout:
-    description: User logs out
-    parameters: {}
+        description: ISO country code for the dialed number
+      tracking_token:
+        type: string
+        identifier: trackingToken
+        param_name: tracking-token
+        description: Legacy token kept for backend reconciliation
+      user_exists:
+        type: bool?
+        description: Whether the user exists or not
 ```
+
+This one snippet highlights placeholder interpolation, per-event identifiers, and parameter overrides—features you’ll lean on when aligning mobile analytics with established backend schemas.
 
 ### Supported Parameter Types
 
@@ -165,6 +190,11 @@ void main() {
   // Use anywhere in your app
   Analytics.instance.logAuthLogin(method: 'email');
   Analytics.instance.logAuthLogout();
+  Analytics.instance.logAuthPhoneLogin(
+    phoneCountry: 'US',
+    trackingToken: 'legacy-token',
+    userExists: true,
+  );
   Analytics.instance.logScreenView(screenName: 'home');
 }
 ```

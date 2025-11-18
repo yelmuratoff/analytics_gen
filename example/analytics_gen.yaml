@@ -20,3 +20,14 @@ analytics_gen:
   # If true, each generated logEvent call will include the event description
   # under the 'description' key in the parameters map. Default: false
   include_event_description: true
+  naming:
+    # Keep snake_case domains (files/mixins stay stable) but allow legacy parameter
+    # keys to opt-in via per-parameter `identifier`.
+    enforce_snake_case_domains: true
+    enforce_snake_case_parameters: true
+    # Use human-friendly aliases when auto-building event names without `event_name`.
+    event_name_template: "{domain_alias}: {event}"
+    identifier_template: "{domain}.{event}"
+    domain_aliases:
+      screen: "Screen Domain"
+      purchase: "Purchase Flow"

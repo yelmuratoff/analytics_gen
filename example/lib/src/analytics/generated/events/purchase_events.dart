@@ -18,7 +18,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
   }) {
 
     logger.logEvent(
-      name: "purchase: cancelled",
+      name: "Purchase Flow: cancelled",
       parameters: <String, Object?>{
         'description': 'User cancelled a purchase',
         "product_id": productId,
@@ -30,23 +30,23 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// User completed a purchase
   ///
   /// Parameters:
-  /// - `currency`: string
-  /// - `price`: double
+  /// - `currency-code`: string
+  /// - `amount_value`: double - Localized amount used by legacy dashboards
   /// - `product_id`: string
   /// - `quantity`: int - Number of items purchased
   void logPurchaseCompleted({
-    required String currency,
+    required String currencyCode,
     required double price,
     required String productId,
     required int quantity,
   }) {
 
     logger.logEvent(
-      name: "purchase: completed",
+      name: "Purchase Flow: completed",
       parameters: <String, Object?>{
         'description': 'User completed a purchase',
-        "currency": currency,
-        "price": price,
+        "currency-code": currencyCode,
+        "amount_value": price,
         "product_id": productId,
         "quantity": quantity,
       },

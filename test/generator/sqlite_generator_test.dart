@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/sqlite_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:path/path.dart' as p;
@@ -45,6 +46,7 @@ void main() {
 
       final generator = SqliteGenerator(
         log: logs.add,
+        naming: const NamingStrategy(),
         runProcess: (executable, arguments) async {
           if (executable == 'sqlite3' && arguments.contains('--version')) {
             return ProcessResult(0, 1, '', 'not found');
@@ -95,6 +97,7 @@ void main() {
 
       final generator = SqliteGenerator(
         log: logs.add,
+        naming: const NamingStrategy(),
         runProcess: fakeRun,
       );
 
@@ -134,6 +137,7 @@ void main() {
 
       final generator = SqliteGenerator(
         log: logs.add,
+        naming: const NamingStrategy(),
         runProcess: fakeRun,
       );
 

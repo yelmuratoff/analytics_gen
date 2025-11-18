@@ -31,6 +31,7 @@ final class ExportGenerator {
     final parser = YamlParser(
       eventsPath: path.join(projectRoot, config.eventsPath),
       log: log,
+      naming: config.naming,
     );
     final domains = await parser.parseEvents();
 
@@ -52,7 +53,7 @@ final class ExportGenerator {
 
     // Generate configured formats
     if (config.generateCsv) {
-      final csvGen = CsvGenerator();
+      final csvGen = CsvGenerator(naming: config.naming);
       await csvGen.generate(
         domains,
         path.join(outputDir, 'analytics_events.csv'),
@@ -63,7 +64,7 @@ final class ExportGenerator {
     }
 
     if (config.generateJson) {
-      final jsonGen = JsonGenerator();
+      final jsonGen = JsonGenerator(naming: config.naming);
       await jsonGen.generate(domains, outputDir);
       log?.call(
         '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
@@ -74,8 +75,11 @@ final class ExportGenerator {
     }
 
     if (config.generateSql) {
-      final sqlGen = SqlGenerator();
-      final sqliteGen = SqliteGenerator(log: log);
+      final sqlGen = SqlGenerator(naming: config.naming);
+      final sqliteGen = SqliteGenerator(
+        log: log,
+        naming: config.naming,
+      );
 
       final sqlPath = path.join(outputDir, 'create_database.sql');
       await sqlGen.generate(domains, sqlPath);

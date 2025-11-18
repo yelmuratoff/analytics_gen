@@ -203,11 +203,27 @@ analytics_gen:
   # `logger.logEvent` parameters under the key `description`. Defaults to
   # `false`.
   # include_event_description: false
+  naming:
+    enforce_snake_case_domains: true       # Disable for legacy domain names
+    enforce_snake_case_parameters: true    # Disable for legacy parameter keys
+    event_name_template: '{domain}: {event}'
+    identifier_template: '{domain}: {event}'
+    domain_aliases:
+      marketing: 'Marketing Domain'        # Used by {domain_alias} placeholder
 ```
 
 When `generate_docs` or any export flag is enabled in the config, the CLI will run those generators automatically (no need to pass `--docs` or `--exports`). Use `--no-docs` or `--no-exports` to temporarily override config.
 
 Set `generate_plan: false` if you prefer to omit the runtime `Analytics.plan` metadata from `analytics.dart`.
+
+### Naming strategy
+
+`analytics_gen` still defaults to snake_case everywhere, but the `naming` block gives you several customization points:
+
+- Toggle `enforce_snake_case_domains` / `enforce_snake_case_parameters` off to ingest legacy camelCase or kebab-case plans without renaming every key. When disabled, validation focuses on the identifiers you provide instead of the raw YAML keys.
+- `event_name_template` decides what gets logged whenever an event omits `event_name`. Use `{domain}`, `{domain_alias}`, and `{event}` placeholders; aliases come from `domain_aliases`.
+- `identifier_template` defines the canonical ID that must stay unique across the plan. Override it globally or per event with the new `identifier` field to keep analytics strings and unique IDs decoupled.
+- Add entries to `domain_aliases` to control how `{domain_alias}` renders inside templates (helpful when YAML keys are filesystem-safe but you want spaces/punctuation in exports).
 
 ## YAML Schema
 
@@ -258,6 +274,7 @@ screen:
   view:
     description: Screen viewed
     event_name: "Screen: View"  # Custom name for legacy systems
+    identifier: screen.view     # Optional canonical identifier
     parameters:
       screen_name: string
 ```
@@ -315,6 +332,22 @@ Notes & behavior:
   raw `event_name` is still used for exports and documentation so your
   tracking plan remain unchanged.
 
+### Parameter overrides (identifiers + wire names)
+
+```yaml
+auth:
+  login:
+    description: User logs in
+    parameters:
+      tracking_id:
+        type: string
+        identifier: trackingIdentifier   # Used for generated Dart APIs
+        param_name: tracking-id          # Sent to analytics providers
+```
+
+- `identifier` lets you keep snake_case YAML while exposing a custom Dart-friendly parameter (`trackingIdentifier` above). Use it whenever the YAML key doesn't produce the method signature you need.
+- `param_name` rewrites the actual analytics payload key so you can continue logging `tracking-id` (or any other legacy string) without sacrificing the clean YAML identifier.
+
 ### Supported Types
 
 - `int`, `string`, `bool`, `double`, `float`
@@ -326,17 +359,17 @@ Notes & behavior:
 ### Parameter Validation
 
 - Declare `allowed_values` for a parameter to auto-generate a runtime guard that throws an `ArgumentError` if your app passes anything outside that list. This keeps your analytics payloads consistent with the tracking plan and surfaces mistakes during development (and CI when you run `dart test` or `dart run analytics_gen:generate`).
-- Parameter names must be snake_case (lowercase letters, digits, underscores) and start with a letter, and they must remain unique even after camelCase normalization (e.g., `user_id` vs `user-id`). The parser throws a `FormatException` if those rules are violated so generated methods always receive valid Dart identifiers.
+- Parameter identifiers are snake_case by default (lowercase letters, digits, underscores) and must remain unique even after camelCase normalization (e.g., `user_id` vs `user-id`). Disable `analytics_gen.naming.enforce_snake_case_parameters` or provide a per-parameter `identifier` when legacy plans need different conventions.
 
 ### Domain Naming
 
-- Domain keys (top-level YAML keys) must be snake_case, using only lowercase letters, digits, and underscores (e.g. `auth`, `screen_navigation`).
+- Domain keys (top-level YAML keys) are snake_case by default to keep generated files filesystem-safe. Toggle `analytics_gen.naming.enforce_snake_case_domains` off when ingesting legacy domain names—the parser still preserves deterministic ordering and uniqueness via the identifier template.
 - This keeps generated file and class names stable and filesystem‑safe.
-- Each event's effective name-either the optional `event_name` override or the default `<domain>: <event>` string-must be unique across your entire tracking plan. Duplicate names cause the parser to throw a `FormatException`, which surfaces immediately when you run the generator (including `--validate-only`), preventing conflicting analytics payloads from being emitted.
+- Each event's canonical identifier—either the optional `identifier` field or the configured `identifier_template`—must be unique across your entire tracking plan. Duplicate identifiers cause the parser to throw a `FormatException`, which surfaces immediately when you run the generator (including `--validate-only`), preventing conflicting analytics payloads from being emitted even if their provider-facing `event_name` strings are the same.
 
 ## Validation Guarantees
 
-- `dart run analytics_gen:generate --validate-only` (or any run that parses your YAML) now enforces the same uniqueness constraint, so duplicate event names fail fast before any generated files are written.
+- `dart run analytics_gen:generate --validate-only` (or any run that parses your YAML) enforces the same identifier uniqueness constraint, so conflicting events fail fast before any generated files are written—even if their display `event_name` values intentionally match for legacy reasons.
 - Since the parser sorts files, domains, and events before visiting them, every validation failure is predictable and repeatable-no ordering surprises in CI or on different machines.
 - `dart run analytics_gen:generate --plan` prints the parsed tracking plan (domains, events, parameters, and fingerprint) so you can inspect instrumentation without writing any generated files.
 

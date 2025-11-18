@@ -1,3 +1,4 @@
+import '../config/naming_strategy.dart';
 import '../models/analytics_event.dart';
 import 'string_utils.dart';
 
@@ -7,8 +8,28 @@ final class EventNaming {
   static String resolveEventName(
     String domainName,
     AnalyticsEvent event,
+    NamingStrategy naming,
   ) {
-    return event.customEventName ?? '$domainName: ${event.name}';
+    final custom = event.customEventName;
+    if (custom != null && custom.isNotEmpty) return custom;
+    return naming.renderEventName(domain: domainName, event: event.name);
+  }
+
+  /// Resolves the canonical identifier for an analytics event.
+  static String resolveIdentifier(
+    String domainName,
+    AnalyticsEvent event,
+    NamingStrategy naming,
+  ) {
+    final identifier = event.identifier;
+    if (identifier != null && identifier.isNotEmpty) {
+      return identifier;
+    }
+    final custom = event.customEventName;
+    if (custom != null && custom.isNotEmpty) {
+      return custom;
+    }
+    return naming.renderIdentifier(domain: domainName, event: event.name);
   }
 
   /// Builds the generated logger method name from the domain/event names.

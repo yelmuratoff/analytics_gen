@@ -15,6 +15,9 @@ void main() {
       expect(config.generateSql, isFalse);
       expect(config.generateDocs, isFalse);
       expect(config.generatePlan, isTrue);
+      expect(config.naming.enforceSnakeCaseDomains, isTrue);
+      expect(config.naming.enforceSnakeCaseParameters, isTrue);
+      expect(config.naming.eventNameTemplate, '{domain}: {event}');
     });
 
     test('applies overrides when analytics_gen section exists', () {
@@ -29,6 +32,15 @@ void main() {
           'generate_sql': true,
           'generate_docs': true,
           'generate_plan': false,
+          'naming': {
+            'enforce_snake_case_domains': false,
+            'enforce_snake_case_parameters': false,
+            'event_name_template': '{domain_alias}.{event}',
+            'identifier_template': '{domain}.{event}',
+            'domain_aliases': {
+              'auth': 'AuthDomain',
+            },
+          },
         },
       };
 
@@ -43,6 +55,11 @@ void main() {
       expect(config.generateSql, isTrue);
       expect(config.generateDocs, isTrue);
       expect(config.generatePlan, isFalse);
+      expect(config.naming.enforceSnakeCaseDomains, isFalse);
+      expect(config.naming.enforceSnakeCaseParameters, isFalse);
+      expect(config.naming.eventNameTemplate, '{domain_alias}.{event}');
+      expect(config.naming.identifierTemplate, '{domain}.{event}');
+      expect(config.naming.domainAliases['auth'], 'AuthDomain');
     });
   });
 }

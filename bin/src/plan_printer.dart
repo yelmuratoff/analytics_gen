@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/event_naming.dart';
 
 import 'banner_printer.dart';
 
@@ -19,6 +20,7 @@ Future<void> validateTrackingPlan(
   final parser = YamlParser(
     eventsPath: path.join(projectRoot, config.eventsPath),
     log: verbose ? (message) => print(message) : null,
+    naming: config.naming,
   );
 
   try {
@@ -57,6 +59,7 @@ Future<void> printTrackingPlan(
   final parser = YamlParser(
     eventsPath: path.join(projectRoot, config.eventsPath),
     log: verbose ? (message) => print(message) : null,
+    naming: config.naming,
   );
 
   try {
@@ -88,8 +91,11 @@ Future<void> printTrackingPlan(
       );
 
       for (final event in domain.events) {
-        final effectiveName =
-            event.customEventName ?? '${domain.name}: ${event.name}';
+        final effectiveName = EventNaming.resolveEventName(
+          domain.name,
+          event,
+          config.naming,
+        );
         final status = event.deprecated
             ? 'DEPRECATED${event.replacement != null ? ' -> ${event.replacement}' : ''}'
             : 'Active';

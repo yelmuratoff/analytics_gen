@@ -39,7 +39,8 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
           deprecated: false,
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
-              name: 'method',
+              name: 'login-method',
+              codeName: 'login_method',
               type: 'string',
               isNullable: false,
               description: 'Login method v2 (email, google, apple)',
@@ -56,9 +57,23 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
         AnalyticsEvent(
           name: 'phone_login',
           description: 'When user logs in via phone',
-          customEventName: 'Auth: Phone',
+          identifier: 'auth.phone_login',
+          customEventName: 'Auth: Phone {phone_country}',
           deprecated: false,
           parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'phone_country',
+              type: 'string',
+              isNullable: false,
+              description: 'ISO country code for the dialed number',
+            ),
+            AnalyticsParameter(
+              name: 'tracking-token',
+              codeName: 'tracking_token',
+              type: 'string',
+              isNullable: false,
+              description: 'Legacy token kept for backend reconciliation',
+            ),
             AnalyticsParameter(
               name: 'user_exists',
               type: 'bool',
@@ -114,14 +129,17 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
           deprecated: false,
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
-              name: 'currency',
+              name: 'currency-code',
+              codeName: 'currency_code',
               type: 'string',
               isNullable: false,
             ),
             AnalyticsParameter(
-              name: 'price',
+              name: 'amount_value',
+              codeName: 'price',
               type: 'double',
               isNullable: false,
+              description: 'Localized amount used by legacy dashboards',
             ),
             AnalyticsParameter(
               name: 'product_id',
@@ -141,6 +159,22 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
     AnalyticsDomain(
       name: 'screen',
       events: <AnalyticsEvent>[
+        AnalyticsEvent(
+          name: 'legacy_view',
+          description: 'Legacy backend identifier kept for parity',
+          identifier: 'screen.legacy_view',
+          customEventName: 'Screen: Legacy',
+          deprecated: false,
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'legacy-screen-code',
+              codeName: 'legacy_screen_code',
+              type: 'string',
+              isNullable: false,
+              description: 'Three-letter code provided by data team',
+            ),
+          ],
+        ),
         AnalyticsEvent(
           name: 'view',
           description: 'User views a screen',

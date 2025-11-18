@@ -1,7 +1,7 @@
 # Analytics Events Documentation
 
-Fingerprint: `-3889fe4dbbfad68f`
-Domains: 3 | Events: 8 | Parameters: 14
+Fingerprint: `4736e3c8e5d98ffc`
+Domains: 3 | Events: 9 | Parameters: 17
 
 ## Table of Contents
 
@@ -12,19 +12,19 @@ Domains: 3 | Events: 8 | Parameters: 14
 ## Summary
 
 - **Total Domains**: 3
-- **Total Events**: 8
-- **Total Parameters**: 14
+- **Total Events**: 9
+- **Total Parameters**: 17
 
 ## auth
 
-Events: 5 | Parameters: 5
+Events: 5 | Parameters: 7
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
 | auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) |
-| auth: login_v2 | User logs in to the application (v2) | Active | `method` (string): Login method v2 (email, google, apple) |
+| auth: login_v2 | User logs in to the application (v2) | Active | `login-method` (string): Login method v2 (email, google, apple) |
 | auth: logout | User logs out | Active | - |
-| Auth: Phone | When user logs in via phone | Active | `user_exists` (bool?): Whether the user exists or not |
+| Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (string): ISO country code for the dialed number<br>`tracking-token` (string): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not |
 | auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup |
 
 ### Code Examples
@@ -35,7 +35,7 @@ Analytics.instance.logAuthLogin(
 );
 
 Analytics.instance.logAuthLoginV2(
-  method: 'example',
+  loginMethod: 'example',
 );
 
 Analytics.instance.logAuthLogout();
@@ -48,8 +48,8 @@ Events: 2 | Parameters: 6
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
-| purchase: cancelled | User cancelled a purchase | Active | `product_id` (string)<br>`reason` (string?): Reason for cancellation |
-| purchase: completed | User completed a purchase | Active | `currency` (string)<br>`price` (double)<br>`product_id` (string)<br>`quantity` (int): Number of items purchased |
+| Purchase Flow: cancelled | User cancelled a purchase | Active | `product_id` (string)<br>`reason` (string?): Reason for cancellation |
+| Purchase Flow: completed | User completed a purchase | Active | `currency-code` (string)<br>`amount_value` (double): Localized amount used by legacy dashboards<br>`product_id` (string)<br>`quantity` (int): Number of items purchased |
 
 ### Code Examples
 
@@ -60,7 +60,7 @@ Analytics.instance.logPurchaseCancelled(
 );
 
 Analytics.instance.logPurchaseCompleted(
-  currency: 'example',
+  currencyCode: 'example',
   price: 1.5,
   productId: 'example',
   quantity: 123,
@@ -70,15 +70,20 @@ Analytics.instance.logPurchaseCompleted(
 
 ## screen
 
-Events: 1 | Parameters: 3
+Events: 2 | Parameters: 4
 
 | Event | Description | Status | Parameters |
 |-------|-------------|--------|------------|
+| Screen: Legacy | Legacy backend identifier kept for parity | Active | `legacy-screen-code` (string): Three-letter code provided by data team |
 | Screen: {screen_name} | User views a screen | Active | `duration_ms` (int?): Time spent on previous screen in milliseconds<br>`previous_screen` (string?): Name of the previous screen<br>`screen_name` (string) |
 
 ### Code Examples
 
 ```dart
+Analytics.instance.logScreenLegacyView(
+  legacyScreenCode: 'example',
+);
+
 Analytics.instance.logScreenView(
   durationMs: null,
   previousScreen: null,
