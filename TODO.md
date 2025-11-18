@@ -16,9 +16,9 @@
 - [x] Add targeted unit tests + example wiring that demonstrate requesting a timed-event capability and setting user properties; include docs describing how to implement custom adapters and how to access them from app code.
 
 ### Onboarding & documentation improvements
-- [ ] streamline README structure so juniors can follow a “define YAML → run generator → use API” flow without jumping around; surface concise checklists at the top.
-- [ ] Add a practical walkthrough (with screenshots/snippets) covering YAML authoring, common validation errors, and how to read generated mixins/analytics singleton.
-- [ ] Highlight provider-capability extension points (once built) with simple Firebase/Amplitude examples so teams understand how to wire advanced APIs.
+- [x] streamline README structure so juniors can follow a “define YAML → run generator → use API” flow without jumping around; surface concise checklists at the top.
+- [x] Add a practical walkthrough (with screenshots/snippets) covering YAML authoring, common validation errors, and how to read generated mixins/analytics singleton.
+- [x] Highlight provider-capability extension points (once built) with simple Firebase/Amplitude examples so teams understand how to wire advanced APIs.
 
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.

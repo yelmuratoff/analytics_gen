@@ -57,6 +57,14 @@
 - [FAQ](#faq)
 - [License](#license)
 
+## Onboarding Checklist
+
+1. **Define** your events in `events/*.yaml` (one domain per file). Keep names snake_case unless you opt into overrides.
+2. **Configure** `analytics_gen.yaml` (or use defaults) so everyone runs the same generator settings.
+3. **Generate** code/docs/exports with `dart run analytics_gen:generate --docs --exports` (or the simple variant during local dev).
+4. **Initialize + use** the generated API (`Analytics.initialize(...)` once, then call the strongly typed mixin methods).
+5. **Review** the generated artifacts (`lib/src/analytics/generated`, docs, exports) during PRs to keep product + data teams in sync.
+
 ## Overview
 
 `analytics_gen` keeps your tracking plan, generated code, and analytics providers in sync.
@@ -176,6 +184,80 @@ void main() {
 ```
 
 > Important: accessing `Analytics.instance` before calling `Analytics.initialize` throws a descriptive `StateError`, keeping improper usage from silently failing.
+
+## Onboarding Walkthrough
+
+### Step 1 – Describe your tracking plan
+
+Create or update the domain files under `events/`. Keep descriptions and parameter docs current:
+
+```yaml
+auth:
+  signup:
+    description: User creates a new account
+    parameters:
+      method: string
+      referral_code:
+        type: string?
+        description: Optional referral code used during signup
+```
+
+### Step 2 – Configure once, run everywhere
+
+`analytics_gen.yaml` captures paths, generators, and naming rules. Commit it so the whole team generates identical artifacts:
+
+```yaml
+analytics_gen:
+  events_path: events
+  output_path: src/analytics/generated
+  generate_docs: true
+  naming:
+    enforce_snake_case_domains: true
+    enforce_snake_case_parameters: true
+```
+
+### Step 3 – Generate artifacts
+
+```bash
+dart run analytics_gen:generate --docs --exports
+```
+
+- `lib/src/analytics/generated/analytics.dart` — singleton + mixins
+- `docs/analytics_events.md` — Markdown docs (with fingerprint)
+- `assets/generated/*` — CSV/JSON/SQL/SQLite exports (optional)
+
+### Step 4 – Use the type-safe API
+
+```dart
+void main() {
+  Analytics.initialize(MockAnalyticsService());
+  Analytics.instance.logAuthSignup(method: 'email');
+}
+```
+
+Need provider-specific features? Request the capability you registered on your provider:
+
+```dart
+final props = Analytics.instance.capability(userPropertiesKey);
+props?.setUserProperty('premium_tier', 'gold');
+```
+
+### Step 5 – Read the generated code
+
+- `analytics.dart` exposes `Analytics.plan` (runtime plan) and aggregates all mixins.
+- `events/*_events.dart` documents every method signature next to its YAML description.
+- Treat generated files as part of the review—they visualize the impact of YAML edits.
+
+### Common validation errors
+
+| Error | Why it happens | Fix |
+| --- | --- | --- |
+| `Domain "Auth" ... violates the configured naming strategy` | Domain keys must be snake_case when enforcement is on. | Rename to `auth` or disable `enforce_snake_case_domains` (only for legacy plans). |
+| `Parameter identifier "userId" ... violates the configured naming strategy` | Identifiers default to snake_case. | Use `identifier: user_id` or disable parameter enforcement for that project. |
+| `Duplicate analytics event identifier` | Two events resolve to the same canonical ID (`identifier` or template). | Provide unique `identifier` values or tweak `identifier_template`. |
+| `Parameters ... must be a map` | YAML indentation/structure is invalid. | Ensure each event’s `parameters` key points to a map (use `{}` for none). |
+
+Run `dart run analytics_gen:generate --validate-only` in CI to catch these issues before code generation.
 
 ## Why this approach
 
