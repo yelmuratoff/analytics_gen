@@ -77,3 +77,22 @@ AnalyticsCapabilityResolver analyticsCapabilitiesFor(IAnalytics analytics) {
   }
   return _nullCapabilityResolver;
 }
+
+/// Mixin that wires capability registration into provider implementations.
+mixin CapabilityProviderMixin implements AnalyticsCapabilityProvider {
+  final CapabilityRegistry _capabilityRegistry = CapabilityRegistry();
+
+  @override
+  AnalyticsCapabilityResolver get capabilityResolver => _capabilityRegistry;
+
+  /// Registers [capability] under the provided [key].
+  ///
+  /// Call this from your provider constructor (or factory) to expose the
+  /// capabilities you support.
+  void registerCapability<T extends AnalyticsCapability>(
+    CapabilityKey<T> key,
+    T capability,
+  ) {
+    _capabilityRegistry.register(key, capability);
+  }
+}

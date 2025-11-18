@@ -61,24 +61,20 @@ const pushTokenKey = CapabilityKey<PushTokenCapability>('push_tokens');
 
 ```dart
 class FirebaseAnalyticsService
-    implements IAnalytics, AnalyticsCapabilityProvider {
+    with CapabilityProviderMixin
+    implements IAnalytics {
   final FirebaseAnalytics _firebase;
-  final CapabilityRegistry _capabilities = CapabilityRegistry();
 
   FirebaseAnalyticsService(this._firebase) {
-    _capabilities
-      ..register(userPropertiesKey, _FirebaseUserProperties(_firebase))
-      ..register(revenueKey, _FirebaseRevenue(_firebase))
-      ..register(pushTokenKey, _FirebasePushTokens(_firebase));
+    registerCapability(userPropertiesKey, _FirebaseUserProperties(_firebase));
+    registerCapability(revenueKey, _FirebaseRevenue(_firebase));
+    registerCapability(pushTokenKey, _FirebasePushTokens(_firebase));
   }
 
   @override
   void logEvent({required String name, AnalyticsParams? parameters}) {
     _firebase.logEvent(name: name, parameters: parameters);
   }
-
-  @override
-  AnalyticsCapabilityResolver get capabilityResolver => _capabilities;
 }
 
 final class _FirebaseUserProperties implements UserPropertiesCapability {
@@ -157,15 +153,10 @@ void markPremiumUser() {
 
 ```dart
 class FakeCapabilityProvider extends MockAnalyticsService
-    implements AnalyticsCapabilityProvider {
-  final CapabilityRegistry _registry = CapabilityRegistry();
-
+    with CapabilityProviderMixin {
   FakeCapabilityProvider() {
-    _registry.register(userPropertiesKey, _FakeUserProps());
+    registerCapability(userPropertiesKey, _FakeUserProps());
   }
-
-  @override
-  AnalyticsCapabilityResolver get capabilityResolver => _registry;
 }
 ```
 

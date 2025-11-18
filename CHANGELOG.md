@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - Added `BatchingAnalytics` to buffer events with `maxBatchSize`, optional timers,
   and flush/dispose hooks, plus README/Onboarding docs and tests so apps can batch
   network calls without rewriting providers.
+- Introduced `CapabilityProviderMixin` so providers can register capability keys
+  without manual boilerplate, refreshed the capabilities guide, and added tests.
 - Flexible naming strategy block with per-event/parameter overrides:
   - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
   - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.
