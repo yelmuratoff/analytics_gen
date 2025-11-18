@@ -363,6 +363,8 @@ final class CodeGenerator {
     buffer.writeln('  static Analytics get instance => _instance;');
     buffer.writeln();
     buffer.writeln('  IAnalytics? _analytics;');
+    buffer.writeln(
+        '  AnalyticsCapabilityResolver _capabilities = const NullCapabilityResolver();');
     buffer.writeln();
     buffer.writeln('  /// Whether analytics has been initialized');
     buffer.writeln('  bool get isInitialized => _analytics != null;');
@@ -373,12 +375,18 @@ final class CodeGenerator {
         '  /// Call this once at app startup before using any analytics methods.');
     buffer.writeln('  static void initialize(IAnalytics analytics) {');
     buffer.writeln('    _instance._analytics = analytics;');
+    buffer.writeln(
+        '    _instance._capabilities = analyticsCapabilitiesFor(analytics);');
     buffer.writeln('  }');
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
       '  IAnalytics get logger => ensureAnalyticsInitialized(_analytics);',
     );
+    buffer.writeln();
+    buffer.writeln('  @override');
+    buffer.writeln(
+        '  AnalyticsCapabilityResolver get capabilities => _capabilities;');
     buffer.writeln('}');
     buffer.writeln();
 

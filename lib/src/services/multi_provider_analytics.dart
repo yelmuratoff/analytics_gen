@@ -1,6 +1,7 @@
 import 'dart:io';
 import '../core/async_analytics_interface.dart';
 
+import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
 
 /// Function used to check whether an event (name + params) should be
@@ -28,7 +29,8 @@ typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
 /// // Functional updates (immutable)
 /// final updated = multiProvider.addProvider(SegmentService(segment));
 /// ```
-final class MultiProviderAnalytics implements IAnalytics, IAsyncAnalytics {
+final class MultiProviderAnalytics
+    implements IAnalytics, IAsyncAnalytics, AnalyticsCapabilityProvider {
   final List<IAnalytics> _providers;
   final void Function(Object error, StackTrace stackTrace)? onError;
 
@@ -50,6 +52,10 @@ final class MultiProviderAnalytics implements IAnalytics, IAsyncAnalytics {
     Map<IAnalytics, EventPredicate?>? providerFilters,
   })  : _providers = List.unmodifiable(providers),
         _providerFilters = Map.unmodifiable(providerFilters ?? const {});
+
+  @override
+  AnalyticsCapabilityResolver get capabilityResolver =>
+      _MultiProviderCapabilityResolver(_providers);
 
   @override
   void logEvent({
@@ -197,6 +203,23 @@ final class MultiProviderAnalytics implements IAnalytics, IAsyncAnalytics {
       onProviderFailure: onProviderFailure,
       providerFilters: newProviderFilters,
     );
+  }
+}
+
+final class _MultiProviderCapabilityResolver
+    implements AnalyticsCapabilityResolver {
+  final List<IAnalytics> providers;
+
+  _MultiProviderCapabilityResolver(this.providers);
+
+  @override
+  T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {
+    for (final provider in providers) {
+      final resolver = analyticsCapabilitiesFor(provider);
+      final capability = resolver.getCapability(key);
+      if (capability != null) return capability;
+    }
+    return null;
   }
 }
 

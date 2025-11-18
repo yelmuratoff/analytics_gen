@@ -528,6 +528,46 @@ class FirebaseAnalyticsService implements IAnalytics {
     _firebase.logEvent(name: name, parameters: parameters);
   }
 }
+
+### Provider-specific capabilities
+
+Many SDKs expose richer APIs (user properties, timed/timed-out events, push-token registration, revenue helpers). Use capabilities to surface them without polluting the generated mixins with provider-specific types:
+
+1. **Define a capability type + key**
+
+```dart
+final class UserPropertiesCapability implements AnalyticsCapability {
+  void setUserProperty(String name, String value);
+}
+
+const userPropertiesKey = CapabilityKey<UserPropertiesCapability>('user_props');
+```
+
+2. **Expose the capability from your provider**
+
+```dart
+class FirebaseAnalyticsService implements IAnalytics, AnalyticsCapabilityProvider {
+  final CapabilityRegistry _capabilities = CapabilityRegistry();
+
+  FirebaseAnalyticsService(this._firebase) {
+    _capabilities.register(userPropertiesKey, _FirebaseUserProps(_firebase));
+  }
+
+  @override
+  AnalyticsCapabilityResolver get capabilityResolver => _capabilities;
+
+  // ...existing logEvent(...)...
+}
+```
+
+3. **Consume the capability anywhere in your app**
+
+```dart
+final props = Analytics.instance.capability(userPropertiesKey);
+props?.setUserProperty('premium_tier', 'gold');
+```
+
+Capabilities keep SOLID boundaries intact: generated code still speaks in terms of plain `logEvent`, while advanced hooks stay discoverable and type-safe for teams that need them.
 ```
 
 `AnalyticsParams` is a typedef for `Map<String, Object?>`. In practice:

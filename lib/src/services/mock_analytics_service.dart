@@ -1,16 +1,21 @@
+import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
 import '../models/recorded_event.dart';
 
 /// Mock analytics service for testing and development.
 ///
 /// Records events in memory and provides query methods for verification.
-final class MockAnalyticsService implements IAnalytics {
+final class MockAnalyticsService
+    implements IAnalytics, AnalyticsCapabilityProvider {
   final List<RecordedAnalyticsEvent> _records = [];
 
   /// Whether to print events to console when logged
   final bool verbose;
 
-  MockAnalyticsService({this.verbose = false});
+  final CapabilityRegistry _capabilities;
+
+  MockAnalyticsService({this.verbose = false, CapabilityRegistry? capabilities})
+      : _capabilities = capabilities ?? CapabilityRegistry();
 
   /// Immutable view of recorded events as typed records.
   List<RecordedAnalyticsEvent> get records => List.unmodifiable(_records);
@@ -67,4 +72,15 @@ final class MockAnalyticsService implements IAnalytics {
 
   /// Returns the most recent event name or null.
   String? get lastEventName => last?.name;
+
+  /// Registers a mock capability for testing/demo purposes.
+  void registerCapability<T extends AnalyticsCapability>(
+    CapabilityKey<T> key,
+    T capability,
+  ) {
+    _capabilities.register(key, capability);
+  }
+
+  @override
+  AnalyticsCapabilityResolver get capabilityResolver => _capabilities;
 }

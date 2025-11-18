@@ -11,9 +11,9 @@
 
 ### SDK capability abstraction layer
 - [x] Review `AnalyticsBase`, `IAnalytics`, generated mixins, and existing services (`MockAnalyticsService`, `MultiProviderAnalytics`, `AsyncAnalyticsAdapter`) to confirm we only expose `logEvent`/`logEventAsync` today and lack hooks for provider-specific capabilities (user properties, timed events, revenue APIs, attribution APIs).
-- [ ] Define a capability-driven adapter API (e.g., `AnalyticsCapability`, `AnalyticsAdapter`, `AnalyticsClient`) so providers can expose advanced features without leaking SDK types into generated code; sketch the dependency graph to keep SOLID boundaries.
-- [ ] Update runtime core (`AnalyticsBase`, `Analytics.initialize`, generator outputs) to route `logEvent` through the adapter layer while exposing safe capability lookups for custom hooks; provide default no-op adapters to keep backward compatibility.
-- [ ] Add targeted unit tests + example wiring that demonstrate requesting a timed-event capability and setting user properties; include docs describing how to implement custom adapters and how to access them from app code.
+- [x] Define a capability-driven adapter API (e.g., `AnalyticsCapability`, `AnalyticsAdapter`, `AnalyticsClient`) so providers can expose advanced features without leaking SDK types into generated code; sketch the dependency graph to keep SOLID boundaries.
+- [x] Update runtime core (`AnalyticsBase`, `Analytics.initialize`, generator outputs) to route `logEvent` through the adapter layer while exposing safe capability lookups for custom hooks; provide default no-op adapters to keep backward compatibility.
+- [x] Add targeted unit tests + example wiring that demonstrate requesting a timed-event capability and setting user properties; include docs describing how to implement custom adapters and how to access them from app code.
 
 ### Onboarding & documentation improvements
 - [ ] streamline README structure so juniors can follow a “define YAML → run generator → use API” flow without jumping around; surface concise checklists at the top.

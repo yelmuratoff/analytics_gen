@@ -211,6 +211,7 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
   static Analytics get instance => _instance;
 
   IAnalytics? _analytics;
+  AnalyticsCapabilityResolver _capabilities = const NullCapabilityResolver();
 
   /// Whether analytics has been initialized
   bool get isInitialized => _analytics != null;
@@ -220,9 +221,13 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
   /// Call this once at app startup before using any analytics methods.
   static void initialize(IAnalytics analytics) {
     _instance._analytics = analytics;
+    _instance._capabilities = analyticsCapabilitiesFor(analytics);
   }
 
   @override
   IAnalytics get logger => ensureAnalyticsInitialized(_analytics);
+
+  @override
+  AnalyticsCapabilityResolver get capabilities => _capabilities;
 }
 

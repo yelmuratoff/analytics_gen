@@ -11,6 +11,7 @@ library;
 export 'src/core/analytics_base.dart';
 export 'src/core/analytics_interface.dart';
 export 'src/core/async_analytics_interface.dart';
+export 'src/core/analytics_capabilities.dart';
 
 // Service implementations
 export 'src/services/mock_analytics_service.dart';
