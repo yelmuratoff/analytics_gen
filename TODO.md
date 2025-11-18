@@ -20,6 +20,12 @@
 - [x] Add a practical walkthrough (with screenshots/snippets) covering YAML authoring, common validation errors, and how to read generated mixins/analytics singleton.
 - [x] Highlight provider-capability extension points (once built) with simple Firebase/Amplitude examples so teams understand how to wire advanced APIs.
 
+### Documentation split + review guardrails
+- [x] Break the long-form README into focused docs (`docs/ONBOARDING.md`, `docs/VALIDATION.md`, `docs/CAPABILITIES.md`) and keep the README scoped to essentials + links.
+- [x] Document the capability pattern in beginner-friendly language with concrete provider + consumer snippets so juniors understand why capability keys exist.
+- [x] Introduce a `docs/CODE_REVIEW.md` checklist so PR reviewers know exactly what to inspect across YAML, generated code, docs, and exports.
+- [ ] Wire a PR template (or CI reminder) that links to the new checklist so contributors cannot skip the required review steps.
+
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
 - README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.
