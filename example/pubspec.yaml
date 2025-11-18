@@ -4,11 +4,17 @@ version: 1.0.0
 publish_to: none
 
 environment:
-  sdk: ^3.7.2
+  sdk: ^3.9.0
+  flutter: ">=3.22.0"
 
 dependencies:
   analytics_gen:
     path: ../
+  flutter:
+    sdk: flutter
+  provider: ^6.1.5+1
 
 dev_dependencies:
-  lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

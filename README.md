@@ -221,7 +221,7 @@ dart run analytics_gen:generate --docs --exports
 dart run lib/main.dart
 ```
 
-Generated artifacts inside the example mirror what your app will emit. Use it as a sandbox before editing your production plan.
+Generated artifacts inside the example mirror what your app will emit. Use it as a sandbox before editing your production plan. Prefer running the Flutter sample via `flutter run` so you can tap through the buttons and inspect recorded events live—the UI simply calls into a controller that wraps the generated mixins so logging stays out of widgets.
 
 ## Testing
 

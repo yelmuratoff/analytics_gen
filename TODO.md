@@ -11,7 +11,7 @@
 - [x] Revisit provider capability ergonomics to reduce boilerplate (templates, mixins, or helper base classes) and ensure the abstraction does not feel like lock-in. _Added `CapabilityProviderMixin`, README + capabilities doc guidance, and regression tests so providers can register capability keys without custom plumbing._
 
 ### Examples & guidance
-- [ ] Expand `example/` into a realistic Flutter showcase (UI + analytics wiring) and publish its pubspec so developers can run a full app, not just scripts.
+- [x] Expand `example/` into a realistic Flutter showcase (UI + analytics wiring) and publish its pubspec so developers can run a full app, not just scripts. _The example now boots a Flutter UI with buttons that call generated mixins, includes widget tests, and documents running via `flutter run`._
 - [ ] Author migration guides for common sources (Firebase Analytics manual strings, Amplitude, Mixpanel) covering mapping events → YAML, verifying generated diffs, and rollout strategy.
 - [ ] Deepen the FAQ/docs explaining why YAML was chosen over a Dart DSL, including pros/cons and mitigation strategies (e.g., generators wired into CI). Clarify compile-step implications.
 

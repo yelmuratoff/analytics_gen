@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
   network calls without rewriting providers.
 - Introduced `CapabilityProviderMixin` so providers can register capability keys
   without manual boilerplate, refreshed the capabilities guide, and added tests.
+- Example revamp: `example/` is now a Flutter app with buttons wired to the generated
+  mixins, widget tests verifying the interaction, and an updated README explaining
+  how to run `flutter run` / `flutter test`.
+- Further cleaned up the Flutter example by moving analytics orchestration into a
+  controller + observable adapter, keeping event logging logic out of widgets.
 - Flexible naming strategy block with per-event/parameter overrides:
   - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
   - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.
