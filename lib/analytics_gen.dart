@@ -17,6 +17,7 @@ export 'src/core/analytics_capabilities.dart';
 export 'src/services/mock_analytics_service.dart';
 export 'src/services/multi_provider_analytics.dart';
 export 'src/services/async_analytics_adapter.dart';
+export 'src/services/batching_analytics.dart';
 
 // Configuration
 export 'src/config/analytics_config.dart';

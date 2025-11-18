@@ -58,6 +58,19 @@ Future<void> main() async {
   );
   print('   Async logEventAsync call completed.');
 
+  // Example 8: Batching analytics events before network flushes
+  print('\n8. Buffering events with BatchingAnalytics');
+  final batching = BatchingAnalytics(
+    delegate: AsyncAnalyticsAdapter(mockService),
+    maxBatchSize: 2,
+    flushInterval: const Duration(milliseconds: 250),
+  );
+  batching.logEvent(name: 'batched_event', parameters: {'source': 'example'});
+  batching.logEvent(name: 'batched_event_2');
+  await batching.flush();
+  await batching.dispose();
+  print('   Batched events flushed via AsyncAnalyticsAdapter.');
+
   // Display summary
   print('\n${'═' * 50}');
   print('\nSummary:');

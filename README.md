@@ -44,6 +44,8 @@
 - [CLI Commands](#cli-commands)
 - [Validation & Quality](#validation--quality)
 - [Analytics Providers & Capabilities](#analytics-providers--capabilities)
+- [Synchronous Logging & Async Providers](#synchronous-logging--async-providers)
+- [Batch Logging Buffers](#batch-logging-buffers)
 - [Example](#example)
 - [Testing](#testing)
 - [Contributing](#contributing)
@@ -170,6 +172,43 @@ Analytics.initialize(QueueingAnalytics(asyncProvider));
 - `AsyncAnalyticsAdapter` wires into existing synchronous providers, which keeps compatibility with code gen.
 
 This same pattern appears in `example/lib/main.dart`, where the async adapter is exercised alongside the synchronous runtime.
+
+## Batch Logging Buffers
+
+When you need to control network fan-out—slow uplinks, cellular metering, or provider SDKs that enforce batch delivery—wrap your async provider with `BatchingAnalytics`.
+
+```dart
+final asyncAdapter = AsyncAnalyticsAdapter(
+  MultiProviderAnalytics([
+    FirebaseAnalyticsService(firebase),
+    AmplitudeService(amplitude),
+  ]),
+);
+
+final batching = BatchingAnalytics(
+  delegate: asyncAdapter,
+  maxBatchSize: 25,
+  flushInterval: const Duration(seconds: 5),
+  onFlushError: (error, stack) {
+    print('Batch flush failed: $error');
+  },
+);
+
+Analytics.initialize(batching);
+
+// ... app runs, events buffer automatically.
+
+Future<void> onAppBackground() async {
+  await batching.flush(); // or await batching.dispose();
+}
+```
+
+- `maxBatchSize` forces a flush when enough events accumulate.
+- `flushInterval` (optional) drains on a timer for long-lived sessions.
+- `flush()` returns a `Future` so lifecycle hooks (`AppLifecycleState.paused`, integration-test teardown) can wait for delivery.
+- If the delegate throws, the batch is requeued and the optional `onFlushError` hook runs; call `flush()` again when the provider is ready.
+
+Combine `BatchingAnalytics` with `AsyncAnalyticsAdapter` to await multiple providers without changing the generated, synchronous API surface.
 
 ## Example
 

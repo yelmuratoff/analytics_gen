@@ -103,6 +103,7 @@ Future<void> login(String method) async {
 - Initialization is mandatory. Accessing `Analytics.instance` before `initialize` throws a descriptive `StateError`.
 - In tests, wire `MockAnalyticsService` or the async adapter to assert on recorded events.
 - Logging stays synchronous by design. If a provider requires awaiting (network flushes, background isolates), wrap it in a queue that implements `IAnalytics` and delegates to `IAsyncAnalytics` (for example, via `AsyncAnalyticsAdapter`). This keeps feature code fire-and-forget while still letting you `await queue.flush()` in teardown hooks or integration tests.
+- Need to buffer network calls? Combine `AsyncAnalyticsAdapter` with `BatchingAnalytics`, set `maxBatchSize`/`flushInterval`, and call `flush()`/`dispose()` from lifecycle hooks so the UI never blocks on analytics I/O.
 
 ## Step 5 – Review generated artifacts
 

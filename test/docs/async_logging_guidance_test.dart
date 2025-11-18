@@ -22,6 +22,16 @@ void main() {
         contains('AsyncAnalyticsAdapter'),
         reason: 'README must point to AsyncAnalyticsAdapter for bridging.',
       );
+      expect(
+        readme,
+        contains('Batch Logging Buffers'),
+        reason: 'README should describe batch logging strategies.',
+      );
+      expect(
+        readme,
+        contains('BatchingAnalytics'),
+        reason: 'README should mention the BatchingAnalytics helper.',
+      );
     });
 
     test('Onboarding guide mentions AsyncAnalyticsAdapter usage', () {
@@ -30,12 +40,18 @@ void main() {
       expect(
         onboarding,
         contains('Logging stays synchronous by design'),
-        reason: 'Onboarding should explain the synchronous runtime assumptions.',
+        reason:
+            'Onboarding should explain the synchronous runtime assumptions.',
       );
       expect(
         onboarding,
         contains('AsyncAnalyticsAdapter'),
         reason: 'Onboarding should reference AsyncAnalyticsAdapter for queues.',
+      );
+      expect(
+        onboarding,
+        contains('BatchingAnalytics'),
+        reason: 'Onboarding should highlight batch buffering hooks.',
       );
     });
   });

@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Documented why `IAnalytics.logEvent` stays synchronous and added queueing +
   `AsyncAnalyticsAdapter` examples/tests so contributors know how to await heavy
   providers without changing the base interface.
+- Added `BatchingAnalytics` to buffer events with `maxBatchSize`, optional timers,
+  and flush/dispose hooks, plus README/Onboarding docs and tests so apps can batch
+  network calls without rewriting providers.
 - Flexible naming strategy block with per-event/parameter overrides:
   - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
   - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.
