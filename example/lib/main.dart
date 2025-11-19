@@ -7,7 +7,7 @@ import 'src/app/analytics_demo_controller.dart';
 import 'src/app/app.dart';
 import 'src/app/observable_analytics.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final controller = HomeScreenController();
@@ -15,6 +15,10 @@ void main() {
     delegate: MockAnalyticsService(verbose: true),
     onRecord: controller.recordEvent,
   );
+
+  // Demonstrate AsyncAnalyticsAdapter usage for async logging scenarios
+  final asyncAdapter = AsyncAnalyticsAdapter(observableAnalytics);
+  await asyncAdapter.logEventAsync(name: 'app_started');
 
   Analytics.initialize(observableAnalytics);
 

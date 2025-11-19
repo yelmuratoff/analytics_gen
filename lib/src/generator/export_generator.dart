@@ -42,6 +42,26 @@ final class ExportGenerator {
       await outputDirectory.create(recursive: true);
     }
 
+    // Clean up disabled exports
+    if (!config.generateCsv) {
+      final file = File(path.join(outputDir, 'analytics_events.csv'));
+      if (file.existsSync()) await file.delete();
+    }
+
+    if (!config.generateJson) {
+      final file = File(path.join(outputDir, 'analytics_events.json'));
+      if (file.existsSync()) await file.delete();
+      final minFile = File(path.join(outputDir, 'analytics_events.min.json'));
+      if (minFile.existsSync()) await minFile.delete();
+    }
+
+    if (!config.generateSql) {
+      final file = File(path.join(outputDir, 'create_database.sql'));
+      if (file.existsSync()) await file.delete();
+      final dbFile = File(path.join(outputDir, 'analytics_events.db'));
+      if (dbFile.existsSync()) await dbFile.delete();
+    }
+
     final tasks = <Future<void>>[];
 
     // Generate configured formats

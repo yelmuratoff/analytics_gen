@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -42,7 +43,12 @@ void main() {
         projectRoot: tempDir.path,
       );
 
-      await firstGenerator.generate();
+      final parser = YamlParser(
+        eventsPath: path.join(tempDir.path, firstConfig.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await firstGenerator.generate(domains);
 
       final outputDir = Directory(path.join(tempDir.path, 'generated'));
       final csvFile = File(path.join(outputDir.path, 'analytics_events.csv'));
@@ -62,7 +68,7 @@ void main() {
         projectRoot: tempDir.path,
       );
 
-      await secondGenerator.generate();
+      await secondGenerator.generate(domains);
 
       expect(csvFile.existsSync(), isTrue);
       expect(jsonFile.existsSync(), isFalse);
@@ -73,16 +79,22 @@ void main() {
       eventsDir.createSync(recursive: true);
 
       final logs = <String>[];
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        generateCsv: true,
+      );
       final generator = ExportGenerator(
-        config: AnalyticsConfig(
-          eventsPath: 'events',
-          generateCsv: true,
-        ),
+        config: config,
         projectRoot: tempDir.path,
         log: logs.add,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: path.join(tempDir.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final defaultAssets =
           Directory(path.join(tempDir.path, 'assets', 'generated'));
@@ -119,7 +131,12 @@ void main() {
         log: logs.add,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: path.join(tempDir.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final outputDir = path.join(tempDir.path, 'assets', 'generated');
       final csvFile = File(path.join(outputDir, 'analytics_events.csv'));

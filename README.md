@@ -110,7 +110,7 @@ dart run analytics_gen:generate --docs --no-code
 dart run analytics_gen:generate --exports --no-code
 dart run analytics_gen:generate --validate-only
 dart run analytics_gen:generate --plan
-dart run analytics_gen:generate --watch
+dart run analytics_gen:generate --watch              # incremental rebuilds on file change
 ```
 
 Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop—the config still drives CI.

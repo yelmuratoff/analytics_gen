@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
+import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -46,7 +47,12 @@ void main() {
         log: logs.add,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final outputDir =
           Directory(p.join(tempProject.path, 'lib', config.outputPath));
@@ -118,7 +124,12 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final authContent = await File(
         p.join(tempProject.path, 'lib', config.outputPath, 'events',
@@ -166,7 +177,12 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final screenContent = await File(
         p.join(tempProject.path, 'lib', config.outputPath, 'events',
@@ -202,7 +218,12 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final authContent = await File(
         p.join(tempProject.path, 'lib', config.outputPath, 'events',
@@ -236,7 +257,12 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final eventsDir = Directory(
         p.join(tempProject.path, 'lib', config.outputPath, 'events'),
@@ -245,7 +271,7 @@ void main() {
       await staleFile.writeAsString('// stale domain');
       expect(staleFile.existsSync(), isTrue);
 
-      await generator.generate();
+      await generator.generate(domains);
 
       expect(staleFile.existsSync(), isFalse);
       expect(
@@ -266,7 +292,12 @@ void main() {
         log: logs.add,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final outputDir =
           Directory(p.join(tempProject.path, 'lib', config.outputPath));
@@ -303,7 +334,12 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final billingFile = File(
         p.join(tempProject.path, 'lib', config.outputPath, 'events',
@@ -355,7 +391,12 @@ delta:
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final parser = YamlParser(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final domains = await parser.parseEvents();
+
+      await generator.generate(domains);
 
       final analyticsFile = File(
         p.join(tempProject.path, 'lib', config.outputPath, 'analytics.dart'),
