@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.1.7] - Unreleased
 - Add a PR template that links to the Code Review checklist so contributors must
   explicitly confirm regeneration + docs/exports review before requesting feedback.
 - Documented why `IAnalytics.logEvent` stays synchronous and added queueing +
