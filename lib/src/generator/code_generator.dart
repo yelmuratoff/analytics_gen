@@ -41,13 +41,21 @@ final class CodeGenerator {
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final eventsDir = path.join(outputDir, 'events');
 
-    // Ensure we start from a clean slate so stale domains disappear
+    // Ensure output directories exist
     await _prepareOutputDirectories(outputDir, eventsDir);
 
-    // Generate individual domain files
-    for (final entry in domains.entries) {
-      await _generateDomainFile(entry.key, entry.value, eventsDir);
-    }
+    // Track generated files to clean up stale ones later
+    final generatedFiles = <String>{};
+
+    // Generate individual domain files in parallel
+    await Future.wait(domains.entries.map((entry) async {
+      final filePath =
+          await _generateDomainFile(entry.key, entry.value, eventsDir);
+      generatedFiles.add(filePath);
+    }));
+
+    // Clean up stale files
+    await _cleanStaleFiles(eventsDir, generatedFiles);
 
     // Generate barrel file with all exports
     await _generateBarrelFile(domains, outputDir);
@@ -59,8 +67,8 @@ final class CodeGenerator {
     await _generateAnalyticsClass(domains);
   }
 
-  /// Generates a separate file for a single domain
-  Future<void> _generateDomainFile(
+  /// Generates a separate file for a single domain and returns the file path
+  Future<String> _generateDomainFile(
     String domainName,
     AnalyticsDomain domain,
     String eventsDir,
@@ -85,6 +93,7 @@ final class CodeGenerator {
     final fileName = '${domainName}_events.dart';
     final filePath = path.join(eventsDir, fileName);
     await _writeFileIfContentChanged(filePath, buffer.toString());
+    return filePath;
   }
 
   /// Generates barrel file that exports all domain event files
@@ -518,10 +527,23 @@ final class CodeGenerator {
     }
 
     final eventsDirectory = Directory(eventsDir);
-    if (eventsDirectory.existsSync()) {
-      await eventsDirectory.delete(recursive: true);
+    if (!eventsDirectory.existsSync()) {
+      await eventsDirectory.create(recursive: true);
     }
-    await eventsDirectory.create(recursive: true);
+  }
+
+  Future<void> _cleanStaleFiles(
+    String eventsDir,
+    Set<String> generatedFiles,
+  ) async {
+    final dir = Directory(eventsDir);
+    if (!dir.existsSync()) return;
+
+    await for (final entity in dir.list()) {
+      if (entity is File && !generatedFiles.contains(entity.path)) {
+        await entity.delete();
+      }
+    }
   }
 }
 

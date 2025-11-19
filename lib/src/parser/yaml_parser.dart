@@ -64,10 +64,17 @@ final class YamlParser {
 
     log?.call('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
 
-    final merged = <String, _DomainSource>{};
-    for (final file in yamlFiles) {
+    final futures = yamlFiles.map((file) async {
       final content = await file.readAsString();
-      final parsed = loadYaml(content);
+      return _ParsedFile(file, loadYaml(content));
+    });
+
+    final results = await Future.wait(futures);
+
+    final merged = <String, _DomainSource>{};
+    for (final result in results) {
+      final file = result.file;
+      final parsed = result.yaml;
 
       if (parsed is! YamlMap) {
         log?.call(
@@ -387,4 +394,11 @@ final class _DomainSource {
     required this.filePath,
     required this.yaml,
   });
+}
+
+final class _ParsedFile {
+  final File file;
+  final dynamic yaml;
+
+  _ParsedFile(this.file, this.yaml);
 }

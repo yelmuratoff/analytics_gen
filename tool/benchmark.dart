@@ -72,7 +72,7 @@ dependencies:
 
       // Run generator
       final stopwatch = Stopwatch()..start();
-      final result = await Process.run(
+      var result = await Process.run(
         'dart',
         ['run', 'analytics_gen:generate', '--config', 'analytics_gen.yaml'],
         workingDirectory: tempDir.path,
@@ -88,6 +88,19 @@ dependencies:
           outputDir.listSync(recursive: true).whereType<File>().length;
       print(
           '| $totalEvents | $domainCount | ${stopwatch.elapsedMilliseconds} | $generatedFiles |');
+
+      // Run again to test incremental build
+      if (totalEvents == 2000) {
+        final stopwatch2 = Stopwatch()..start();
+        result = await Process.run(
+          'dart',
+          ['run', 'analytics_gen:generate', '--config', 'analytics_gen.yaml'],
+          workingDirectory: tempDir.path,
+        );
+        stopwatch2.stop();
+        print(
+            '| $totalEvents (incremental) | $domainCount | ${stopwatch2.elapsedMilliseconds} | $generatedFiles |');
+      }
     }
   } finally {
     print('Cleaning up...');
