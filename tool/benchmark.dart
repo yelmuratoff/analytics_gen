@@ -1,13 +1,15 @@
 import 'dart:io';
 
 void main() async {
-  final tempDir = Directory.systemTemp.createTempSync('analytics_gen_benchmark_');
+  final tempDir =
+      Directory.systemTemp.createTempSync('analytics_gen_benchmark_');
   print('Running benchmark in ${tempDir.path}');
 
   try {
     // 1. Setup configuration
     final eventsDir = Directory('${tempDir.path}/events')..createSync();
-    final outputDir = Directory('${tempDir.path}/lib/src/analytics/generated')..createSync(recursive: true);
+    final outputDir = Directory('${tempDir.path}/lib/src/analytics/generated')
+      ..createSync(recursive: true);
     Directory('${tempDir.path}/docs').createSync();
     Directory('${tempDir.path}/assets/generated').createSync(recursive: true);
 
@@ -45,7 +47,7 @@ dependencies:
     for (final totalEvents in [100, 500, 2000, 10000]) {
       final eventsPerDomain = 10;
       final domainCount = (totalEvents / eventsPerDomain).ceil();
-      
+
       // Clean events dir
       if (eventsDir.existsSync()) eventsDir.deleteSync(recursive: true);
       eventsDir.createSync();
@@ -55,7 +57,7 @@ dependencies:
         final domainName = 'domain_$i';
         final buffer = StringBuffer();
         buffer.writeln('$domainName:');
-        
+
         for (var j = 0; j < eventsPerDomain; j++) {
           buffer.writeln('  event_$j:');
           buffer.writeln('    description: Event $j in domain $i');
@@ -64,7 +66,8 @@ dependencies:
           buffer.writeln('      param_int: int');
           buffer.writeln('      param_list: List<String>');
         }
-        File('${eventsDir.path}/$domainName.yaml').writeAsStringSync(buffer.toString());
+        File('${eventsDir.path}/$domainName.yaml')
+            .writeAsStringSync(buffer.toString());
       }
 
       // Run generator
@@ -72,7 +75,7 @@ dependencies:
       final result = await Process.run(
         'dart',
         ['run', 'analytics_gen:generate', '--config', 'analytics_gen.yaml'],
-        workingDirectory: tempDir.path, 
+        workingDirectory: tempDir.path,
       );
       stopwatch.stop();
 
@@ -81,10 +84,11 @@ dependencies:
         continue;
       }
 
-      final generatedFiles = outputDir.listSync(recursive: true).whereType<File>().length;
-      print('| $totalEvents | $domainCount | ${stopwatch.elapsedMilliseconds} | $generatedFiles |');
+      final generatedFiles =
+          outputDir.listSync(recursive: true).whereType<File>().length;
+      print(
+          '| $totalEvents | $domainCount | ${stopwatch.elapsedMilliseconds} | $generatedFiles |');
     }
-
   } finally {
     print('Cleaning up...');
     tempDir.deleteSync(recursive: true);
