@@ -139,15 +139,20 @@ final class BatchingAnalytics implements IAnalytics {
     final batch = List<_QueuedAnalyticsEvent>.from(_pending);
     _pending.clear();
 
+    var nextIndex = 0;
     try {
-      for (final event in batch) {
+      for (; nextIndex < batch.length; nextIndex++) {
+        final event = batch[nextIndex];
         await _delegate.logEventAsync(
           name: event.name,
           parameters: event.parameters,
         );
       }
     } catch (error, stackTrace) {
-      _pending.insertAll(0, batch);
+      if (nextIndex < batch.length) {
+        final remaining = batch.getRange(nextIndex, batch.length);
+        _pending.insertAll(0, remaining);
+      }
       onFlushError?.call(error, stackTrace);
       rethrow;
     }
