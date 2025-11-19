@@ -23,9 +23,12 @@ final class CodeGenerator {
     required this.config,
     required this.projectRoot,
     this.log,
-  })  : _classRenderer = AnalyticsClassRenderer(config),
-        _contextRenderer = ContextRenderer(),
-        _eventRenderer = EventRenderer(config);
+    AnalyticsClassRenderer? classRenderer,
+    ContextRenderer? contextRenderer,
+    EventRenderer? eventRenderer,
+  })  : _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
+        _contextRenderer = contextRenderer ?? ContextRenderer(),
+        _eventRenderer = eventRenderer ?? EventRenderer(config);
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate(

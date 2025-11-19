@@ -8,6 +8,8 @@
   - [x] Create `AnalyticsClassRenderer` for the main singleton.
   - [x] Update `CodeGenerator` to use renderers and handle only file I/O.
   - [x] Add unit tests for renderers.
+- [x] Refactor `YamlParser`: Extract parameter parsing logic into `ParameterParser`.
+- [x] Refactor `CodeGenerator`: Inject renderers via constructor for better testability.
 
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
