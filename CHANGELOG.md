@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.1.7] - Unreleased
+- **Refactored `Analytics` class generation**:
+  - The generated `Analytics` class is now immutable and provides a `const` constructor for Dependency Injection (DI).
+  - Retained `Analytics.instance` and `Analytics.initialize()` for backward compatibility (Singleton usage).
+- **Event Name Interpolation Warning**:
+  - Added a warning when event name interpolation (e.g., `event_name: "View ${itemId}"`) is detected in the generator. This is flagged as an analytics anti-pattern due to high cardinality risks.
 - Add a PR template that links to the Code Review checklist so contributors must
   explicitly confirm regeneration + docs/exports review before requesting feedback.
 - Documented why `IAnalytics.logEvent` stays synchronous and added queueing +

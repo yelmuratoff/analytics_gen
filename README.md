@@ -61,7 +61,9 @@
 1. **Describe events** in `events/*.yaml` (one domain per file). Keep descriptions + parameter docs current.
 2. **Configure** `analytics_gen.yaml` so every machine runs the same generator settings.
 3. **Generate** code/doc/exports with `dart run analytics_gen:generate --docs --exports`.
-4. **Initialize + use** the generated API: `Analytics.initialize(...)`, then call the strongly typed mixins anywhere in your app.
+4. **Initialize + use** the generated API:
+   - **Singleton**: `Analytics.initialize(...)`, then `Analytics.instance.logEvent(...)`.
+   - **DI**: `final analytics = Analytics(...)`, then `analytics.logEvent(...)`.
 5. **Review diffs** for generated Dart, docs, and exports during PRs—treat them as production code.
 
 Need a detailed walkthrough? Head to [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
@@ -124,7 +126,10 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 
 ## Analytics Providers & Capabilities
 
-The generated mixins call `Analytics.instance.logEvent(...)`. You are in control of the underlying providers:
+The generated mixins call `logger.logEvent(...)`. You are in control of the underlying providers:
+
+- **Singleton Usage**: `Analytics.initialize(provider)` and access via `Analytics.instance`.
+- **Dependency Injection**: Create an instance `final analytics = Analytics(provider)` and inject it where needed.
 
 - Implement `IAnalytics` for a single SDK.
 - Use `MultiProviderAnalytics` to fan out events while isolating provider failures.
