@@ -165,7 +165,7 @@ void main() {
       expect(
         logs,
         contains(
-          'No analytics events found. Skipping documentation generation.',
+          'No analytics events or properties found. Skipping documentation generation.',
         ),
       );
     });

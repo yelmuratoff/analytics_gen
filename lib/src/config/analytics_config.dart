@@ -36,6 +36,10 @@ final class AnalyticsConfig {
   /// Naming controls applied across parsing and generation.
   final NamingStrategy naming;
 
+  /// List of paths to context definition files (relative to project root).
+  /// These files define stateful properties (e.g. user properties, session context).
+  final List<String> contexts;
+
   const AnalyticsConfig({
     this.eventsPath = 'events',
     this.outputPath = 'src/analytics/generated',
@@ -48,6 +52,7 @@ final class AnalyticsConfig {
     this.generatePlan = true,
     this.includeEventDescription = false,
     this.naming = const NamingStrategy(),
+    this.contexts = const [],
   });
 
   /// Creates config from YAML map
@@ -67,6 +72,7 @@ final class AnalyticsConfig {
       includeEventDescription:
           config['include_event_description'] as bool? ?? false,
       naming: NamingStrategy.fromYaml(config['naming'] as Map?),
+      contexts: (config['contexts'] as List?)?.cast<String>() ?? const [],
     );
   }
 

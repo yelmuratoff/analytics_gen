@@ -61,6 +61,16 @@ class HomeScreen extends StatelessWidget {
                       .purchaseMonthlySubscription(),
                   child: const Text('Purchase monthly plan'),
                 ),
+                ElevatedButton(
+                  onPressed: () =>
+                      context.read<HomeScreenController>().toggleTheme(),
+                  child: const Text('Set Theme Context'),
+                ),
+                ElevatedButton(
+                  onPressed: () =>
+                      context.read<HomeScreenController>().setUserProperties(),
+                  child: const Text('Set User Properties'),
+                ),
               ],
             ),
             const SizedBox(height: 24),

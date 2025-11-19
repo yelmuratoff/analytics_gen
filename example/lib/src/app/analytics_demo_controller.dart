@@ -49,6 +49,19 @@ class HomeScreenController extends ChangeNotifier {
     Analytics.instance.logAuthLogin(method: 'biometrics');
   }
 
+  /// Sets theme context properties.
+  void toggleTheme() {
+    Analytics.instance.setThemeIsDarkMode(true);
+    Analytics.instance.setThemePrimaryColor('#FF0000');
+  }
+
+  /// Sets user properties.
+  void setUserProperties() {
+    Analytics.instance.setUserId('user_123');
+    Analytics.instance.setUserRole('admin');
+    Analytics.instance.setIsPremium(true);
+  }
+
   void clearLog() {
     if (_events.isEmpty) return;
     _events.clear();

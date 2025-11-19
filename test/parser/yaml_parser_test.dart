@@ -136,6 +136,56 @@ void main() {
       expect(param.codeName, equals('tracking_id'));
     });
 
+    test('parses meta field for events and parameters', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    meta:\n'
+        '      owner: team-auth\n'
+        '      is_pii: false\n'
+        '    parameters:\n'
+        '      email:\n'
+        '        type: string\n'
+        '        meta:\n'
+        '          is_pii: true\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+      final domains = await parser.parseEvents();
+
+      final event = domains['auth']!.events.first;
+      expect(event.meta, equals({'owner': 'team-auth', 'is_pii': false}));
+
+      final param = event.parameters.first;
+      expect(param.meta, equals({'is_pii': true}));
+    });
+
+    test('throws when meta is not a map', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    meta: "invalid"\n'
+        '    parameters: {}\n',
+      );
+
+      final parser = YamlParser(eventsPath: eventsPath);
+
+      expect(
+        () => parser.parseEvents(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('The "meta" field must be a map'),
+          ),
+        ),
+      );
+    });
+
     test('returns empty map when events directory does not exist', () async {
       final messages = <String>[];
       final parser =

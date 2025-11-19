@@ -20,7 +20,7 @@ final class CsvGenerator {
 
     // CSV Header
     buffer.writeln(
-      'Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement',
+      'Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement,Metadata',
     );
 
     // Data rows
@@ -35,8 +35,15 @@ final class CsvGenerator {
               (p.allowedValues != null && p.allowedValues!.isNotEmpty)
                   ? ' {allowed: ${p.allowedValues!.join('|')}}'
                   : '';
-          return '$typeStr$desc$allowed';
+          final meta = p.meta.isNotEmpty
+              ? ' [${p.meta.entries.map((e) => '${e.key}=${e.value}').join(';')}]'
+              : '';
+          return '$typeStr$desc$allowed$meta';
         }).join('; ');
+
+        final meta = event.meta.isEmpty
+            ? ''
+            : event.meta.entries.map((e) => '${e.key}=${e.value}').join('; ');
 
         buffer.writeln(
           '${_escape(domain.name)},'
@@ -45,7 +52,8 @@ final class CsvGenerator {
           '${_escape(event.description)},'
           '${_escape(parameters)},'
           '${event.deprecated},'
-          '${_escape(event.replacement ?? '')}',
+          '${_escape(event.replacement ?? '')},'
+          '${_escape(meta)}',
         );
       }
     }

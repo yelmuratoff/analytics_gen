@@ -11,6 +11,11 @@ analytics_gen:
   # Path for export files (optional)
   exports_path: assets/generated
 
+  # Additional context files (optional)
+  contexts:
+    - events/theme_context.yaml
+    - events/user_properties.yaml
+
   # Enable/disable various generators
   generate_docs: true
   generate_csv: true

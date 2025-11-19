@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 
 const _listEq = ListEquality<String>();
+const _mapEq = MapEquality<String, Object?>();
 
 /// Represents a single analytics event parameter.
 final class AnalyticsParameter {
@@ -15,6 +16,9 @@ final class AnalyticsParameter {
   final String? description;
   final List<String>? allowedValues;
 
+  /// Custom metadata for this parameter (e.g. PII flags, ownership).
+  final Map<String, Object?> meta;
+
   const AnalyticsParameter({
     required this.name,
     String? codeName,
@@ -22,6 +26,7 @@ final class AnalyticsParameter {
     required this.isNullable,
     this.description,
     this.allowedValues,
+    this.meta = const {},
   }) : codeName = codeName ?? name;
 
   @override
@@ -36,7 +41,8 @@ final class AnalyticsParameter {
         other.type == type &&
         other.isNullable == isNullable &&
         other.description == description &&
-        _listEq.equals(other.allowedValues, allowedValues);
+        _listEq.equals(other.allowedValues, allowedValues) &&
+        _mapEq.equals(other.meta, meta);
   }
 
   @override
@@ -47,6 +53,7 @@ final class AnalyticsParameter {
         isNullable,
         description,
         _listEq.hash(allowedValues ?? const []),
+        _mapEq.hash(meta),
       );
 }
 
@@ -62,6 +69,9 @@ final class AnalyticsEvent {
   final bool deprecated;
   final String? replacement;
 
+  /// Custom metadata for this event (e.g. ownership, Jira tickets).
+  final Map<String, Object?> meta;
+
   const AnalyticsEvent({
     required this.name,
     required this.description,
@@ -70,6 +80,7 @@ final class AnalyticsEvent {
     required this.parameters,
     this.deprecated = false,
     this.replacement,
+    this.meta = const {},
   });
 
   @override
@@ -85,7 +96,8 @@ final class AnalyticsEvent {
         other.customEventName == customEventName &&
         other.deprecated == deprecated &&
         other.replacement == replacement &&
-        _paramListEq.equals(other.parameters, parameters);
+        _paramListEq.equals(other.parameters, parameters) &&
+        _mapEq.equals(other.meta, meta);
   }
 
   @override
@@ -97,6 +109,7 @@ final class AnalyticsEvent {
         deprecated,
         replacement,
         _paramListEq.hash(parameters),
+        _mapEq.hash(meta),
       );
 }
 

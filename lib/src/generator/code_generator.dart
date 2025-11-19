@@ -22,19 +22,28 @@ final class CodeGenerator {
   });
 
   /// Generates analytics code and writes to configured output path
-  Future<void> generate(Map<String, AnalyticsDomain> domains) async {
+  Future<void> generate(
+    Map<String, AnalyticsDomain> domains, {
+    Map<String, List<AnalyticsParameter>> contexts = const {},
+  }) async {
     log?.call('Starting analytics code generation...');
 
-    if (domains.isEmpty) {
-      log?.call('No analytics events found. Skipping generation.');
+    // Filter out empty contexts to avoid generating empty files
+    final activeContexts = Map<String, List<AnalyticsParameter>>.from(contexts)
+      ..removeWhere((_, value) => value.isEmpty);
+
+    if (domains.isEmpty && activeContexts.isEmpty) {
+      log?.call(
+          'No analytics events or properties found. Skipping generation.');
       return;
     }
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final eventsDir = path.join(outputDir, 'events');
+    final contextsDir = path.join(outputDir, 'contexts');
 
     // Ensure output directories exist
-    await _prepareOutputDirectories(outputDir, eventsDir);
+    await _prepareOutputDirectories(outputDir, eventsDir, contextsDir);
 
     // Track generated files to clean up stale ones later
     final generatedFiles = <String>{};
@@ -46,6 +55,11 @@ final class CodeGenerator {
       generatedFiles.add(filePath);
     }));
 
+    // Generate context files
+    for (final entry in activeContexts.entries) {
+      await _generateContextFile(entry.key, entry.value, contextsDir);
+    }
+
     // Clean up stale files
     await _cleanStaleFiles(eventsDir, generatedFiles);
 
@@ -56,7 +70,104 @@ final class CodeGenerator {
     log?.call('  Domains: ${domains.keys.join(', ')}');
 
     // Generate Analytics singleton class
-    await _generateAnalyticsClass(domains);
+    await _generateAnalyticsClass(
+      domains,
+      contexts: activeContexts,
+    );
+  }
+
+  Future<String> _generateContextFile(
+    String contextName,
+    List<AnalyticsParameter> properties,
+    String outputDir,
+  ) async {
+    final isLegacyUserProperties = contextName == 'user_properties';
+    final isLegacyGlobalContext = contextName == 'global_context';
+    final isLegacy = isLegacyUserProperties || isLegacyGlobalContext;
+
+    final pascalName = StringUtils.capitalizePascal(contextName);
+    final camelContextName = _toCamelCase(contextName);
+
+    final buffer = StringBuffer();
+    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
+    buffer.writeln('// ignore_for_file: type=lint, unused_import');
+    buffer.writeln();
+    buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
+    buffer.writeln();
+
+    buffer.writeln('/// Capability interface for $pascalName');
+    buffer.writeln(
+        'abstract class ${pascalName}Capability implements AnalyticsCapability {');
+
+    String interfaceMethodName;
+    if (isLegacyUserProperties) {
+      interfaceMethodName = 'setUserProperty';
+    } else if (isLegacyGlobalContext) {
+      interfaceMethodName = 'setContextProperty';
+    } else {
+      interfaceMethodName = 'set${pascalName}Property';
+    }
+
+    buffer.writeln('  void $interfaceMethodName(String name, Object? value);');
+    buffer.writeln('}');
+    buffer.writeln();
+
+    buffer.writeln('/// Key for $pascalName capability');
+    buffer.writeln(
+        "const ${camelContextName}Key = CapabilityKey<${pascalName}Capability>('$contextName');");
+    buffer.writeln();
+
+    buffer.writeln('/// Mixin for Analytics class');
+    buffer.writeln('mixin Analytics$pascalName on AnalyticsBase {');
+
+    for (final prop in properties) {
+      final camelName = _toCamelCase(prop.codeName);
+
+      String methodName;
+      if (isLegacy) {
+        methodName = 'set${StringUtils.capitalizePascal(camelName)}';
+      } else {
+        methodName = 'set$pascalName${StringUtils.capitalizePascal(camelName)}';
+      }
+
+      final dartType = DartTypeMapper.toDartType(prop.type);
+      final nullableType = prop.isNullable ? '$dartType?' : dartType;
+
+      if (prop.description != null) {
+        buffer.writeln('  /// ${prop.description}');
+      }
+      buffer.writeln('  void $methodName($nullableType value) {');
+
+      if (prop.allowedValues != null && prop.allowedValues!.isNotEmpty) {
+        final constName =
+            'allowed${StringUtils.capitalizePascal(camelName)}Values';
+        final encodedValues = prop.allowedValues!
+            .map((value) => '\'${_escapeSingleQuoted(value)}\'')
+            .join(', ');
+        final joinedValues = prop.allowedValues!.join(', ');
+
+        buffer.write(_generateAllowedValuesCheck(
+          camelParam: 'value',
+          constName: constName,
+          encodedValues: encodedValues,
+          joinedValues: joinedValues,
+          isNullable: prop.isNullable,
+        ));
+      }
+
+      buffer.writeln(
+          "    capability(${camelContextName}Key)?.$interfaceMethodName('${prop.name}', value);");
+      buffer.writeln('  }');
+      buffer.writeln();
+    }
+
+    buffer.writeln('}');
+
+    final fileName =
+        isLegacy ? '$contextName.dart' : '${contextName}_context.dart';
+    final filePath = path.join(outputDir, fileName);
+    await _writeFileIfContentChanged(filePath, buffer.toString());
+    return filePath;
   }
 
   /// Generates a separate file for a single domain and returns the file path
@@ -335,14 +446,25 @@ final class CodeGenerator {
 
   /// Generates Analytics singleton class with all domain mixins
   Future<void> _generateAnalyticsClass(
-    Map<String, AnalyticsDomain> domains,
-  ) async {
+    Map<String, AnalyticsDomain> domains, {
+    Map<String, List<AnalyticsParameter>> contexts = const {},
+  }) async {
     final buffer = StringBuffer();
 
     // File header
     buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
     buffer.writeln();
     buffer.writeln("import 'generated_events.dart';");
+
+    for (final contextName in contexts.keys.toList()..sort()) {
+      final isLegacy =
+          contextName == 'user_properties' || contextName == 'global_context';
+      if (isLegacy) {
+        buffer.writeln("import 'contexts/$contextName.dart';");
+      } else {
+        buffer.writeln("import 'contexts/${contextName}_context.dart';");
+      }
+    }
     buffer.writeln();
 
     // Class documentation
@@ -369,6 +491,10 @@ final class CodeGenerator {
     final mixins = sortedDomains
         .map((d) => 'Analytics${StringUtils.capitalizePascal(d)}')
         .toList();
+
+    for (final contextName in contexts.keys.toList()..sort()) {
+      mixins.add('Analytics${StringUtils.capitalizePascal(contextName)}');
+    }
 
     // Class declaration
     buffer.write('final class Analytics extends AnalyticsBase');
@@ -501,6 +627,15 @@ final class CodeGenerator {
         "          replacement: '${_escapeSingleQuoted(event.replacement!)}',",
       );
     }
+    if (event.meta.isNotEmpty) {
+      buffer.writeln('          meta: <String, Object?>{');
+      for (final entry in event.meta.entries) {
+        buffer.writeln(
+          "            '${_escapeSingleQuoted(entry.key)}': '${_escapeSingleQuoted(entry.value.toString())}',",
+        );
+      }
+      buffer.writeln('          },');
+    }
     buffer.writeln('          parameters: <AnalyticsParameter>[');
 
     for (final param in event.parameters) {
@@ -546,6 +681,15 @@ final class CodeGenerator {
       }
       buffer.writeln('              ],');
     }
+    if (param.meta.isNotEmpty) {
+      buffer.writeln('              meta: <String, Object?>{');
+      for (final entry in param.meta.entries) {
+        buffer.writeln(
+          "                '${_escapeSingleQuoted(entry.key)}': '${_escapeSingleQuoted(entry.value.toString())}',",
+        );
+      }
+      buffer.writeln('              },');
+    }
     buffer.writeln('            ),');
     return buffer.toString();
   }
@@ -554,6 +698,7 @@ final class CodeGenerator {
   Future<void> _prepareOutputDirectories(
     String outputDir,
     String eventsDir,
+    String contextsDir,
   ) async {
     final outputDirectory = Directory(outputDir);
     if (!outputDirectory.existsSync()) {
@@ -563,6 +708,11 @@ final class CodeGenerator {
     final eventsDirectory = Directory(eventsDir);
     if (!eventsDirectory.existsSync()) {
       await eventsDirectory.create(recursive: true);
+    }
+
+    final contextsDirectory = Directory(contextsDir);
+    if (!contextsDirectory.existsSync()) {
+      await contextsDirectory.create(recursive: true);
     }
   }
 

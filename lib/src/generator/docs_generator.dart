@@ -21,12 +21,15 @@ final class DocsGenerator {
   });
 
   /// Generates analytics documentation and writes to configured path
-  Future<void> generate(Map<String, AnalyticsDomain> domains) async {
+  Future<void> generate(
+    Map<String, AnalyticsDomain> domains, {
+    Map<String, List<AnalyticsParameter>> contexts = const {},
+  }) async {
     log?.call('Starting analytics documentation generation...');
 
-    if (domains.isEmpty) {
+    if (domains.isEmpty && contexts.isEmpty) {
       log?.call(
-        'No analytics events found. Skipping documentation generation.',
+        'No analytics events or properties found. Skipping documentation generation.',
       );
       return;
     }
@@ -34,7 +37,11 @@ final class DocsGenerator {
     final metadata = GenerationMetadata.fromDomains(domains);
 
     // Generate documentation
-    final markdown = _generateMarkdown(domains, metadata);
+    final markdown = _generateMarkdown(
+      domains,
+      metadata,
+      contexts,
+    );
 
     // Write to output file
     final outputPath = config.docsPath != null
@@ -57,6 +64,7 @@ final class DocsGenerator {
   String _generateMarkdown(
     Map<String, AnalyticsDomain> domains,
     GenerationMetadata metadata,
+    Map<String, List<AnalyticsParameter>> contexts,
   ) {
     final buffer = StringBuffer();
 
@@ -78,6 +86,11 @@ final class DocsGenerator {
       final anchor = domainName.toLowerCase().replaceAll('_', '-');
       buffer.writeln('- [$domainName](#$anchor)');
     }
+    for (final contextName in contexts.keys) {
+      final title = _getContextTitle(contextName);
+      final anchor = title.toLowerCase().replaceAll(' ', '-');
+      buffer.writeln('- [$title](#$anchor)');
+    }
     buffer.writeln();
 
     // Summary statistics
@@ -91,6 +104,12 @@ final class DocsGenerator {
     // Generate documentation for each domain
     for (final entry in domains.entries) {
       buffer.write(_generateDomainDocs(entry.key, entry.value));
+      buffer.writeln();
+    }
+
+    for (final entry in contexts.entries) {
+      buffer.write(
+          _generatePropertiesDocs(_getContextTitle(entry.key), entry.value));
       buffer.writeln();
     }
 
@@ -131,6 +150,12 @@ final class DocsGenerator {
     return buffer.toString();
   }
 
+  String _getContextTitle(String contextName) {
+    if (contextName == 'user_properties') return 'User Properties';
+    if (contextName == 'global_context') return 'Global Context';
+    return StringUtils.capitalizePascal(contextName);
+  }
+
   /// Generates documentation for a single domain
   String _generateDomainDocs(String domainName, AnalyticsDomain domain) {
     final buffer = StringBuffer();
@@ -143,8 +168,8 @@ final class DocsGenerator {
     buffer.writeln();
 
     // Create table
-    buffer.writeln('| Event | Description | Status | Parameters |');
-    buffer.writeln('|-------|-------------|--------|------------|');
+    buffer.writeln('| Event | Description | Status | Parameters | Metadata |');
+    buffer.writeln('|-------|-------------|--------|------------|----------|');
 
     for (final event in domain.events) {
       final eventName =
@@ -159,15 +184,24 @@ final class DocsGenerator {
                   (p.allowedValues != null && p.allowedValues!.isNotEmpty)
                       ? ' (allowed: ${p.allowedValues!.join(', ')})'
                       : '';
-              return '$typeStr$desc$allowed';
+              final meta = p.meta.isNotEmpty
+                  ? ' [${p.meta.entries.map((e) => '${e.key}: ${e.value}').join(', ')}]'
+                  : '';
+              return '$typeStr$desc$allowed$meta';
             }).join('<br>');
       final status = _formatEventStatus(event);
+      final meta = event.meta.isEmpty
+          ? '-'
+          : event.meta.entries
+              .map((e) => '**${e.key}**: ${e.value}')
+              .join('<br>');
 
       buffer.writeln(
         '| ${_escapeMarkdownCell(eventName)} | '
         '${_escapeMarkdownCell(event.description)} | '
         '${_escapeMarkdownCell(status)} | '
-        '${_escapeMarkdownCell(params)} |',
+        '${_escapeMarkdownCell(params)} | '
+        '${_escapeMarkdownCell(meta)} |',
       );
     }
 
@@ -200,6 +234,48 @@ final class DocsGenerator {
     }
 
     buffer.writeln('```');
+
+    return buffer.toString();
+  }
+
+  String _generatePropertiesDocs(
+    String title,
+    List<AnalyticsParameter> properties,
+  ) {
+    final buffer = StringBuffer();
+
+    buffer.writeln('## $title');
+    buffer.writeln();
+    buffer.writeln('Count: ${properties.length}');
+    buffer.writeln();
+
+    buffer.writeln(
+        '| Property | Type | Description | Allowed Values | Metadata |');
+    buffer.writeln(
+        '|----------|------|-------------|----------------|----------|');
+
+    for (final prop in properties) {
+      final name = prop.name;
+      final type = '${prop.type}${prop.isNullable ? '?' : ''}';
+      final desc = prop.description ?? '-';
+      final allowed =
+          (prop.allowedValues != null && prop.allowedValues!.isNotEmpty)
+              ? prop.allowedValues!.join(', ')
+              : '-';
+      final meta = prop.meta.isEmpty
+          ? '-'
+          : prop.meta.entries
+              .map((e) => '**${e.key}**: ${e.value}')
+              .join('<br>');
+
+      buffer.writeln(
+        '| ${_escapeMarkdownCell(name)} | '
+        '${_escapeMarkdownCell(type)} | '
+        '${_escapeMarkdownCell(desc)} | '
+        '${_escapeMarkdownCell(allowed)} | '
+        '${_escapeMarkdownCell(meta)} |',
+      );
+    }
 
     return buffer.toString();
   }

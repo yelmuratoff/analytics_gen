@@ -39,7 +39,6 @@
 - [Overview](#overview)
 - [TL;DR Quick Start](#tldr-quick-start)
 - [Key Features](#key-features)
-- [Architecture Snapshot](#architecture-snapshot)
 - [Documentation Hub](#documentation-hub)
 - [CLI Commands](#cli-commands)
 - [Validation & Quality](#validation--quality)
@@ -76,22 +75,84 @@ Need a detailed walkthrough? Head to [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 - **Multi-provider fan-out** – send the same event to multiple SDKs with error handling.
 - **Docs + exports** – Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
 - **Runtime plan** – `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
+- **Extensible Metadata** – attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
 
-## Architecture Snapshot
+## Extensible Metadata
 
+You can attach arbitrary metadata to events and parameters using the `meta` key in your YAML definitions. This is useful for tagging events with ownership, PII status, or other organizational context without hardcoding it into the schema.
+
+```yaml
+user_login:
+  description: User logged in successfully.
+  meta:
+    owner: "auth-team"
+    pii: false
+    tier: "critical"
+  parameters:
+    method:
+      type: String
+      description: The method used to login (email, google, apple).
+      meta:
+        pii: true # Email might be PII if logged directly
 ```
-lib/src/analytics/generated/
-├── analytics.dart          # Singleton + runtime plan metadata
-├── generated_events.dart   # Barrel export
-└── events/
-    ├── auth_events.dart    # AnalyticsAuth mixin
-    ├── screen_events.dart  # AnalyticsScreen mixin
-    └── purchase_events.dart
-```
 
-- Docs land in `docs/analytics_events.md`.
-- Optional exports go under `assets/generated/`.
-- Re-running the generator without YAML changes yields byte-identical files.
+This metadata is:
+- Available at runtime via `Analytics.plan`.
+- Included in the generated Markdown documentation.
+- Exported to JSON and CSV for external analysis.
+
+## Contexts & Global Properties
+
+Contexts allow you to define global properties (like user attributes, device info, or theme settings) that are managed separately from individual events.
+
+1. **Define a context file** (e.g., `events/user_properties.yaml`):
+   ```yaml
+   user_properties:
+     user_id:
+       type: String
+       description: Unique identifier for the user
+     user_role:
+       type: String
+       allowed_values: ['admin', 'viewer']
+   ```
+
+2. **Register it** in `analytics_gen.yaml`:
+   ```yaml
+   analytics_gen:
+     contexts:
+       - events/user_properties.yaml
+   ```
+
+3. **Use the generated API**:
+   ```dart
+   // The generator creates a mixin and capability interface
+   Analytics.instance.setUserId('123');
+   Analytics.instance.setUserRole('admin');
+   ```
+
+4. **Implement the capability** in your provider:
+   The generator creates an interface (e.g., `UserPropertiesCapability`). Your analytics provider must implement this interface and register it to handle the property updates.
+
+   ```dart
+   class MyAnalyticsService with CapabilityProviderMixin implements IAnalytics {
+     MyAnalyticsService() {
+       // Register the capability implementation
+       registerCapability(userPropertiesKey, _UserPropertiesImpl(this));
+     }
+     // ...
+   }
+
+   class _UserPropertiesImpl implements UserPropertiesCapability {
+     final MyAnalyticsService _service;
+     _UserPropertiesImpl(this._service);
+
+     @override
+     void setUserProperty(String name, Object? value) {
+       // Forward to your SDK (e.g. Firebase setUserProperty)
+       _service.firebase.setUserProperty(name: name, value: value);
+     }
+   }
+   ```
 
 ## Documentation Hub
 

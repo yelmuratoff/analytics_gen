@@ -13,11 +13,13 @@ final class YamlParser {
   final String eventsPath;
   final void Function(String message)? log;
   final NamingStrategy naming;
+  final List<String> contextFiles;
 
   YamlParser({
     required this.eventsPath,
     this.log,
     NamingStrategy? naming,
+    this.contextFiles = const [],
   }) : naming = naming ?? const NamingStrategy();
 
   /// Parses all YAML files in the events directory and returns a map of domains.
@@ -27,6 +29,7 @@ final class YamlParser {
       eventsPath: eventsPath,
       log: log,
       naming: naming,
+      contextFiles: contextFiles,
     )) {
       domains[domain.name] = domain;
     }
@@ -41,6 +44,7 @@ final class YamlParser {
     required String eventsPath,
     NamingStrategy? naming,
     void Function(String message)? log,
+    List<String> contextFiles = const [],
   }) async* {
     final strategy = naming ?? const NamingStrategy();
     final eventsDir = Directory(eventsPath);
@@ -65,11 +69,27 @@ final class YamlParser {
     log?.call('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
 
     final futures = yamlFiles.map((file) async {
+      // Skip context files
+      // We normalize paths to ensure consistent comparison
+      final normalizedPath = file.path.replaceAll('\\', '/');
+      if (contextFiles.any((c) => normalizedPath.endsWith(c))) {
+        return null;
+      }
+
+      // Skip legacy user_properties.yaml and global_context.yaml if they are not explicitly in contextFiles
+      // but we want to avoid parsing them as domains.
+      // If the user explicitly added them to contextFiles, they are skipped above.
+      // If not, we still skip them to preserve legacy behavior unless they are renamed.
+      if (file.path.endsWith('user_properties.yaml') ||
+          file.path.endsWith('global_context.yaml')) {
+        return null;
+      }
       final content = await file.readAsString();
       return _ParsedFile(file, loadYaml(content));
     });
 
-    final results = await Future.wait(futures);
+    final results =
+        (await Future.wait(futures)).whereType<_ParsedFile>().toList();
 
     final merged = <String, _DomainSource>{};
     for (final result in results) {
@@ -144,6 +164,55 @@ final class YamlParser {
     }
   }
 
+  /// Parses user properties from user_properties.yaml
+  Future<List<AnalyticsParameter>> parseUserProperties() async {
+    return _parseSpecialFile('user_properties.yaml', 'user_properties');
+  }
+
+  /// Parses global context from global_context.yaml
+  Future<List<AnalyticsParameter>> parseGlobalContext() async {
+    return _parseSpecialFile('global_context.yaml', 'global_context');
+  }
+
+  Future<List<AnalyticsParameter>> _parseSpecialFile(
+    String fileName,
+    String rootKey,
+  ) async {
+    final file = File('$eventsPath/$fileName');
+    if (!file.existsSync()) {
+      return const [];
+    }
+
+    final content = await file.readAsString();
+    final yaml = loadYaml(content);
+
+    if (yaml is! YamlMap) {
+      throw AnalyticsParseException(
+        '$fileName must be a map.',
+        filePath: file.path,
+      );
+    }
+
+    final propertiesYaml = yaml[rootKey];
+    if (propertiesYaml == null) {
+      return const [];
+    }
+
+    if (propertiesYaml is! YamlMap) {
+      throw AnalyticsParseException(
+        'The "$rootKey" key must be a map.',
+        filePath: file.path,
+      );
+    }
+
+    return _parseParameters(
+      propertiesYaml,
+      domainName: rootKey,
+      eventName: 'global', // Dummy event name for error messages
+      filePath: file.path,
+    );
+  }
+
   /// Parses events for a single domain
   List<AnalyticsEvent> _parseEventsForDomain(
     String domainName,
@@ -175,6 +244,8 @@ final class YamlParser {
       final deprecated = eventData['deprecated'] as bool? ?? false;
       final replacement = eventData['replacement'] as String?;
 
+      final meta = _parseMeta(eventData['meta'], filePath);
+
       final rawParameters = eventData['parameters'];
       if (rawParameters != null && rawParameters is! YamlMap) {
         throw AnalyticsParseException(
@@ -200,11 +271,24 @@ final class YamlParser {
           deprecated: deprecated,
           replacement: replacement,
           parameters: parameters,
+          meta: meta,
         ),
       );
     }
 
     return events;
+  }
+
+  Map<String, Object?> _parseMeta(dynamic metaYaml, String filePath) {
+    if (metaYaml == null) return const {};
+    if (metaYaml is! YamlMap) {
+      throw AnalyticsParseException(
+        'The "meta" field must be a map.',
+        filePath: filePath,
+      );
+    }
+    // Convert YamlMap to Map<String, Object?>
+    return metaYaml.map((key, value) => MapEntry(key.toString(), value));
   }
 
   /// Parses parameters from YAML
@@ -280,10 +364,12 @@ final class YamlParser {
       String paramType;
       String? description;
       List<String>? allowedValues;
+      Map<String, Object?> meta = const {};
 
       if (paramValue is YamlMap) {
         // Complex parameter with 'type' and/or 'description'
         description = paramValue['description'] as String?;
+        meta = _parseMeta(paramValue['meta'], filePath);
 
         // Check if 'type' key exists explicitly
         if (paramValue.containsKey('type')) {
@@ -296,7 +382,8 @@ final class YamlParser {
                     k.toString() != 'description' &&
                     k.toString() != 'allowed_values' &&
                     k.toString() != 'identifier' &&
-                    k.toString() != 'param_name',
+                    k.toString() != 'param_name' &&
+                    k.toString() != 'meta',
               )
               .firstOrNull;
           paramType = typeKey?.toString() ?? 'dynamic';
@@ -331,6 +418,7 @@ final class YamlParser {
           isNullable: isNullable,
           description: description,
           allowedValues: allowedValues,
+          meta: meta,
         ),
       );
     }
@@ -383,6 +471,61 @@ final class YamlParser {
         seen[actualIdentifier] = domainName;
       }
     }
+  }
+
+  /// Parses all configured context files.
+  /// Returns a map where the key is the context name (from the YAML root key)
+  /// and the value is the list of parameters.
+  Future<Map<String, List<AnalyticsParameter>>> parseContexts() async {
+    final contexts = <String, List<AnalyticsParameter>>{};
+
+    for (final filePath in contextFiles) {
+      final file = File(filePath);
+      if (!file.existsSync()) {
+        log?.call('Context file not found: $filePath');
+        continue;
+      }
+
+      final content = await file.readAsString();
+      final yaml = loadYaml(content);
+
+      if (yaml is! YamlMap) {
+        throw AnalyticsParseException(
+          'Context file $filePath must be a map.',
+          filePath: filePath,
+        );
+      }
+
+      // We expect a single root key which defines the context name
+      // e.g. user: { ... }
+      if (yaml.keys.length != 1) {
+        throw AnalyticsParseException(
+          'Context file $filePath must contain exactly one root key defining the context name.',
+          filePath: filePath,
+        );
+      }
+
+      final contextName = yaml.keys.first.toString();
+      final propertiesYaml = yaml[contextName];
+
+      if (propertiesYaml is! YamlMap) {
+        throw AnalyticsParseException(
+          'The "$contextName" key in $filePath must be a map of properties.',
+          filePath: filePath,
+        );
+      }
+
+      final parameters = _parseParameters(
+        propertiesYaml,
+        domainName: contextName,
+        eventName: 'context', // Dummy
+        filePath: filePath,
+      );
+
+      contexts[contextName] = parameters;
+    }
+
+    return contexts;
   }
 }
 

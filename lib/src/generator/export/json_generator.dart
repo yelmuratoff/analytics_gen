@@ -54,6 +54,7 @@ final class JsonGenerator {
               'description': event.description,
               'deprecated': event.deprecated,
               if (event.replacement != null) 'replacement': event.replacement,
+              if (event.meta.isNotEmpty) 'meta': event.meta,
               'parameters': event.parameters.map((p) {
                 return {
                   'name': p.name,
@@ -63,6 +64,7 @@ final class JsonGenerator {
                   if (p.description != null) 'description': p.description,
                   if (p.allowedValues != null && p.allowedValues!.isNotEmpty)
                     'allowed_values': p.allowedValues,
+                  if (p.meta.isNotEmpty) 'meta': p.meta,
                 };
               }).toList(),
             };

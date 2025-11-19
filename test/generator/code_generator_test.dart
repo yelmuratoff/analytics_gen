@@ -304,7 +304,8 @@ void main() {
       expect(outputDir.existsSync(), isFalse);
       expect(
         logs,
-        contains('No analytics events found. Skipping generation.'),
+        contains(
+            'No analytics events or properties found. Skipping generation.'),
       );
     });
 

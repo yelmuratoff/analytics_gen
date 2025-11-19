@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
   - Retained `Analytics.instance` and `Analytics.initialize()` for backward compatibility (Singleton usage).
 - **Event Name Interpolation Warning**:
   - Added a warning when event name interpolation (e.g., `event_name: "View ${itemId}"`) is detected in the generator. This is flagged as an analytics anti-pattern due to high cardinality risks.
+- **Extensible Metadata Support**:
+  - Added a `meta` field to `AnalyticsEvent` and `AnalyticsParameter` models to support arbitrary key-value pairs in YAML definitions.
+  - Metadata is propagated to the generated `Analytics.plan`, Markdown documentation, JSON exports, and CSV exports.
+  - This allows teams to attach custom attributes (e.g., `owner`, `pii`, `tier`) to events and parameters without altering the core schema.
 - Add a PR template that links to the Code Review checklist so contributors must
   explicitly confirm regeneration + docs/exports review before requesting feedback.
 - Documented why `IAnalytics.logEvent` stays synchronous and added queueing +

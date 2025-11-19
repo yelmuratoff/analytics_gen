@@ -1,0 +1,13 @@
+user_properties:
+  user_id:
+    type: String
+    description: Unique identifier for the user
+
+  user_role:
+    type: String
+    description: Role of the user in the system
+    allowed_values: ["admin", "editor", "viewer"]
+
+  is_premium:
+    type: bool
+    description: Whether the user has a premium subscription

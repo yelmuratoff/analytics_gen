@@ -35,10 +35,28 @@ class GenerationPipeline {
       eventsPath: path.join(projectRoot, config.eventsPath),
       log: request.logger,
       naming: config.naming,
+      contextFiles: config.contexts
+          .map((c) => path.join(projectRoot, c))
+          .toList(), // Resolve paths
     );
     final domains = await parser.parseEvents();
+    final userProperties = await parser.parseUserProperties();
+    final globalContext = await parser.parseGlobalContext();
+    final contexts = await parser.parseContexts();
 
-    final tasks = _buildTasks(request, domains);
+    // Merge legacy contexts if they exist
+    if (userProperties.isNotEmpty) {
+      contexts['user_properties'] = userProperties;
+    }
+    if (globalContext.isNotEmpty) {
+      contexts['global_context'] = globalContext;
+    }
+
+    final tasks = _buildTasks(
+      request,
+      domains,
+      contexts,
+    );
     final startTime = DateTime.now();
 
     try {
@@ -100,6 +118,7 @@ class GenerationPipeline {
   List<_GeneratorTask> _buildTasks(
     GenerationRequest request,
     Map<String, AnalyticsDomain> domains,
+    Map<String, List<AnalyticsParameter>> contexts,
   ) {
     final tasks = <_GeneratorTask>[];
     final rootLogger = request.logger;
@@ -112,7 +131,10 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: _scopedLogger('Code generation', rootLogger),
-          ).generate(domains),
+          ).generate(
+            domains,
+            contexts: contexts,
+          ),
         ),
       );
     }
@@ -125,7 +147,10 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: _scopedLogger('Documentation generation', rootLogger),
-          ).generate(domains),
+          ).generate(
+            domains,
+            contexts: contexts,
+          ),
         ),
       );
     }
