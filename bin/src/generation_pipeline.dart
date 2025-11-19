@@ -42,19 +42,20 @@ class GenerationPipeline {
     final startTime = DateTime.now();
 
     try {
-      // Run tasks in parallel where possible, but for now sequential is safer for logging
-      // Actually, since we have separate loggers or sequential logging, let's keep sequential execution
-      // of top-level tasks to avoid interleaved log output, but the tasks themselves are optimized.
-      for (final task in tasks) {
-        await task.invoke();
-        print('');
-      }
-
+      await _runTasks(tasks);
       final duration = DateTime.now().difference(startTime);
       print('✓ All generation tasks completed in ${duration.inMilliseconds}ms');
+    } on _TaskFailure catch (failure) {
+      print('✗ ${failure.label} failed: ${failure.error}');
+      if (request.verbose) {
+        print('Stack trace: ${failure.stackTrace}');
+      }
+      exit(1);
     } catch (e, stack) {
       print('✗ Generation failed: $e');
-      print('Stack trace: $stack');
+      if (request.verbose) {
+        print('Stack trace: $stack');
+      }
       exit(1);
     }
   }
@@ -101,7 +102,7 @@ class GenerationPipeline {
     Map<String, AnalyticsDomain> domains,
   ) {
     final tasks = <_GeneratorTask>[];
-    final log = request.logger;
+    final rootLogger = request.logger;
 
     if (request.generateCode) {
       tasks.add(
@@ -110,7 +111,7 @@ class GenerationPipeline {
           invoke: () => CodeGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: log,
+            log: _scopedLogger('Code generation', rootLogger),
           ).generate(domains),
         ),
       );
@@ -123,7 +124,7 @@ class GenerationPipeline {
           invoke: () => DocsGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: log,
+            log: _scopedLogger('Documentation generation', rootLogger),
           ).generate(domains),
         ),
       );
@@ -136,13 +137,40 @@ class GenerationPipeline {
           invoke: () => ExportGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: log,
+            log: _scopedLogger('Export generation', rootLogger),
           ).generate(domains),
         ),
       );
     }
 
     return tasks;
+  }
+
+  Future<void> _runTasks(List<_GeneratorTask> tasks) async {
+    if (tasks.isEmpty) return;
+
+    if (tasks.length == 1) {
+      await _invokeTask(tasks.single);
+      print('');
+      return;
+    }
+
+    await Future.wait(tasks.map(_invokeTask));
+    print('');
+  }
+
+  Future<void> _invokeTask(_GeneratorTask task) async {
+    try {
+      await task.invoke();
+      print('✓ ${task.label} completed');
+    } catch (error, stackTrace) {
+      throw _TaskFailure(task.label, error, stackTrace);
+    }
+  }
+
+  Logger? _scopedLogger(String label, Logger? root) {
+    if (root == null) return null;
+    return (message) => root('[$label] $message');
   }
 }
 
@@ -154,4 +182,15 @@ class _GeneratorTask {
 
   final String label;
   final Future<void> Function() invoke;
+}
+
+final class _TaskFailure implements Exception {
+  _TaskFailure(this.label, this.error, this.stackTrace);
+
+  final String label;
+  final Object error;
+  final StackTrace stackTrace;
+
+  @override
+  String toString() => '$label failed: $error';
 }
