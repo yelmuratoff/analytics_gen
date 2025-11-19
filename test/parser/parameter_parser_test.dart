@@ -64,8 +64,8 @@ void main() {
       ));
 
       final yamlConflict = loadYaml('''
-        userId: String
-        user_id: int
+        user_id: String
+        user-id: int
       ''') as YamlMap;
 
       expect(
@@ -78,7 +78,7 @@ void main() {
         throwsA(isA<AnalyticsParseException>().having(
           (e) => e.message,
           'message',
-          contains('conflicts with "userId" after camelCase normalization'),
+          contains('conflicts with "user-id" after camelCase normalization'),
         )),
       );
     });
