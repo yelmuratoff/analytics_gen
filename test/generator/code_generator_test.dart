@@ -423,9 +423,5 @@ delta:
         contains("description: 'Detailed info'"),
       );
     });
-
-    test('buildAnalyticsMixinClause returns newline when no mixins', () {
-      expect(buildAnalyticsMixinClause([]), '\n');
-    });
   });
 }

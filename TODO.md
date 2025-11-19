@@ -2,6 +2,12 @@
 
 ## Active Work Items
 
+- [x] Refactor `CodeGenerator`: Extract string rendering logic into separate Renderer classes (SRP).
+  - [x] Create `EventRenderer` for domain mixins.
+  - [x] Create `ContextRenderer` for context capabilities.
+  - [x] Create `AnalyticsClassRenderer` for the main singleton.
+  - [x] Update `CodeGenerator` to use renderers and handle only file I/O.
+  - [x] Add unit tests for renderers.
 
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
