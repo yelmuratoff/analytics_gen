@@ -213,6 +213,12 @@ final class CodeGenerator {
       eventName,
       event.parameters,
     );
+
+    if (interpolatedEventName.contains(r'${')) {
+      log?.call(
+          'WARNING: Event "${event.name}" in domain "$domainName" uses interpolation in event name: "$interpolatedEventName". This is an analytics anti-pattern (high cardinality) and may be deprecated in future versions.');
+    }
+
     buffer.writeln('    logger.logEvent(');
     buffer.writeln('      name: "$interpolatedEventName",');
 
@@ -327,13 +333,18 @@ final class CodeGenerator {
     buffer.writeln();
 
     // Class documentation
-    buffer.writeln('/// Main Analytics singleton class.');
+    buffer.writeln('/// Main Analytics class.');
     buffer.writeln('///');
     buffer.writeln('/// Automatically generated with all domain mixins.');
-    buffer.writeln(
-        '/// Initialize once at app startup, then use throughout your app.');
+    buffer.writeln('/// Supports both Dependency Injection and Singleton usage.');
     buffer.writeln('///');
-    buffer.writeln('/// Example:');
+    buffer.writeln('/// Usage (DI):');
+    buffer.writeln('/// ```dart');
+    buffer.writeln('/// final analytics = Analytics(YourAnalyticsService());');
+    buffer.writeln('/// analytics.logAuthLogin(method: "email");');
+    buffer.writeln('/// ```');
+    buffer.writeln('///');
+    buffer.writeln('/// Usage (Singleton):');
     buffer.writeln('/// ```dart');
     buffer.writeln('/// Analytics.initialize(YourAnalyticsService());');
     buffer.writeln('/// Analytics.instance.logAuthLogin(method: "email");');
@@ -350,40 +361,57 @@ final class CodeGenerator {
     buffer.write(buildAnalyticsMixinClause(mixins));
 
     buffer.writeln('{');
+
+    // Fields
+    buffer.writeln('  final IAnalytics _analytics;');
+    buffer.writeln('  final AnalyticsCapabilityResolver _capabilities;');
+    buffer.writeln();
+
+    // Constructor
+    buffer.writeln('  /// Constructor for Dependency Injection.');
+    buffer.writeln('  const Analytics(');
+    buffer.writeln('    this._analytics, [');
+    buffer.writeln('    this._capabilities = const NullCapabilityResolver(),');
+    buffer.writeln('  ]);');
+    buffer.writeln();
+
     if (config.generatePlan) {
       buffer.write(_generateAnalyticsPlanField(domains));
       buffer.writeln();
     }
 
     // Singleton implementation
-    buffer
-        .writeln('  static final Analytics _instance = Analytics._internal();');
-    buffer.writeln('  Analytics._internal();');
+    buffer.writeln('  // --- Singleton Compatibility ---');
+    buffer.writeln();
+    buffer.writeln('  static Analytics? _instance;');
     buffer.writeln();
     buffer.writeln('  /// Access the singleton instance');
-    buffer.writeln('  static Analytics get instance => _instance;');
-    buffer.writeln();
-    buffer.writeln('  IAnalytics? _analytics;');
+    buffer.writeln('  static Analytics get instance {');
+    buffer.writeln('    if (_instance == null) {');
     buffer.writeln(
-        '  AnalyticsCapabilityResolver _capabilities = const NullCapabilityResolver();');
+        "      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');");
+    buffer.writeln('    }');
+    buffer.writeln('    return _instance!;');
+    buffer.writeln('  }');
     buffer.writeln();
     buffer.writeln('  /// Whether analytics has been initialized');
-    buffer.writeln('  bool get isInitialized => _analytics != null;');
+    buffer.writeln('  static bool get isInitialized => _instance != null;');
     buffer.writeln();
     buffer.writeln('  /// Initialize analytics with your provider');
     buffer.writeln('  ///');
     buffer.writeln(
         '  /// Call this once at app startup before using any analytics methods.');
     buffer.writeln('  static void initialize(IAnalytics analytics) {');
-    buffer.writeln('    _instance._analytics = analytics;');
     buffer.writeln(
-        '    _instance._capabilities = analyticsCapabilitiesFor(analytics);');
+        '    _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));');
     buffer.writeln('  }');
     buffer.writeln();
+
+    // Overrides
+    buffer.writeln('  // --- Implementation ---');
+    buffer.writeln();
     buffer.writeln('  @override');
-    buffer.writeln(
-      '  IAnalytics get logger => ensureAnalyticsInitialized(_analytics);',
-    );
+    buffer.writeln('  IAnalytics get logger => _analytics;');
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(

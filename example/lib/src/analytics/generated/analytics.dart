@@ -2,18 +2,33 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 import 'generated_events.dart';
 
-/// Main Analytics singleton class.
+/// Main Analytics class.
 ///
 /// Automatically generated with all domain mixins.
-/// Initialize once at app startup, then use throughout your app.
+/// Supports both Dependency Injection and Singleton usage.
 ///
-/// Example:
+/// Usage (DI):
+/// ```dart
+/// final analytics = Analytics(YourAnalyticsService());
+/// analytics.logAuthLogin(method: "email");
+/// ```
+///
+/// Usage (Singleton):
 /// ```dart
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
 final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen
 {
+  final IAnalytics _analytics;
+  final AnalyticsCapabilityResolver _capabilities;
+
+  /// Constructor for Dependency Injection.
+  const Analytics(
+    this._analytics, [
+    this._capabilities = const NullCapabilityResolver(),
+  ]);
+
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
     AnalyticsDomain(
@@ -204,28 +219,32 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
     ),
   ];
 
-  static final Analytics _instance = Analytics._internal();
-  Analytics._internal();
+  // --- Singleton Compatibility ---
+
+  static Analytics? _instance;
 
   /// Access the singleton instance
-  static Analytics get instance => _instance;
-
-  IAnalytics? _analytics;
-  AnalyticsCapabilityResolver _capabilities = const NullCapabilityResolver();
+  static Analytics get instance {
+    if (_instance == null) {
+      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');
+    }
+    return _instance!;
+  }
 
   /// Whether analytics has been initialized
-  bool get isInitialized => _analytics != null;
+  static bool get isInitialized => _instance != null;
 
   /// Initialize analytics with your provider
   ///
   /// Call this once at app startup before using any analytics methods.
   static void initialize(IAnalytics analytics) {
-    _instance._analytics = analytics;
-    _instance._capabilities = analyticsCapabilitiesFor(analytics);
+    _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));
   }
 
+  // --- Implementation ---
+
   @override
-  IAnalytics get logger => ensureAnalyticsInitialized(_analytics);
+  IAnalytics get logger => _analytics;
 
   @override
   AnalyticsCapabilityResolver get capabilities => _capabilities;
