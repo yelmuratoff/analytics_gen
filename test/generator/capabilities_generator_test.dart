@@ -44,7 +44,8 @@ void main() {
     await generator.generate({}, contexts: {'user_properties': userProperties});
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
-    final userPropsFile = File(path.join(outputDir, 'contexts', 'user_properties.dart'));
+    final userPropsFile =
+        File(path.join(outputDir, 'contexts', 'user_properties.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(userPropsFile.existsSync(), isTrue);
@@ -60,7 +61,8 @@ void main() {
             "capability(userPropertiesKey)?.setUserProperty('user_role', value)"));
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(analyticsContent, contains("import 'contexts/user_properties.dart';"));
+    expect(
+        analyticsContent, contains("import 'contexts/user_properties.dart';"));
     expect(analyticsContent, contains('with AnalyticsUserProperties'));
   });
 
@@ -73,7 +75,8 @@ void main() {
     await generator.generate({}, contexts: {'user_properties': []});
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
-    final userPropsFile = File(path.join(outputDir, 'contexts', 'user_properties.dart'));
+    final userPropsFile =
+        File(path.join(outputDir, 'contexts', 'user_properties.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(userPropsFile.existsSync(), isFalse);
@@ -99,7 +102,8 @@ void main() {
     await generator.generate({}, contexts: {'global_context': globalContext});
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
-    final contextFile = File(path.join(outputDir, 'contexts', 'global_context.dart'));
+    final contextFile =
+        File(path.join(outputDir, 'contexts', 'global_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(contextFile.existsSync(), isTrue);
@@ -115,7 +119,8 @@ void main() {
             "capability(globalContextKey)?.setContextProperty('app_version', value)"));
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(analyticsContent, contains("import 'contexts/global_context.dart';"));
+    expect(
+        analyticsContent, contains("import 'contexts/global_context.dart';"));
     expect(analyticsContent, contains('with AnalyticsGlobalContext'));
   });
 
@@ -149,8 +154,10 @@ void main() {
     );
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
-    final userPropsFile = File(path.join(outputDir, 'contexts', 'user_properties.dart'));
-    final contextFile = File(path.join(outputDir, 'contexts', 'global_context.dart'));
+    final userPropsFile =
+        File(path.join(outputDir, 'contexts', 'user_properties.dart'));
+    final contextFile =
+        File(path.join(outputDir, 'contexts', 'global_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(userPropsFile.existsSync(), isTrue);
@@ -158,8 +165,10 @@ void main() {
     expect(analyticsFile.existsSync(), isTrue);
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(analyticsContent, contains("import 'contexts/user_properties.dart';"));
-    expect(analyticsContent, contains("import 'contexts/global_context.dart';"));
+    expect(
+        analyticsContent, contains("import 'contexts/user_properties.dart';"));
+    expect(
+        analyticsContent, contains("import 'contexts/global_context.dart';"));
     expect(analyticsContent,
         contains('with AnalyticsGlobalContext, AnalyticsUserProperties'));
   });
@@ -184,7 +193,8 @@ void main() {
     await generator.generate({}, contexts: contexts);
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
-    final contextFile = File(path.join(outputDir, 'contexts', 'device_context.dart'));
+    final contextFile =
+        File(path.join(outputDir, 'contexts', 'device_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(contextFile.existsSync(), isTrue);
@@ -200,7 +210,8 @@ void main() {
             "capability(deviceKey)?.setDeviceProperty('os_version', value)"));
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(analyticsContent, contains("import 'contexts/device_context.dart';"));
+    expect(
+        analyticsContent, contains("import 'contexts/device_context.dart';"));
     expect(analyticsContent, contains('with AnalyticsDevice'));
   });
 }
