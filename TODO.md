@@ -12,7 +12,7 @@
 
 ### Examples & guidance
 - [x] Expand `example/` into a realistic Flutter showcase (UI + analytics wiring) and publish its pubspec so developers can run a full app, not just scripts. _The example now boots a Flutter UI with buttons that call generated mixins, includes widget tests, and documents running via `flutter run`._
-- [ ] Author migration guides for common sources (Firebase Analytics manual strings, Amplitude, Mixpanel) covering mapping events → YAML, verifying generated diffs, and rollout strategy.
+- [x] Author migration guides for common sources (Firebase Analytics manual strings, Amplitude, Mixpanel) covering mapping events → YAML, verifying generated diffs, and rollout strategy. _Documented in `docs/MIGRATION_GUIDES.md` with provider-specific steps and README links + tests._
 - [ ] Deepen the FAQ/docs explaining why YAML was chosen over a Dart DSL, including pros/cons and mitigation strategies (e.g., generators wired into CI). Clarify compile-step implications.
 
 ### Configuration & compatibility

@@ -18,6 +18,9 @@ All notable changes to this project will be documented in this file.
   how to run `flutter run` / `flutter test`.
 - Further cleaned up the Flutter example by moving analytics orchestration into a
   controller + observable adapter, keeping event logging logic out of widgets.
+- Added `docs/MIGRATION_GUIDES.md` with step-by-step playbooks for Firebase,
+  Amplitude, and Mixpanel migrations plus README/test coverage so teams can
+  map legacy events → YAML confidently.
 - Flexible naming strategy block with per-event/parameter overrides:
   - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
   - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.
