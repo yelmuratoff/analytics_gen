@@ -53,6 +53,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     );
   }
 
+  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
   /// When user logs in via phone
   ///
   /// Parameters:

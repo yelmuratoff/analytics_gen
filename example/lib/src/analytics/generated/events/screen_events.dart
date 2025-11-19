@@ -24,6 +24,7 @@ mixin AnalyticsScreen on AnalyticsBase {
     );
   }
 
+  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
   /// User views a screen
   ///
   /// Parameters:

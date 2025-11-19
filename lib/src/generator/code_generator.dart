@@ -137,6 +137,19 @@ final class CodeGenerator {
     if (event.deprecated) {
       final message = _buildDeprecationMessage(event);
       buffer.writeln("  @Deprecated('$message')");
+    } else {
+      // Check for interpolation and add deprecation warning if needed
+      // We do this check here to ensure the annotation appears before the method signature
+      final eventName =
+          EventNaming.resolveEventName(domainName, event, config.naming);
+      final interpolatedEventName = _replacePlaceholdersWithInterpolation(
+        eventName,
+        event.parameters,
+      );
+      if (interpolatedEventName.contains(r'${')) {
+        buffer.writeln(
+            "  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')");
+      }
     }
 
     // Documentation
