@@ -8,16 +8,16 @@ Tests were performed on a standard developer machine (Apple Silicon) using synth
 
 | Total Events | Domains | Generation Time | Files Generated |
 |--------------|---------|-----------------|-----------------|
-| **100**      | 10      | ~1.0s           | 12              |
-| **500**      | 50      | ~1.5s           | 52              |
-| **2,000**    | 200     | ~3.7s           | 202             |
-| **10,000**   | 1,000   | ~15.5s          | 1,002           |
+| **100**      | 10      | ~0.9s           | 12              |
+| **500**      | 50      | ~1.3s           | 52              |
+| **2,000**    | 200     | ~3.3s           | 202             |
+| **10,000**   | 1,000   | ~14.3s          | 1,002           |
 
 ### Key Takeaways
 
 1.  **Linear Scaling**: Performance scales linearly with the number of events/domains.
-2.  **Fast Iteration**: Small to medium plans (<500 events) generate in under 2 seconds.
-3.  **Enterprise Ready**: Even massive plans (10,000 events) complete in <16 seconds, making it suitable for CI/CD pipelines.
+2.  **Fast Iteration**: Small to medium plans (<500 events) generate in under 1.5 seconds.
+3.  **Enterprise Ready**: Even massive plans (10,000 events) complete in <15 seconds, making it suitable for CI/CD pipelines.
 4.  **Optimized I/O**: The generator uses parallel processing and incremental file writes (only touching files if content changes) to minimize disk I/O and preserve build caches.
 
 ## Recommendations

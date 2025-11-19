@@ -4,7 +4,6 @@ import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
-import '../parser/yaml_parser.dart';
 import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 import 'generation_metadata.dart';
@@ -22,16 +21,8 @@ final class DocsGenerator {
   });
 
   /// Generates analytics documentation and writes to configured path
-  Future<void> generate() async {
+  Future<void> generate(Map<String, AnalyticsDomain> domains) async {
     log?.call('Starting analytics documentation generation...');
-
-    // Parse YAML files
-    final parser = YamlParser(
-      eventsPath: path.join(projectRoot, config.eventsPath),
-      log: log,
-      naming: config.naming,
-    );
-    final domains = await parser.parseEvents();
 
     if (domains.isEmpty) {
       log?.call(

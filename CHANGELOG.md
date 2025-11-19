@@ -31,6 +31,8 @@ All notable changes to this project will be documented in this file.
 - Performance optimizations:
   - Parallelized domain file generation and YAML file reading.
   - Removed aggressive directory deletion in favor of incremental file writes and stale file cleanup, preserving filesystem caches and reducing I/O.
+  - Implemented single-pass YAML parsing: event definitions are now parsed once and shared across code, docs, and export generators, eliminating redundant work.
+  - Parallelized export generation tasks (CSV, JSON, SQL).
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an

@@ -7,6 +7,8 @@ import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/parser/yaml_parser.dart';
 
 import 'banner_printer.dart';
 import 'generation_request.dart';
@@ -28,10 +30,21 @@ class GenerationPipeline {
       return;
     }
 
-    final tasks = _buildTasks(request);
+    // Parse YAML files once
+    final parser = YamlParser(
+      eventsPath: path.join(projectRoot, config.eventsPath),
+      log: request.logger,
+      naming: config.naming,
+    );
+    final domains = await parser.parseEvents();
+
+    final tasks = _buildTasks(request, domains);
     final startTime = DateTime.now();
 
     try {
+      // Run tasks in parallel where possible, but for now sequential is safer for logging
+      // Actually, since we have separate loggers or sequential logging, let's keep sequential execution
+      // of top-level tasks to avoid interleaved log output, but the tasks themselves are optimized.
       for (final task in tasks) {
         await task.invoke();
         print('');
@@ -83,7 +96,10 @@ class GenerationPipeline {
     }
   }
 
-  List<_GeneratorTask> _buildTasks(GenerationRequest request) {
+  List<_GeneratorTask> _buildTasks(
+    GenerationRequest request,
+    Map<String, AnalyticsDomain> domains,
+  ) {
     final tasks = <_GeneratorTask>[];
     final log = request.logger;
 
@@ -95,7 +111,7 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: log,
-          ).generate(),
+          ).generate(domains),
         ),
       );
     }
@@ -108,7 +124,7 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: log,
-          ).generate(),
+          ).generate(domains),
         ),
       );
     }
@@ -121,7 +137,7 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: log,
-          ).generate(),
+          ).generate(domains),
         ),
       );
     }

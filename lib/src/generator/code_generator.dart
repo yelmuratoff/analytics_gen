@@ -4,7 +4,6 @@ import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
-import '../parser/yaml_parser.dart';
 import '../util/event_naming.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
@@ -23,15 +22,8 @@ final class CodeGenerator {
   });
 
   /// Generates analytics code and writes to configured output path
-  Future<void> generate() async {
+  Future<void> generate(Map<String, AnalyticsDomain> domains) async {
     log?.call('Starting analytics code generation...');
-
-    // Parse YAML files
-    final parser = YamlParser(
-      eventsPath: path.join(projectRoot, config.eventsPath),
-      log: log,
-    );
-    final domains = await parser.parseEvents();
 
     if (domains.isEmpty) {
       log?.call('No analytics events found. Skipping generation.');
