@@ -336,7 +336,8 @@ final class CodeGenerator {
     buffer.writeln('/// Main Analytics class.');
     buffer.writeln('///');
     buffer.writeln('/// Automatically generated with all domain mixins.');
-    buffer.writeln('/// Supports both Dependency Injection and Singleton usage.');
+    buffer
+        .writeln('/// Supports both Dependency Injection and Singleton usage.');
     buffer.writeln('///');
     buffer.writeln('/// Usage (DI):');
     buffer.writeln('/// ```dart');
