@@ -13,10 +13,10 @@
 ### Examples & guidance
 - [x] Expand `example/` into a realistic Flutter showcase (UI + analytics wiring) and publish its pubspec so developers can run a full app, not just scripts. _The example now boots a Flutter UI with buttons that call generated mixins, includes widget tests, and documents running via `flutter run`._
 - [x] Author migration guides for common sources (Firebase Analytics manual strings, Amplitude, Mixpanel) covering mapping events → YAML, verifying generated diffs, and rollout strategy. _Documented in `docs/MIGRATION_GUIDES.md` with provider-specific steps and README links + tests._
-- [ ] Deepen the FAQ/docs explaining why YAML was chosen over a Dart DSL, including pros/cons and mitigation strategies (e.g., generators wired into CI). Clarify compile-step implications.
+- [x] Deepen the FAQ/docs explaining why YAML was chosen over a Dart DSL, including pros/cons and mitigation strategies (e.g., generators wired into CI). Clarify compile-step implications.
 
 ### Configuration & compatibility
-- [ ] Audit dependency constraints (`yaml`, `path`, `args`, etc.) to decide whether tighter pinning or caret updates make sense; document rationale so consumers know compatibility expectations.
+- [x] Audit dependency constraints (`yaml`, `path`, `args`, etc.) to decide whether tighter pinning or caret updates make sense; document rationale so consumers know compatibility expectations.
 - [ ] Reassess the minimum supported Dart SDK (currently 3.6.0). If the codebase can compile on 3.3/3.4, lower the constraint and add CI coverage; otherwise, document why 3.6 features are required.
 - [ ] Document + measure scalability characteristics (parse/generate times, memory) for large plans (100+ domains / 1000+ events) so enterprises understand limits and tuning options.
 ## Notes
