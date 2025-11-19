@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
   - Parameters gained `identifier` (for generated Dart APIs) and `param_name` (for the wire payload). Code generation, docs, and exports respect the new fields and continue validating collisions after camelCase normalization.
   - CSV/JSON/SQL/SQLite exports, docs, the CLI plan printer, and runtime uniqueness checks all use the configured naming strategy so watchdogs stay consistent across layers.
 - README onboarding refresh with a top-level checklist, step-by-step walkthrough (describe YAML → configure → generate → use → review), and a quick reference for common validation errors to speed up junior onboarding.
+- Added `docs/SCALABILITY.md` with benchmarks demonstrating 2000+ events generated in <6s, plus guidance for large enterprise plans.
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an

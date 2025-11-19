@@ -98,6 +98,7 @@ lib/src/analytics/generated/
 - [Capabilities](docs/CAPABILITIES.md) – why capability keys exist and how to expose provider-specific APIs without violating SOLID.
 - [Migration Guides](docs/MIGRATION_GUIDES.md) – playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
 - [Code Review checklist](docs/CODE_REVIEW.md) – what to inspect in YAML, generated code, docs, and provider adapters during PRs.
+- [Scalability & Performance](docs/SCALABILITY.md) – benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
 
 ## CLI Commands
 
