@@ -2,22 +2,21 @@
 
 ## Active Work Items
 
+### High Priority
+
+- [ ] **Enhanced CSV Export for Analytics** (Analyst-Friendly)
+  - Add separate parameters CSV with parameter-per-row structure for filtering
+  - Add metadata CSV with meta-per-row structure for easy querying
+  - Create events-parameters relationship table for SQL-like joins
+  - Improve readability with proper escaping and formatting
+  - Add export documentation for analysts
+
 ### Medium Priority
 
 - [ ] **Parameter Validation DSL** (Future enhancement)
   - Add validation rules support in YAML (regex, min_length, max_length, range)
   - Generate runtime validation code for parameters
   - Update docs with validation examples
-
-- [ ] **Export Format Extensions**
-  - Add Protobuf schema generator for type-safe integrations
-  - Add Parquet export for big data pipelines
-  - Add Prometheus metrics format for real-time monitoring
-
-- [ ] **Plugin System**
-  - Design plugin interface for custom generators/validators
-  - Add plugin discovery mechanism
-  - Document plugin development guide
 
 ### Low Priority
 
@@ -35,6 +34,11 @@
   - Variant tracking in YAML
   - Conditional event logging
   - Experiment metadata
+
+- [ ] **Export Format Extensions**
+  - Add Protobuf schema generator for type-safe integrations
+  - Add Parquet export for big data pipelines
+  - Add Prometheus metrics format for real-time monitoring
 
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
