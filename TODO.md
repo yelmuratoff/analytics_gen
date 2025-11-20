@@ -2,26 +2,6 @@
 
 ## Active Work Items
 
-### High Priority
-
-- [x] **Enhanced CSV Export for Analytics** (Analyst-Friendly)
-  - [x] Add separate parameters CSV with parameter-per-row structure for filtering
-  - [x] Add metadata CSV with meta-per-row structure for easy querying
-  - [x] Create events-parameters relationship table for SQL-like joins
-  - [x] Improve readability with proper escaping and formatting
-  - [x] Add export documentation for analysts
-
-### Medium Priority
-
-- [x] **Parameter Validation DSL** (Future enhancement)
-  - [x] Add validation rules support in YAML (regex, min_length, max_length, range)
-  - [x] Generate runtime validation code for parameters
-  - [x] Update docs with validation examples
-- [x] Add ignore of lints to generated dart files, datetime of last generation
-
-
-### Low Priority
-
 - [ ] **Cloud Integration**
   - BigQuery schema sync
   - Snowflake schema sync
