@@ -10,6 +10,8 @@ class EventRenderer {
 
   EventRenderer(this.config);
 
+  static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
+
   String renderDomainFile(String domainName, AnalyticsDomain domain) {
     final buffer = StringBuffer();
 
@@ -215,8 +217,6 @@ class EventRenderer {
 
     return 'Use ${event.replacement} instead.';
   }
-
-  static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
 
   String _replacePlaceholdersWithInterpolation(
     String eventName,
