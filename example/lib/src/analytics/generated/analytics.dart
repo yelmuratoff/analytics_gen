@@ -1,3 +1,9 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated at: 2025-11-20T16:55:12.860209
+// ignore_for_file: type=lint, unused_import
+// ignore_for_file: directives_ordering, unnecessary_string_interpolations
+// coverage:ignore-file
+
 import 'package:analytics_gen/analytics_gen.dart';
 
 import 'generated_events.dart';

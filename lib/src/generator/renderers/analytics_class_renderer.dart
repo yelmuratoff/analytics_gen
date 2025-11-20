@@ -15,6 +15,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     final buffer = StringBuffer();
 
     // File header
+    buffer.write(renderFileHeader());
     buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
     buffer.writeln();
     buffer.writeln("import 'generated_events.dart';");

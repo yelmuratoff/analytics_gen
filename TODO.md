@@ -19,6 +19,7 @@
   - [x] Update docs with validation examples
 - [x] Add ignore of lints to generated dart files, datetime of last generation
 
+
 ### Low Priority
 
 - [ ] **Cloud Integration**
