@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 enum LogLevel {
   debug,
   info,
@@ -62,10 +64,42 @@ class ConsoleLogger implements Logger {
 
   void _print(String level, String message) {
     final p = prefix.isNotEmpty ? prefix : '';
-    if (level == 'INFO') {
-      print('$p$message');
-    } else {
-      print('[$level] $p$message');
+    final supportsAnsi = io.stdout.supportsAnsiEscapes;
+
+    if (!supportsAnsi) {
+      if (level == 'INFO') {
+        print('$p$message');
+      } else {
+        print('[$level] $p$message');
+      }
+      return;
+    }
+
+    const reset = '\x1B[0m';
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const yellow = '\x1B[33m';
+    const gray = '\x1B[90m';
+
+    switch (level) {
+      case 'DEBUG':
+        print('$gray[DEBUG] $p$message$reset');
+        break;
+      case 'INFO':
+        if (message.trim().startsWith('✓')) {
+          print('$green$p$message$reset');
+        } else {
+          print('$p$message');
+        }
+        break;
+      case 'WARN':
+        print('$yellow[WARN] $p$message$reset');
+        break;
+      case 'ERROR':
+        print('$red[ERROR] $p$message$reset');
+        break;
+      default:
+        print('[$level] $p$message');
     }
   }
 }
