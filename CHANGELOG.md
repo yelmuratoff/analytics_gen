@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.1] - 2025-11-20
+## [0.2.1] - Unreleased
 
 ### Added
 - **Enhanced CSV Export**:
@@ -15,6 +15,11 @@ All notable changes to this project will be documented in this file.
 - **Generated Code Improvements**:
   - Added `ignore_for_file` lints to generated Dart files.
   - Added timestamp of last generation to file headers.
+- **Better Error Reporting**: Now uses `SourceSpan` to point to the exact line and column in the YAML file where an error occurred.
+- **Strict Event Naming**: The parser now throws an error if event names contain interpolation characters (`{}`) to prevent high cardinality issues.
+
+### Changed
+- Refactored `YamlParser` to use `loadYamlNode` internally.
 
 ### Refactoring
 - **Validator Separation**:

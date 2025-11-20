@@ -1,3 +1,5 @@
+import 'package:source_span/source_span.dart';
+
 /// Base exception for all analytics_gen errors.
 ///
 /// This is a sealed hierarchy, allowing consumers to exhaustively match
@@ -19,11 +21,21 @@ final class AnalyticsParseException extends FormatException
   /// Optional underlying error that caused this exception.
   final Object? innerError;
 
-  const AnalyticsParseException(super.message,
-      {this.filePath, this.innerError});
+  /// Optional source span indicating the location of the error.
+  final SourceSpan? span;
+
+  const AnalyticsParseException(
+    super.message, {
+    this.filePath,
+    this.innerError,
+    this.span,
+  });
 
   @override
   String toString() {
+    if (span != null) {
+      return 'AnalyticsParseException: $message\n${span!.message(message)}';
+    }
     final sb = StringBuffer(super.toString());
     if (filePath != null) {
       sb.write(' (file: $filePath)');

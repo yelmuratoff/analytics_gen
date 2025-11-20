@@ -214,18 +214,20 @@ void main() {
       expect(messages, contains(contains('No YAML files found')));
     });
 
-    test('logs and skips files that do not contain a top-level YamlMap',
-        () async {
+    test('throws when file does not contain a top-level YamlMap', () async {
       final yamlFile = File(path.join(eventsPath, 'not_map.yaml'));
       await yamlFile.writeAsString('- list_item\n- second_item\n');
 
-      final messages = <String>[];
-      final domains = await parseEventsHelper(log: TestLogger(messages));
-
-      expect(domains, isEmpty);
-      expect(messages, hasLength(2));
-      expect(messages.any((m) => m.contains('does not contain a YamlMap')),
-          isTrue);
+      expect(
+        () => parseEventsHelper(),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('Root of the YAML file must be a map'),
+          ),
+        ),
+      );
     });
 
     test('throws when domain value is not a map', () async {
@@ -360,7 +362,17 @@ void main() {
 
       expect(
         () => parseEventsHelper(),
-        throwsA(isA<YamlException>()),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first,
+            'error',
+            isA<AnalyticsParseException>().having(
+              (e) => e.message,
+              'message',
+              contains('Duplicate mapping key'),
+            ),
+          ),
+        ),
       );
     });
 

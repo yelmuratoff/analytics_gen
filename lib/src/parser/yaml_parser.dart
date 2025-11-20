@@ -65,20 +65,49 @@ final class YamlParser {
 
     final merged = <String, _DomainSource>{};
     for (final source in sources) {
-      final parsed = loadYaml(source.content);
-
-      if (parsed is! YamlMap) {
-        log.warning(
-          'Warning: ${source.filePath} does not contain a YamlMap. Skipping.',
+      final YamlNode parsedNode;
+      try {
+        parsedNode = loadYamlNode(source.content);
+      } catch (e) {
+        final error = AnalyticsParseException(
+          'Failed to parse YAML file: $e',
+          filePath: source.filePath,
+          innerError: e,
         );
+        if (onError != null) {
+          onError(error);
+        } else {
+          throw error;
+        }
         continue;
       }
 
-      final sortedDomainKeys = parsed.keys.toList()
+      if (parsedNode is! YamlMap) {
+        // If the file is empty or contains only comments, loadYamlNode might return a YamlScalar with null value
+        if (parsedNode is YamlScalar && parsedNode.value == null) {
+          continue;
+        }
+
+        final error = AnalyticsParseException(
+          'Root of the YAML file must be a map.',
+          filePath: source.filePath,
+          span: parsedNode.span,
+        );
+        if (onError != null) {
+          onError(error);
+        } else {
+          throw error;
+        }
+        continue;
+      }
+
+      final parsedMap = parsedNode;
+      final sortedDomainKeys = parsedMap.nodes.keys.toList()
         ..sort((a, b) => a.toString().compareTo(b.toString()));
 
-      for (final key in sortedDomainKeys) {
-        final domainKey = key.toString();
+      for (final keyNode in sortedDomainKeys) {
+        final domainKey = keyNode.toString();
+        final valueNode = parsedMap.nodes[keyNode];
 
         try {
           // Enforce snake_case, filesystem-safe domain names
@@ -90,15 +119,18 @@ final class YamlParser {
               'Each domain must be defined in only one file.',
             );
           }
-          final value = parsed[key];
-          if (value is! YamlMap) {
-            throw FormatException(
-              'Domain "$domainKey" in ${source.filePath} must be a map of events.',
+
+          if (valueNode is! YamlMap) {
+            throw AnalyticsParseException(
+              'Domain "$domainKey" must be a map of events.',
+              filePath: source.filePath,
+              span: valueNode?.span ?? keyNode.span,
             );
           }
+
           merged[domainKey] = _DomainSource(
             filePath: source.filePath,
-            yaml: value,
+            yaml: valueNode,
           );
         } on AnalyticsParseException catch (e) {
           if (onError != null) {
@@ -112,6 +144,7 @@ final class YamlParser {
             e.toString(),
             filePath: source.filePath,
             innerError: e,
+            span: (keyNode is YamlNode) ? keyNode.span : null,
           );
           if (onError != null) {
             onError(error);
@@ -165,22 +198,34 @@ final class YamlParser {
   }) {
     final events = <AnalyticsEvent>[];
 
-    final sortedEvents = eventsYaml.entries.toList()
+    final sortedEvents = eventsYaml.nodes.entries.toList()
       ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
 
     for (final entry in sortedEvents) {
-      final eventName = entry.key.toString();
-      final value = entry.value;
+      final keyNode = entry.key as YamlNode;
+      final eventName = keyNode.toString();
+      final valueNode = entry.value;
 
       try {
-        if (value is! YamlMap) {
+        // Strict Event Name Validation: Check for interpolation
+        if (eventName.contains('{') || eventName.contains('}')) {
           throw AnalyticsParseException(
-            'Event "$domainName.$eventName" in $filePath must be a map.',
+            'Event name "$eventName" contains interpolation characters "{}" or "{}". '
+            'Dynamic event names are discouraged as they lead to high cardinality.',
             filePath: filePath,
+            span: keyNode.span,
           );
         }
 
-        final eventData = value;
+        if (valueNode is! YamlMap) {
+          throw AnalyticsParseException(
+            'Event "$domainName.$eventName" must be a map.',
+            filePath: filePath,
+            span: valueNode.span,
+          );
+        }
+
+        final eventData = valueNode;
 
         final description =
             eventData['description'] as String? ?? 'No description provided';
@@ -189,13 +234,15 @@ final class YamlParser {
         final deprecated = eventData['deprecated'] as bool? ?? false;
         final replacement = eventData['replacement'] as String?;
 
-        final meta = _parseMeta(eventData['meta'], filePath);
+        final metaNode = eventData.nodes['meta'];
+        final meta = _parseMeta(metaNode, filePath);
 
-        final rawParameters = eventData['parameters'];
+        final rawParameters = eventData.nodes['parameters'];
         if (rawParameters != null && rawParameters is! YamlMap) {
           throw AnalyticsParseException(
-            'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
+            'Parameters for event "$domainName.$eventName" must be a map.',
             filePath: filePath,
+            span: rawParameters.span,
           );
         }
 
@@ -230,6 +277,7 @@ final class YamlParser {
           e.toString(),
           filePath: filePath,
           innerError: e,
+          span: keyNode.span,
         );
         if (onError != null) {
           onError(error);
@@ -242,16 +290,17 @@ final class YamlParser {
     return events;
   }
 
-  Map<String, Object?> _parseMeta(dynamic metaYaml, String filePath) {
-    if (metaYaml == null) return const {};
-    if (metaYaml is! YamlMap) {
+  Map<String, Object?> _parseMeta(YamlNode? metaNode, String filePath) {
+    if (metaNode == null) return const {};
+    if (metaNode is! YamlMap) {
       throw AnalyticsParseException(
         'The "meta" field must be a map.',
         filePath: filePath,
+        span: metaNode.span,
       );
     }
     // Convert YamlMap to Map<String, Object?>
-    return metaYaml.map((key, value) => MapEntry(key.toString(), value));
+    return metaNode.map((key, value) => MapEntry(key.toString(), value));
   }
 
   /// Public helper used by tests to exercise parameter parsing logic
@@ -284,36 +333,51 @@ final class YamlParser {
     final contexts = <String, List<AnalyticsParameter>>{};
 
     for (final source in sources) {
-      final yaml = loadYaml(source.content);
-
-      if (yaml is! YamlMap) {
+      final YamlNode parsedNode;
+      try {
+        parsedNode = loadYamlNode(source.content);
+      } catch (e) {
         throw AnalyticsParseException(
-          'Context file ${source.filePath} must be a map.',
+          'Failed to parse YAML file: $e',
           filePath: source.filePath,
+          innerError: e,
         );
       }
+
+      if (parsedNode is! YamlMap) {
+        throw AnalyticsParseException(
+          'Context file must be a map.',
+          filePath: source.filePath,
+          span: parsedNode.span,
+        );
+      }
+
+      final yaml = parsedNode;
 
       // We expect a single root key which defines the context name
       // e.g. user: { ... }
       if (yaml.keys.length != 1) {
         throw AnalyticsParseException(
-          'Context file ${source.filePath} must contain exactly one root key defining the context name.',
+          'Context file must contain exactly one root key defining the context name.',
           filePath: source.filePath,
+          span: yaml.span,
         );
       }
 
-      final contextName = yaml.keys.first.toString();
-      final propertiesYaml = yaml[contextName];
+      final contextNameNode = yaml.nodes.keys.first as YamlNode;
+      final contextName = contextNameNode.toString();
+      final propertiesNode = yaml.nodes[contextNameNode];
 
-      if (propertiesYaml is! YamlMap) {
+      if (propertiesNode is! YamlMap) {
         throw AnalyticsParseException(
-          'The "$contextName" key in ${source.filePath} must be a map of properties.',
+          'The "$contextName" key must be a map of properties.',
           filePath: source.filePath,
+          span: propertiesNode?.span ?? contextNameNode.span,
         );
       }
 
       final parameters = _parameterParser.parseParameters(
-        propertiesYaml,
+        propertiesNode,
         domainName: contextName,
         eventName: 'context', // Dummy
         filePath: source.filePath,

@@ -213,7 +213,7 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 - Run `dart run analytics_gen:generate --validate-only` in CI to block invalid YAML before files are written.
 - **CI Guardrails**: Add a step in your CI pipeline to run generation and check for uncommitted changes (`git diff --exit-code`). This ensures that the generated code, docs, and exports are always in sync with the YAML definitions.
 - Naming strategy (`analytics_gen.naming`) enforces consistent identifiers—override per-field when legacy plans demand it.
-- **Strict Event Naming**: Set `strict_event_names: true` in `analytics_gen.yaml` to forbid string interpolation in event names (e.g. `View ${page}`). This prevents high-cardinality events from polluting your analytics data.
+- **Strict Event Naming**: The parser forbids string interpolation in event names (e.g. `View ${page}`) to prevent high-cardinality events from polluting your analytics data. This is now enforced by default.
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
 - Full details live in [`doc/VALIDATION.md`](doc/VALIDATION.md).
 

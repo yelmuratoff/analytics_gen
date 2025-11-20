@@ -4,6 +4,19 @@
 
 ## Refactoring & Improvements (Priority)
 
+## Improvements & Refactoring
+- [x] **Better YAML Error Reporting**: Refactor `YamlParser` to use `loadYamlNode` instead of `loadYaml`.
+    - [x] Implement `SourceSpan` usage to point to exact line/column of errors.
+    - [x] Update `AnalyticsParseException` to support `SourceSpan`.
+- [x] **Event Name Validation**: Enforce stricter validation for event names to prevent high cardinality issues (interpolation check) directly in the parser.
+- [x] **Test Coverage**:
+    - [x] Add tests for malformed YAML with expected line/column errors.
+    - [x] Verify `strict_event_names` logic.
+
+## Documentation
+- [x] Update `CHANGELOG.md`.
+- [x] Update `README.md` with info about strict mode.
+
 - [x] **Dart 3 Features**
   - Refactor `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
   - Ensure all models are `final` or `sealed`.

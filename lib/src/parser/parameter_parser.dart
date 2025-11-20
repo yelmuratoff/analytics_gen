@@ -23,23 +23,31 @@ class ParameterParser {
     final seenAnalyticsNames = <String>{};
     final camelNameToOriginal = <String, String>{};
 
-    final sortedEntries = parametersYaml.entries.toList()
+    final sortedEntries = parametersYaml.nodes.entries.toList()
       ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
 
     for (final entry in sortedEntries) {
-      final rawName = entry.key.toString();
+      final keyNode = entry.key as YamlNode;
+      final rawName = keyNode.toString();
+
       if (!seenRawNames.add(rawName)) {
         throw AnalyticsParseException(
           'Duplicate parameter "$rawName" found in $domainName.$eventName.',
           filePath: filePath,
+          span: keyNode.span,
         );
       }
 
-      final paramValue = entry.value;
-      final identifierOverride =
-          paramValue is YamlMap ? paramValue['identifier'] as String? : null;
-      final wireNameOverride =
-          paramValue is YamlMap ? paramValue['param_name'] as String? : null;
+      final valueNode = entry.value;
+      final paramValue = valueNode;
+
+      String? identifierOverride;
+      String? wireNameOverride;
+
+      if (paramValue is YamlMap) {
+        identifierOverride = paramValue['identifier'] as String?;
+        wireNameOverride = paramValue['param_name'] as String?;
+      }
 
       final codeIdentifier = identifierOverride ?? rawName;
       final analyticsName = wireNameOverride ?? rawName;
@@ -49,6 +57,7 @@ class ParameterParser {
           'Parameter "$rawName" in $domainName.$eventName must declare a '
           'non-empty identifier.',
           filePath: filePath,
+          span: keyNode.span,
         );
       }
 
@@ -59,6 +68,7 @@ class ParameterParser {
           'analytics_gen.naming.enforce_snake_case_parameters or define a '
           'different `identifier`.',
           filePath: filePath,
+          span: keyNode.span,
         );
       }
 
@@ -67,6 +77,7 @@ class ParameterParser {
           'Duplicate analytics parameter "$analyticsName" found in '
           '$domainName.$eventName.',
           filePath: filePath,
+          span: keyNode.span,
         );
       }
 
@@ -77,6 +88,7 @@ class ParameterParser {
           'Parameter identifier "$codeIdentifier" in $domainName.$eventName '
           'conflicts with "$existingParam" after camelCase normalization.',
           filePath: filePath,
+          span: keyNode.span,
         );
       }
       camelNameToOriginal[camelParamName] = codeIdentifier;
@@ -94,7 +106,9 @@ class ParameterParser {
       if (paramValue is YamlMap) {
         // Complex parameter with 'type' and/or 'description'
         description = paramValue['description'] as String?;
-        meta = _parseMeta(paramValue['meta'], filePath);
+
+        final metaNode = paramValue.nodes['meta'];
+        meta = _parseMeta(metaNode, filePath);
 
         // Validation rules
         regex = paramValue['regex'] as String?;
@@ -115,21 +129,27 @@ class ParameterParser {
                     k.toString() != 'allowed_values' &&
                     k.toString() != 'identifier' &&
                     k.toString() != 'param_name' &&
-                    k.toString() != 'meta',
+                    k.toString() != 'meta' &&
+                    k.toString() != 'regex' &&
+                    k.toString() != 'min_length' &&
+                    k.toString() != 'max_length' &&
+                    k.toString() != 'min' &&
+                    k.toString() != 'max',
               )
               .firstOrNull;
           paramType = typeKey?.toString() ?? 'dynamic';
         }
 
-        final rawAllowed = paramValue['allowed_values'];
+        final rawAllowed = paramValue.nodes['allowed_values'];
         if (rawAllowed != null) {
           if (rawAllowed is! YamlList) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list.',
               filePath: filePath,
+              span: rawAllowed.span,
             );
           }
-          allowedValues = List<Object>.from(rawAllowed);
+          allowedValues = List<Object>.from(rawAllowed.value);
         }
       } else {
         // Simple parameter (just type)
@@ -163,15 +183,16 @@ class ParameterParser {
     return parameters;
   }
 
-  Map<String, Object?> _parseMeta(dynamic metaYaml, String filePath) {
-    if (metaYaml == null) return const {};
-    if (metaYaml is! YamlMap) {
+  Map<String, Object?> _parseMeta(YamlNode? metaNode, String filePath) {
+    if (metaNode == null) return const {};
+    if (metaNode is! YamlMap) {
       throw AnalyticsParseException(
         'The "meta" field must be a map.',
         filePath: filePath,
+        span: metaNode.span,
       );
     }
     // Convert YamlMap to Map<String, Object?>
-    return metaYaml.map((key, value) => MapEntry(key.toString(), value));
+    return metaNode.map((key, value) => MapEntry(key.toString(), value));
   }
 }
