@@ -18,6 +18,15 @@
 - [x] Refactor `YamlParser`: Extract parameter parsing logic into `ParameterParser`.
 - [x] Refactor `CodeGenerator`: Inject renderers via constructor for better testability.
 
+- [x] **Documentation Audit & Polish**
+  - [x] **README.md**: Tighten tone (remove "Absolutely"), standardize YAML types to lowercase, rewrite "Extensible Metadata" intro.
+  - [x] **VALIDATION.md**: Add "Accepted types" section, clarify nullable syntax.
+  - [x] **ONBOARDING.md**: Standardize example types, clarify initialization location, tighten phrasing.
+  - [x] **CAPABILITIES.md**: Clarify naming conventions, rewrite "optional add-ons" phrasing.
+  - [x] **CODE_REVIEW.md**: Add checks for downstream consumers and export verification.
+  - [x] **MIGRATION_GUIDES.md**: Add rollback guidance and integration test emphasis.
+  - [x] **SCALABILITY.md**: Add machine specs and reproducibility notes to benchmarks.
+
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
 - README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.

@@ -14,7 +14,7 @@ Instrumentation changes are compliance-sensitive: a typo in the tracking plan ca
 - [ ] Descriptions are meaningful and updated when behavior changes.
 - [ ] Parameters document types, nullability, and allowed values when applicable.
 - [ ] Deprecations include `replacement` pointers and a migration plan.
-- [ ] Search for duplicate `identifier` or payload collisions when renaming events.
+- [ ] Search for duplicate `identifier` or payload collisions when renaming events (e.g., `rg "identifier:" events`).
 
 ## Generated Dart (`lib/src/analytics/generated`)
 
@@ -28,6 +28,8 @@ Instrumentation changes are compliance-sensitive: a typo in the tracking plan ca
 
 - [ ] `docs/analytics_events.md` fingerprint matches YAML changes; table entries reflect new descriptions/status.
 - [ ] CSV/JSON/SQL/SQLite artifacts only change when necessary; verify schema shifts with downstream consumers before approving.
+- [ ] Confirm downstream consumers have been notified and assigned (owner metadata present) when identifiers or exported schemas change.
+- [ ] Verify export schema changes with at least one consumer (analyst/BI) before merge.
 - [ ] New docs (`docs/*.md`) include actionable guidance and link back to README.
 
 ## Runtime / Provider Changes

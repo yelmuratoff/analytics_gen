@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://github.com/yelmuratoff/packages_assets/blob/main/assets/analytics_gen.png?raw=true" width="400">
 
-  <p><strong>Type-safe analytics events from a single YAML source of truth.</strong></p>
+  <p><strong>Type-safe analytics from a single YAML plan.</strong></p>
 
   <p>
     <a href="https://pub.dev/packages/analytics_gen">
@@ -79,7 +79,7 @@ Need a detailed walkthrough? Head to [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 
 ## Extensible Metadata
 
-You can attach arbitrary metadata to events and parameters using the `meta` key in your YAML definitions. This is useful for tagging events with ownership, PII status, or other organizational context without hardcoding it into the schema.
+Attach metadata to events and parameters using the `meta` key. Use metadata for ownership, PII flags, and other attributes that should travel with the plan but not the runtime code.
 
 ```yaml
 user_login:
@@ -90,7 +90,7 @@ user_login:
     tier: "critical"
   parameters:
     method:
-      type: String
+      type: string
       description: The method used to login (email, google, apple).
       meta:
         pii: true # Email might be PII if logged directly
@@ -109,10 +109,10 @@ Contexts allow you to define global properties (like user attributes, device inf
    ```yaml
    user_properties:
      user_id:
-       type: String
+       type: string
        description: Unique identifier for the user
      user_role:
-       type: String
+       type: string
        allowed_values: ['admin', 'viewer']
    ```
 
@@ -322,7 +322,7 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
   No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
 - **Is it safe to commit generated files?**  
-  Absolutely. Deterministic output keeps diffs readable. Reviewers should inspect code/docs/exports just like any other change (see [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md)).
+  Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md)).
 
 ## License
 

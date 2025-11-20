@@ -1,6 +1,6 @@
 # Capabilities
 
-Capabilities let analytics providers expose advanced features (user properties, revenue APIs, timed events) without polluting the core `IAnalytics.logEvent` contract. Think of them as optional add-ons: consumers ask for a capability when they need it, providers opt in only when they can implement it.
+Capabilities let analytics providers expose advanced features (user properties, revenue APIs, timed events) without polluting the core `IAnalytics.logEvent` contract. Capabilities are optional typed extensions to the base API: consumers ask for a capability when they need it, providers opt in only when they can implement it.
 
 ## Why not just add more methods to `IAnalytics`?
 
@@ -144,8 +144,7 @@ void markPremiumUser() {
 
 ### Naming Capabilities Consistently
 
-- Use `lowerCamelCase` for the constant (`userPropertiesKey`) and give it a descriptive string identifier (`'user_properties'`). This matches Dart style guidelines and keeps IDE auto-complete predictable.
-- For teams that prefer screaming snake case, pick one convention and hold the line—`user_propertiesKey` vs `USER_PROPERTIES_KEY` mismatches make diffs noisy.
+- Use `lowerCamelCase` for the constant (`userPropertiesKey`) and `snake_case` for the key string (`'user_properties'`). This matches Dart style guidelines and keeps IDE auto-complete predictable.
 - Align capability interface names with domain language (`UserPropertiesCapability`, `RevenueCapability`, `PushTokenCapability`). Avoid generic labels like `ExtraCapability`.
 - Document every capability key in the provider module so newcomers know what exists already before adding duplicates.
 

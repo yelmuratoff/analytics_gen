@@ -10,6 +10,7 @@ Instrumentation rarely starts from a clean slate. This guide walks through migra
 4. **Generate + review artifacts** - run `dart run analytics_gen:generate --docs --exports` and inspect generated Dart/doc/export diffs just like production code.
 5. **Wire runtime providers** - implement `IAnalytics` (or wrap the SDK you already use) and initialize the generated `Analytics` singleton in your app bootstrap.
 6. **Roll out gradually** - release instrumentation file-by-file or screen-by-screen. Keep deprecated events emitting until stakeholders confirm the new events are live.
+7. **Plan for rollback** - for each domain change, include a short rollback plan (e.g., revert the YAML change or re-enable the legacy helper) in case of data issues.
 
 ## Firebase Analytics (manual `logEvent` strings)
 
@@ -41,7 +42,7 @@ Mixpanel projects often have strict property schemas and roll-up dashboards.
 
 ## Verification Tips
 
-- Add a dedicated integration test that wires `MockAnalyticsService` and asserts that each domain action emits the expected event names/parameters.
+- Add a dedicated integration test that wires `MockAnalyticsService` and asserts that each domain action emits the expected event names/parameters. This ensures parity during the migration window.
 - Keep `docs/analytics_events.md` and exports committed so reviewers can spot accidental regressions.
 - Use the new Flutter example (`example/`) as a sandbox for teaching developers how to depend on generated mixins through controllers instead of calling `Analytics.instance` everywhere.
 

@@ -29,6 +29,22 @@ domain_name:
         allowed_values: [card, paypal]
 ```
 
+### Accepted Types
+
+The generator maps YAML primitive names to Dart types. Prefer lower-case primitives in your plan for consistency.
+
+| YAML Type | Dart Type | Notes |
+| :--- | :--- | :--- |
+| `string` | `String` | |
+| `int` | `int` | |
+| `double` | `double` | |
+| `bool` | `bool` | |
+| `list` | `List<dynamic>` | Use `list<String>` etc. if supported by your provider adapter. |
+| `map` | `Map<String, dynamic>` | |
+| `DateTime` | `DateTime` | Custom types pass through as-is. |
+
+**Nullable parameters**: Append `?` to the type (e.g., `string?`, `int?`).
+
 Rules of thumb:
 
 - `parameters` must be a map (use `{}` when none).
