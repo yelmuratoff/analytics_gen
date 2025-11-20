@@ -10,11 +10,11 @@
 
 ## Refactoring & Improvements (Priority)
 
-- [ ] **Singleton Reset**
+- [x] **Singleton Reset**
   - Add `Analytics.reset()` method visible for testing to allow clearing the singleton instance.
   - Useful for integration tests and hot restarts.
 
-- [ ] **CI/CD Integration Guide**
+- [x] **CI/CD Integration Guide**
   - Add GitHub Actions workflow example to documentation.
   - Show how to run `dart run analytics_gen:generate --validate-only` in CI.
 
