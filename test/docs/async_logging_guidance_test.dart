@@ -35,7 +35,7 @@ void main() {
     });
 
     test('Onboarding guide mentions AsyncAnalyticsAdapter usage', () {
-      final onboarding = File('docs/ONBOARDING.md').readAsStringSync();
+      final onboarding = File('doc/ONBOARDING.md').readAsStringSync();
 
       expect(
         onboarding,

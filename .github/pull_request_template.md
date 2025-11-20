@@ -12,7 +12,7 @@
 
 ## Review Checklist
 
-- [ ] I walked through [`docs/CODE_REVIEW.md`](../docs/CODE_REVIEW.md) and verified every section that applies to this PR.
+- [ ] I walked through [`doc/CODE_REVIEW.md`](../doc/CODE_REVIEW.md) and verified every section that applies to this PR.
 - [ ] I regenerated code/docs/exports after YAML changes and inspected the diffs.
 - [ ] I confirmed provider/runtime changes include error handling + capability docs.
 - [ ] README/CHANGELOG (or relevant docs) describe the user-facing impact.
