@@ -1,7 +1,6 @@
 import 'package:analytics_gen/src/util/logger.dart';
 
 class TestLogger implements Logger {
-
   TestLogger(this.logs);
   final List<String> logs;
 

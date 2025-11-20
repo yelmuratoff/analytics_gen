@@ -48,13 +48,13 @@ import 'contexts/user_properties_context.dart';
 ///
 /// Note: Capabilities are provider-specific. Ensure your analytics
 /// provider implements the required capability interfaces.
-final class Analytics extends AnalyticsBase with
-    AnalyticsAuth,
-    AnalyticsPurchase,
-    AnalyticsScreen,
-    AnalyticsTheme,
-    AnalyticsUserProperties
-{
+final class Analytics extends AnalyticsBase
+    with
+        AnalyticsAuth,
+        AnalyticsPurchase,
+        AnalyticsScreen,
+        AnalyticsTheme,
+        AnalyticsUserProperties {
   final IAnalytics _analytics;
   final AnalyticsCapabilityResolver _capabilities;
 
@@ -74,19 +74,14 @@ final class Analytics extends AnalyticsBase with
           description: 'User logs in to the application',
           deprecated: true,
           replacement: 'auth.login_v2',
-          meta: <String, Object?>{
-            'owner': 'auth-team',
-            'tier': 'critical',
-          },
+          meta: <String, Object?>{'owner': 'auth-team', 'tier': 'critical'},
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'method',
               type: 'string',
               isNullable: false,
               description: 'Login method (email, google, apple)',
-              meta: <String, Object?>{
-                'pii': true,
-              },
+              meta: <String, Object?>{'pii': true},
             ),
           ],
         ),
@@ -108,8 +103,7 @@ final class Analytics extends AnalyticsBase with
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
-          parameters: <AnalyticsParameter>[
-          ],
+          parameters: <AnalyticsParameter>[],
         ),
         AnalyticsEvent(
           name: 'phone_login',
@@ -271,7 +265,9 @@ final class Analytics extends AnalyticsBase with
   /// Access the singleton instance
   static Analytics get instance {
     if (_instance == null) {
-      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');
+      throw StateError(
+        'Analytics.initialize() must be called before accessing Analytics.instance',
+      );
     }
     return _instance!;
   }
@@ -297,4 +293,3 @@ final class Analytics extends AnalyticsBase with
   @override
   AnalyticsCapabilityResolver get capabilities => _capabilities;
 }
-

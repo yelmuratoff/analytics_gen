@@ -78,7 +78,6 @@ final class _LoggerOnly implements IAnalytics {
 }
 
 final class _AnalyticsHarness extends AnalyticsBase {
-
   _AnalyticsHarness(this.resolver);
   final AnalyticsCapabilityResolver resolver;
 

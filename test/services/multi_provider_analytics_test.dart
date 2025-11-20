@@ -348,7 +348,6 @@ class _FailingAnalyticsService implements IAnalytics {
 
 /// An async-capable provider that executes logging after a short delay.
 class _AsyncLoggingProvider implements IAnalytics, IAsyncAnalytics {
-
   _AsyncLoggingProvider(this._delegate);
   final MockAnalyticsService _delegate;
 
@@ -412,7 +411,6 @@ class _TestCapabilityImpl implements _TestCapability {
 class _ProviderWithCapability
     with CapabilityProviderMixin
     implements IAnalytics {
-
   _ProviderWithCapability(this.name) {
     registerCapability(_testCapabilityKey, _TestCapabilityImpl(name));
   }
