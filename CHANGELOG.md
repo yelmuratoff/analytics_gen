@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.7] - 2025-11-20
+## [0.2.0] - 2025-11-20
 - **Updates**:
   - Optimized generator performance with parallel processing and smart I/O.
   - Stable API supporting both Dependency Injection and Singleton patterns.
