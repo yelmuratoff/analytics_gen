@@ -6,9 +6,11 @@ import '../../util/file_utils.dart';
 
 /// Generates Excel-compatible CSV export of analytics events.
 final class CsvGenerator {
-  final NamingStrategy naming;
-
+  /// Creates a new CSV generator.
   CsvGenerator({required this.naming});
+
+  /// The naming strategy to use.
+  final NamingStrategy naming;
 
   /// Generates CSV files from analytics domains
   Future<void> generate(

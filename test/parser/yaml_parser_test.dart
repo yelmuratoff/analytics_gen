@@ -15,8 +15,8 @@ import '../test_utils.dart';
 // Helper type used in tests to create map keys that stringify to the same
 // value while remaining distinct map keys (Dart object identity).
 class KeyWithToString {
-  final String id;
   KeyWithToString(this.id);
+  final String id;
 
   @override
   String toString() => 'dup';

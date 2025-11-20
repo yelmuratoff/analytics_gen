@@ -10,15 +10,21 @@ import 'generation_metadata.dart';
 
 /// Generates Markdown documentation for analytics events.
 final class DocsGenerator {
-  final AnalyticsConfig config;
-  final String projectRoot;
-  final Logger log;
-
+  /// Creates a new docs generator.
   DocsGenerator({
     required this.config,
     required this.projectRoot,
     this.log = const NoOpLogger(),
   });
+
+  /// The analytics configuration.
+  final AnalyticsConfig config;
+
+  /// The root directory of the project.
+  final String projectRoot;
+
+  /// The logger to use.
+  final Logger log;
 
   /// Generates analytics documentation and writes to configured path
   Future<void> generate(

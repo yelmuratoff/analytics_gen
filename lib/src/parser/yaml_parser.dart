@@ -10,12 +10,8 @@ import 'schema_validator.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
-  final Logger log;
-  final NamingStrategy naming;
-  final bool strictEventNames;
-  final ParameterParser _parameterParser;
-  final SchemaValidator _validator;
 
+  /// Creates a new YAML parser.
   YamlParser({
     this.log = const NoOpLogger(),
     NamingStrategy? naming,
@@ -28,6 +24,17 @@ final class YamlParser {
               naming ?? const NamingStrategy(),
               strictEventNames: strictEventNames,
             );
+  /// The logger to use.
+  final Logger log;
+
+  /// The naming strategy to use.
+  final NamingStrategy naming;
+
+  /// Whether to enforce strict event naming (no interpolation).
+  final bool strictEventNames;
+
+  final ParameterParser _parameterParser;
+  final SchemaValidator _validator;
 
   /// Parses the provided analytics sources and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents(
@@ -403,11 +410,11 @@ final class YamlParser {
 }
 
 final class _DomainSource {
-  final String filePath;
-  final YamlMap yaml;
 
   _DomainSource({
     required this.filePath,
     required this.yaml,
   });
+  final String filePath;
+  final YamlMap yaml;
 }

@@ -3,11 +3,15 @@ import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';
 import 'base_renderer.dart';
 
+/// Renders the main Analytics class with domain mixins and capabilities.
 class AnalyticsClassRenderer extends BaseRenderer {
-  final AnalyticsConfig config;
-
+  /// Creates a new analytics class renderer.
   const AnalyticsClassRenderer(this.config);
 
+  /// The analytics configuration.
+  final AnalyticsConfig config;
+
+  /// Renders the Analytics class code.
   String renderAnalyticsClass(
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},

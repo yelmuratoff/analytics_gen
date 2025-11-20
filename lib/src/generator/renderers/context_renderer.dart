@@ -3,8 +3,12 @@ import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
 import 'base_renderer.dart';
 
+/// Renders context capability interfaces and mixins.
 class ContextRenderer extends BaseRenderer {
+  /// Creates a new context renderer.
   const ContextRenderer();
+
+  /// Renders a context capability file.
   String renderContextFile(
     String contextName,
     List<AnalyticsParameter> properties,

@@ -11,19 +11,21 @@ import 'sql_generator.dart';
 ///
 /// Creates a database file using sqlite3 command-line tool (must be installed).
 final class SqliteGenerator {
-  final SqlGenerator _sqlGenerator;
-  final Logger log;
-  final Future<ProcessResult> Function(
-    String executable,
-    List<String> arguments,
-  ) _runProcess;
-
+  /// Creates a new SQLite generator.
   SqliteGenerator({
     this.log = const NoOpLogger(),
     NamingStrategy? naming,
     Future<ProcessResult> Function(String, List<String>)? runProcess,
   })  : _sqlGenerator = SqlGenerator(naming: naming ?? const NamingStrategy()),
         _runProcess = runProcess ?? Process.run;
+  final SqlGenerator _sqlGenerator;
+
+  /// The logger to use.
+  final Logger log;
+  final Future<ProcessResult> Function(
+    String executable,
+    List<String> arguments,
+  ) _runProcess;
 
   /// Generates SQLite database file
   Future<void> generate(

@@ -7,13 +7,17 @@ import '../util/event_naming.dart';
 
 /// Validates analytics schema definitions.
 final class SchemaValidator {
-  final NamingStrategy naming;
-  final bool strictEventNames;
 
+  /// Creates a new schema validator.
   const SchemaValidator(
     this.naming, {
     this.strictEventNames = true,
   });
+  /// The naming strategy to use.
+  final NamingStrategy naming;
+
+  /// Whether to enforce strict event naming (no interpolation).
+  final bool strictEventNames;
 
   /// Validates that a domain name adheres to the naming strategy.
   void validateDomainName(String domainName, String filePath) {

@@ -6,9 +6,11 @@ import '../generation_metadata.dart';
 
 /// Generates SQL schema and data inserts for analytics events.
 final class SqlGenerator {
-  final NamingStrategy naming;
-
+  /// Creates a new SQL generator.
   SqlGenerator({required this.naming});
+
+  /// The naming strategy to use.
+  final NamingStrategy naming;
 
   /// Generates SQL file with schema and data
   Future<void> generate(

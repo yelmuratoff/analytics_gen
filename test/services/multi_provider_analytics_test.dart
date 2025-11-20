@@ -348,9 +348,9 @@ class _FailingAnalyticsService implements IAnalytics {
 
 /// An async-capable provider that executes logging after a short delay.
 class _AsyncLoggingProvider implements IAnalytics, IAsyncAnalytics {
-  final MockAnalyticsService _delegate;
 
   _AsyncLoggingProvider(this._delegate);
+  final MockAnalyticsService _delegate;
 
   @override
   void logEvent({required String name, AnalyticsParams? parameters}) {
@@ -404,19 +404,19 @@ abstract class _TestCapability implements AnalyticsCapability {
 const _testCapabilityKey = CapabilityKey<_TestCapability>('test_capability');
 
 class _TestCapabilityImpl implements _TestCapability {
+  _TestCapabilityImpl(this.source);
   @override
   final String source;
-  _TestCapabilityImpl(this.source);
 }
 
 class _ProviderWithCapability
     with CapabilityProviderMixin
     implements IAnalytics {
-  final String name;
 
   _ProviderWithCapability(this.name) {
     registerCapability(_testCapabilityKey, _TestCapabilityImpl(name));
   }
+  final String name;
 
   @override
   void logEvent({required String name, AnalyticsParams? parameters}) {}

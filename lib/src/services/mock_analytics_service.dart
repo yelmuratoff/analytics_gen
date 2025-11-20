@@ -8,6 +8,14 @@ import '../util/logger.dart';
 /// Records events in memory and provides query methods for verification.
 final class MockAnalyticsService
     implements IAnalytics, AnalyticsCapabilityProvider {
+
+  /// Creates a new mock analytics service.
+  MockAnalyticsService({
+    this.verbose = false,
+    CapabilityRegistry? capabilities,
+    Logger? logger,
+  })  : _capabilities = capabilities ?? CapabilityRegistry(),
+        _logger = logger ?? const ConsoleLogger();
   final List<RecordedAnalyticsEvent> _records = [];
 
   /// Whether to print events to console when logged
@@ -15,13 +23,6 @@ final class MockAnalyticsService
 
   final CapabilityRegistry _capabilities;
   final Logger _logger;
-
-  MockAnalyticsService({
-    this.verbose = false,
-    CapabilityRegistry? capabilities,
-    Logger? logger,
-  })  : _capabilities = capabilities ?? CapabilityRegistry(),
-        _logger = logger ?? const ConsoleLogger();
 
   /// Immutable view of recorded events as typed records.
   List<RecordedAnalyticsEvent> get records => List.unmodifiable(_records);

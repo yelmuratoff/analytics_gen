@@ -9,9 +9,11 @@ import '../generation_metadata.dart';
 
 /// Generates JSON export of analytics events (pretty and minified).
 final class JsonGenerator {
-  final NamingStrategy naming;
-
+  /// Creates a new JSON generator.
   JsonGenerator({required this.naming});
+
+  /// The naming strategy to use.
+  final NamingStrategy naming;
 
   /// Generates both pretty and minified JSON files
   Future<void> generate(

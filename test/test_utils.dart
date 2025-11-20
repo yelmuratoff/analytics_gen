@@ -1,9 +1,9 @@
 import 'package:analytics_gen/src/util/logger.dart';
 
 class TestLogger implements Logger {
-  final List<String> logs;
 
   TestLogger(this.logs);
+  final List<String> logs;
 
   @override
   void debug(String message) => logs.add(message);

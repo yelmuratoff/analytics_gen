@@ -7,9 +7,11 @@ import '../util/string_utils.dart';
 
 /// Helper class responsible for parsing analytics parameters from YAML.
 class ParameterParser {
-  final NamingStrategy naming;
 
+  /// Creates a new parameter parser.
   const ParameterParser(this.naming);
+  /// The naming strategy to use.
+  final NamingStrategy naming;
 
   /// Parses a list of parameters from a YAML map.
   List<AnalyticsParameter> parseParameters(

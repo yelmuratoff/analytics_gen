@@ -3,30 +3,8 @@
 /// The default strategy enforces snake_case domains/parameters and uses a
 /// `<domain>: <event>` template when no custom `event_name` is provided.
 final class NamingStrategy {
-  static final _snakeCaseDomain = RegExp(r'^[a-z0-9_]+$');
-  static final _snakeCaseParam = RegExp(r'^[a-z][a-z0-9_]*$');
 
-  /// Whether to enforce snake_case validation on domain keys.
-  final bool enforceSnakeCaseDomains;
-
-  /// Whether to enforce snake_case validation on parameter identifiers.
-  final bool enforceSnakeCaseParameters;
-
-  /// Template used when resolving the loggable event name.
-  ///
-  /// Supports `{domain}`, `{domain_alias}`, and `{event}` placeholders.
-  final String eventNameTemplate;
-
-  /// Template used when resolving the canonical identifier for uniqueness.
-  ///
-  /// Supports the same placeholders as [eventNameTemplate].
-  final String identifierTemplate;
-
-  /// Optional map of domain aliases used when rendering templates.
-  ///
-  /// When a domain is present, `{domain_alias}` resolves to the mapped value.
-  final Map<String, String> domainAliases;
-
+  /// Creates a new naming strategy.
   const NamingStrategy({
     this.enforceSnakeCaseDomains = true,
     this.enforceSnakeCaseParameters = true,
@@ -36,6 +14,7 @@ final class NamingStrategy {
   })  : identifierTemplate = identifierTemplate ?? '{domain}: {event}',
         domainAliases = domainAliases ?? const {};
 
+  /// Creates a naming strategy from a YAML map.
   factory NamingStrategy.fromYaml(Map<dynamic, dynamic>? yaml) {
     if (yaml == null) {
       return const NamingStrategy();
@@ -61,6 +40,29 @@ final class NamingStrategy {
       domainAliases: aliases,
     );
   }
+  static final _snakeCaseDomain = RegExp(r'^[a-z0-9_]+$');
+  static final _snakeCaseParam = RegExp(r'^[a-z][a-z0-9_]*$');
+
+  /// Whether to enforce snake_case validation on domain keys.
+  final bool enforceSnakeCaseDomains;
+
+  /// Whether to enforce snake_case validation on parameter identifiers.
+  final bool enforceSnakeCaseParameters;
+
+  /// Template used when resolving the loggable event name.
+  ///
+  /// Supports `{domain}`, `{domain_alias}`, and `{event}` placeholders.
+  final String eventNameTemplate;
+
+  /// Template used when resolving the canonical identifier for uniqueness.
+  ///
+  /// Supports the same placeholders as [eventNameTemplate].
+  final String identifierTemplate;
+
+  /// Optional map of domain aliases used when rendering templates.
+  ///
+  /// When a domain is present, `{domain_alias}` resolves to the mapped value.
+  final Map<String, String> domainAliases;
 
   /// Returns `true` when [domain] satisfies the configured validation.
   bool isValidDomain(String domain) {

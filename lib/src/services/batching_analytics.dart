@@ -3,6 +3,7 @@ import 'dart:async';
 import '../core/analytics_interface.dart';
 import '../core/async_analytics_interface.dart';
 
+/// Signature for error handler invoked when batch flush fails.
 typedef BatchFlushErrorHandler = void Function(
   Object error,
   StackTrace stackTrace,
@@ -14,6 +15,7 @@ typedef BatchFlushErrorHandler = void Function(
 /// flaky providers, cold starts) without changing the synchronous
 /// `IAnalytics.logEvent` contract exposed to the rest of the app.
 final class BatchingAnalytics implements IAnalytics {
+  /// Creates a new batching analytics service.
   BatchingAnalytics({
     required IAsyncAnalytics delegate,
     this.maxBatchSize = 20,
@@ -35,10 +37,20 @@ final class BatchingAnalytics implements IAnalytics {
   }
 
   final IAsyncAnalytics _delegate;
+
+  /// The maximum number of events to buffer before flushing.
   final int maxBatchSize;
+
+  /// The maximum number of times to retry a failed batch.
   final int maxRetries;
+
+  /// The minimum delay between retries.
   final Duration minRetryDelay;
+
+  /// The maximum delay between retries.
   final Duration maxRetryDelay;
+
+  /// Callback for handling flush errors.
   final BatchFlushErrorHandler? onFlushError;
 
   final List<_QueuedAnalyticsEvent> _pending = <_QueuedAnalyticsEvent>[];
@@ -58,6 +70,12 @@ final class BatchingAnalytics implements IAnalytics {
   }
 
   /// Flushes buffered events and waits for completion.
+  ///
+  /// If the flush fails (e.g. network error) and retries are exhausted,
+  /// this method will throw the underlying exception.
+  ///
+  /// If a flush is already in progress, this returns the future of the
+  /// active flush.
   Future<void> flush() {
     if (_pending.isEmpty && _activeFlush == null) {
       return Future<void>.value();

@@ -5,6 +5,7 @@ import '../../util/string_utils.dart';
 /// Provides common functionality for generating file headers,
 /// imports, documentation comments, and validation checks.
 abstract class BaseRenderer {
+  /// Creates a new base renderer.
   const BaseRenderer();
 
   /// Renders a standard file header for generated files.
@@ -295,12 +296,7 @@ abstract class BaseRenderer {
 
 /// Represents a method parameter for code generation.
 class MethodParameter {
-  final String name;
-  final String type;
-  final bool isNullable;
-  final String? defaultValue;
-  final String? documentation;
-
+  /// Creates a new method parameter.
   const MethodParameter({
     required this.name,
     required this.type,
@@ -308,4 +304,19 @@ class MethodParameter {
     this.defaultValue,
     this.documentation,
   });
+
+  /// The parameter name.
+  final String name;
+
+  /// The parameter type.
+  final String type;
+
+  /// Whether the parameter is nullable.
+  final bool isNullable;
+
+  /// The default value for the parameter, if any.
+  final String? defaultValue;
+
+  /// The documentation comment for the parameter, if any.
+  final String? documentation;
 }

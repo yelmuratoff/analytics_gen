@@ -14,15 +14,21 @@ import 'export/sqlite_generator.dart';
 ///
 /// Delegates to specialized generators for each format.
 final class ExportGenerator {
-  final AnalyticsConfig config;
-  final String projectRoot;
-  final Logger log;
-
+  /// Creates a new export generator.
   ExportGenerator({
     required this.config,
     required this.projectRoot,
     this.log = const NoOpLogger(),
   });
+
+  /// The analytics configuration.
+  final AnalyticsConfig config;
+
+  /// The root directory of the project.
+  final String projectRoot;
+
+  /// The logger to use.
+  final Logger log;
 
   /// Generates all configured export files
   Future<void> generate(Map<String, AnalyticsDomain> domains) async {

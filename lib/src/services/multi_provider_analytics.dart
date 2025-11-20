@@ -32,19 +32,6 @@ typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
 /// ```
 final class MultiProviderAnalytics
     implements IAnalytics, IAsyncAnalytics, AnalyticsCapabilityProvider {
-  final List<IAnalytics> _providers;
-  final void Function(Object error, StackTrace stackTrace)? onError;
-
-  /// Notifies observers when a specific provider fails.
-  /// Use this for metrics, logging, or alerting with full context.
-  final void Function(MultiProviderAnalyticsFailure failure)? onProviderFailure;
-
-  /// Optional per-provider filters: if a filter returns false the provider
-  /// will not receive that event.
-  final Map<IAnalytics, EventPredicate?> _providerFilters;
-
-  final Logger _logger;
-
   /// Creates an immutable multi-provider analytics service.
   ///
   /// The [providers] list is copied and made unmodifiable to ensure immutability.
@@ -57,6 +44,20 @@ final class MultiProviderAnalytics
   })  : _providers = List.unmodifiable(providers),
         _providerFilters = Map.unmodifiable(providerFilters ?? const {}),
         _logger = logger ?? const NoOpLogger();
+  final List<IAnalytics> _providers;
+
+  /// Notifies observers when any provider fails.
+  final void Function(Object error, StackTrace stackTrace)? onError;
+
+  /// Notifies observers when a specific provider fails.
+  /// Use this for metrics, logging, or alerting with full context.
+  final void Function(MultiProviderAnalyticsFailure failure)? onProviderFailure;
+
+  /// Optional per-provider filters: if a filter returns false the provider
+  /// will not receive that event.
+  final Map<IAnalytics, EventPredicate?> _providerFilters;
+
+  final Logger _logger;
 
   @override
   AnalyticsCapabilityResolver get capabilityResolver =>
@@ -233,9 +234,8 @@ final class MultiProviderAnalytics
 
 final class _MultiProviderCapabilityResolver
     implements AnalyticsCapabilityResolver {
-  final List<IAnalytics> providers;
-
   _MultiProviderCapabilityResolver(this.providers);
+  final List<IAnalytics> providers;
 
   @override
   T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {

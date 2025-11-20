@@ -2,6 +2,12 @@ import 'dart:async';
 
 /// Simple scheduler that debounces watch-mode regenerations.
 final class WatchRegenerationScheduler {
+  /// Creates a new watch regeneration scheduler.
+  WatchRegenerationScheduler({
+    required this.onGenerate,
+    Duration? debounceDuration,
+  }) : debounceDuration = debounceDuration ?? const Duration(milliseconds: 350);
+
   /// How long to wait after the last file event before regenerating.
   final Duration debounceDuration;
 
@@ -11,11 +17,6 @@ final class WatchRegenerationScheduler {
   Timer? _timer;
   bool _pending = false;
   bool _isRunning = false;
-
-  WatchRegenerationScheduler({
-    required this.onGenerate,
-    Duration? debounceDuration,
-  }) : debounceDuration = debounceDuration ?? const Duration(milliseconds: 350);
 
   /// Schedule a regeneration run.
   void schedule() {

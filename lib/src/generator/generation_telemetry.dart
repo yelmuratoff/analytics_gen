@@ -5,6 +5,7 @@ import '../util/logger.dart';
 /// Use these callbacks to monitor generation performance, identify bottlenecks,
 /// and collect metrics for optimization.
 abstract class GenerationTelemetry {
+  /// Creates a new generation telemetry instance.
   const GenerationTelemetry();
 
   /// Called when generation starts.
@@ -51,14 +52,7 @@ abstract class GenerationTelemetry {
 
 /// Context information about the generation request.
 class GenerationContext {
-  final int domainCount;
-  final int contextCount;
-  final int totalEventCount;
-  final int totalParameterCount;
-  final bool generateDocs;
-  final bool generateExports;
-  final bool generateCode;
-
+  /// Creates a new generation context.
   const GenerationContext({
     required this.domainCount,
     required this.contextCount,
@@ -68,6 +62,27 @@ class GenerationContext {
     required this.generateExports,
     required this.generateCode,
   });
+
+  /// The number of domains to generate.
+  final int domainCount;
+
+  /// The number of contexts to generate.
+  final int contextCount;
+
+  /// The total number of events to generate.
+  final int totalEventCount;
+
+  /// The total number of parameters to generate.
+  final int totalParameterCount;
+
+  /// Whether documentation generation is enabled.
+  final bool generateDocs;
+
+  /// Whether export generation is enabled.
+  final bool generateExports;
+
+  /// Whether code generation is enabled.
+  final bool generateCode;
 
   @override
   String toString() => 'GenerationContext('
@@ -82,9 +97,11 @@ class GenerationContext {
 
 /// Default implementation that logs telemetry to a callback.
 class LoggingTelemetry extends GenerationTelemetry {
-  final Logger log;
-
+  /// Creates a new logging telemetry instance.
   const LoggingTelemetry(this.log);
+
+  /// The logger to use.
+  final Logger log;
 
   @override
   void onGenerationStart(GenerationContext context) {
@@ -136,5 +153,6 @@ class LoggingTelemetry extends GenerationTelemetry {
 
 /// No-op implementation that does nothing.
 class NoOpTelemetry extends GenerationTelemetry {
+  /// Creates a new no-op telemetry instance.
   const NoOpTelemetry();
 }

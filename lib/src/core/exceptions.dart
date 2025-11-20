@@ -15,6 +15,15 @@ sealed class AnalyticsException implements Exception {
 /// callers to match analytics-specific errors explicitly.
 final class AnalyticsParseException extends FormatException
     implements AnalyticsException {
+
+  /// Creates a new parse exception.
+  const AnalyticsParseException(
+    super.message, {
+    this.filePath,
+    this.innerError,
+    this.span,
+    this.lineNumber,
+  });
   /// Optional file path where the error occurred.
   final String? filePath;
 
@@ -26,14 +35,6 @@ final class AnalyticsParseException extends FormatException
 
   /// Optional line number (1-based) if span is not available.
   final int? lineNumber;
-
-  const AnalyticsParseException(
-    super.message, {
-    this.filePath,
-    this.innerError,
-    this.span,
-    this.lineNumber,
-  });
 
   @override
   String toString() {
@@ -57,9 +58,11 @@ final class AnalyticsParseException extends FormatException
 
 /// Exception thrown when there are multiple parsing errors.
 final class AnalyticsAggregateException implements AnalyticsException {
-  final List<AnalyticsParseException> errors;
 
+  /// Creates a new aggregate exception.
   const AnalyticsAggregateException(this.errors);
+  /// The list of errors that occurred.
+  final List<AnalyticsParseException> errors;
 
   @override
   String toString() {
@@ -72,16 +75,23 @@ final class AnalyticsAggregateException implements AnalyticsException {
   }
 }
 
+/// Exception thrown during code generation.
 final class AnalyticsGenerationException implements AnalyticsException {
-  final String message;
-  final String? sourcePath;
-  final int? lineNumber;
 
+  /// Creates a new generation exception.
   const AnalyticsGenerationException(
     this.message, {
     this.sourcePath,
     this.lineNumber,
   });
+  /// The error message.
+  final String message;
+
+  /// The source file path where the error occurred.
+  final String? sourcePath;
+
+  /// The line number where the error occurred.
+  final int? lineNumber;
 
   @override
   String toString() {

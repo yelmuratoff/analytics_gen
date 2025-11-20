@@ -2,8 +2,8 @@ import 'package:analytics_gen/analytics_gen.dart';
 import 'package:test/test.dart';
 
 final class _TestCapability implements AnalyticsCapability {
-  final String value;
   _TestCapability(this.value);
+  final String value;
 }
 
 const _testCapabilityKey = CapabilityKey<_TestCapability>('test_capability');
@@ -78,9 +78,9 @@ final class _LoggerOnly implements IAnalytics {
 }
 
 final class _AnalyticsHarness extends AnalyticsBase {
-  final AnalyticsCapabilityResolver resolver;
 
   _AnalyticsHarness(this.resolver);
+  final AnalyticsCapabilityResolver resolver;
 
   @override
   IAnalytics get logger => _LoggerOnly();

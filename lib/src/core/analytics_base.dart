@@ -6,6 +6,7 @@ import 'analytics_interface.dart';
 /// All generated domain mixins will be mixed onto this base class,
 /// which provides access to the underlying [IAnalytics] implementation.
 abstract class AnalyticsBase {
+  /// Creates a new analytics base.
   const AnalyticsBase();
 
   /// The analytics service implementation used to log events.

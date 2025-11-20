@@ -4,29 +4,36 @@ import 'package:analytics_gen/src/util/logger.dart';
 
 /// Represents a source file containing analytics definitions.
 final class AnalyticsSource {
+
+  /// Creates a new analytics source.
+  const AnalyticsSource({
+    required this.filePath,
+    required this.content,
+  });
   /// The absolute path to the source file.
   final String filePath;
 
   /// The raw string content of the file.
   final String content;
-
-  const AnalyticsSource({
-    required this.filePath,
-    required this.content,
-  });
 }
 
 /// Handles discovery and loading of analytics definition files.
 final class EventLoader {
-  final String eventsPath;
-  final List<String> contextFiles;
-  final Logger log;
 
+  /// Creates a new event loader.
   EventLoader({
     required this.eventsPath,
     this.contextFiles = const [],
     this.log = const NoOpLogger(),
   });
+  /// The path to the directory containing event files.
+  final String eventsPath;
+
+  /// The list of context files to load.
+  final List<String> contextFiles;
+
+  /// The logger to use.
+  final Logger log;
 
   /// Loads all YAML files from the configured events directory.
   Future<List<AnalyticsSource>> loadEventFiles() async {

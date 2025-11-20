@@ -1,29 +1,51 @@
 import 'dart:io' as io;
 
+/// Log levels for the logger.
 enum LogLevel {
+  /// Debug level for detailed diagnostic information.
   debug,
+
+  /// Info level for general informational messages.
   info,
+
+  /// Warning level for potentially harmful situations.
   warning,
+
+  /// Error level for error events.
   error,
 }
 
+/// Abstract logger interface.
+/// Implementations can log messages at various levels.
 abstract class Logger {
+  /// Logs a debug message.
   void debug(String message);
+
+  /// Logs an informational message.
   void info(String message);
+
+  /// Logs a warning message.
   void warning(String message);
+
+  /// Logs an error message with optional error and stack trace.
   void error(String message, [Object? error, StackTrace? stackTrace]);
 
   /// Creates a child logger with a prefix or context.
   Logger scoped(String label);
 }
 
+/// Console logger implementation that prints to standard output.
 class ConsoleLogger implements Logger {
+  /// Creates a new console logger.
   const ConsoleLogger({
     this.verbose = false,
     this.prefix = '',
   });
 
+  /// Whether to enable verbose logging (debug level).
   final bool verbose;
+
+  /// Optional prefix for log messages.
   final String prefix;
 
   @override
@@ -104,7 +126,9 @@ class ConsoleLogger implements Logger {
   }
 }
 
+/// No-operation logger that ignores all log messages.
 class NoOpLogger implements Logger {
+  /// Creates a new no-op logger.
   const NoOpLogger();
 
   @override

@@ -14,15 +14,7 @@ import 'renderers/event_renderer.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
-  final AnalyticsConfig config;
-  final String projectRoot;
-  final Logger log;
-  final GenerationTelemetry _telemetry;
-
-  final AnalyticsClassRenderer _classRenderer;
-  final ContextRenderer _contextRenderer;
-  final EventRenderer _eventRenderer;
-
+  /// Creates a new code generator.
   CodeGenerator({
     required this.config,
     required this.projectRoot,
@@ -35,6 +27,20 @@ final class CodeGenerator {
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = eventRenderer ?? EventRenderer(config);
+
+  /// The analytics configuration.
+  final AnalyticsConfig config;
+
+  /// The root directory of the project.
+  final String projectRoot;
+
+  /// The logger to use.
+  final Logger log;
+
+  final GenerationTelemetry _telemetry;
+  final AnalyticsClassRenderer _classRenderer;
+  final ContextRenderer _contextRenderer;
+  final EventRenderer _eventRenderer;
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate(

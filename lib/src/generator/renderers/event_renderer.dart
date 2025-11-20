@@ -5,13 +5,17 @@ import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
 import 'base_renderer.dart';
 
+/// Renders analytics event domain files.
 class EventRenderer extends BaseRenderer {
-  final AnalyticsConfig config;
-
+  /// Creates a new event renderer.
   const EventRenderer(this.config);
+
+  /// The analytics configuration.
+  final AnalyticsConfig config;
 
   static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
 
+  /// Renders a domain file with event methods.
   String renderDomainFile(String domainName, AnalyticsDomain domain) {
     final buffer = StringBuffer();
 
@@ -25,6 +29,7 @@ class EventRenderer extends BaseRenderer {
     return buffer.toString();
   }
 
+  /// Renders a domain mixin with event methods.
   String renderDomainMixin(String domainName, AnalyticsDomain domain) {
     final buffer = StringBuffer();
     final className = 'Analytics${StringUtils.capitalizePascal(domainName)}';
