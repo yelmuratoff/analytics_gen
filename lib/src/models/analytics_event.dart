@@ -1,22 +1,33 @@
 import 'package:collection/collection.dart';
 
 const _listEq = ListEquality<String>();
+const _mapEq = MapEquality<String, Object?>();
 
 /// Represents a single analytics event parameter.
 final class AnalyticsParameter {
+  /// Analytics key that gets sent to providers.
   final String name;
+
+  /// Identifier used when generating Dart API (defaults to [name]).
+  final String codeName;
+
   final String type;
   final bool isNullable;
   final String? description;
   final List<String>? allowedValues;
 
+  /// Custom metadata for this parameter (e.g. PII flags, ownership).
+  final Map<String, Object?> meta;
+
   const AnalyticsParameter({
     required this.name,
+    String? codeName,
     required this.type,
     required this.isNullable,
     this.description,
     this.allowedValues,
-  });
+    this.meta = const {},
+  }) : codeName = codeName ?? name;
 
   @override
   String toString() => '$name: $type${isNullable ? '?' : ''}';
@@ -26,19 +37,23 @@ final class AnalyticsParameter {
     if (identical(this, other)) return true;
     return other is AnalyticsParameter &&
         other.name == name &&
+        other.codeName == codeName &&
         other.type == type &&
         other.isNullable == isNullable &&
         other.description == description &&
-        _listEq.equals(other.allowedValues, allowedValues);
+        _listEq.equals(other.allowedValues, allowedValues) &&
+        _mapEq.equals(other.meta, meta);
   }
 
   @override
   int get hashCode => Object.hash(
         name,
+        codeName,
         type,
         isNullable,
         description,
         _listEq.hash(allowedValues ?? const []),
+        _mapEq.hash(meta),
       );
 }
 
@@ -48,18 +63,24 @@ const _paramListEq = ListEquality<AnalyticsParameter>();
 final class AnalyticsEvent {
   final String name;
   final String description;
+  final String? identifier;
   final String? customEventName;
   final List<AnalyticsParameter> parameters;
   final bool deprecated;
   final String? replacement;
 
+  /// Custom metadata for this event (e.g. ownership, Jira tickets).
+  final Map<String, Object?> meta;
+
   const AnalyticsEvent({
     required this.name,
     required this.description,
+    this.identifier,
     this.customEventName,
     required this.parameters,
     this.deprecated = false,
     this.replacement,
+    this.meta = const {},
   });
 
   @override
@@ -71,20 +92,24 @@ final class AnalyticsEvent {
     return other is AnalyticsEvent &&
         other.name == name &&
         other.description == description &&
+        other.identifier == identifier &&
         other.customEventName == customEventName &&
         other.deprecated == deprecated &&
         other.replacement == replacement &&
-        _paramListEq.equals(other.parameters, parameters);
+        _paramListEq.equals(other.parameters, parameters) &&
+        _mapEq.equals(other.meta, meta);
   }
 
   @override
   int get hashCode => Object.hash(
         name,
         description,
+        identifier,
         customEventName,
         deprecated,
         replacement,
         _paramListEq.hash(parameters),
+        _mapEq.hash(meta),
       );
 }
 

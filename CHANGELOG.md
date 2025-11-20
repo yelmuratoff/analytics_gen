@@ -2,9 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.2.0] - 2025-11-20
+- **Updates**:
+  - Optimized generator performance with parallel processing and smart I/O.
+  - Stable API supporting both Dependency Injection and Singleton patterns.
+- **Major Features**:
+  - **Extensible Metadata**: Support for arbitrary key-value pairs (`meta`) in YAML, propagated to code and exports.
+  - **Batching & Async**: Added `BatchingAnalytics` for buffering events and `AsyncAnalyticsAdapter` for heavy providers.
+  - **Flexible Naming**: Configurable naming strategies for domains, events, and parameters.
+  - **Strict Mode**: Added `strict_event_names` to prevent high-cardinality anti-patterns.
+- **Developer Experience**:
+  - **Improved Error Reporting**: Aggregated validation errors for faster debugging.
+  - **Performance**: Parallelized generation and incremental file writes.
+  - **Documentation**: Added migration guides, scalability benchmarks, and onboarding checklists.
+- **Quality Assurance**:
+  - Full test coverage (100%).
+  - Stricter linting rules and CI guardrails.
+
 ## [0.1.6] - 2025-11-17
- - Add `include_event_description` config option to optionally include an
-   event's `description` property inside the emitted `logger.logEvent`
+
+## [0.1.6] - 2025-11-17
+- Add `include_event_description` config option to optionally include an
+  event's `description` property inside the emitted `logger.logEvent`
    parameters map. This flag defaults to `false` to preserve existing
    behavior; enable it via `analytics_gen.yaml` (key: `include_event_description`).
    - The code generator now inserts a `'description'` key for events that

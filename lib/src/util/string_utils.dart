@@ -49,4 +49,9 @@ final class StringUtils {
             .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
             .join();
   }
+
+  /// Escapes single quotes and backslashes for use in Dart string literals.
+  static String escapeSingleQuoted(String value) {
+    return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
+  }
 }

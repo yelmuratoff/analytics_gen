@@ -1,6 +1,5 @@
-import 'package:args/args.dart';
-
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:args/args.dart';
 
 ArgParser createArgParser() {
   return ArgParser()

@@ -3,8 +3,14 @@ purchase:
     description: User completed a purchase
     parameters:
       product_id: string
-      price: double
-      currency: string
+      price:
+        type: double
+        param_name: amount_value
+        description: Localized amount used by legacy dashboards
+      currency:
+        type: string
+        identifier: currency_code
+        param_name: currency-code
       quantity:
         type: int
         description: Number of items purchased

@@ -11,6 +11,11 @@ analytics_gen:
   # Path for export files (optional)
   exports_path: assets/generated
 
+  # Additional context files (optional)
+  contexts:
+    - events/theme_context.yaml
+    - events/user_properties.yaml
+
   # Enable/disable various generators
   generate_docs: true
   generate_csv: true
@@ -20,3 +25,19 @@ analytics_gen:
   # If true, each generated logEvent call will include the event description
   # under the 'description' key in the parameters map. Default: false
   include_event_description: true
+
+  # If true, forbids string interpolation in event names to prevent high cardinality.
+  # Default: false
+  strict_event_names: false
+
+  naming:
+    # Keep snake_case domains (files/mixins stay stable) but allow legacy parameter
+    # keys to opt-in via per-parameter `identifier`.
+    enforce_snake_case_domains: true
+    enforce_snake_case_parameters: true
+    # Use human-friendly aliases when auto-building event names without `event_name`.
+    event_name_template: "{domain_alias}: {event}"
+    identifier_template: "{domain}.{event}"
+    domain_aliases:
+      screen: "Screen Domain"
+      purchase: "Purchase Flow"

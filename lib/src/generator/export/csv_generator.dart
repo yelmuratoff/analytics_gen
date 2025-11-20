@@ -1,11 +1,15 @@
 // dart:io not required directly
-import '../../util/file_utils.dart';
-
+import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
+import '../../util/file_utils.dart';
 
 /// Generates Excel-compatible CSV export of analytics events.
 final class CsvGenerator {
+  final NamingStrategy naming;
+
+  CsvGenerator({required this.naming});
+
   /// Generates CSV file from analytics domains
   Future<void> generate(
     Map<String, AnalyticsDomain> domains,
@@ -15,13 +19,14 @@ final class CsvGenerator {
 
     // CSV Header
     buffer.writeln(
-      'Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement',
+      'Domain,Action,Event Name,Description,Parameters,Deprecated,Replacement,Metadata',
     );
 
     // Data rows
     for (final domain in domains.values) {
       for (final event in domain.events) {
-        final eventName = EventNaming.resolveEventName(domain.name, event);
+        final eventName =
+            EventNaming.resolveEventName(domain.name, event, naming);
         final parameters = event.parameters.map((p) {
           final typeStr = '${p.name} (${p.type}${p.isNullable ? '?' : ''})';
           final desc = p.description != null ? ': ${p.description}' : '';
@@ -29,8 +34,15 @@ final class CsvGenerator {
               (p.allowedValues != null && p.allowedValues!.isNotEmpty)
                   ? ' {allowed: ${p.allowedValues!.join('|')}}'
                   : '';
-          return '$typeStr$desc$allowed';
+          final meta = p.meta.isNotEmpty
+              ? ' [${p.meta.entries.map((e) => '${e.key}=${e.value}').join(';')}]'
+              : '';
+          return '$typeStr$desc$allowed$meta';
         }).join('; ');
+
+        final meta = event.meta.isEmpty
+            ? ''
+            : event.meta.entries.map((e) => '${e.key}=${e.value}').join('; ');
 
         buffer.writeln(
           '${_escape(domain.name)},'
@@ -39,7 +51,8 @@ final class CsvGenerator {
           '${_escape(event.description)},'
           '${_escape(parameters)},'
           '${event.deprecated},'
-          '${_escape(event.replacement ?? '')}',
+          '${_escape(event.replacement ?? '')},'
+          '${_escape(meta)}',
         );
       }
     }

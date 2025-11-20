@@ -1,13 +1,18 @@
 import 'dart:convert';
+
+import '../../config/naming_strategy.dart';
+import '../../models/analytics_event.dart';
+import '../../util/event_naming.dart';
 // dart:io not required directly since file utils handle IO
 import '../../util/file_utils.dart';
-
-import '../../models/analytics_event.dart';
 import '../generation_metadata.dart';
-import '../../util/event_naming.dart';
 
 /// Generates JSON export of analytics events (pretty and minified).
 final class JsonGenerator {
+  final NamingStrategy naming;
+
+  JsonGenerator({required this.naming});
+
   /// Generates both pretty and minified JSON files
   Future<void> generate(
     Map<String, AnalyticsDomain> domains,
@@ -42,18 +47,24 @@ final class JsonGenerator {
           'events': entry.value.events.map((event) {
             return {
               'name': event.name,
-              'event_name': EventNaming.resolveEventName(entry.key, event),
+              'event_name':
+                  EventNaming.resolveEventName(entry.key, event, naming),
+              'identifier':
+                  EventNaming.resolveIdentifier(entry.key, event, naming),
               'description': event.description,
               'deprecated': event.deprecated,
               if (event.replacement != null) 'replacement': event.replacement,
+              if (event.meta.isNotEmpty) 'meta': event.meta,
               'parameters': event.parameters.map((p) {
                 return {
                   'name': p.name,
+                  if (p.codeName != p.name) 'code_name': p.codeName,
                   'type': p.type,
                   'nullable': p.isNullable,
                   if (p.description != null) 'description': p.description,
                   if (p.allowedValues != null && p.allowedValues!.isNotEmpty)
                     'allowed_values': p.allowedValues,
+                  if (p.meta.isNotEmpty) 'meta': p.meta,
                 };
               }).toList(),
             };

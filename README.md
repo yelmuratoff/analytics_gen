@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://github.com/yelmuratoff/packages_assets/blob/main/assets/analytics_gen.png?raw=true" width="400">
 
-  <p><strong>Type‑safe analytics events from a single YAML source of truth.</strong></p>
+  <p><strong>Type-safe analytics from a single YAML plan.</strong></p>
 
   <p>
     <a href="https://pub.dev/packages/analytics_gen">
@@ -37,527 +37,253 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Key features](#key-features)
-- [When to use](#when-to-use)
-- [Quick Start](#quick-start)
-  - [Install](#1-install)
-  - [Define events](#2-define-events-yaml-tracking-plan)
-  - [Generate code](#3-generate-code)
-- [Why this approach](#why-this-approach)
-- [Configuration](#configuration)
-- [YAML Schema](#yaml-schema)
-- [Validation Guarantees](#validation-guarantees)
-- [CLI quick commands](#cli-quick-commands)
-- [Generated Files](#generated-files)
-- [Analytics Providers](#analytics-providers)
-- [Deterministic Output](#deterministic-output)
-- [Testing](#testing)
+- [TL;DR Quick Start](#tldr-quick-start)
+- [Key Features](#key-features)
+- [Documentation Hub](#documentation-hub)
+- [CLI Commands](#cli-commands)
+- [Validation & Quality](#validation--quality)
+- [Analytics Providers & Capabilities](#analytics-providers--capabilities)
+- [Synchronous Logging & Async Providers](#synchronous-logging--async-providers)
+- [Batch Logging Buffers](#batch-logging-buffers)
 - [Example](#example)
+- [Testing](#testing)
 - [Contributing](#contributing)
 - [FAQ](#faq)
 - [License](#license)
 
 ## Overview
 
-`analytics_gen` keeps your tracking plan, generated code, and analytics providers in sync.
+`analytics_gen` keeps your tracking plan, generated code, docs, and analytics providers in sync. Describe events once in YAML and the tool emits a type-safe Dart API, deterministic documentation, and optional exports (CSV/JSON/SQL/SQLite). The runtime `Analytics` singleton delegates to any provider(s) you register, so instrumentation stays consistent across platforms and teams.
 
-You describe events once in YAML; the package generates:
+## TL;DR Quick Start
 
-- A type‑safe Dart API for all events and parameters
-- A single `Analytics` entrypoint with domain‑specific mixins
-- Optional documentation and export files (CSV/JSON/SQL/SQLite)
+1. **Describe events** in `events/*.yaml` (one domain per file). Keep descriptions + parameter docs current.
+2. **Configure** `analytics_gen.yaml` so every machine runs the same generator settings.
+3. **Generate** code/doc/exports with `dart run analytics_gen:generate --docs --exports`.
+4. **Initialize + use** the generated API:
+   - **Singleton**: `Analytics.initialize(...)`, then `Analytics.instance.logEvent(...)`.
+   - **DI**: `final analytics = Analytics(...)`, then `analytics.logEvent(...)`.
+5. **Review diffs** for generated Dart, docs, and exports during PRs—treat them as production code.
 
-This removes brittle, hand‑written string keys, prevents drift across platforms, and makes analytics changes safe to review and refactor from a single YAML source.
+Need a detailed walkthrough? Head to [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 
-## Key features
+## Key Features
 
-- **Type‑safe analytics** - compile‑time checking of event names and parameter types
-- **YAML → Dart generation** - write your plan once; emit strongly‑typed methods
-- **Domain-per-file** - a clean file per domain for readable diffs and code review
-- **Multi‑provider support** - fan‑out events to multiple analytics backends
-- **Exports & docs** - optional CSV/JSON/SQL/SQLite and generated Markdown for stakeholders
-- **Deterministic output** - fingerprinted and sorted generation prevents noisy diffs
-- **Watch mode & cleanup** - safe incremental regeneration; outputs cleaned before emit
-- **Runtime plan** - generated `Analytics.plan` makes plan metadata available at runtime
+- **Type-safe analytics** – compile-time event + parameter checking, optional allowed-value guards.
+- **Domain-per-file generation** – readable diffs, mixins scoped to a single domain.
+- **Deterministic outputs** – sorted parsing with fingerprints to keep reviewers sane.
+- **Multi-provider fan-out** – send the same event to multiple SDKs with error handling.
+- **Docs + exports** – Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
+- **Runtime plan** – `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
+- **Extensible Metadata** – attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
 
-## When to use
+## Extensible Metadata
 
-- You maintain a growing tracking plan and want the plan to be reviewable and type‑safe
-- Product, data, and engineering teams need a shared source of truth
-- You send identical events to multiple analytics providers and want consistency
-- You prefer compile‑time guarantees over stringly‑typed event names
-
-## When it may not fit
-
-- Small apps with very few events and no need for a shared tracking plan
-- When you rely heavily on provider-specific SDK primitives that can't be generalized
-
-## Quick Start
-
-### 1. Install
-
-Add `analytics_gen` to your `dev_dependencies` and get packages:
+Attach metadata to events and parameters using the `meta` key. Use metadata for ownership, PII flags, and other attributes that should travel with the plan but not the runtime code.
 
 ```yaml
-dev_dependencies:
-  analytics_gen: ^0.1.6
+user_login:
+  description: User logged in successfully.
+  meta:
+    owner: "auth-team"
+    pii: false
+    tier: "critical"
+  parameters:
+    method:
+      type: string
+      description: The method used to login (email, google, apple).
+      meta:
+        pii: true # Email might be PII if logged directly
 ```
 
-```bash
-dart pub get
-```
+This metadata is:
+- Available at runtime via `Analytics.plan`.
+- Included in the generated Markdown documentation.
+- Exported to JSON and CSV for external analysis.
 
-### 2. Define Events (YAML Tracking Plan)
+## Contexts & Global Properties
 
-Create `events/auth.yaml`:
+Contexts allow you to define global properties (like user attributes, device info, or theme settings) that are managed separately from individual events.
 
-```yaml
-auth:
-  login:
-    description: "User logs in"
-    parameters:
-      method:
-        type: string
-        description: "Login method (email, google, apple)"
+1. **Define a context file** (e.g., `events/user_properties.yaml`):
+   ```yaml
+   user_properties:
+     user_id:
+       type: string
+       description: Unique identifier for the user
+     user_role:
+       type: string
+       allowed_values: ['admin', 'viewer']
+   ```
 
-  logout:
-    description: "User logs out"
-    parameters: {}
-```
+2. **Register it** in `analytics_gen.yaml`:
+   ```yaml
+   analytics_gen:
+     contexts:
+       - events/user_properties.yaml
+   ```
 
-To deprecate an event:
+3. **Use the generated API**:
+   ```dart
+   // The generator creates a mixin and capability interface
+   Analytics.instance.setUserId('123');
+   Analytics.instance.setUserRole('admin');
+   ```
 
-```yaml
-auth:
-  login:
-    description: "User logs in"
-    deprecated: true
-    replacement: auth.login_v2
-    parameters:
-      method:
-        type: string
-        description: "Login method (email, google, apple)"
-```
+4. **Implement the capability** in your provider:
+   The generator creates an interface (e.g., `UserPropertiesCapability`). Your analytics provider must implement this interface and register it to handle the property updates.
 
-### 3. Generate Code
+   ```dart
+   class MyAnalyticsService with CapabilityProviderMixin implements IAnalytics {
+     MyAnalyticsService() {
+       // Register the capability implementation
+       registerCapability(userPropertiesKey, _UserPropertiesImpl(this));
+     }
+     // ...
+   }
 
-```bash
-dart run analytics_gen:generate --docs --exports
-```
+   class _UserPropertiesImpl implements UserPropertiesCapability {
+     final MyAnalyticsService _service;
+     _UserPropertiesImpl(this._service);
 
-This creates a stable, reviewable set of generated files:
+     @override
+     void setUserProperty(String name, Object? value) {
+       // Forward to your SDK (e.g. Firebase setUserProperty)
+       _service.firebase.setUserProperty(name: name, value: value);
+     }
+   }
+   ```
 
-Tip: run `dart run analytics_gen:generate --help` anytime to list CLI options and usage examples.
+## Documentation Hub
 
-```
-lib/src/analytics/generated/
-├── analytics.dart              # Auto-generated singleton
-├── generated_events.dart       # Barrel file (exports)
-└── events/
-    ├── auth_events.dart       # Auth domain events
-    ├── screen_events.dart     # Screen domain events
-    └── purchase_events.dart   # Purchase domain events
-```
-
-### 4. Use It in Your App
-
-```dart
-import 'package:analytics_gen/analytics_gen.dart';
-import 'src/analytics/generated/analytics.dart';
-
-void main() {
-  // Initialize once
-  Analytics.initialize(YourAnalyticsService());
-
-  // Use anywhere in your app
-  Analytics.instance.logAuthLogin(method: 'email');
-  Analytics.instance.logAuthLogout();
-}
-```
-
-> Important: accessing `Analytics.instance` before calling `Analytics.initialize` throws a descriptive `StateError`, keeping improper usage from silently failing.
-
-## Why this approach
-
-- **Readable** - domain-per-file keeps each area focused and reviewable
-- **Maintainable** - changes to one domain aren't scattered across the codebase
-- **Scalable** - new domains don't bloat a single generated file
-- **Simple imports** - a barrel file provides one canonical import for generated events
-
-## Configuration
-
-Create `analytics_gen.yaml` in your project root (optional, with sensible defaults if omitted):
-
-```yaml
-analytics_gen:
-  events_path: events                      # YAML event files location
-  output_path: src/analytics/generated     # Generated code output
-  docs_path: docs/analytics_events.md      # Documentation output
-  exports_path: assets/generated           # Exports output
-  generate_docs: true
-  generate_csv: true
-  generate_json: true
-  generate_sql: true
-  generate_plan: true
-  # When true, event descriptions are included in the emitted
-  # `logger.logEvent` parameters under the key `description`. Defaults to
-  # `false`.
-  # include_event_description: false
-```
-
-When `generate_docs` or any export flag is enabled in the config, the CLI will run those generators automatically (no need to pass `--docs` or `--exports`). Use `--no-docs` or `--no-exports` to temporarily override config.
-
-Set `generate_plan: false` if you prefer to omit the runtime `Analytics.plan` metadata from `analytics.dart`.
-
-## YAML Schema
-
-### Basic Event
-
-```yaml
-domain_name:
-  event_name:
-    description: Event description
-    parameters:
-      param1: string
-      param2: int
-```
-
-### Nullable Parameters
-
-```yaml
-auth:
-  signup:
-    description: User signs up
-    parameters:
-      referral_code: string?  # Optional parameter
-```
-
-### Parameters with Descriptions
-
-```yaml
-purchase:
-  completed:
-    description: Purchase completed
-    parameters:
-      product_id:
-        type: string
-        description: ID of purchased product
-      price:
-        type: double
-        description: Purchase price
-      method:
-        type: string
-        description: Payment method
-        allowed_values: [card, paypal, apple_pay]
-```
-
-### Custom Event Names (for Legacy / External Systems)
-
-```yaml
-screen:
-  view:
-    description: Screen viewed
-    event_name: "Screen: View"  # Custom name for legacy systems
-    parameters:
-      screen_name: string
-```
-
-Note: you can include parameter placeholders in `event_name` that will be
-replaced with the generated Dart parameter variables when code is emitted.
-This makes it safe to include contextual values (like the active screen name)
-in legacy or provider-specific strings while preserving a type-safe API.
-
-Example with placeholder interpolation:
-
-```yaml
-screen:
-  view:
-    description: Screen viewed
-    event_name: "Screen: {screen_name}"
-    parameters:
-      screen_name: string
-      previous_screen:
-        type: string?
-        description: Name of the previous screen
-      duration_ms:
-        type: int?
-        description: Time spent on previous screen in milliseconds
-```
-
-Generated Dart snippet (truncated):
-
-```dart
-void logScreenView({
-  int? durationMs,
-  String? previousScreen,
-  required String screenName,
-}) {
-  logger.logEvent(
-    name: "Screen: ${screenName}",
-    parameters: <String, Object?>{
-      if (durationMs != null) "duration_ms": durationMs,
-      if (previousScreen != null) "previous_screen": previousScreen,
-      "screen_name": screenName,
-    },
-  );
-}
-```
-
-Notes & behavior:
-- Placeholders are written in the YAML using `{parameter_name}` (snake_case).
-- During generation the placeholder is replaced by the camelCase parameter
-  variable (e.g. `{screen_name}` -> `${screenName}`) so you can use the
-  variable directly in the emitted string.
-- If a placeholder does not match any parameter name exactly, it is left
-  unchanged so your logs are predictable and explicit validation is not
-  attempted at generation time.
-- This interpolation happens only in the generated Dart logger call — the
-  raw `event_name` is still used for exports and documentation so your
-  tracking plan remain unchanged.
-
-### Supported Types
-
-- `int`, `string`, `bool`, `double`, `float`
-- `map` (Map<String, dynamic>)
-- `list` (List<dynamic>)
-- Add `?` for nullable: `string?`, `int?`
-- Custom Dart types (e.g., `DateTime`, `Uri`, `MyEnum`) are emitted exactly as declared, so you retain compile-time checking without extra YAML tricks.
-
-### Parameter Validation
-
-- Declare `allowed_values` for a parameter to auto-generate a runtime guard that throws an `ArgumentError` if your app passes anything outside that list. This keeps your analytics payloads consistent with the tracking plan and surfaces mistakes during development (and CI when you run `dart test` or `dart run analytics_gen:generate`).
-- Parameter names must be snake_case (lowercase letters, digits, underscores) and start with a letter, and they must remain unique even after camelCase normalization (e.g., `user_id` vs `user-id`). The parser throws a `FormatException` if those rules are violated so generated methods always receive valid Dart identifiers.
-
-### Domain Naming
-
-- Domain keys (top-level YAML keys) must be snake_case, using only lowercase letters, digits, and underscores (e.g. `auth`, `screen_navigation`).
-- This keeps generated file and class names stable and filesystem‑safe.
-- Each event's effective name-either the optional `event_name` override or the default `<domain>: <event>` string-must be unique across your entire tracking plan. Duplicate names cause the parser to throw a `FormatException`, which surfaces immediately when you run the generator (including `--validate-only`), preventing conflicting analytics payloads from being emitted.
-
-## Validation Guarantees
-
-- `dart run analytics_gen:generate --validate-only` (or any run that parses your YAML) now enforces the same uniqueness constraint, so duplicate event names fail fast before any generated files are written.
-- Since the parser sorts files, domains, and events before visiting them, every validation failure is predictable and repeatable-no ordering surprises in CI or on different machines.
-- `dart run analytics_gen:generate --plan` prints the parsed tracking plan (domains, events, parameters, and fingerprint) so you can inspect instrumentation without writing any generated files.
+- [Onboarding Guide](docs/ONBOARDING.md) – setup checklist, command reference, troubleshooting.
+- [Validation & Naming](docs/VALIDATION.md) – schema, strict naming rules, and error explanations.
+- [Capabilities](docs/CAPABILITIES.md) – why capability keys exist and how to expose provider-specific APIs.
+- [Migration Guides](docs/MIGRATION_GUIDES.md) – playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
+- [Code Review checklist](docs/CODE_REVIEW.md) – what to inspect in YAML, generated code, docs, and provider adapters during PRs.
+- [Scalability & Performance](docs/SCALABILITY.md) – benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
 
 ## CLI Commands
 
 ```bash
-# Generate code only (default)
-dart run analytics_gen:generate
-
-# Generate code + documentation
-dart run analytics_gen:generate --docs
-
-# Generate everything
+dart run analytics_gen:generate              # code only (default)
+dart run analytics_gen:generate --docs       # code + docs
 dart run analytics_gen:generate --docs --exports
-
-# Docs only
 dart run analytics_gen:generate --docs --no-code
-
-# Exports only
 dart run analytics_gen:generate --exports --no-code
-
-# Watch mode (auto-regenerate on changes)
-dart run analytics_gen:generate --watch
-
-# Quiet mode (no generator logs, only summary)
-dart run analytics_gen:generate --no-verbose
-
-# Validate YAML only (no files written)
 dart run analytics_gen:generate --validate-only
-
-# Print the parsed tracking plan (no files written)
 dart run analytics_gen:generate --plan
+dart run analytics_gen:generate --watch              # incremental rebuilds on file change
 ```
 
-## Generated Files
+Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop—the config still drives CI.
 
-### Code Structure
-```
-lib/src/analytics/generated/
-├── analytics.dart              # Singleton with all mixins
-├── generated_events.dart       # Barrel file
-└── events/
-    ├── auth_events.dart       # AnalyticsAuth mixin
-    ├── screen_events.dart     # AnalyticsScreen mixin
-    └── purchase_events.dart   # AnalyticsPurchase mixin
-```
+## Validation & Quality
 
-### Documentation & Exports (Optional)
-- **Docs**: `docs/analytics_events.md`
-- **CSV**: `assets/generated/analytics_events.csv`
-- **JSON**: `assets/generated/analytics_events.json`
-- **SQL**: `assets/generated/create_database.sql`
-- **SQLite**: `assets/generated/analytics_events.db`
+- Run `dart run analytics_gen:generate --validate-only` in CI to block invalid YAML before files are written.
+- **CI Guardrails**: Add a step in your CI pipeline to run generation and check for uncommitted changes (`git diff --exit-code`). This ensures that the generated code, docs, and exports are always in sync with the YAML definitions.
+- Naming strategy (`analytics_gen.naming`) enforces consistent identifiers—override per-field when legacy plans demand it.
+- **Strict Event Naming**: Set `strict_event_names: true` in `analytics_gen.yaml` to forbid string interpolation in event names (e.g. `View ${page}`). This prevents high-cardinality events from polluting your analytics data.
+- Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
+- Full details live in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
-Docs screenshot (Markdown excerpt from the example project):
+## Analytics Providers & Capabilities
 
-```markdown
-| Event | Description | Status | Parameters |
-|-------|-------------|--------|------------|
-| auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) |
-| auth: logout | User logs out | Active | - |
-```
+The generated mixins call `logger.logEvent(...)`. You are in control of the underlying providers:
 
-### Deterministic Metadata
-Docs, JSON, and SQL exports embed a fingerprint derived from your YAML tracking plan (for example `Fingerprint: \`-6973fa48b7dfcee0\`` in docs and `"fingerprint": "-6973fa48b7dfcee0"` inside JSON metadata). Because timestamps are no longer written, re-running the generator without plan changes produces byte-identical artifacts across machines.
-Repeated runs reuse the same fingerprint and totals, so docs/JSON/SQL files stay byte-for-byte identical even when generated at different times.
+- **Singleton Usage**: `Analytics.initialize(provider)` and access via `Analytics.instance`.
+- **Dependency Injection**: Create an instance `final analytics = Analytics(provider)` and inject it where needed.
 
-## Analytics Providers
+- Implement `IAnalytics` for a single SDK.
+- Use `MultiProviderAnalytics` to fan out events while isolating provider failures.
+- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) for a junior-friendly walkthrough.
 
-### Mock Service (Testing)
+Mock + async adapters (`MockAnalyticsService`, `AsyncAnalyticsAdapter`) are included for tests and await-heavy flows.
 
-Mock service now surfaces typed `RecordedAnalyticsEvent` snapshots through `records`, while the map-based helpers (`getEventsByName`) remain for legacy checks.
+## Synchronous Logging & Async Providers
+
+`IAnalytics.logEvent` stays synchronous on purpose:
+
+- UI instrumentation should be fire-and-forget so frames are never blocked by analytics I/O.
+- Generated methods are widely sprinkled across apps; forcing `await` would leak runtime coupling into feature code.
+- Tests remain simple because `MockAnalyticsService` records events immediately.
+
+When a provider must await network flushes or heavy batching, queue that work behind an adapter instead of changing the base interface. A reference pattern:
 
 ```dart
-final mockService = MockAnalyticsService(verbose: true);
-Analytics.initialize(mockService);
+final class QueueingAnalytics implements IAnalytics {
+  QueueingAnalytics(this._asyncAnalytics);
 
-// Verify in tests
-expect(mockService.totalEvents, equals(1));
-expect(
-  mockService.records.where((event) => event.name == 'login'),
-  hasLength(1),
-);
-
-// Typed snapshots make structured assertions effortless.
-final record = mockService.records.single;
-expect(record.parameters, containsPair('method', 'email'));
-
-// Legacy map view still mirrors the recorded payload.
-final legacy = mockService.getEventsByName('login').first;
-expect(legacy['parameters'], containsPair('method', 'email'));
-```
-
-### Multi-Provider
-
-```dart
-final multiProvider = MultiProviderAnalytics([
-  FirebaseAnalyticsService(firebase),
-  AmplitudeService(amplitude),
-]);
-Analytics.initialize(multiProvider);
-```
-
-MultiProvider analytics keeps every provider running even if one throws. Supply optional callbacks to log the failure and record metrics:
-
-```dart
-final multiProvider = MultiProviderAnalytics(
-  [
-    FirebaseAnalyticsService(firebase),
-    AmplitudeService(amplitude),
-  ],
-  onError: (error, stackTrace) {
-    logger.error('Analytics provider failed', error, stackTrace);
-  },
-  onProviderFailure: (failure) {
-    telemetry.increment('analytics_provider_failure', {
-      'provider': failure.providerName,
-      'event': failure.eventName,
-    });
-  },
-);
-```
-
-`onProviderFailure` receives a `MultiProviderAnalyticsFailure` with the failing provider, event name, parameters, error, and stack trace so you can build observability around lost events.
-
-### Provider Filters (Selective forwarding)
-
-You can optionally control which providers receive each event by passing `providerFilters` into `MultiProviderAnalytics`. Filters are predicates of the event name and parameters; returning `false` prevents the provider from receiving that event.
-
-```dart
-final filtered = MultiProviderAnalytics([
-  firebase,
-  amplitude,
-], providerFilters: {
-  firebase: (name, params) => name.startsWith('screen'),
-  amplitude: (name, params) => true, // receives everything
-});
-
-filtered.logEvent(name: 'screen_view'); // sent to firebase + amplitude
-filtered.logEvent(name: 'auth_login');   // only sent to amplitude
-```
-
-### Custom Provider
-
-```dart
-class FirebaseAnalyticsService implements IAnalytics {
-  final FirebaseAnalytics _firebase;
-
-  FirebaseAnalyticsService(this._firebase);
+  final IAsyncAnalytics _asyncAnalytics;
+  final _pending = <Future<void>>[];
 
   @override
-  void logEvent({
-    required String name,
-    AnalyticsParams? parameters,
-  }) {
-    _firebase.logEvent(name: name, parameters: parameters);
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    _pending.add(
+      _asyncAnalytics.logEventAsync(name: name, parameters: parameters),
+    );
   }
+
+  Future<void> flush() => Future.wait(_pending);
+}
+
+final asyncProvider = AsyncAnalyticsAdapter(
+  MultiProviderAnalytics([
+    FirebaseAnalyticsService(firebase),
+    AmplitudeService(amplitude),
+  ]),
+);
+
+Analytics.initialize(QueueingAnalytics(asyncProvider));
+```
+
+- The UI still calls synchronous generated methods.
+- `QueueingAnalytics` tracks outstanding futures so diagnostics/tests can `await` `flush()`.
+- `AsyncAnalyticsAdapter` wires into existing synchronous providers, which keeps compatibility with code gen.
+
+This same pattern appears in `example/lib/main.dart`, where the async adapter is exercised alongside the synchronous runtime.
+
+## Batch Logging Buffers
+
+When you need to control network fan-out—slow uplinks, cellular metering, or provider SDKs that enforce batch delivery—wrap your async provider with `BatchingAnalytics`.
+
+```dart
+final asyncAdapter = AsyncAnalyticsAdapter(
+  MultiProviderAnalytics([
+    FirebaseAnalyticsService(firebase),
+    AmplitudeService(amplitude),
+  ]),
+);
+
+final batching = BatchingAnalytics(
+  delegate: asyncAdapter,
+  maxBatchSize: 25,
+  maxRetries: 3, // Drop events after 3 failures (poison pill protection)
+  flushInterval: const Duration(seconds: 5),
+  onFlushError: (error, stack) {
+    print('Batch flush failed: $error');
+  },
+);
+
+Analytics.initialize(batching);
+
+// ... app runs, events buffer automatically.
+
+Future<void> onAppBackground() async {
+  await batching.flush(); // or await batching.dispose();
 }
 ```
 
-`AnalyticsParams` is a typedef for `Map<String, Object?>`. In practice:
+- `maxBatchSize` forces a flush when enough events accumulate.
+- `flushInterval` (optional) drains on a timer for long-lived sessions.
+- `flush()` returns a `Future` so lifecycle hooks (`AppLifecycleState.paused`, integration-test teardown) can wait for delivery.
+- If the delegate throws, the batch is requeued and the optional `onFlushError` hook runs; call `flush()` again when the provider is ready.
 
-- Keys are always `String` in snake_case.
-- Values should be JSON-serializable (String, num, bool, null, List, Map) or simple objects supported by your analytics SDK.
-
-### Async adapters
-
-Some providers expose `Future` based APIs. We provide `IAsyncAnalytics` and
-`AsyncAnalyticsAdapter`, which lets you await delivery for synchronous
-providers or adapt sync implementations into async flows.
-
-```dart
-final adapter = AsyncAnalyticsAdapter(mockService);
-await adapter.logEventAsync(name: 'async_event');
-```
-
-### Sync vs Async logging
-
-- The `IAnalytics.logEvent` API is synchronous for ergonomics in UI and business code.
-- Your implementation may perform asynchronous work internally (e.g. calling an async SDK), but the generated methods themselves do not return a `Future`.
-- If you need strict delivery guarantees, handle retries and error reporting inside your `IAnalytics` implementation.
-
-## Deterministic Output
-
-`analytics_gen` sorts YAML files, domains, and events before emitting code, docs, or exports. Running `dart run analytics_gen:generate` on different machines produces identical output as long as the input YAML is the same, which keeps pull request diffs and CI artifacts predictable.
-
-## Testing
-
-Unit tests should initialize `Analytics` with `MockAnalyticsService` (or other adapters) and assert that generated methods call into providers correctly. Add `dart run analytics_gen:generate --validate-only` to CI to fail early on plan errors and invalid YAML.
-
-```dart
-void main() {
-  group('Analytics', () {
-    late MockAnalyticsService analytics;
-
-    setUp(() {
-      analytics = MockAnalyticsService();
-      Analytics.initialize(analytics);
-    });
-
-    test('logs login event', () {
-      Analytics.instance.logAuthLogin(method: 'email');
-
-      expect(analytics.totalEvents, equals(1));
-      final event = analytics.events.first;
-      expect(event['name'], equals('auth: login'));
-      expect(event['parameters'], containsPair('method', 'email'));
-    });
-  });
-}
-```
-
-## Coverage
-
-[![](https://codecov.io/gh/yelmuratoff/analytics_gen/branch/main/graphs/sunburst.svg)](https://codecov.io/gh/yelmuratoff/analytics_gen/branch/main)
+Combine `BatchingAnalytics` with `AsyncAnalyticsAdapter` to await multiple providers without changing the generated, synchronous API surface.
 
 ## Example
 
-See [`example/`](example/) for a complete working project.
-
-Run the example:
+The [`example/`](example/) directory shows a working tracking plan + app integration.
 
 ```bash
 cd example
@@ -566,28 +292,39 @@ dart run analytics_gen:generate --docs --exports
 dart run lib/main.dart
 ```
 
+Generated artifacts inside the example mirror what your app will emit. Use it as a sandbox before editing your production plan. Prefer running the Flutter sample via `flutter run` so you can tap through the buttons and inspect recorded events live—the UI simply calls into a controller that wraps the generated mixins so logging stays out of widgets.
+
+## Testing
+
+- Unit tests should initialize `Analytics` with `MockAnalyticsService` (or the async adapter) and assert on recorded events.
+- Add `dart run analytics_gen:generate --validate-only` to CI so schema errors fail fast.
+- Run `dart analyze` + `dart test` before committing—analytics code follows the same standards as the rest of your Flutter/Dart app.
+
 ## Contributing
 
-Contributions welcome! Please open issues for bugs or feature requests. To contribute:
+Contributions welcome! Please:
 
-- Fork the repo and open a PR with targeted changes
-- Add unit tests for all new features and validations
-- Run `dart analyze` and `dart test` before submitting
+1. Fork the repo and open a PR with focused changes.
+2. Add unit tests for new features/validations.
+3. Run `dart analyze`, `dart test`, and the generator before submitting.
+4. Document user-facing changes in the README or the relevant doc under `docs/`.
 
-## License
-
-Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) for details.
+Every PR description flows through `.github/pull_request_template.md`, which links directly to [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, docs/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.
 
 ## FAQ
 
 - **Why YAML instead of defining events directly in Dart?**  
-   YAML keeps the tracking plan tooling‑agnostic: product and analytics teams can read and edit it, and you can export the same source of truth to code, docs, and data formats.
+  YAML is tooling-agnostic and easy for product/analytics teams to edit. `analytics_gen` transforms it into code, docs, and exports without duplication.
 
-- **Can I migrate existing events?** 
-   Yes. Start by describing your current events in YAML, generate Dart code, then gradually replace existing manual `logEvent` calls with the generated methods.
+- **Can I migrate existing events?**  
+  Yes. Start by mirroring your current events in YAML, run the generator, and gradually replace hard-coded `logEvent` calls with generated methods.
 
-- **Does this lock me into a single analytics provider?** 
-   No. You implement `IAnalytics` adapters for each provider and can use `MultiProviderAnalytics` to send the same event to several backends.
+- **Does this lock me into one provider?**  
+  No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
-- **Is this safe to commit to source control?** 
-   Yes. The YAML definitions and generated code are designed to be code‑review friendly and should live in your repo alongside application code.
+- **Is it safe to commit generated files?**  
+  Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md)).
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) for details.

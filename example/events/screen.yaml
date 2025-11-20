@@ -10,3 +10,14 @@ screen:
       duration_ms:
         type: int?
         description: Time spent on previous screen in milliseconds
+
+  legacy_view:
+    description: Legacy backend identifier kept for parity
+    event_name: "Screen: Legacy"
+    identifier: screen.legacy_view
+    parameters:
+      legacy_screen_code:
+        type: string
+        identifier: legacy_screen_code
+        param_name: legacy-screen-code
+        description: Three-letter code provided by data team

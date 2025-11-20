@@ -14,6 +14,8 @@ auth:
       method:
         type: string
         description: Login method v2 (email, google, apple)
+        identifier: login_method
+        param_name: login-method
 
   logout:
     description: User logs out
@@ -29,8 +31,17 @@ auth:
 
   phone_login:
     description: When user logs in via phone
-    event_name: "Auth: Phone"
+    event_name: "Auth: Phone {phone_country}"
+    identifier: auth.phone_login
     parameters:
+      phone_country:
+        type: string
+        description: ISO country code for the dialed number
       user_exists:
-        bool?:
+        type: bool?
         description: Whether the user exists or not
+      tracking_token:
+        type: string
+        identifier: tracking_token
+        param_name: tracking-token
+        description: Legacy token kept for backend reconciliation

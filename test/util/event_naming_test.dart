@@ -1,9 +1,12 @@
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('EventNaming', () {
+    const naming = NamingStrategy();
+
     test('resolveEventName uses custom event when provided', () {
       final event = AnalyticsEvent(
         name: 'login',
@@ -13,7 +16,7 @@ void main() {
       );
 
       expect(
-        EventNaming.resolveEventName('auth', event),
+        EventNaming.resolveEventName('auth', event, naming),
         equals('auth: login_custom'),
       );
     });
@@ -26,8 +29,52 @@ void main() {
       );
 
       expect(
-        EventNaming.resolveEventName('auth', event),
+        EventNaming.resolveEventName('auth', event, naming),
         equals('auth: logout'),
+      );
+    });
+
+    test('resolveIdentifier prefers explicit identifier', () {
+      final event = AnalyticsEvent(
+        name: 'logout',
+        description: 'User logs out',
+        identifier: 'legacy.logout',
+        parameters: const [],
+      );
+
+      expect(
+        EventNaming.resolveIdentifier('auth', event, naming),
+        equals('legacy.logout'),
+      );
+    });
+
+    test('resolveIdentifier falls back to template', () {
+      final customNaming =
+          NamingStrategy(identifierTemplate: '{domain}.{event}');
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: const [],
+      );
+
+      expect(
+        EventNaming.resolveIdentifier('auth', event, customNaming),
+        equals('auth.login'),
+      );
+    });
+
+    test('resolveIdentifier reuses custom event name when identifier missing',
+        () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        customEventName: 'legacy_login',
+        parameters: const [],
+      );
+
+      expect(
+        EventNaming.resolveIdentifier('auth', event, const NamingStrategy()),
+        equals('legacy_login'),
       );
     });
 

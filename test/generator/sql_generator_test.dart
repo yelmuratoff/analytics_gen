@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/sql_generator.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
@@ -41,7 +42,7 @@ void main() {
       };
 
       final outputPath = p.join(tempDir.path, 'create_database.sql');
-      final generator = SqlGenerator();
+      final generator = SqlGenerator(naming: const NamingStrategy());
 
       await generator.generate(domains, outputPath);
 
@@ -83,7 +84,7 @@ void main() {
                   type: 'string',
                   isNullable: false,
                   description: "Plan with 'quote' and comma, yes",
-                  allowedValues: ['basic', "premium,plus", "o'clock"],
+                  allowedValues: ['basic', 'premium,plus', "o'clock"],
                 ),
               ],
             ),
@@ -92,7 +93,7 @@ void main() {
       };
 
       final outputPath = p.join(tempDir.path, 'create_database.sql');
-      final generator = SqlGenerator();
+      final generator = SqlGenerator(naming: const NamingStrategy());
 
       await generator.generate(domains, outputPath);
       final sql = await File(outputPath).readAsString();
@@ -126,7 +127,7 @@ void main() {
       };
 
       final outputPath = p.join(tempDir.path, 'create_database.sql');
-      final generator = SqlGenerator();
+      final generator = SqlGenerator(naming: const NamingStrategy());
 
       await generator.generate(domains, outputPath);
       final first = await File(outputPath).readAsString();

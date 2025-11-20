@@ -1,12 +1,14 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
-
 import 'package:analytics_gen/src/cli/watch_scheduler.dart';
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
+import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
 import 'generation_request.dart';
@@ -28,20 +30,47 @@ class GenerationPipeline {
       return;
     }
 
-    final tasks = _buildTasks(request);
+    // Load files
+    final loader = EventLoader(
+      eventsPath: path.join(projectRoot, config.eventsPath),
+      contextFiles: config.contexts
+          .map((c) => path.join(projectRoot, c))
+          .toList(), // Resolve paths
+      log: request.logger,
+    );
+    final eventSources = await loader.loadEventFiles();
+    final contextSources = await loader.loadContextFiles();
+
+    // Parse YAML files once
+    final parser = YamlParser(
+      log: request.logger,
+      naming: config.naming,
+    );
+    final domains = await parser.parseEvents(eventSources);
+    final contexts = await parser.parseContexts(contextSources);
+
+    final tasks = _buildTasks(
+      request,
+      domains,
+      contexts,
+    );
     final startTime = DateTime.now();
 
     try {
-      for (final task in tasks) {
-        await task.invoke();
-        print('');
-      }
-
+      await _runTasks(tasks);
       final duration = DateTime.now().difference(startTime);
       print('✓ All generation tasks completed in ${duration.inMilliseconds}ms');
+    } on _TaskFailure catch (failure) {
+      print('✗ ${failure.label} failed: ${failure.error}');
+      if (request.verbose) {
+        print('Stack trace: ${failure.stackTrace}');
+      }
+      exit(1);
     } catch (e, stack) {
       print('✗ Generation failed: $e');
-      print('Stack trace: $stack');
+      if (request.verbose) {
+        print('Stack trace: $stack');
+      }
       exit(1);
     }
   }
@@ -83,9 +112,13 @@ class GenerationPipeline {
     }
   }
 
-  List<_GeneratorTask> _buildTasks(GenerationRequest request) {
+  List<_GeneratorTask> _buildTasks(
+    GenerationRequest request,
+    Map<String, AnalyticsDomain> domains,
+    Map<String, List<AnalyticsParameter>> contexts,
+  ) {
     final tasks = <_GeneratorTask>[];
-    final log = request.logger;
+    final rootLogger = request.logger;
 
     if (request.generateCode) {
       tasks.add(
@@ -94,8 +127,11 @@ class GenerationPipeline {
           invoke: () => CodeGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: log,
-          ).generate(),
+            log: _scopedLogger('Code generation', rootLogger),
+          ).generate(
+            domains,
+            contexts: contexts,
+          ),
         ),
       );
     }
@@ -107,8 +143,11 @@ class GenerationPipeline {
           invoke: () => DocsGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: log,
-          ).generate(),
+            log: _scopedLogger('Documentation generation', rootLogger),
+          ).generate(
+            domains,
+            contexts: contexts,
+          ),
         ),
       );
     }
@@ -120,13 +159,40 @@ class GenerationPipeline {
           invoke: () => ExportGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: log,
-          ).generate(),
+            log: _scopedLogger('Export generation', rootLogger),
+          ).generate(domains),
         ),
       );
     }
 
     return tasks;
+  }
+
+  Future<void> _runTasks(List<_GeneratorTask> tasks) async {
+    if (tasks.isEmpty) return;
+
+    if (tasks.length == 1) {
+      await _invokeTask(tasks.single);
+      print('');
+      return;
+    }
+
+    await Future.wait(tasks.map(_invokeTask));
+    print('');
+  }
+
+  Future<void> _invokeTask(_GeneratorTask task) async {
+    try {
+      await task.invoke();
+      print('✓ ${task.label} completed');
+    } catch (error, stackTrace) {
+      throw _TaskFailure(task.label, error, stackTrace);
+    }
+  }
+
+  Logger? _scopedLogger(String label, Logger? root) {
+    if (root == null) return null;
+    return (message) => root('[$label] $message');
   }
 }
 
@@ -138,4 +204,15 @@ class _GeneratorTask {
 
   final String label;
   final Future<void> Function() invoke;
+}
+
+final class _TaskFailure implements Exception {
+  _TaskFailure(this.label, this.error, this.stackTrace);
+
+  final String label;
+  final Object error;
+  final StackTrace stackTrace;
+
+  @override
+  String toString() => '$label failed: $error';
 }

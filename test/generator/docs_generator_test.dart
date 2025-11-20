@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
+import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -45,7 +47,14 @@ void main() {
         log: logs.add,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       final docsFile = File(
         p.join(tempProject.path, config.docsPath!),
@@ -112,7 +121,14 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       final content = await File(
         p.join(tempProject.path, config.docsPath!),
@@ -140,7 +156,14 @@ void main() {
         log: logs.add,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       expect(
         File(p.join(tempProject.path, 'analytics_docs.md')).existsSync(),
@@ -149,7 +172,7 @@ void main() {
       expect(
         logs,
         contains(
-          'No analytics events found. Skipping documentation generation.',
+          'No analytics events or properties found. Skipping documentation generation.',
         ),
       );
     });
@@ -184,7 +207,14 @@ void main() {
         log: logs.add,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       final docsFile = File(p.join(tempProject.path, config.docsPath!));
       expect(docsFile.existsSync(), isTrue);
@@ -220,7 +250,14 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       final defaultPath = p.join(tempProject.path, 'analytics_docs.md');
       expect(File(defaultPath).existsSync(), isTrue);
@@ -255,7 +292,14 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       final content = await File(
         p.join(tempProject.path, config.docsPath!),
@@ -289,7 +333,14 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
 
       final content = await File(
         p.join(tempProject.path, config.docsPath!),
@@ -320,14 +371,21 @@ void main() {
         projectRoot: tempProject.path,
       );
 
-      await generator.generate();
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
       final firstRun = await File(
         p.join(tempProject.path, config.docsPath!),
       ).readAsString();
 
       await Future<void>.delayed(const Duration(milliseconds: 5));
 
-      await generator.generate();
+      await generator.generate(domains);
       final secondRun = await File(
         p.join(tempProject.path, config.docsPath!),
       ).readAsString();

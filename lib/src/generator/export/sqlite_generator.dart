@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
+import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
 import 'sql_generator.dart';
 
@@ -9,7 +10,7 @@ import 'sql_generator.dart';
 ///
 /// Creates a database file using sqlite3 command-line tool (must be installed).
 final class SqliteGenerator {
-  final SqlGenerator _sqlGenerator = SqlGenerator();
+  final SqlGenerator _sqlGenerator;
   final void Function(String message)? log;
   final Future<ProcessResult> Function(
     String executable,
@@ -18,8 +19,10 @@ final class SqliteGenerator {
 
   SqliteGenerator({
     this.log,
+    NamingStrategy? naming,
     Future<ProcessResult> Function(String, List<String>)? runProcess,
-  }) : _runProcess = runProcess ?? Process.run;
+  })  : _sqlGenerator = SqlGenerator(naming: naming ?? const NamingStrategy()),
+        _runProcess = runProcess ?? Process.run;
 
   /// Generates SQLite database file
   Future<void> generate(

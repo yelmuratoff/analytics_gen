@@ -1,71 +1,70 @@
-import 'dart:io';
-
 import 'package:yaml/yaml.dart';
 
-import '../models/analytics_event.dart';
+import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
+import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
-import '../util/string_utils.dart';
+import 'event_loader.dart';
+import 'parameter_parser.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
-  final String eventsPath;
   final void Function(String message)? log;
+  final NamingStrategy naming;
+  final ParameterParser _parameterParser;
 
   YamlParser({
-    required this.eventsPath,
     this.log,
-  });
+    NamingStrategy? naming,
+  })  : naming = naming ?? const NamingStrategy(),
+        _parameterParser = ParameterParser(naming ?? const NamingStrategy());
 
-  /// Parses all YAML files in the events directory and returns a map of domains.
-  Future<Map<String, AnalyticsDomain>> parseEvents() async {
+  /// Parses the provided analytics sources and returns a map of domains.
+  Future<Map<String, AnalyticsDomain>> parseEvents(
+    List<AnalyticsSource> sources,
+  ) async {
     final domains = <String, AnalyticsDomain>{};
-    await for (final domain in loadAnalyticsDomains(
-      eventsPath: eventsPath,
+    final errors = <AnalyticsParseException>[];
+
+    await for (final domain in _parseSources(
+      sources,
       log: log,
+      naming: naming,
+      onError: errors.add,
     )) {
       domains[domain.name] = domain;
     }
 
-    _validateUniqueEventNames(domains);
+    _validateUniqueEventNames(domains, onError: errors.add);
+
+    if (errors.isNotEmpty) {
+      throw AnalyticsAggregateException(errors);
+    }
 
     return domains;
   }
 
-  /// Internal helper to load domains as a stream while allowing reuse in tests.
-  static Stream<AnalyticsDomain> loadAnalyticsDomains({
-    required String eventsPath,
+  /// Internal helper to parse sources as a stream.
+  Stream<AnalyticsDomain> _parseSources(
+    List<AnalyticsSource> sources, {
+    NamingStrategy? naming,
     void Function(String message)? log,
+    void Function(AnalyticsParseException)? onError,
   }) async* {
-    final eventsDir = Directory(eventsPath);
+    final strategy = naming ?? const NamingStrategy();
 
-    if (!eventsDir.existsSync()) {
-      log?.call('Events directory not found at: $eventsPath');
+    if (sources.isEmpty) {
+      log?.call('No YAML sources provided for parsing');
       return;
     }
-
-    final yamlFiles = eventsDir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
-
-    if (yamlFiles.isEmpty) {
-      log?.call('No YAML files found in: $eventsPath');
-      return;
-    }
-
-    log?.call('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
 
     final merged = <String, _DomainSource>{};
-    for (final file in yamlFiles) {
-      final content = await file.readAsString();
-      final parsed = loadYaml(content);
+    for (final source in sources) {
+      final parsed = loadYaml(source.content);
 
       if (parsed is! YamlMap) {
         log?.call(
-          'Warning: ${file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : file.path} does not contain a YamlMap. Skipping.',
+          'Warning: ${source.filePath} does not contain a YamlMap. Skipping.',
         );
         continue;
       }
@@ -76,32 +75,52 @@ final class YamlParser {
       for (final key in sortedDomainKeys) {
         final domainKey = key.toString();
 
-        // Enforce snake_case, filesystem-safe domain names
-        final isValidDomain = RegExp(r'^[a-z0-9_]+$').hasMatch(domainKey);
-        if (!isValidDomain) {
-          throw AnalyticsParseException(
-            'Domain "$domainKey" in ${file.path} must use snake_case '
-            'with lowercase letters, digits and underscores only.',
-            filePath: file.path,
-          );
-        }
+        try {
+          // Enforce snake_case, filesystem-safe domain names
+          final isValidDomain = strategy.isValidDomain(domainKey);
+          if (!isValidDomain) {
+            throw AnalyticsParseException(
+              'Domain "$domainKey" in ${source.filePath} violates the configured '
+              'naming strategy. Update analytics_gen.naming.enforce_snake_case_domains '
+              'or rename the domain.',
+              filePath: source.filePath,
+            );
+          }
 
-        if (merged.containsKey(domainKey)) {
-          throw StateError(
-            'Duplicate domain "$domainKey" found in multiple files. '
-            'Each domain must be defined in only one file.',
+          if (merged.containsKey(domainKey)) {
+            throw StateError(
+              'Duplicate domain "$domainKey" found in multiple files. '
+              'Each domain must be defined in only one file.',
+            );
+          }
+          final value = parsed[key];
+          if (value is! YamlMap) {
+            throw FormatException(
+              'Domain "$domainKey" in ${source.filePath} must be a map of events.',
+            );
+          }
+          merged[domainKey] = _DomainSource(
+            filePath: source.filePath,
+            yaml: value,
           );
-        }
-        final value = parsed[key];
-        if (value is! YamlMap) {
-          throw FormatException(
-            'Domain "$domainKey" in ${file.path} must be a map of events.',
+        } on AnalyticsParseException catch (e) {
+          if (onError != null) {
+            onError(e);
+          } else {
+            rethrow;
+          }
+        } catch (e) {
+          // Wrap other errors
+          final error = AnalyticsParseException(
+            e.toString(),
+            filePath: source.filePath,
           );
+          if (onError != null) {
+            onError(error);
+          } else {
+            throw error;
+          }
         }
-        merged[domainKey] = _DomainSource(
-          filePath: file.path,
-          yaml: value,
-        );
       }
     }
 
@@ -113,16 +132,29 @@ final class YamlParser {
       final source = entry.value;
       final eventsYaml = source.yaml;
 
-      final parser = YamlParser(eventsPath: eventsPath, log: log);
-      final events = parser._parseEventsForDomain(
-        domainName,
-        eventsYaml,
-        filePath: source.filePath,
+      final parser = YamlParser(
+        log: log,
+        naming: strategy,
       );
-      yield AnalyticsDomain(
-        name: domainName,
-        events: events,
-      );
+
+      try {
+        final events = parser._parseEventsForDomain(
+          domainName,
+          eventsYaml,
+          filePath: source.filePath,
+          onError: onError,
+        );
+        yield AnalyticsDomain(
+          name: domainName,
+          events: events,
+        );
+      } on AnalyticsParseException catch (e) {
+        if (onError != null) {
+          onError(e);
+        } else {
+          rethrow;
+        }
+      }
     }
   }
 
@@ -131,6 +163,7 @@ final class YamlParser {
     String domainName,
     YamlMap eventsYaml, {
     required String filePath,
+    void Function(AnalyticsParseException)? onError,
   }) {
     final events = <AnalyticsEvent>[];
 
@@ -141,152 +174,85 @@ final class YamlParser {
       final eventName = entry.key.toString();
       final value = entry.value;
 
-      if (value is! YamlMap) {
-        throw AnalyticsParseException(
-          'Event "$domainName.$eventName" in $filePath must be a map.',
+      try {
+        if (value is! YamlMap) {
+          throw AnalyticsParseException(
+            'Event "$domainName.$eventName" in $filePath must be a map.',
+            filePath: filePath,
+          );
+        }
+
+        final eventData = value;
+
+        final description =
+            eventData['description'] as String? ?? 'No description provided';
+        final customEventName = eventData['event_name'] as String?;
+        final identifier = eventData['identifier'] as String?;
+        final deprecated = eventData['deprecated'] as bool? ?? false;
+        final replacement = eventData['replacement'] as String?;
+
+        final meta = _parseMeta(eventData['meta'], filePath);
+
+        final rawParameters = eventData['parameters'];
+        if (rawParameters != null && rawParameters is! YamlMap) {
+          throw AnalyticsParseException(
+            'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
+            filePath: filePath,
+          );
+        }
+
+        final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
+        final parameters = _parameterParser.parseParameters(
+          parametersYaml,
+          domainName: domainName,
+          eventName: eventName,
           filePath: filePath,
         );
-      }
 
-      final eventData = value;
-
-      final description =
-          eventData['description'] as String? ?? 'No description provided';
-      final customEventName = eventData['event_name'] as String?;
-      final deprecated = eventData['deprecated'] as bool? ?? false;
-      final replacement = eventData['replacement'] as String?;
-
-      final rawParameters = eventData['parameters'];
-      if (rawParameters != null && rawParameters is! YamlMap) {
-        throw AnalyticsParseException(
-          'Parameters for event "$domainName.$eventName" in $filePath must be a map.',
+        events.add(
+          AnalyticsEvent(
+            name: eventName,
+            description: description,
+            identifier: identifier,
+            customEventName: customEventName,
+            deprecated: deprecated,
+            replacement: replacement,
+            parameters: parameters,
+            meta: meta,
+          ),
+        );
+      } on AnalyticsParseException catch (e) {
+        if (onError != null) {
+          onError(e);
+        } else {
+          rethrow;
+        }
+      } catch (e) {
+        final error = AnalyticsParseException(
+          e.toString(),
           filePath: filePath,
         );
+        if (onError != null) {
+          onError(error);
+        } else {
+          throw error;
+        }
       }
-
-      final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
-      final parameters = _parseParameters(
-        parametersYaml,
-        domainName: domainName,
-        eventName: eventName,
-        filePath: filePath,
-      );
-
-      events.add(
-        AnalyticsEvent(
-          name: eventName,
-          description: description,
-          customEventName: customEventName,
-          deprecated: deprecated,
-          replacement: replacement,
-          parameters: parameters,
-        ),
-      );
     }
 
     return events;
   }
 
-  /// Parses parameters from YAML
-  List<AnalyticsParameter> _parseParameters(
-    YamlMap parametersYaml, {
-    required String domainName,
-    required String eventName,
-    required String filePath,
-  }) {
-    final parameters = <AnalyticsParameter>[];
-    final seenRawNames = <String>{};
-    final camelNameToOriginal = <String, String>{};
-
-    final sortedEntries = parametersYaml.entries.toList()
-      ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
-
-    for (final entry in sortedEntries) {
-      final paramName = entry.key.toString();
-      if (!_isValidParameterName(paramName)) {
-        throw AnalyticsParseException(
-          'Parameter "$paramName" in $domainName.$eventName must use '
-          'snake_case (lowercase letters, digits, underscores, starting with '
-          'a letter).',
-          filePath: filePath,
-        );
-      }
-      if (!seenRawNames.add(paramName)) {
-        throw AnalyticsParseException(
-          'Duplicate parameter "$paramName" found in $domainName.$eventName.',
-          filePath: filePath,
-        );
-      }
-
-      final camelParamName = StringUtils.toCamelCase(paramName);
-      final existingParam = camelNameToOriginal[camelParamName];
-      if (existingParam != null) {
-        throw AnalyticsParseException(
-          'Parameter "$paramName" in $domainName.$eventName conflicts '
-          'with "$existingParam" after camelCase normalization.',
-          filePath: filePath,
-        );
-      }
-      camelNameToOriginal[camelParamName] = paramName;
-
-      final paramValue = entry.value;
-
-      String paramType;
-      String? description;
-      List<String>? allowedValues;
-
-      if (paramValue is YamlMap) {
-        // Complex parameter with 'type' and/or 'description'
-        description = paramValue['description'] as String?;
-
-        // Check if 'type' key exists explicitly
-        if (paramValue.containsKey('type')) {
-          paramType = paramValue['type'].toString();
-        } else {
-          // Fallback: Find type key (anything except 'description')
-          final typeKey = paramValue.keys
-              .where(
-                (k) =>
-                    k.toString() != 'description' &&
-                    k.toString() != 'allowed_values',
-              )
-              .firstOrNull;
-          paramType = typeKey?.toString() ?? 'dynamic';
-        }
-
-        final rawAllowed = paramValue['allowed_values'];
-        if (rawAllowed != null) {
-          if (rawAllowed is! YamlList) {
-            throw AnalyticsParseException(
-              'allowed_values for parameter "$paramName" must be a list.',
-              filePath: filePath,
-            );
-          }
-          allowedValues = rawAllowed.map((e) => e.toString()).toList();
-        }
-      } else {
-        // Simple parameter (just type)
-        paramType = paramValue.toString();
-      }
-
-      // Check if nullable
-      final isNullable = paramType.endsWith('?');
-      if (isNullable) {
-        paramType = paramType.substring(0, paramType.length - 1);
-      }
-
-      parameters.add(
-        AnalyticsParameter(
-          name: paramName,
-          type: paramType,
-          isNullable: isNullable,
-          description: description,
-          allowedValues: allowedValues,
-        ),
+  Map<String, Object?> _parseMeta(dynamic metaYaml, String filePath) {
+    if (metaYaml == null) return const {};
+    if (metaYaml is! YamlMap) {
+      throw AnalyticsParseException(
+        'The "meta" field must be a map.',
+        filePath: filePath,
       );
     }
-
-    return parameters;
+    // Convert YamlMap to Map<String, Object?>
+    return metaYaml.map((key, value) => MapEntry(key.toString(), value));
   }
 
   /// Public helper used by tests to exercise parameter parsing logic
@@ -301,8 +267,8 @@ final class YamlParser {
     required String eventName,
     required String filePath,
   }) {
-    final parser = YamlParser(eventsPath: '.', log: null);
-    return parser._parseParameters(
+    final parser = ParameterParser(const NamingStrategy());
+    return parser.parseParameters(
       parametersYaml,
       domainName: domainName,
       eventName: eventName,
@@ -310,34 +276,92 @@ final class YamlParser {
     );
   }
 
-  /// Ensures every resolved [AnalyticsEvent] name is unique across domains.
-  void _validateUniqueEventNames(Map<String, AnalyticsDomain> domains) {
+  /// Ensures every resolved [AnalyticsEvent] identifier is unique across domains.
+  void _validateUniqueEventNames(
+    Map<String, AnalyticsDomain> domains, {
+    void Function(AnalyticsParseException)? onError,
+  }) {
     final seen = <String, String>{};
 
     for (final entry in domains.entries) {
       final domainName = entry.key;
       for (final event in entry.value.events) {
-        final actualName = EventNaming.resolveEventName(domainName, event);
-        final conflictDomain = seen[actualName];
+        try {
+          final actualIdentifier =
+              EventNaming.resolveIdentifier(domainName, event, naming);
+          final conflictDomain = seen[actualIdentifier];
 
-        if (conflictDomain != null) {
-          throw AnalyticsParseException(
-            'Duplicate analytics event name "$actualName" found in domains '
-            '"$conflictDomain" and "$domainName". '
-            'Event names (custom_event_name or "<domain>: <event>") must be unique.',
-            filePath: null,
-          );
+          if (conflictDomain != null) {
+            throw AnalyticsParseException(
+              'Duplicate analytics event identifier "$actualIdentifier" found '
+              'in domains "$conflictDomain" and "$domainName". '
+              'Provide a custom `identifier` or update '
+              '`analytics_gen.naming.identifier_template` to make identifiers unique.',
+              filePath: null,
+            );
+          }
+
+          seen[actualIdentifier] = domainName;
+        } on AnalyticsParseException catch (e) {
+          if (onError != null) {
+            onError(e);
+          } else {
+            rethrow;
+          }
         }
-
-        seen[actualName] = domainName;
       }
     }
   }
-}
 
-bool _isValidParameterName(String name) {
-  final regex = RegExp(r'^[a-z][a-z0-9_]*$');
-  return regex.hasMatch(name);
+  /// Parses all configured context files.
+  /// Returns a map where the key is the context name (from the YAML root key)
+  /// and the value is the list of parameters.
+  Future<Map<String, List<AnalyticsParameter>>> parseContexts(
+    List<AnalyticsSource> sources,
+  ) async {
+    final contexts = <String, List<AnalyticsParameter>>{};
+
+    for (final source in sources) {
+      final yaml = loadYaml(source.content);
+
+      if (yaml is! YamlMap) {
+        throw AnalyticsParseException(
+          'Context file ${source.filePath} must be a map.',
+          filePath: source.filePath,
+        );
+      }
+
+      // We expect a single root key which defines the context name
+      // e.g. user: { ... }
+      if (yaml.keys.length != 1) {
+        throw AnalyticsParseException(
+          'Context file ${source.filePath} must contain exactly one root key defining the context name.',
+          filePath: source.filePath,
+        );
+      }
+
+      final contextName = yaml.keys.first.toString();
+      final propertiesYaml = yaml[contextName];
+
+      if (propertiesYaml is! YamlMap) {
+        throw AnalyticsParseException(
+          'The "$contextName" key in ${source.filePath} must be a map of properties.',
+          filePath: source.filePath,
+        );
+      }
+
+      final parameters = _parameterParser.parseParameters(
+        propertiesYaml,
+        domainName: contextName,
+        eventName: 'context', // Dummy
+        filePath: source.filePath,
+      );
+
+      contexts[contextName] = parameters;
+    }
+
+    return contexts;
+  }
 }
 
 final class _DomainSource {

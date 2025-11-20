@@ -1,0 +1,223 @@
+import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
+import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
+import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
+import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
+import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:test/test.dart';
+
+void main() {
+  group('EventRenderer', () {
+    late AnalyticsConfig config;
+    late EventRenderer renderer;
+
+    setUp(() {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+      );
+      renderer = EventRenderer(config);
+    });
+
+    test('renders domain file with mixin and events', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result = renderer.renderDomainFile('auth', domain);
+
+      expect(result, contains('mixin AnalyticsAuth on AnalyticsBase'));
+      expect(result, contains('void logAuthLogin({'));
+      expect(result, contains('required String method,'));
+      expect(result, contains('logger.logEvent('));
+      expect(result, contains('name: "auth: login",'));
+    });
+
+    test('renders deprecated event', () {
+      final event = AnalyticsEvent(
+        name: 'old_event',
+        description: 'Old event',
+        parameters: [],
+        deprecated: true,
+        replacement: 'legacy.new_event',
+      );
+      final domain = AnalyticsDomain(name: 'legacy', events: [event]);
+
+      final result = renderer.renderDomainFile('legacy', domain);
+
+      expect(
+          result, contains('@Deprecated(\'Use logLegacyNewEvent instead.\')'));
+      expect(result, contains('void logLegacyOldEvent()'));
+    });
+
+    test('renders event with allowed values', () {
+      final event = AnalyticsEvent(
+        name: 'filter',
+        description: 'Filter items',
+        parameters: [
+          AnalyticsParameter(
+            name: 'sort',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['asc', 'desc'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'items', events: [event]);
+
+      final result = renderer.renderDomainFile('items', domain);
+
+      expect(result,
+          contains("const allowedSortValues = <String>{'asc', 'desc'};"));
+      expect(result, contains('if (!allowedSortValues.contains(sort)) {'));
+      expect(result, contains('throw ArgumentError.value('));
+    });
+
+    test(
+        'throws AnalyticsGenerationException when strict_event_names is true and interpolation used',
+        () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        strictEventNames: true,
+      );
+      renderer = EventRenderer(config);
+
+      final event = AnalyticsEvent(
+        name: 'view_{page}',
+        description: 'View page',
+        parameters: [
+          AnalyticsParameter(name: 'page', type: 'string', isNullable: false),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'screen', events: [event]);
+
+      expect(
+        () => renderer.renderDomainFile('screen', domain),
+        throwsA(isA<AnalyticsGenerationException>()),
+      );
+    });
+  });
+
+  group('ContextRenderer', () {
+    late ContextRenderer renderer;
+
+    setUp(() {
+      renderer = ContextRenderer();
+    });
+
+    test('renders context file with capability and mixin', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'user_id',
+          type: 'string',
+          isNullable: false,
+          description: 'User ID',
+        ),
+      ];
+
+      final result = renderer.renderContextFile('user_context', properties);
+
+      expect(
+          result,
+          contains(
+              'abstract class UserContextCapability implements AnalyticsCapability'));
+      expect(result, contains('mixin AnalyticsUserContext on AnalyticsBase'));
+      expect(result, contains('void setUserContextUserId(String value)'));
+      expect(
+          result,
+          contains(
+              "capability(userContextKey)?.setUserContextProperty('user_id', value);"));
+    });
+
+    test('renders user properties context', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'role',
+          type: 'string',
+          isNullable: true,
+        ),
+      ];
+
+      final result = renderer.renderContextFile('user_properties', properties);
+
+      expect(result, contains('abstract class UserPropertiesCapability'));
+      expect(
+          result,
+          contains(
+              'void setUserPropertiesProperty(String name, Object? value);'));
+      expect(result, contains('void setUserPropertiesRole(String? value)'));
+    });
+  });
+
+  group('AnalyticsClassRenderer', () {
+    late AnalyticsConfig config;
+    late AnalyticsClassRenderer renderer;
+
+    setUp(() {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+      );
+      renderer = AnalyticsClassRenderer(config);
+    });
+
+    test('renders Analytics class with mixins and singleton', () {
+      final domains = {
+        'auth': AnalyticsDomain(name: 'auth', events: []),
+        'shop': AnalyticsDomain(name: 'shop', events: []),
+      };
+      final contexts = {
+        'user_context': <AnalyticsParameter>[],
+      };
+
+      final result = renderer.renderAnalyticsClass(domains, contexts: contexts);
+
+      expect(result, contains('final class Analytics extends AnalyticsBase'));
+      expect(result,
+          contains('with AnalyticsAuth, AnalyticsShop, AnalyticsUserContext'));
+      expect(result, contains('static Analytics get instance'));
+      expect(result, contains('static void initialize(IAnalytics analytics)'));
+    });
+
+    test('renders analytics plan', () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        generatePlan: true,
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(
+          result,
+          contains(
+              'static const List<AnalyticsDomain> plan = <AnalyticsDomain>['));
+      expect(result, contains("name: 'auth',"));
+      expect(result, contains("name: 'login',"));
+    });
+  });
+}

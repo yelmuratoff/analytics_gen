@@ -1,19 +1,41 @@
 import 'package:analytics_gen/analytics_gen.dart';
 
 import 'generated_events.dart';
+import 'contexts/theme_context.dart';
+import 'contexts/user_properties_context.dart';
 
-/// Main Analytics singleton class.
+/// Main Analytics class.
 ///
 /// Automatically generated with all domain mixins.
-/// Initialize once at app startup, then use throughout your app.
+/// Supports both Dependency Injection and Singleton usage.
 ///
-/// Example:
+/// Usage (DI):
+/// ```dart
+/// final analytics = Analytics(YourAnalyticsService());
+/// analytics.logAuthLogin(method: "email");
+/// ```
+///
+/// Usage (Singleton):
 /// ```dart
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
-final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen
-{
+final class Analytics extends AnalyticsBase
+    with
+        AnalyticsAuth,
+        AnalyticsPurchase,
+        AnalyticsScreen,
+        AnalyticsTheme,
+        AnalyticsUserProperties {
+  final IAnalytics _analytics;
+  final AnalyticsCapabilityResolver _capabilities;
+
+  /// Constructor for Dependency Injection.
+  const Analytics(
+    this._analytics, [
+    this._capabilities = const NullCapabilityResolver(),
+  ]);
+
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
     AnalyticsDomain(
@@ -39,7 +61,8 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
           deprecated: false,
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
-              name: 'method',
+              name: 'login-method',
+              codeName: 'login_method',
               type: 'string',
               isNullable: false,
               description: 'Login method v2 (email, google, apple)',
@@ -50,15 +73,28 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
-          parameters: <AnalyticsParameter>[
-          ],
+          parameters: <AnalyticsParameter>[],
         ),
         AnalyticsEvent(
           name: 'phone_login',
           description: 'When user logs in via phone',
-          customEventName: 'Auth: Phone',
+          identifier: 'auth.phone_login',
+          customEventName: 'Auth: Phone {phone_country}',
           deprecated: false,
           parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'phone_country',
+              type: 'string',
+              isNullable: false,
+              description: 'ISO country code for the dialed number',
+            ),
+            AnalyticsParameter(
+              name: 'tracking-token',
+              codeName: 'tracking_token',
+              type: 'string',
+              isNullable: false,
+              description: 'Legacy token kept for backend reconciliation',
+            ),
             AnalyticsParameter(
               name: 'user_exists',
               type: 'bool',
@@ -114,14 +150,17 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
           deprecated: false,
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
-              name: 'currency',
+              name: 'currency-code',
+              codeName: 'currency_code',
               type: 'string',
               isNullable: false,
             ),
             AnalyticsParameter(
-              name: 'price',
+              name: 'amount_value',
+              codeName: 'price',
               type: 'double',
               isNullable: false,
+              description: 'Localized amount used by legacy dashboards',
             ),
             AnalyticsParameter(
               name: 'product_id',
@@ -141,6 +180,22 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
     AnalyticsDomain(
       name: 'screen',
       events: <AnalyticsEvent>[
+        AnalyticsEvent(
+          name: 'legacy_view',
+          description: 'Legacy backend identifier kept for parity',
+          identifier: 'screen.legacy_view',
+          customEventName: 'Screen: Legacy',
+          deprecated: false,
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'legacy-screen-code',
+              codeName: 'legacy_screen_code',
+              type: 'string',
+              isNullable: false,
+              description: 'Three-letter code provided by data team',
+            ),
+          ],
+        ),
         AnalyticsEvent(
           name: 'view',
           description: 'User views a screen',
@@ -170,25 +225,38 @@ final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchas
     ),
   ];
 
-  static final Analytics _instance = Analytics._internal();
-  Analytics._internal();
+  // --- Singleton Compatibility ---
+
+  static Analytics? _instance;
 
   /// Access the singleton instance
-  static Analytics get instance => _instance;
-
-  IAnalytics? _analytics;
+  static Analytics get instance {
+    if (_instance == null) {
+      throw StateError(
+        'Analytics.initialize() must be called before accessing Analytics.instance',
+      );
+    }
+    return _instance!;
+  }
 
   /// Whether analytics has been initialized
-  bool get isInitialized => _analytics != null;
+  static bool get isInitialized => _instance != null;
 
   /// Initialize analytics with your provider
   ///
   /// Call this once at app startup before using any analytics methods.
   static void initialize(IAnalytics analytics) {
-    _instance._analytics = analytics;
+    if (_instance != null) {
+      throw StateError('Analytics is already initialized.');
+    }
+    _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));
   }
 
-  @override
-  IAnalytics get logger => ensureAnalyticsInitialized(_analytics);
-}
+  // --- Implementation ---
 
+  @override
+  IAnalytics get logger => _analytics;
+
+  @override
+  AnalyticsCapabilityResolver get capabilities => _capabilities;
+}

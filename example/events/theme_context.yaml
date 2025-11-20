@@ -1,0 +1,9 @@
+theme:
+  is_dark_mode:
+    type: bool
+    description: Whether the app is in dark mode
+
+  primary_color:
+    type: String
+    description: The primary color hex code
+    allowed_values: ["#FF0000", "#00FF00", "#0000FF"]

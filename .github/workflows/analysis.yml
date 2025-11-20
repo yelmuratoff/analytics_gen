@@ -33,7 +33,14 @@ jobs:
                  ${{ runner.os }}-pub-
 
          - name: Get dependencies
-           run: dart pub get
+           run: |
+              if [ -f example/pubspec.yaml ]; then
+                mv example/pubspec.yaml example/pubspec.yaml.bak
+              fi
+              dart pub get
+              if [ -f example/pubspec.yaml.bak ]; then
+                mv example/pubspec.yaml.bak example/pubspec.yaml
+              fi
 
          - name: Run static analyzer
            run: dart analyze

@@ -1,0 +1,177 @@
+# Capabilities
+
+Capabilities let analytics providers expose advanced features (user properties, revenue APIs, timed events) without polluting the core `IAnalytics.logEvent` contract. Capabilities are optional typed extensions to the base API: consumers ask for a capability when they need it, providers opt in only when they can implement it.
+
+## Why not just add more methods to `IAnalytics`?
+
+Adding provider-specific calls (`setUserProperty`, `logRevenue`, `setPushToken`, …) directly to `IAnalytics`:
+
+– `IAnalytics` would have to change every time one team wants a new helper.
+– Implementers would be forced to stub methods they do not support.
+– App code would depend on concrete provider details.
+
+Capabilities keep the generated API minimal (`logEvent` stays simple) while still giving teams access to richer SDK hooks.
+
+## Key Types
+
+| Type | Purpose |
+| --- | --- |
+| `AnalyticsCapability` | Marker interface implemented by capability objects. |
+| `CapabilityKey<T>` | Typed key that prevents accidental mismatches. |
+| `AnalyticsCapabilityProvider` | Provider interface that exposes a `capabilityResolver`. |
+| `CapabilityRegistry` | Helper that stores capabilities by key. |
+
+## Flow Overview
+
+1. Define a capability interface describing the extra behavior.
+2. Register an implementation inside your analytics provider.
+3. Request the capability from `Analytics.instance` wherever you need it.
+
+## Step-by-step Example
+
+### 1. Define the capability + key
+
+```dart
+abstract class UserPropertiesCapability implements AnalyticsCapability {
+  void setUserProperty(String name, String value);
+  void clearUserProperty(String name);
+}
+
+const userPropertiesKey =
+    CapabilityKey<UserPropertiesCapability>('user_properties');
+
+abstract class RevenueCapability implements AnalyticsCapability {
+  void logRevenue({
+    required String productId,
+    required double value,
+    String? currency,
+  });
+}
+
+const revenueKey = CapabilityKey<RevenueCapability>('revenue');
+
+abstract class PushTokenCapability implements AnalyticsCapability {
+  Future<void> setPushToken(String token);
+}
+
+const pushTokenKey = CapabilityKey<PushTokenCapability>('push_tokens');
+```
+
+### 2. Expose it from a provider
+
+```dart
+class FirebaseAnalyticsService
+    with CapabilityProviderMixin
+    implements IAnalytics {
+  final FirebaseAnalytics _firebase;
+
+  FirebaseAnalyticsService(this._firebase) {
+    registerCapability(userPropertiesKey, _FirebaseUserProperties(_firebase));
+    registerCapability(revenueKey, _FirebaseRevenue(_firebase));
+    registerCapability(pushTokenKey, _FirebasePushTokens(_firebase));
+  }
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    _firebase.logEvent(name: name, parameters: parameters);
+  }
+}
+
+final class _FirebaseUserProperties implements UserPropertiesCapability {
+  final FirebaseAnalytics _firebase;
+  _FirebaseUserProperties(this._firebase);
+
+  @override
+  void setUserProperty(String name, String value) =>
+      _firebase.setUserProperty(name: name, value: value);
+
+  @override
+  void clearUserProperty(String name) =>
+      _firebase.setUserProperty(name: name, value: null);
+}
+
+final class _FirebaseRevenue implements RevenueCapability {
+  final FirebaseAnalytics _firebase;
+  _FirebaseRevenue(this._firebase);
+
+  @override
+  void logRevenue({
+    required String productId,
+    required double value,
+    String? currency,
+  }) {
+    _firebase.logEvent(
+      name: 'revenue',
+      parameters: {
+        'product_id': productId,
+        'value': value,
+        if (currency != null) 'currency': currency,
+      },
+    );
+  }
+}
+
+final class _FirebasePushTokens implements PushTokenCapability {
+  final FirebaseAnalytics _firebase;
+  _FirebasePushTokens(this._firebase);
+
+  @override
+  Future<void> setPushToken(String token) =>
+      _firebase.setPushToken(token);
+}
+```
+
+- Register as many capabilities as you need: the registry is just a typed map.
+- Providers that do not implement a capability simply omit registration—no stubs or empty implementations required.
+
+### 3. Consume it in application code
+
+```dart
+void markPremiumUser() {
+  final capability = Analytics.instance.capability(userPropertiesKey);
+  capability?.setUserProperty('tier', 'gold');
+}
+```
+
+- The `?` keeps calls safe when the capability is not available.
+- Consider surfacing logs/metrics when a capability is unexpectedly missing so you can catch misconfigured providers early.
+
+## Tips for Explaining to Junior Engineers
+
+- Compare capabilities to feature flags: only providers that implement the feature will expose it; everyone else keeps the simpler interface.
+- Highlight that capabilities are regular Dart objects—no reflection or code generation.
+- Emphasize testing: wire `MockAnalyticsService` with a fake capability to assert behavior in unit tests.
+
+### Naming Capabilities Consistently
+
+- Use `lowerCamelCase` for the constant (`userPropertiesKey`) and `snake_case` for the key string (`'user_properties'`). This matches Dart style guidelines and keeps IDE auto-complete predictable.
+- Align capability interface names with domain language (`UserPropertiesCapability`, `RevenueCapability`, `PushTokenCapability`). Avoid generic labels like `ExtraCapability`.
+- Document every capability key in the provider module so newcomers know what exists already before adding duplicates.
+
+## Testing Patterns
+
+```dart
+class FakeCapabilityProvider extends MockAnalyticsService
+    with CapabilityProviderMixin {
+  FakeCapabilityProvider() {
+    registerCapability(userPropertiesKey, _FakeUserProps());
+  }
+}
+```
+
+Inject `FakeCapabilityProvider` in tests and assert that the capability methods were invoked when expected.
+
+## Observability
+
+When using `MultiProviderAnalytics`, hook into `onProviderFailure` and `onError` callbacks. They also receive the provider identifiers so you can alert when a capability-backed call fails (for instance, user property updates failing on one provider but not another).
+
+## Multi-Provider Resolution
+
+When using `MultiProviderAnalytics`, capability resolution follows a "first match wins" strategy. If multiple providers support the same capability (e.g., both Firebase and Amplitude support `UserProperties`), `Analytics.instance.capability(...)` returns the implementation from the **first** provider in the list.
+
+This is intentional: capabilities are typically used for setting global state (like user ID) where one successful call is sufficient, or where the implementation delegates to a specific SDK. If you need to fan out capability calls to multiple providers, create a composite capability implementation that wraps them.
+
+## Next Steps
+
+- Read the [Onboarding Guide](./ONBOARDING.md) if you are wiring the generator for the first time.
+- Follow the [Code Review checklist](./CODE_REVIEW.md) when verifying new capabilities in PRs (pay special attention to provider registration and generated method usage).

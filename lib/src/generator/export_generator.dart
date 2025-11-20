@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
-import '../parser/yaml_parser.dart';
+import '../models/analytics_event.dart';
 import 'export/csv_generator.dart';
 import 'export/json_generator.dart';
 import 'export/sql_generator.dart';
@@ -24,15 +24,8 @@ final class ExportGenerator {
   });
 
   /// Generates all configured export files
-  Future<void> generate() async {
+  Future<void> generate(Map<String, AnalyticsDomain> domains) async {
     log?.call('Starting analytics export generation...');
-
-    // Parse YAML files
-    final parser = YamlParser(
-      eventsPath: path.join(projectRoot, config.eventsPath),
-      log: log,
-    );
-    final domains = await parser.parseEvents();
 
     if (domains.isEmpty) {
       log?.call('No analytics events found. Skipping export generation.');
@@ -45,51 +38,83 @@ final class ExportGenerator {
         : path.join(projectRoot, 'assets', 'generated');
 
     final outputDirectory = Directory(outputDir);
-    if (outputDirectory.existsSync()) {
-      await outputDirectory.delete(recursive: true);
+    if (!outputDirectory.existsSync()) {
+      await outputDirectory.create(recursive: true);
     }
-    await outputDirectory.create(recursive: true);
+
+    // Clean up disabled exports
+    if (!config.generateCsv) {
+      final file = File(path.join(outputDir, 'analytics_events.csv'));
+      if (file.existsSync()) await file.delete();
+    }
+
+    if (!config.generateJson) {
+      final file = File(path.join(outputDir, 'analytics_events.json'));
+      if (file.existsSync()) await file.delete();
+      final minFile = File(path.join(outputDir, 'analytics_events.min.json'));
+      if (minFile.existsSync()) await minFile.delete();
+    }
+
+    if (!config.generateSql) {
+      final file = File(path.join(outputDir, 'create_database.sql'));
+      if (file.existsSync()) await file.delete();
+      final dbFile = File(path.join(outputDir, 'analytics_events.db'));
+      if (dbFile.existsSync()) await dbFile.delete();
+    }
+
+    final tasks = <Future<void>>[];
 
     // Generate configured formats
     if (config.generateCsv) {
-      final csvGen = CsvGenerator();
-      await csvGen.generate(
-        domains,
-        path.join(outputDir, 'analytics_events.csv'),
-      );
-      log?.call(
-        '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
-      );
+      tasks.add(() async {
+        final csvGen = CsvGenerator(naming: config.naming);
+        await csvGen.generate(
+          domains,
+          path.join(outputDir, 'analytics_events.csv'),
+        );
+        log?.call(
+          '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
+        );
+      }());
     }
 
     if (config.generateJson) {
-      final jsonGen = JsonGenerator();
-      await jsonGen.generate(domains, outputDir);
-      log?.call(
-        '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
-      );
-      log?.call(
-        '✓ Generated minified JSON at: ${path.join(outputDir, 'analytics_events.min.json')}',
-      );
+      tasks.add(() async {
+        final jsonGen = JsonGenerator(naming: config.naming);
+        await jsonGen.generate(domains, outputDir);
+        log?.call(
+          '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
+        );
+        log?.call(
+          '✓ Generated minified JSON at: ${path.join(outputDir, 'analytics_events.min.json')}',
+        );
+      }());
     }
 
     if (config.generateSql) {
-      final sqlGen = SqlGenerator();
-      final sqliteGen = SqliteGenerator(log: log);
+      tasks.add(() async {
+        final sqlGen = SqlGenerator(naming: config.naming);
+        final sqliteGen = SqliteGenerator(
+          log: log,
+          naming: config.naming,
+        );
 
-      final sqlPath = path.join(outputDir, 'create_database.sql');
-      await sqlGen.generate(domains, sqlPath);
-      log?.call(
-        '✓ Generated SQL at: $sqlPath',
-      );
+        final sqlPath = path.join(outputDir, 'create_database.sql');
+        await sqlGen.generate(domains, sqlPath);
+        log?.call(
+          '✓ Generated SQL at: $sqlPath',
+        );
 
-      // Try to generate SQLite database (optional)
-      await sqliteGen.generate(
-        domains,
-        outputDir,
-        existingSqlPath: sqlPath,
-      );
+        // Try to generate SQLite database (optional)
+        await sqliteGen.generate(
+          domains,
+          outputDir,
+          existingSqlPath: sqlPath,
+        );
+      }());
     }
+
+    await Future.wait(tasks);
 
     log?.call('✓ Export generation completed');
   }

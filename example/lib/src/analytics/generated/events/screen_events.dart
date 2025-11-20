@@ -7,6 +7,23 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 /// Generated mixin for screen analytics events
 mixin AnalyticsScreen on AnalyticsBase {
+  /// Legacy backend identifier kept for parity
+  ///
+  /// Parameters:
+  /// - `legacy-screen-code`: string - Three-letter code provided by data team
+  void logScreenLegacyView({required String legacyScreenCode}) {
+    logger.logEvent(
+      name: "Screen: Legacy",
+      parameters: <String, Object?>{
+        'description': 'Legacy backend identifier kept for parity',
+        "legacy-screen-code": legacyScreenCode,
+      },
+    );
+  }
+
+  @Deprecated(
+    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
+  )
   /// User views a screen
   ///
   /// Parameters:
@@ -18,7 +35,6 @@ mixin AnalyticsScreen on AnalyticsBase {
     String? previousScreen,
     required String screenName,
   }) {
-
     logger.logEvent(
       name: "Screen: ${screenName}",
       parameters: <String, Object?>{
@@ -29,5 +45,4 @@ mixin AnalyticsScreen on AnalyticsBase {
       },
     );
   }
-
 }

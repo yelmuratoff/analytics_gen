@@ -1,10 +1,11 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
-
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/event_naming.dart';
+import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
 
@@ -16,13 +17,19 @@ Future<void> validateTrackingPlan(
   printBanner('Analytics Gen - Validation Only');
   print('');
 
-  final parser = YamlParser(
+  final loader = EventLoader(
     eventsPath: path.join(projectRoot, config.eventsPath),
     log: verbose ? (message) => print(message) : null,
   );
+  final sources = await loader.loadEventFiles();
+
+  final parser = YamlParser(
+    log: verbose ? (message) => print(message) : null,
+    naming: config.naming,
+  );
 
   try {
-    final domains = await parser.parseEvents();
+    final domains = await parser.parseEvents(sources);
 
     if (domains.isEmpty) {
       print('No analytics events found.');
@@ -54,13 +61,19 @@ Future<void> printTrackingPlan(
   printBanner('Analytics Gen - Tracking Plan Overview');
   print('');
 
-  final parser = YamlParser(
+  final loader = EventLoader(
     eventsPath: path.join(projectRoot, config.eventsPath),
     log: verbose ? (message) => print(message) : null,
   );
+  final sources = await loader.loadEventFiles();
+
+  final parser = YamlParser(
+    log: verbose ? (message) => print(message) : null,
+    naming: config.naming,
+  );
 
   try {
-    final domains = await parser.parseEvents();
+    final domains = await parser.parseEvents(sources);
 
     if (domains.isEmpty) {
       print('No analytics events are defined yet.');
@@ -88,8 +101,11 @@ Future<void> printTrackingPlan(
       );
 
       for (final event in domain.events) {
-        final effectiveName =
-            event.customEventName ?? '${domain.name}: ${event.name}';
+        final effectiveName = EventNaming.resolveEventName(
+          domain.name,
+          event,
+          config.naming,
+        );
         final status = event.deprecated
             ? 'DEPRECATED${event.replacement != null ? ' -> ${event.replacement}' : ''}'
             : 'Active';

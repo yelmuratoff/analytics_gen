@@ -12,10 +12,7 @@ mixin AnalyticsAuth on AnalyticsBase {
   ///
   /// Parameters:
   /// - `method`: string - Login method (email, google, apple)
-  void logAuthLogin({
-    required String method,
-  }) {
-
+  void logAuthLogin({required String method}) {
     logger.logEvent(
       name: "auth: login",
       parameters: <String, Object?>{
@@ -28,16 +25,13 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// User logs in to the application (v2)
   ///
   /// Parameters:
-  /// - `method`: string - Login method v2 (email, google, apple)
-  void logAuthLoginV2({
-    required String method,
-  }) {
-
+  /// - `login-method`: string - Login method v2 (email, google, apple)
+  void logAuthLoginV2({required String loginMethod}) {
     logger.logEvent(
       name: "auth: login_v2",
       parameters: <String, Object?>{
         'description': 'User logs in to the application (v2)',
-        "method": method,
+        "login-method": loginMethod,
       },
     );
   }
@@ -47,24 +41,30 @@ mixin AnalyticsAuth on AnalyticsBase {
   void logAuthLogout() {
     logger.logEvent(
       name: "auth: logout",
-      parameters: <String, Object?>{
-        'description': 'User logs out',
-      },
+      parameters: <String, Object?>{'description': 'User logs out'},
     );
   }
 
+  @Deprecated(
+    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
+  )
   /// When user logs in via phone
   ///
   /// Parameters:
+  /// - `phone_country`: string - ISO country code for the dialed number
+  /// - `tracking-token`: string - Legacy token kept for backend reconciliation
   /// - `user_exists`: bool? - Whether the user exists or not
   void logAuthPhoneLogin({
+    required String phoneCountry,
+    required String trackingToken,
     bool? userExists,
   }) {
-
     logger.logEvent(
-      name: "Auth: Phone",
+      name: "Auth: Phone ${phoneCountry}",
       parameters: <String, Object?>{
         'description': 'When user logs in via phone',
+        "phone_country": phoneCountry,
+        "tracking-token": trackingToken,
         if (userExists != null) "user_exists": userExists,
       },
     );
@@ -75,11 +75,7 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// Parameters:
   /// - `method`: string
   /// - `referral_code`: string? - Optional referral code used during signup
-  void logAuthSignup({
-    required String method,
-    String? referralCode,
-  }) {
-
+  void logAuthSignup({required String method, String? referralCode}) {
     logger.logEvent(
       name: "auth: signup",
       parameters: <String, Object?>{
@@ -89,5 +85,4 @@ mixin AnalyticsAuth on AnalyticsBase {
       },
     );
   }
-
 }
