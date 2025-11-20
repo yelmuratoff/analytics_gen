@@ -119,3 +119,53 @@ YAML files, domains, and events are sorted before emission. Docs, JSON, SQL, and
 4. Re-run `--validate-only` before generating code to ensure errors are resolved.
 
 Still confused? Pair this doc with the [Onboarding Guide](./ONBOARDING.md) and share plan context in PR descriptions so reviewers can spot issues faster.
+
+## CI/CD Integration
+
+To ensure your analytics plan and generated code stay in sync, add a validation step to your CI pipeline.
+
+### GitHub Actions Example
+
+Create `.github/workflows/analytics_check.yml`:
+
+```yaml
+name: Analytics Check
+
+on:
+  pull_request:
+    paths:
+      - 'events/**'
+      - 'analytics_gen.yaml'
+      - 'lib/src/analytics/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Validate Analytics Plan
+        run: dart run analytics_gen:generate --validate-only
+
+      - name: Check for Uncommitted Changes
+        run: |
+          dart run analytics_gen:generate --docs --exports
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "Error: Generated files are out of sync. Please run generation locally and commit changes."
+            git status
+            git diff
+            exit 1
+          fi
+```
+
+This workflow:
+1.  Validates the YAML schema.
+2.  Regenerates all artifacts.
+3.  Fails if there are any uncommitted changes (ensuring generated code matches the plan).

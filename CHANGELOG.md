@@ -41,6 +41,8 @@ All notable changes to this project will be documented in this file.
   - Lists all available capabilities with usage examples
   - Shows capability keys, types, and method signatures
   - Helps developers discover context property setters
+- **Singleton Reset**: Added `Analytics.reset()` method (visible for testing) to clear the singleton instance, facilitating integration tests and hot restarts.
+- **CI/CD Documentation**: Added GitHub Actions workflow example to `doc/VALIDATION.md` for automated plan validation.
 
 ### Changed
 - Refactored `YamlParser` to use `loadYamlNode` internally.

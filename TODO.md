@@ -10,6 +10,22 @@
 
 ## Refactoring & Improvements (Priority)
 
+- [ ] **Singleton Reset**
+  - Add `Analytics.reset()` method visible for testing to allow clearing the singleton instance.
+  - Useful for integration tests and hot restarts.
+
+- [ ] **CI/CD Integration Guide**
+  - Add GitHub Actions workflow example to documentation.
+  - Show how to run `dart run analytics_gen:generate --validate-only` in CI.
+
+- [ ] **Strict Event Naming**
+  - Make `strict_event_names: true` the default in future versions.
+  - Ensure documentation strongly encourages strict mode.
+
+- [ ] **Context Operations**
+  - Support specific operations for user properties (increment, setOnce, append) in YAML.
+  - Generate specific capability methods for these operations.
+
 - [ ] **Cloud Integration**
   - BigQuery schema sync
   - Snowflake schema sync

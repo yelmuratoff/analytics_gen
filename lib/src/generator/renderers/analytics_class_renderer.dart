@@ -22,6 +22,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     // File header
     buffer.write(renderFileHeader());
     buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
+    buffer.writeln("import 'package:meta/meta.dart';");
     buffer.writeln();
     buffer.writeln("import 'generated_events.dart';");
 
@@ -148,6 +149,13 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln('    }');
     buffer.writeln(
         '    _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));');
+    buffer.writeln('  }');
+    buffer.writeln();
+
+    buffer.writeln('  /// Resets the singleton instance. Useful for testing.');
+    buffer.writeln('  @visibleForTesting');
+    buffer.writeln('  static void reset() {');
+    buffer.writeln('    _instance = null;');
     buffer.writeln('  }');
     buffer.writeln();
 

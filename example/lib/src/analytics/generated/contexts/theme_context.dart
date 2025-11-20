@@ -30,4 +30,5 @@ mixin AnalyticsTheme on AnalyticsBase {
     }
     capability(themeKey)?.setThemeProperty('primary_color', value);
   }
+
 }

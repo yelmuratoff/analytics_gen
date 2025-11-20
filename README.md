@@ -327,6 +327,7 @@ Generated artifacts inside the example mirror what your app will emit. Use it as
 ## Testing
 
 - Unit tests should initialize `Analytics` with `MockAnalyticsService` (or the async adapter) and assert on recorded events.
+- Use `Analytics.reset()` in `tearDown` to clear the singleton instance between tests.
 - Add `dart run analytics_gen:generate --validate-only` to CI so schema errors fail fast.
 - Run `dart analyze` + `dart test` before committing—analytics code follows the same standards as the rest of your Flutter/Dart app.
 
