@@ -7,11 +7,22 @@ class AnalyticsParseException extends FormatException {
   /// Optional file path where the error occurred.
   final String? filePath;
 
-  AnalyticsParseException(super.message, {this.filePath});
+  /// Optional underlying error that caused this exception.
+  final Object? innerError;
+
+  AnalyticsParseException(super.message, {this.filePath, this.innerError});
 
   @override
-  String toString() =>
-      '${super.toString()}${filePath != null ? ' (file: $filePath)' : ''}';
+  String toString() {
+    final sb = StringBuffer(super.toString());
+    if (filePath != null) {
+      sb.write(' (file: $filePath)');
+    }
+    if (innerError != null) {
+      sb.write('\n  Caused by: $innerError');
+    }
+    return sb.toString();
+  }
 }
 
 /// Exception thrown when there are multiple parsing errors.

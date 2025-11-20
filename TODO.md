@@ -22,6 +22,21 @@
   - Add Parquet export for big data pipelines
   - Add Prometheus metrics format for real-time monitoring
 
+## Refactoring & Improvements (Priority)
+
+- [x] **Validator Separation**
+  - Extract validation logic from `YamlParser` into a dedicated `SchemaValidator` class.
+  - Allow for different validation strategies (strict vs lenient).
+  - Unit tests for the new validator.
+
+- [ ] **Structured Logging**
+  - Replace `void Function(String)` callback with a structured logging interface.
+  - Improve debuggability for CI/CD pipelines.
+
+- [ ] **Diff-Based Parsing**
+  - Optimize `YamlParser` to support incremental parsing for large projects.
+  - Cache parsed results and only re-parse modified files.
+
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
 - README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.

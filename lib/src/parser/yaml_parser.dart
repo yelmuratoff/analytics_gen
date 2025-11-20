@@ -3,21 +3,25 @@ import 'package:yaml/yaml.dart';
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
-import '../util/event_naming.dart';
 import 'event_loader.dart';
 import 'parameter_parser.dart';
+import 'schema_validator.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
   final void Function(String message)? log;
   final NamingStrategy naming;
   final ParameterParser _parameterParser;
+  final SchemaValidator _validator;
 
   YamlParser({
     this.log,
     NamingStrategy? naming,
+    SchemaValidator? validator,
   })  : naming = naming ?? const NamingStrategy(),
-        _parameterParser = ParameterParser(naming ?? const NamingStrategy());
+        _parameterParser = ParameterParser(naming ?? const NamingStrategy()),
+        _validator =
+            validator ?? SchemaValidator(naming ?? const NamingStrategy());
 
   /// Parses the provided analytics sources and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents(
@@ -35,7 +39,7 @@ final class YamlParser {
       domains[domain.name] = domain;
     }
 
-    _validateUniqueEventNames(domains, onError: errors.add);
+    _validator.validateUniqueEventNames(domains, onError: errors.add);
 
     if (errors.isNotEmpty) {
       throw AnalyticsAggregateException(errors);
@@ -77,15 +81,7 @@ final class YamlParser {
 
         try {
           // Enforce snake_case, filesystem-safe domain names
-          final isValidDomain = strategy.isValidDomain(domainKey);
-          if (!isValidDomain) {
-            throw AnalyticsParseException(
-              'Domain "$domainKey" in ${source.filePath} violates the configured '
-              'naming strategy. Update analytics_gen.naming.enforce_snake_case_domains '
-              'or rename the domain.',
-              filePath: source.filePath,
-            );
-          }
+          _validator.validateDomainName(domainKey, source.filePath);
 
           if (merged.containsKey(domainKey)) {
             throw StateError(
@@ -114,6 +110,7 @@ final class YamlParser {
           final error = AnalyticsParseException(
             e.toString(),
             filePath: source.filePath,
+            innerError: e,
           );
           if (onError != null) {
             onError(error);
@@ -231,6 +228,7 @@ final class YamlParser {
         final error = AnalyticsParseException(
           e.toString(),
           filePath: filePath,
+          innerError: e,
         );
         if (onError != null) {
           onError(error);
@@ -274,43 +272,6 @@ final class YamlParser {
       eventName: eventName,
       filePath: filePath,
     );
-  }
-
-  /// Ensures every resolved [AnalyticsEvent] identifier is unique across domains.
-  void _validateUniqueEventNames(
-    Map<String, AnalyticsDomain> domains, {
-    void Function(AnalyticsParseException)? onError,
-  }) {
-    final seen = <String, String>{};
-
-    for (final entry in domains.entries) {
-      final domainName = entry.key;
-      for (final event in entry.value.events) {
-        try {
-          final actualIdentifier =
-              EventNaming.resolveIdentifier(domainName, event, naming);
-          final conflictDomain = seen[actualIdentifier];
-
-          if (conflictDomain != null) {
-            throw AnalyticsParseException(
-              'Duplicate analytics event identifier "$actualIdentifier" found '
-              'in domains "$conflictDomain" and "$domainName". '
-              'Provide a custom `identifier` or update '
-              '`analytics_gen.naming.identifier_template` to make identifiers unique.',
-              filePath: null,
-            );
-          }
-
-          seen[actualIdentifier] = domainName;
-        } on AnalyticsParseException catch (e) {
-          if (onError != null) {
-            onError(e);
-          } else {
-            rethrow;
-          }
-        }
-      }
-    }
   }
 
   /// Parses all configured context files.

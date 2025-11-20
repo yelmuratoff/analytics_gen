@@ -16,6 +16,12 @@ All notable changes to this project will be documented in this file.
   - Added `ignore_for_file` lints to generated Dart files.
   - Added timestamp of last generation to file headers.
 
+### Refactoring
+- **Validator Separation**:
+  - Extracted validation logic from `YamlParser` into a dedicated `SchemaValidator` class.
+  - Improved separation of concerns and testability.
+  - Added comprehensive unit tests for validation logic.
+
 ## [0.2.1] - 2025-11-20
 
 ### Added
