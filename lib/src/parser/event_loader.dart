@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/util/logger.dart';
+
 /// Represents a source file containing analytics definitions.
 final class AnalyticsSource {
   /// The absolute path to the source file.
@@ -18,12 +20,12 @@ final class AnalyticsSource {
 final class EventLoader {
   final String eventsPath;
   final List<String> contextFiles;
-  final void Function(String message)? log;
+  final Logger log;
 
   EventLoader({
     required this.eventsPath,
     this.contextFiles = const [],
-    this.log,
+    this.log = const NoOpLogger(),
   });
 
   /// Loads all YAML files from the configured events directory.
@@ -31,7 +33,7 @@ final class EventLoader {
     final eventsDir = Directory(eventsPath);
 
     if (!eventsDir.existsSync()) {
-      log?.call('Events directory not found at: $eventsPath');
+      log.warning('Events directory not found at: $eventsPath');
       return [];
     }
 
@@ -43,11 +45,11 @@ final class EventLoader {
       ..sort((a, b) => a.path.compareTo(b.path));
 
     if (yamlFiles.isEmpty) {
-      log?.call('No YAML files found in: $eventsPath');
+      log.warning('No YAML files found in: $eventsPath');
       return [];
     }
 
-    log?.call('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
+    log.info('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
 
     final futures = yamlFiles.map((file) async {
       // Skip context files if they happen to be in the events directory
@@ -74,7 +76,7 @@ final class EventLoader {
     for (final filePath in contextFiles) {
       final file = File(filePath);
       if (!file.existsSync()) {
-        log?.call('Context file not found: $filePath');
+        log.warning('Context file not found: $filePath');
         continue;
       }
 

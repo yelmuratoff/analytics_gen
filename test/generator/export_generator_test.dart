@@ -7,6 +7,8 @@ import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('ExportGenerator', () {
     late Directory tempDir;
@@ -89,7 +91,7 @@ void main() {
       final generator = ExportGenerator(
         config: config,
         projectRoot: tempDir.path,
-        log: logs.add,
+        log: TestLogger(logs),
       );
 
       final loader = EventLoader(
@@ -133,7 +135,7 @@ void main() {
       final generator = ExportGenerator(
         config: config,
         projectRoot: tempDir.path,
-        log: logs.add,
+        log: TestLogger(logs),
       );
 
       final loader = EventLoader(

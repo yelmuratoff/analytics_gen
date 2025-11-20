@@ -3,19 +3,20 @@ import 'package:yaml/yaml.dart';
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
+import '../util/logger.dart';
 import 'event_loader.dart';
 import 'parameter_parser.dart';
 import 'schema_validator.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
-  final void Function(String message)? log;
+  final Logger log;
   final NamingStrategy naming;
   final ParameterParser _parameterParser;
   final SchemaValidator _validator;
 
   YamlParser({
-    this.log,
+    this.log = const NoOpLogger(),
     NamingStrategy? naming,
     SchemaValidator? validator,
   })  : naming = naming ?? const NamingStrategy(),
@@ -52,13 +53,13 @@ final class YamlParser {
   Stream<AnalyticsDomain> _parseSources(
     List<AnalyticsSource> sources, {
     NamingStrategy? naming,
-    void Function(String message)? log,
+    Logger log = const NoOpLogger(),
     void Function(AnalyticsParseException)? onError,
   }) async* {
     final strategy = naming ?? const NamingStrategy();
 
     if (sources.isEmpty) {
-      log?.call('No YAML sources provided for parsing');
+      log.warning('No YAML sources provided for parsing');
       return;
     }
 
@@ -67,7 +68,7 @@ final class YamlParser {
       final parsed = loadYaml(source.content);
 
       if (parsed is! YamlMap) {
-        log?.call(
+        log.warning(
           'Warning: ${source.filePath} does not contain a YamlMap. Skipping.',
         );
         continue;

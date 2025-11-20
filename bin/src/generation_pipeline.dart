@@ -127,7 +127,7 @@ class GenerationPipeline {
           invoke: () => CodeGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: _scopedLogger('Code generation', rootLogger),
+            log: rootLogger.scoped('Code generation'),
           ).generate(
             domains,
             contexts: contexts,
@@ -143,7 +143,7 @@ class GenerationPipeline {
           invoke: () => DocsGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: _scopedLogger('Documentation generation', rootLogger),
+            log: rootLogger.scoped('Documentation generation'),
           ).generate(
             domains,
             contexts: contexts,
@@ -159,7 +159,7 @@ class GenerationPipeline {
           invoke: () => ExportGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: _scopedLogger('Export generation', rootLogger),
+            log: rootLogger.scoped('Export generation'),
           ).generate(domains),
         ),
       );
@@ -188,11 +188,6 @@ class GenerationPipeline {
     } catch (error, stackTrace) {
       throw _TaskFailure(task.label, error, stackTrace);
     }
-  }
-
-  Logger? _scopedLogger(String label, Logger? root) {
-    if (root == null) return null;
-    return (message) => root('[$label] $message');
   }
 }
 

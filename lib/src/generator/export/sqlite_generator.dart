@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 
 import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
+import '../../util/logger.dart';
 import 'sql_generator.dart';
 
 /// Generates SQLite database file from analytics events.
@@ -11,14 +12,14 @@ import 'sql_generator.dart';
 /// Creates a database file using sqlite3 command-line tool (must be installed).
 final class SqliteGenerator {
   final SqlGenerator _sqlGenerator;
-  final void Function(String message)? log;
+  final Logger log;
   final Future<ProcessResult> Function(
     String executable,
     List<String> arguments,
   ) _runProcess;
 
   SqliteGenerator({
-    this.log,
+    this.log = const NoOpLogger(),
     NamingStrategy? naming,
     Future<ProcessResult> Function(String, List<String>)? runProcess,
   })  : _sqlGenerator = SqlGenerator(naming: naming ?? const NamingStrategy()),
@@ -41,11 +42,11 @@ final class SqliteGenerator {
     final sqliteAvailable = await _isSqlite3Available();
 
     if (!sqliteAvailable) {
-      log?.call(
+      log.warning(
         '  ⚠ sqlite3 not found - skipping database file generation',
       );
-      log?.call('    SQL script created at: $sqlPath');
-      log?.call(
+      log.info('    SQL script created at: $sqlPath');
+      log.info(
         '    To create database manually: sqlite3 analytics_events.db < create_database.sql',
       );
       return;
@@ -64,10 +65,10 @@ final class SqliteGenerator {
     final result = await _runProcess('sqlite3', [dbPath, '.read $sqlPath']);
 
     if (result.exitCode == 0) {
-      log?.call('✓ Generated SQLite database at: $dbPath');
+      log.info('✓ Generated SQLite database at: $dbPath');
     } else {
-      log?.call('  ⚠ Failed to create database: ${result.stderr}');
-      log?.call('    SQL script available at: $sqlPath');
+      log.error('  ⚠ Failed to create database: ${result.stderr}');
+      log.info('    SQL script available at: $sqlPath');
     }
   }
 

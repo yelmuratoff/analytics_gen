@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
+import '../util/logger.dart';
 import 'export/csv_generator.dart';
 import 'export/json_generator.dart';
 import 'export/sql_generator.dart';
@@ -15,20 +16,20 @@ import 'export/sqlite_generator.dart';
 final class ExportGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
-  final void Function(String message)? log;
+  final Logger log;
 
   ExportGenerator({
     required this.config,
     required this.projectRoot,
-    this.log,
+    this.log = const NoOpLogger(),
   });
 
   /// Generates all configured export files
   Future<void> generate(Map<String, AnalyticsDomain> domains) async {
-    log?.call('Starting analytics export generation...');
+    log.info('Starting analytics export generation...');
 
     if (domains.isEmpty) {
-      log?.call('No analytics events found. Skipping export generation.');
+      log.warning('No analytics events found. Skipping export generation.');
       return;
     }
 
@@ -72,7 +73,7 @@ final class ExportGenerator {
           domains,
           outputDir,
         );
-        log?.call(
+        log.info(
           '✓ Generated CSVs at: $outputDir',
         );
       }());
@@ -82,10 +83,10 @@ final class ExportGenerator {
       tasks.add(() async {
         final jsonGen = JsonGenerator(naming: config.naming);
         await jsonGen.generate(domains, outputDir);
-        log?.call(
+        log.info(
           '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
         );
-        log?.call(
+        log.debug(
           '✓ Generated minified JSON at: ${path.join(outputDir, 'analytics_events.min.json')}',
         );
       }());
@@ -101,7 +102,7 @@ final class ExportGenerator {
 
         final sqlPath = path.join(outputDir, 'create_database.sql');
         await sqlGen.generate(domains, sqlPath);
-        log?.call(
+        log.info(
           '✓ Generated SQL at: $sqlPath',
         );
 
@@ -116,6 +117,6 @@ final class ExportGenerator {
 
     await Future.wait(tasks);
 
-    log?.call('✓ Export generation completed');
+    log.info('✓ Export generation completed');
   }
 }

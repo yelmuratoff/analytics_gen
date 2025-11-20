@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/file_utils.dart';
+import '../util/logger.dart';
 import 'generation_metadata.dart';
 import 'generation_telemetry.dart';
 import 'renderers/analytics_class_renderer.dart';
@@ -15,7 +16,7 @@ import 'renderers/event_renderer.dart';
 final class CodeGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
-  final void Function(String message)? log;
+  final Logger log;
   final GenerationTelemetry _telemetry;
 
   final AnalyticsClassRenderer _classRenderer;
@@ -25,13 +26,12 @@ final class CodeGenerator {
   CodeGenerator({
     required this.config,
     required this.projectRoot,
-    this.log,
+    this.log = const NoOpLogger(),
     GenerationTelemetry? telemetry,
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
-  })  : _telemetry = telemetry ??
-            (log != null ? LoggingTelemetry(log) : const NoOpTelemetry()),
+  })  : _telemetry = telemetry ?? LoggingTelemetry(log),
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = eventRenderer ?? EventRenderer(config);
@@ -48,7 +48,7 @@ final class CodeGenerator {
       ..removeWhere((_, value) => value.isEmpty);
 
     if (domains.isEmpty && activeContexts.isEmpty) {
-      log?.call(
+      log.warning(
           'No analytics events or properties found. Skipping generation.');
       return;
     }
@@ -68,7 +68,7 @@ final class CodeGenerator {
     );
 
     _telemetry.onGenerationStart(context);
-    log?.call('Starting analytics code generation...');
+    log.info('Starting analytics code generation...');
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final eventsDir = path.join(outputDir, 'events');
@@ -114,8 +114,8 @@ final class CodeGenerator {
     // Generate barrel file with all exports
     await _generateBarrelFile(domains, outputDir);
 
-    log?.call('✓ Generated ${domains.length} domain files');
-    log?.call('  Domains: ${domains.keys.join(', ')}');
+    log.info('✓ Generated ${domains.length} domain files');
+    log.debug('  Domains: ${domains.keys.join(', ')}');
 
     // Generate Analytics singleton class
     await _generateAnalyticsClass(
@@ -198,7 +198,7 @@ final class CodeGenerator {
     );
     await _writeFileIfContentChanged(analyticsPath, content);
 
-    log?.call('✓ Generated Analytics class at: $analyticsPath');
+    log.info('✓ Generated Analytics class at: $analyticsPath');
   }
 
   /// Writes a file only if its contents differ from the existing file.

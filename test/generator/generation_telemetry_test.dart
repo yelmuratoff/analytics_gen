@@ -1,6 +1,8 @@
 import 'package:analytics_gen/src/generator/generation_telemetry.dart';
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('GenerationTelemetry', () {
     test('GenerationContext toString includes all fields', () {
@@ -26,7 +28,7 @@ void main() {
 
     test('LoggingTelemetry logs generation start', () {
       final logs = <String>[];
-      final telemetry = LoggingTelemetry(logs.add);
+      final telemetry = LoggingTelemetry(TestLogger(logs));
 
       final context = GenerationContext(
         domainCount: 2,
@@ -47,7 +49,7 @@ void main() {
 
     test('LoggingTelemetry logs domain processed', () {
       final logs = <String>[];
-      final telemetry = LoggingTelemetry(logs.add);
+      final telemetry = LoggingTelemetry(TestLogger(logs));
 
       telemetry.onDomainProcessed(
         'auth',
@@ -63,7 +65,7 @@ void main() {
 
     test('LoggingTelemetry logs context processed', () {
       final logs = <String>[];
-      final telemetry = LoggingTelemetry(logs.add);
+      final telemetry = LoggingTelemetry(TestLogger(logs));
 
       telemetry.onContextProcessed(
         'user_properties',
@@ -79,7 +81,7 @@ void main() {
 
     test('LoggingTelemetry logs generation complete', () {
       final logs = <String>[];
-      final telemetry = LoggingTelemetry(logs.add);
+      final telemetry = LoggingTelemetry(TestLogger(logs));
 
       telemetry.onGenerationComplete(
         const Duration(milliseconds: 150),
@@ -94,7 +96,7 @@ void main() {
 
     test('LoggingTelemetry logs generation error', () {
       final logs = <String>[];
-      final telemetry = LoggingTelemetry(logs.add);
+      final telemetry = LoggingTelemetry(TestLogger(logs));
 
       telemetry.onGenerationError(
         Exception('Test error'),
@@ -102,10 +104,10 @@ void main() {
         const Duration(milliseconds: 100),
       );
 
-      expect(logs, hasLength(1));
+      expect(logs, hasLength(2));
       expect(logs.first, contains('Generation failed'));
       expect(logs.first, contains('100ms'));
-      expect(logs.first, contains('Test error'));
+      expect(logs.last, contains('Test error'));
     });
 
     test('NoOpTelemetry does nothing', () {

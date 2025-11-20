@@ -5,6 +5,7 @@ import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
@@ -19,12 +20,12 @@ Future<void> validateTrackingPlan(
 
   final loader = EventLoader(
     eventsPath: path.join(projectRoot, config.eventsPath),
-    log: verbose ? (message) => print(message) : null,
+    log: ConsoleLogger(verbose: verbose),
   );
   final sources = await loader.loadEventFiles();
 
   final parser = YamlParser(
-    log: verbose ? (message) => print(message) : null,
+    log: ConsoleLogger(verbose: verbose),
     naming: config.naming,
   );
 
@@ -63,12 +64,12 @@ Future<void> printTrackingPlan(
 
   final loader = EventLoader(
     eventsPath: path.join(projectRoot, config.eventsPath),
-    log: verbose ? (message) => print(message) : null,
+    log: ConsoleLogger(verbose: verbose),
   );
   final sources = await loader.loadEventFiles();
 
   final parser = YamlParser(
-    log: verbose ? (message) => print(message) : null,
+    log: ConsoleLogger(verbose: verbose),
     naming: config.naming,
   );
 

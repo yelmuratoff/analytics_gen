@@ -4,6 +4,7 @@ import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
 import '../util/file_utils.dart';
+import '../util/logger.dart';
 import '../util/string_utils.dart';
 import 'generation_metadata.dart';
 
@@ -11,12 +12,12 @@ import 'generation_metadata.dart';
 final class DocsGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
-  final void Function(String message)? log;
+  final Logger log;
 
   DocsGenerator({
     required this.config,
     required this.projectRoot,
-    this.log,
+    this.log = const NoOpLogger(),
   });
 
   /// Generates analytics documentation and writes to configured path
@@ -24,10 +25,10 @@ final class DocsGenerator {
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
   }) async {
-    log?.call('Starting analytics documentation generation...');
+    log.info('Starting analytics documentation generation...');
 
     if (domains.isEmpty && contexts.isEmpty) {
-      log?.call(
+      log.warning(
         'No analytics events or properties found. Skipping documentation generation.',
       );
       return;
@@ -49,14 +50,14 @@ final class DocsGenerator {
 
     await writeFileIfContentChanged(outputPath, markdown);
 
-    log?.call('✓ Generated analytics documentation at: $outputPath');
+    log.info('✓ Generated analytics documentation at: $outputPath');
 
     // Print summary
-    log?.call(
+    log.info(
       '✓ Documented ${metadata.totalEvents} events across '
       '${metadata.totalDomains} domains',
     );
-    log?.call('  Total parameters: ${metadata.totalParameters}');
+    log.debug('  Total parameters: ${metadata.totalParameters}');
   }
 
   /// Generates complete Markdown documentation

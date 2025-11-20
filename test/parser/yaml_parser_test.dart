@@ -5,9 +5,12 @@ import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
+
+import '../test_utils.dart';
 
 // Helper type used in tests to create map keys that stringify to the same
 // value while remaining distinct map keys (Dart object identity).
@@ -38,12 +41,13 @@ void main() {
     Future<Map<String, AnalyticsDomain>> parseEventsHelper({
       String? customPath,
       NamingStrategy? naming,
-      void Function(String)? log,
+      Logger? log,
     }) async {
       final p = customPath ?? eventsPath;
-      final loader = EventLoader(eventsPath: p, log: log);
+      final logger = log ?? const NoOpLogger();
+      final loader = EventLoader(eventsPath: p, log: logger);
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser(naming: naming, log: log);
+      final parser = YamlParser(naming: naming, log: logger);
       return parser.parseEvents(sources);
     }
 
@@ -197,7 +201,7 @@ void main() {
       final messages = <String>[];
       final domains = await parseEventsHelper(
         customPath: '/nonexistent/path',
-        log: messages.add,
+        log: TestLogger(messages),
       );
       expect(domains, isEmpty);
       expect(messages, contains(contains('Events directory not found')));
@@ -205,7 +209,7 @@ void main() {
 
     test('returns empty map when no YAML files found', () async {
       final messages = <String>[];
-      final domains = await parseEventsHelper(log: messages.add);
+      final domains = await parseEventsHelper(log: TestLogger(messages));
       expect(domains, isEmpty);
       expect(messages, contains(contains('No YAML files found')));
     });
@@ -216,7 +220,7 @@ void main() {
       await yamlFile.writeAsString('- list_item\n- second_item\n');
 
       final messages = <String>[];
-      final domains = await parseEventsHelper(log: messages.add);
+      final domains = await parseEventsHelper(log: TestLogger(messages));
 
       expect(domains, isEmpty);
       expect(messages, hasLength(2));

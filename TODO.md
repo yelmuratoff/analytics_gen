@@ -13,9 +13,6 @@
   - Replace `void Function(String)` callback with a structured logging interface.
   - Improve debuggability for CI/CD pipelines.
 
-- [ ] **Diff-Based Parsing**
-  - Optimize `YamlParser` to support incremental parsing for large projects.
-
 - [ ] **Cloud Integration**
   - BigQuery schema sync
   - Snowflake schema sync

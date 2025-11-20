@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
 import 'arguments.dart';
@@ -63,6 +64,7 @@ class AnalyticsGenRunner {
         generateDocs: generateDocs,
         generateExports: generateExports,
         verbose: verbose,
+        logger: ConsoleLogger(verbose: verbose),
       );
 
       final pipeline = GenerationPipeline(

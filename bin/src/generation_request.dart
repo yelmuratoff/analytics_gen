@@ -1,4 +1,4 @@
-typedef Logger = void Function(String message);
+import 'package:analytics_gen/src/util/logger.dart';
 
 class GenerationRequest {
   const GenerationRequest({
@@ -6,14 +6,14 @@ class GenerationRequest {
     required this.generateDocs,
     required this.generateExports,
     required this.verbose,
+    this.logger = const NoOpLogger(),
   });
 
   final bool generateCode;
   final bool generateDocs;
   final bool generateExports;
   final bool verbose;
-
-  Logger? get logger => verbose ? (message) => print(message) : null;
+  final Logger logger;
 
   bool get hasArtifacts => generateCode || generateDocs || generateExports;
 }

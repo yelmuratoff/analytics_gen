@@ -7,6 +7,8 @@ import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('CodeGenerator', () {
     late Directory tempProject;
@@ -45,7 +47,7 @@ void main() {
       final generator = CodeGenerator(
         config: config,
         projectRoot: tempProject.path,
-        log: logs.add,
+        log: TestLogger(logs),
       );
 
       final loader = EventLoader(
@@ -301,7 +303,7 @@ void main() {
       final generator = CodeGenerator(
         config: config,
         projectRoot: tempProject.path,
-        log: logs.add,
+        log: TestLogger(logs),
       );
 
       final loader = EventLoader(

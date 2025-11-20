@@ -1,3 +1,5 @@
+import '../util/logger.dart';
+
 /// Telemetry callbacks for tracking generation performance.
 ///
 /// Use these callbacks to monitor generation performance, identify bottlenecks,
@@ -80,13 +82,13 @@ class GenerationContext {
 
 /// Default implementation that logs telemetry to a callback.
 class LoggingTelemetry extends GenerationTelemetry {
-  final void Function(String message) log;
+  final Logger log;
 
   const LoggingTelemetry(this.log);
 
   @override
   void onGenerationStart(GenerationContext context) {
-    log('Starting generation: $context');
+    log.info('Starting generation: $context');
   }
 
   @override
@@ -95,7 +97,7 @@ class LoggingTelemetry extends GenerationTelemetry {
     Duration elapsed,
     int eventCount,
   ) {
-    log(
+    log.debug(
       'Processed domain "$domainName" '
       '($eventCount events) in ${elapsed.inMilliseconds}ms',
     );
@@ -107,7 +109,7 @@ class LoggingTelemetry extends GenerationTelemetry {
     Duration elapsed,
     int propertyCount,
   ) {
-    log(
+    log.debug(
       'Processed context "$contextName" '
       '($propertyCount properties) in ${elapsed.inMilliseconds}ms',
     );
@@ -115,7 +117,7 @@ class LoggingTelemetry extends GenerationTelemetry {
 
   @override
   void onGenerationComplete(Duration elapsed, int filesGenerated) {
-    log(
+    log.info(
       'Generation completed successfully: '
       '$filesGenerated files in ${elapsed.inMilliseconds}ms',
     );
@@ -124,8 +126,10 @@ class LoggingTelemetry extends GenerationTelemetry {
   @override
   void onGenerationError(
       Object error, StackTrace stackTrace, Duration elapsed) {
-    log(
+    log.error(
       'Generation failed after ${elapsed.inMilliseconds}ms: $error',
+      error,
+      stackTrace,
     );
   }
 }
