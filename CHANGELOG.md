@@ -2,59 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.7] - Unreleased
-- **Refactored `Analytics` class generation**:
-  - The generated `Analytics` class is now immutable and provides a `const` constructor for Dependency Injection (DI).
-  - Retained `Analytics.instance` and `Analytics.initialize()` for backward compatibility (Singleton usage).
-- **Event Name Interpolation Warning**:
-  - Added a warning when event name interpolation (e.g., `event_name: "View ${itemId}"`) is detected in the generator. This is flagged as an analytics anti-pattern due to high cardinality risks.
-- **Extensible Metadata Support**:
-  - Added a `meta` field to `AnalyticsEvent` and `AnalyticsParameter` models to support arbitrary key-value pairs in YAML definitions.
-  - Metadata is propagated to the generated `Analytics.plan`, Markdown documentation, JSON exports, and CSV exports.
-  - This allows teams to attach custom attributes (e.g., `owner`, `pii`, `tier`) to events and parameters without altering the core schema.
-- Add a PR template that links to the Code Review checklist so contributors must
-  explicitly confirm regeneration + docs/exports review before requesting feedback.
-- Documented why `IAnalytics.logEvent` stays synchronous and added queueing +
-  `AsyncAnalyticsAdapter` examples/tests so contributors know how to await heavy
-  providers without changing the base interface.
-- Added `BatchingAnalytics` to buffer events with `maxBatchSize`, optional timers,
-  and flush/dispose hooks, plus README/Onboarding docs and tests so apps can batch
-  network calls without rewriting providers.
-- Introduced `CapabilityProviderMixin` so providers can register capability keys
-  without manual boilerplate, refreshed the capabilities guide, and added tests.
-- Example revamp: `example/` is now a Flutter app with buttons wired to the generated
-  mixins, widget tests verifying the interaction, and an updated README explaining
-  how to run `flutter run` / `flutter test`.
-- Further cleaned up the Flutter example by moving analytics orchestration into a
-  controller + observable adapter, keeping event logging logic out of widgets.
-- Added `docs/MIGRATION_GUIDES.md` with step-by-step playbooks for Firebase,
-  Amplitude, and Mixpanel migrations plus README/test coverage so teams can
-  map legacy events → YAML confidently.
-- Flexible naming strategy block with per-event/parameter overrides:
-  - `analytics_gen.naming` now controls snake_case enforcement, default event-name/identifier templates, and domain aliases so legacy tracking plans can migrate progressively.
-  - Events accept an optional `identifier` that keeps uniqueness independent of the provider-facing `event_name`.
-  - Parameters gained `identifier` (for generated Dart APIs) and `param_name` (for the wire payload). Code generation, docs, and exports respect the new fields and continue validating collisions after camelCase normalization.
-  - CSV/JSON/SQL/SQLite exports, docs, the CLI plan printer, and runtime uniqueness checks all use the configured naming strategy so watchdogs stay consistent across layers.
-- README onboarding refresh with a top-level checklist, step-by-step walkthrough (describe YAML → configure → generate → use → review), and a quick reference for common validation errors to speed up junior onboarding.
-- Added `docs/SCALABILITY.md` with benchmarks demonstrating 2000+ events generated in <4s, plus guidance for large enterprise plans.
-- Performance optimizations:
-  - Parallelized domain file generation and YAML file reading.
-  - Removed aggressive directory deletion in favor of incremental file writes and stale file cleanup, preserving filesystem caches and reducing I/O.
-  - Implemented single-pass YAML parsing: event definitions are now parsed once and shared across code, docs, and export generators, eliminating redundant work.
-  - Parallelized export generation tasks (CSV, JSON, SQL).
-- **Improved Error Reporting**:
-  - The generator now collects and reports all validation errors found in YAML files at once, instead of failing on the first error. This significantly improves the developer experience when fixing multiple issues.
-- **Strict Event Naming Configuration**:
-  - Added `strict_event_names` configuration option (default: `false`). When enabled, the generator will treat string interpolation in event names (e.g., `event_name: "View ${page}"`) as a build error instead of a warning. This helps teams enforce strict low-cardinality rules.
-- **BatchingAnalytics Resilience**:
-  - Added `maxRetries` (default: 3) to `BatchingAnalytics`.
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.1.7] - 2025-11-20
+- **Updates**:
+  - Optimized generator performance with parallel processing and smart I/O.
+  - Stable API supporting both Dependency Injection and Singleton patterns.
+- **Major Features**:
+  - **Extensible Metadata**: Support for arbitrary key-value pairs (`meta`) in YAML, propagated to code and exports.
+  - **Batching & Async**: Added `BatchingAnalytics` for buffering events and `AsyncAnalyticsAdapter` for heavy providers.
+  - **Flexible Naming**: Configurable naming strategies for domains, events, and parameters.
+  - **Strict Mode**: Added `strict_event_names` to prevent high-cardinality anti-patterns.
+- **Developer Experience**:
+  - **Improved Error Reporting**: Aggregated validation errors for faster debugging.
+  - **Performance**: Parallelized generation and incremental file writes.
+  - **Documentation**: Added migration guides, scalability benchmarks, and onboarding checklists.
 - **Quality Assurance**:
-  - Upgraded linter configuration to use `package:lints/recommended.yaml` and added stricter rules (e.g., `unawaited_futures`, `prefer_final_locals`) to enforce higher code quality.
-  - Added CI guardrails to verify that generated code is up-to-date and enforce strict analysis.
-- **Analytics.initialize Safety**:
-  - `Analytics.initialize()` now throws a `StateError` if called when `Analytics` is already initialized. This prevents accidental re-initialization and ensures a stable singleton lifecycle.
-- **Documentation Updates**:
-  - Clarified `MultiProviderAnalytics` capability resolution priority in `CAPABILITIES.md` and code comments. It follows a "first match wins" strategy.
+  - Full test coverage (100%).
+  - Stricter linting rules and CI guardrails.
+
+## [0.1.6] - 2025-11-17
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an
