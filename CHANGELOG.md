@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.2] - 2025-11-20
+## [0.2.1] - 2025-11-20
 
 ### Added
 - **Enhanced CSV Export**:
@@ -21,8 +21,8 @@ All notable changes to this project will be documented in this file.
   - Extracted validation logic from `YamlParser` into a dedicated `SchemaValidator` class.
   - Improved separation of concerns and testability.
   - Added comprehensive unit tests for validation logic.
-
-## [0.2.1] - 2025-11-20
+- **Dart 3 Features**:
+  - Refactored `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
 
 ### Added
 - **BaseRenderer**: Extracted common rendering functionality into a base class to reduce code duplication across renderers

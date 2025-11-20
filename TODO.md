@@ -4,6 +4,10 @@
 
 ## Refactoring & Improvements (Priority)
 
+- [x] **Dart 3 Features**
+  - Refactor `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
+  - Ensure all models are `final` or `sealed`.
+
 - [x] **Validator Separation**
   - Extract validation logic from `YamlParser` into a dedicated `SchemaValidator` class.
   - Allow for different validation strategies (strict vs lenient).

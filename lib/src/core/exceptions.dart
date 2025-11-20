@@ -1,16 +1,26 @@
+/// Base exception for all analytics_gen errors.
+///
+/// This is a sealed hierarchy, allowing consumers to exhaustively match
+/// on specific error types.
+sealed class AnalyticsException implements Exception {
+  const AnalyticsException();
+}
+
 /// Analytics-specific exceptions used by parsers and generation tools.
 ///
 /// These extend the platform's [FormatException] so existing callers
 /// that match `FormatException` will continue to work while allowing
 /// callers to match analytics-specific errors explicitly.
-class AnalyticsParseException extends FormatException {
+final class AnalyticsParseException extends FormatException
+    implements AnalyticsException {
   /// Optional file path where the error occurred.
   final String? filePath;
 
   /// Optional underlying error that caused this exception.
   final Object? innerError;
 
-  AnalyticsParseException(super.message, {this.filePath, this.innerError});
+  const AnalyticsParseException(super.message,
+      {this.filePath, this.innerError});
 
   @override
   String toString() {
@@ -26,10 +36,10 @@ class AnalyticsParseException extends FormatException {
 }
 
 /// Exception thrown when there are multiple parsing errors.
-class AnalyticsAggregateException implements Exception {
+final class AnalyticsAggregateException implements AnalyticsException {
   final List<AnalyticsParseException> errors;
 
-  AnalyticsAggregateException(this.errors);
+  const AnalyticsAggregateException(this.errors);
 
   @override
   String toString() {
@@ -42,9 +52,9 @@ class AnalyticsAggregateException implements Exception {
   }
 }
 
-class AnalyticsGenerationException implements Exception {
+final class AnalyticsGenerationException implements AnalyticsException {
   final String message;
-  AnalyticsGenerationException(this.message);
+  const AnalyticsGenerationException(this.message);
   @override
   String toString() => 'AnalyticsGenerationException: $message';
 }
