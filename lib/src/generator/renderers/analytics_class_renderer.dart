@@ -109,8 +109,10 @@ class AnalyticsClassRenderer extends BaseRenderer {
     }
 
     if (planFingerprint != null) {
-      buffer.writeln('  /// The fingerprint of the plan used to generate this code.');
-      buffer.writeln("  static const String planFingerprint = '$planFingerprint';");
+      buffer.writeln(
+          '  /// The fingerprint of the plan used to generate this code.');
+      buffer.writeln(
+          "  static const String planFingerprint = '$planFingerprint';");
       buffer.writeln();
     }
 
