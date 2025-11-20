@@ -17,6 +17,7 @@
   - Add validation rules support in YAML (regex, min_length, max_length, range)
   - Generate runtime validation code for parameters
   - Update docs with validation examples
+- [ ] Add ignore of lints to generated dart files, datetime of last generation
 
 ### Low Priority
 
