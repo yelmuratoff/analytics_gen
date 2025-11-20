@@ -4,11 +4,12 @@ import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
+import 'base_renderer.dart';
 
-class EventRenderer {
+class EventRenderer extends BaseRenderer {
   final AnalyticsConfig config;
 
-  EventRenderer(this.config);
+  const EventRenderer(this.config);
 
   static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
 
@@ -16,15 +17,8 @@ class EventRenderer {
     final buffer = StringBuffer();
 
     // File header
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('// ignore_for_file: type=lint, unused_import');
-    buffer.writeln(
-      '// ignore_for_file: directives_ordering, unnecessary_string_interpolations',
-    );
-    buffer.writeln('// coverage:ignore-file');
-    buffer.writeln();
-    buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
-    buffer.writeln();
+    buffer.write(renderFileHeader());
+    buffer.write(renderImports(['package:analytics_gen/analytics_gen.dart']));
 
     // Generate mixin
     buffer.write(renderDomainMixin(domainName, domain));
@@ -121,12 +115,10 @@ class EventRenderer {
           final camelParam = StringUtils.toCamelCase(param.codeName);
           final constName =
               'allowed${StringUtils.capitalizePascal(camelParam)}Values';
-          final encodedValues = allowedValues
-              .map((value) => '\'${StringUtils.escapeSingleQuoted(value)}\'')
-              .join(', ');
-          final joinedValues = allowedValues.join(', ');
+          final encodedValues = encodeAllowedValues(allowedValues);
+          final joinedValues = joinAllowedValues(allowedValues);
 
-          buffer.write(_renderAllowedValuesCheck(
+          buffer.write(renderAllowedValuesCheck(
             camelParam: camelParam,
             constName: constName,
             encodedValues: encodedValues,
@@ -177,30 +169,6 @@ class EventRenderer {
     buffer.writeln('  }');
     buffer.writeln();
 
-    return buffer.toString();
-  }
-
-  String _renderAllowedValuesCheck({
-    required String camelParam,
-    required String constName,
-    required String encodedValues,
-    required String joinedValues,
-    required bool isNullable,
-  }) {
-    final buffer = StringBuffer();
-    buffer.writeln('    const $constName = <String>{$encodedValues};');
-
-    final condition = isNullable
-        ? 'if ($camelParam != null && !$constName.contains($camelParam)) {'
-        : 'if (!$constName.contains($camelParam)) {';
-
-    buffer.writeln('    $condition');
-    buffer.writeln('      throw ArgumentError.value(');
-    buffer.writeln('        $camelParam,');
-    buffer.writeln("        '$camelParam',");
-    buffer.writeln("        'must be one of $joinedValues',");
-    buffer.writeln('      );');
-    buffer.writeln('    }');
     return buffer.toString();
   }
 

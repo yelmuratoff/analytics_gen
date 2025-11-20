@@ -1,11 +1,12 @@
 import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';
+import 'base_renderer.dart';
 
-class AnalyticsClassRenderer {
+class AnalyticsClassRenderer extends BaseRenderer {
   final AnalyticsConfig config;
 
-  AnalyticsClassRenderer(this.config);
+  const AnalyticsClassRenderer(this.config);
 
   String renderAnalyticsClass(
     Map<String, AnalyticsDomain> domains, {
@@ -41,6 +42,35 @@ class AnalyticsClassRenderer {
     buffer.writeln('/// Analytics.initialize(YourAnalyticsService());');
     buffer.writeln('/// Analytics.instance.logAuthLogin(method: "email");');
     buffer.writeln('/// ```');
+
+    // Add capabilities documentation if any contexts exist
+    if (contexts.isNotEmpty) {
+      buffer.writeln('///');
+      buffer.writeln('/// ## Available Capabilities');
+      buffer.writeln('///');
+      buffer.writeln(
+          '/// This class provides context property setters via capabilities:');
+      buffer.writeln('///');
+
+      for (final contextName in contexts.keys.toList()..sort()) {
+        final pascalName = StringUtils.capitalizePascal(contextName);
+        final camelName = StringUtils.toCamelCase(contextName);
+        buffer.writeln('/// **$pascalName**');
+        buffer.writeln('/// - Key: `${camelName}Key`');
+        buffer.writeln('/// - Type: `${pascalName}Capability`');
+        buffer.writeln('/// - Usage:');
+        buffer.writeln('/// ```dart');
+        buffer.writeln(
+            '/// Analytics.instance.set${pascalName}PropertyName(value);');
+        buffer.writeln('/// ```');
+        buffer.writeln('///');
+      }
+
+      buffer.writeln(
+          '/// Note: Capabilities are provider-specific. Ensure your analytics');
+      buffer.writeln(
+          '/// provider implements the required capability interfaces.');
+    }
 
     // Generate mixin list
     final sortedDomains = domains.keys.toList()..sort();

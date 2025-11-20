@@ -76,6 +76,8 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](doc/ONBOARDING.md).
 - **Docs + exports** – Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
 - **Runtime plan** – `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
 - **Extensible Metadata** – attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
+- **Generation Telemetry** – track generation performance with built-in metrics (domain processing times, total duration, file counts).
+- **Capability Discovery** – auto-generated documentation shows available capabilities and usage examples in generated code.
 
 ## Extensible Metadata
 

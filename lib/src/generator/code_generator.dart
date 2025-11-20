@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/file_utils.dart';
+import 'generation_telemetry.dart';
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
 import 'renderers/event_renderer.dart';
@@ -14,6 +15,7 @@ final class CodeGenerator {
   final AnalyticsConfig config;
   final String projectRoot;
   final void Function(String message)? log;
+  final GenerationTelemetry _telemetry;
 
   final AnalyticsClassRenderer _classRenderer;
   final ContextRenderer _contextRenderer;
@@ -23,11 +25,14 @@ final class CodeGenerator {
     required this.config,
     required this.projectRoot,
     this.log,
+    GenerationTelemetry? telemetry,
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
-  })  : _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
-        _contextRenderer = contextRenderer ?? ContextRenderer(),
+  })  : _telemetry = telemetry ??
+            (log != null ? LoggingTelemetry(log) : const NoOpTelemetry()),
+        _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
+        _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = eventRenderer ?? EventRenderer(config);
 
   /// Generates analytics code and writes to configured output path
@@ -35,7 +40,7 @@ final class CodeGenerator {
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
   }) async {
-    log?.call('Starting analytics code generation...');
+    final startTime = DateTime.now();
 
     // Filter out empty contexts to avoid generating empty files
     final activeContexts = Map<String, List<AnalyticsParameter>>.from(contexts)
@@ -47,6 +52,23 @@ final class CodeGenerator {
       return;
     }
 
+    final totalEvents = domains.values.fold(0, (sum, d) => sum + d.eventCount);
+    final totalParams =
+        domains.values.fold(0, (sum, d) => sum + d.parameterCount);
+
+    final context = GenerationContext(
+      domainCount: domains.length,
+      contextCount: activeContexts.length,
+      totalEventCount: totalEvents,
+      totalParameterCount: totalParams,
+      generateDocs: true,
+      generateExports: true,
+      generateCode: true,
+    );
+
+    _telemetry.onGenerationStart(context);
+    log?.call('Starting analytics code generation...');
+
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final eventsDir = path.join(outputDir, 'events');
     final contextsDir = path.join(outputDir, 'contexts');
@@ -57,16 +79,32 @@ final class CodeGenerator {
     // Track generated files to clean up stale ones later
     final generatedFiles = <String>{};
 
-    // Generate individual domain files in parallel
+    // Generate individual domain files with telemetry
     await Future.wait(domains.entries.map((entry) async {
+      final domainStartTime = DateTime.now();
       final filePath =
           await _generateDomainFile(entry.key, entry.value, eventsDir);
       generatedFiles.add(filePath);
+
+      final domainElapsed = DateTime.now().difference(domainStartTime);
+      _telemetry.onDomainProcessed(
+        entry.key,
+        domainElapsed,
+        entry.value.eventCount,
+      );
     }));
 
-    // Generate context files
+    // Generate context files with telemetry
     for (final entry in activeContexts.entries) {
+      final contextStartTime = DateTime.now();
       await _generateContextFile(entry.key, entry.value, contextsDir);
+
+      final contextElapsed = DateTime.now().difference(contextStartTime);
+      _telemetry.onContextProcessed(
+        entry.key,
+        contextElapsed,
+        entry.value.length,
+      );
     }
 
     // Clean up stale files
@@ -83,6 +121,12 @@ final class CodeGenerator {
       domains,
       contexts: activeContexts,
     );
+
+    final elapsed = DateTime.now().difference(startTime);
+    final filesGenerated = generatedFiles.length +
+        activeContexts.length +
+        2; // +2 for barrel and analytics
+    _telemetry.onGenerationComplete(elapsed, filesGenerated);
   }
 
   Future<String> _generateContextFile(

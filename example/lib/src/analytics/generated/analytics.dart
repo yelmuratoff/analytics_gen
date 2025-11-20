@@ -20,6 +20,29 @@ import 'contexts/user_properties_context.dart';
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
+///
+/// ## Available Capabilities
+///
+/// This class provides context property setters via capabilities:
+///
+/// **Theme**
+/// - Key: `themeKey`
+/// - Type: `ThemeCapability`
+/// - Usage:
+/// ```dart
+/// Analytics.instance.setThemePropertyName(value);
+/// ```
+///
+/// **UserProperties**
+/// - Key: `userPropertiesKey`
+/// - Type: `UserPropertiesCapability`
+/// - Usage:
+/// ```dart
+/// Analytics.instance.setUserPropertiesPropertyName(value);
+/// ```
+///
+/// Note: Capabilities are provider-specific. Ensure your analytics
+/// provider implements the required capability interfaces.
 final class Analytics extends AnalyticsBase
     with
         AnalyticsAuth,
