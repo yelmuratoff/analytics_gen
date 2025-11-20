@@ -17,6 +17,21 @@ All notable changes to this project will be documented in this file.
   - Added timestamp of last generation to file headers.
 - **Better Error Reporting**: Now uses `SourceSpan` to point to the exact line and column in the YAML file where an error occurred.
 - **Strict Event Naming**: The parser now throws an error if event names contain interpolation characters (`{}`) to prevent high cardinality issues.
+- **BaseRenderer**: Extracted common rendering functionality into a base class to reduce code duplication across renderers
+  - Shared methods for file headers, imports, documentation comments, and validation checks
+  - `MethodParameter` class for type-safe parameter definitions
+  - Improved maintainability and consistency across generators
+- **Generation Telemetry**: Added performance tracking and observability for code generation
+  - `GenerationTelemetry` abstract class with lifecycle hooks
+  - `LoggingTelemetry` implementation for console output
+  - `NoOpTelemetry` for production use without overhead
+  - Track domain/context processing times and total generation duration
+  - Integrated into `CodeGenerator` with automatic metrics collection
+- **Capability Discovery**: Enhanced generated Analytics class documentation
+  - Auto-generated capability documentation in class comments
+  - Lists all available capabilities with usage examples
+  - Shows capability keys, types, and method signatures
+  - Helps developers discover context property setters
 
 ### Changed
 - Refactored `YamlParser` to use `loadYamlNode` internally.
@@ -28,25 +43,6 @@ All notable changes to this project will be documented in this file.
   - Added comprehensive unit tests for validation logic.
 - **Dart 3 Features**:
   - Refactored `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
-
-### Added
-- **BaseRenderer**: Extracted common rendering functionality into a base class to reduce code duplication across renderers
-  - Shared methods for file headers, imports, documentation comments, and validation checks
-  - `MethodParameter` class for type-safe parameter definitions
-  - Improved maintainability and consistency across generators
-  
-- **Generation Telemetry**: Added performance tracking and observability for code generation
-  - `GenerationTelemetry` abstract class with lifecycle hooks
-  - `LoggingTelemetry` implementation for console output
-  - `NoOpTelemetry` for production use without overhead
-  - Track domain/context processing times and total generation duration
-  - Integrated into `CodeGenerator` with automatic metrics collection
-  
-- **Capability Discovery**: Enhanced generated Analytics class documentation
-  - Auto-generated capability documentation in class comments
-  - Lists all available capabilities with usage examples
-  - Shows capability keys, types, and method signatures
-  - Helps developers discover context property setters
 
 ### Improved
 - All renderers now extend `BaseRenderer` for consistent code generation
