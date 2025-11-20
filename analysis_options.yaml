@@ -4,8 +4,6 @@ analyzer:
     invalid_use_of_visible_for_testing_member: ignore
 linter:
   rules:
-    public_member_api_docs: false
-    lines_longer_than_80_chars: false
 
 dart_code_metrics:
   metrics:
