@@ -17,9 +17,11 @@ final class BatchingAnalytics implements IAnalytics {
   BatchingAnalytics({
     required IAsyncAnalytics delegate,
     this.maxBatchSize = 20,
+    this.maxRetries = 3,
     Duration? flushInterval,
     this.onFlushError,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
+        assert(maxRetries >= 0, 'maxRetries must be non-negative.'),
         _delegate = delegate {
     if (flushInterval != null) {
       _timer = Timer.periodic(flushInterval, (_) {
@@ -32,6 +34,7 @@ final class BatchingAnalytics implements IAnalytics {
 
   final IAsyncAnalytics _delegate;
   final int maxBatchSize;
+  final int maxRetries;
   final BatchFlushErrorHandler? onFlushError;
 
   final List<_QueuedAnalyticsEvent> _pending = <_QueuedAnalyticsEvent>[];
@@ -102,14 +105,8 @@ final class BatchingAnalytics implements IAnalytics {
           completer.complete();
         }
       } catch (error, stackTrace) {
-        if (propagateErrors) {
-          if (!completer.isCompleted) {
-            completer.completeError(error, stackTrace);
-          }
-        } else {
-          if (!completer.isCompleted) {
-            completer.complete();
-          }
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
         }
       } finally {
         if (identical(_activeFlush, future)) {
@@ -150,8 +147,18 @@ final class BatchingAnalytics implements IAnalytics {
       }
     } catch (error, stackTrace) {
       if (nextIndex < batch.length) {
-        final remaining = batch.getRange(nextIndex, batch.length);
-        _pending.insertAll(0, remaining);
+        final failedEvent = batch[nextIndex];
+        failedEvent.retryCount++;
+
+        if (failedEvent.retryCount >= maxRetries) {
+          // Drop the poison pill event by skipping it in the re-queue
+          nextIndex++;
+        }
+
+        if (nextIndex < batch.length) {
+          final remaining = batch.getRange(nextIndex, batch.length);
+          _pending.insertAll(0, remaining);
+        }
       }
       onFlushError?.call(error, stackTrace);
       rethrow;
@@ -164,4 +171,5 @@ final class _QueuedAnalyticsEvent {
 
   final String name;
   final AnalyticsParams? parameters;
+  int retryCount = 0;
 }

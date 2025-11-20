@@ -137,12 +137,40 @@ void main() {
 
       await batching.dispose();
     });
+
+    test('poison pill event is dropped after maxRetries', () async {
+      final delegate = _FakeAsyncAnalytics()..alwaysThrow = true;
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxBatchSize: 1,
+        maxRetries: 2,
+      );
+
+      batching.logEvent(name: 'poison');
+
+      // First attempt (retryCount -> 1)
+      await expectLater(
+        () async => await batching.flush(),
+        throwsA(isA<StateError>()),
+      );
+
+      // Second attempt (retryCount -> 2, dropped)
+      await expectLater(
+        () async => await batching.flush(),
+        throwsA(isA<StateError>()),
+      );
+
+      // Third attempt - queue should be empty
+      await batching.flush();
+      expect(delegate.recordedEvents, isEmpty);
+    });
   });
 }
 
 final class _FakeAsyncAnalytics implements IAsyncAnalytics {
   final List<_RecordedAsyncEvent> recordedEvents = [];
   bool throwNext = false;
+  bool alwaysThrow = false;
   int? failAtCall;
   int _callCount = 0;
 
@@ -152,8 +180,9 @@ final class _FakeAsyncAnalytics implements IAsyncAnalytics {
     AnalyticsParams? parameters,
   }) async {
     _callCount++;
-    final shouldThrow =
-        throwNext || (failAtCall != null && _callCount == failAtCall);
+    final shouldThrow = alwaysThrow ||
+        throwNext ||
+        (failAtCall != null && _callCount == failAtCall);
     if (shouldThrow) {
       throwNext = false;
       if (failAtCall == _callCount) {

@@ -46,6 +46,11 @@ All notable changes to this project will be documented in this file.
   - The generator now collects and reports all validation errors found in YAML files at once, instead of failing on the first error. This significantly improves the developer experience when fixing multiple issues.
 - **Strict Event Naming Configuration**:
   - Added `strict_event_names` configuration option (default: `false`). When enabled, the generator will treat string interpolation in event names (e.g., `event_name: "View ${page}"`) as a build error instead of a warning. This helps teams enforce strict low-cardinality rules.
+- **BatchingAnalytics Resilience**:
+  - Added `maxRetries` (default: 3) to `BatchingAnalytics`.
+  - Events that fail to send after `maxRetries` attempts are now dropped from the queue to prevent "poison pill" events from blocking the queue indefinitely.
+- **Analytics.initialize Safety**:
+  - `Analytics.initialize()` now throws a `StateError` if called when `Analytics` is already initialized. This prevents accidental re-initialization and ensures a stable singleton lifecycle.
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an

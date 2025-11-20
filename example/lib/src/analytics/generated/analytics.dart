@@ -20,13 +20,13 @@ import 'contexts/user_properties.dart';
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
-final class Analytics extends AnalyticsBase
-    with
-        AnalyticsAuth,
-        AnalyticsPurchase,
-        AnalyticsScreen,
-        AnalyticsTheme,
-        AnalyticsUserProperties {
+final class Analytics extends AnalyticsBase with
+    AnalyticsAuth,
+    AnalyticsPurchase,
+    AnalyticsScreen,
+    AnalyticsTheme,
+    AnalyticsUserProperties
+{
   final IAnalytics _analytics;
   final AnalyticsCapabilityResolver _capabilities;
 
@@ -73,7 +73,8 @@ final class Analytics extends AnalyticsBase
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
-          parameters: <AnalyticsParameter>[],
+          parameters: <AnalyticsParameter>[
+          ],
         ),
         AnalyticsEvent(
           name: 'phone_login',
@@ -232,9 +233,7 @@ final class Analytics extends AnalyticsBase
   /// Access the singleton instance
   static Analytics get instance {
     if (_instance == null) {
-      throw StateError(
-        'Analytics.initialize() must be called before accessing Analytics.instance',
-      );
+      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');
     }
     return _instance!;
   }
@@ -246,6 +245,9 @@ final class Analytics extends AnalyticsBase
   ///
   /// Call this once at app startup before using any analytics methods.
   static void initialize(IAnalytics analytics) {
+    if (_instance != null) {
+      throw StateError('Analytics is already initialized.');
+    }
     _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));
   }
 
@@ -257,3 +259,4 @@ final class Analytics extends AnalyticsBase
   @override
   AnalyticsCapabilityResolver get capabilities => _capabilities;
 }
+

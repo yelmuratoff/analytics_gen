@@ -257,6 +257,7 @@ final asyncAdapter = AsyncAnalyticsAdapter(
 final batching = BatchingAnalytics(
   delegate: asyncAdapter,
   maxBatchSize: 25,
+  maxRetries: 3, // Drop events after 3 failures (poison pill protection)
   flushInterval: const Duration(seconds: 5),
   onFlushError: (error, stack) {
     print('Batch flush failed: $error');

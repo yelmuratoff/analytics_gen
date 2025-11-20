@@ -104,6 +104,10 @@ class AnalyticsClassRenderer {
     buffer.writeln(
         '  /// Call this once at app startup before using any analytics methods.');
     buffer.writeln('  static void initialize(IAnalytics analytics) {');
+    buffer.writeln('    if (_instance != null) {');
+    buffer.writeln(
+        "      throw StateError('Analytics is already initialized.');");
+    buffer.writeln('    }');
     buffer.writeln(
         '    _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));');
     buffer.writeln('  }');
