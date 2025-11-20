@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/core/exceptions.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
@@ -34,10 +35,12 @@ void main() {
         '    parameters: 123\n', // Error 2: Parameters not a map
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
+      final loader = EventLoader(eventsPath: eventsPath);
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
 
       try {
-        await parser.parseEvents();
+        await parser.parseEvents(sources);
         fail('Should have thrown AnalyticsAggregateException');
       } on AnalyticsAggregateException catch (e) {
         expect(e.errors.length, equals(2));
@@ -55,10 +58,12 @@ void main() {
       await file2.writeAsString(
           'screen:\n  view:\n    parameters: 1\n'); // Error 2: Params not map
 
-      final parser = YamlParser(eventsPath: eventsPath);
+      final loader = EventLoader(eventsPath: eventsPath);
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
 
       try {
-        await parser.parseEvents();
+        await parser.parseEvents(sources);
         fail('Should have thrown AnalyticsAggregateException');
       } on AnalyticsAggregateException catch (e) {
         expect(e.errors.length, equals(2));
@@ -89,10 +94,12 @@ void main() {
         '    parameters: {}\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
+      final loader = EventLoader(eventsPath: eventsPath);
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
 
       try {
-        await parser.parseEvents();
+        await parser.parseEvents(sources);
         fail('Should have thrown AnalyticsAggregateException');
       } on AnalyticsAggregateException catch (e) {
         expect(e.errors.length, equals(1));

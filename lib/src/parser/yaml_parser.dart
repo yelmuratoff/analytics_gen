@@ -1,39 +1,35 @@
-import 'dart:io';
-
 import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
+import 'event_loader.dart';
 import 'parameter_parser.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
-  final String eventsPath;
   final void Function(String message)? log;
   final NamingStrategy naming;
-  final List<String> contextFiles;
   final ParameterParser _parameterParser;
 
   YamlParser({
-    required this.eventsPath,
     this.log,
     NamingStrategy? naming,
-    this.contextFiles = const [],
   })  : naming = naming ?? const NamingStrategy(),
         _parameterParser = ParameterParser(naming ?? const NamingStrategy());
 
-  /// Parses all YAML files in the events directory and returns a map of domains.
-  Future<Map<String, AnalyticsDomain>> parseEvents() async {
+  /// Parses the provided analytics sources and returns a map of domains.
+  Future<Map<String, AnalyticsDomain>> parseEvents(
+    List<AnalyticsSource> sources,
+  ) async {
     final domains = <String, AnalyticsDomain>{};
     final errors = <AnalyticsParseException>[];
 
-    await for (final domain in loadAnalyticsDomains(
-      eventsPath: eventsPath,
+    await for (final domain in _parseSources(
+      sources,
       log: log,
       naming: naming,
-      contextFiles: contextFiles,
       onError: errors.add,
     )) {
       domains[domain.name] = domain;
@@ -48,59 +44,27 @@ final class YamlParser {
     return domains;
   }
 
-  /// Internal helper to load domains as a stream while allowing reuse in tests.
-  static Stream<AnalyticsDomain> loadAnalyticsDomains({
-    required String eventsPath,
+  /// Internal helper to parse sources as a stream.
+  Stream<AnalyticsDomain> _parseSources(
+    List<AnalyticsSource> sources, {
     NamingStrategy? naming,
     void Function(String message)? log,
-    List<String> contextFiles = const [],
     void Function(AnalyticsParseException)? onError,
   }) async* {
     final strategy = naming ?? const NamingStrategy();
-    final eventsDir = Directory(eventsPath);
 
-    if (!eventsDir.existsSync()) {
-      log?.call('Events directory not found at: $eventsPath');
+    if (sources.isEmpty) {
+      log?.call('No YAML sources provided for parsing');
       return;
     }
-
-    final yamlFiles = eventsDir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
-
-    if (yamlFiles.isEmpty) {
-      log?.call('No YAML files found in: $eventsPath');
-      return;
-    }
-
-    log?.call('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
-
-    final futures = yamlFiles.map((file) async {
-      // Skip context files
-      // We normalize paths to ensure consistent comparison
-      final normalizedPath = file.path.replaceAll('\\', '/');
-      if (contextFiles.any((c) => normalizedPath.endsWith(c))) {
-        return null;
-      }
-
-      final content = await file.readAsString();
-      return _ParsedFile(file, loadYaml(content));
-    });
-
-    final results =
-        (await Future.wait(futures)).whereType<_ParsedFile>().toList();
 
     final merged = <String, _DomainSource>{};
-    for (final result in results) {
-      final file = result.file;
-      final parsed = result.yaml;
+    for (final source in sources) {
+      final parsed = loadYaml(source.content);
 
       if (parsed is! YamlMap) {
         log?.call(
-          'Warning: ${file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : file.path} does not contain a YamlMap. Skipping.',
+          'Warning: ${source.filePath} does not contain a YamlMap. Skipping.',
         );
         continue;
       }
@@ -116,10 +80,10 @@ final class YamlParser {
           final isValidDomain = strategy.isValidDomain(domainKey);
           if (!isValidDomain) {
             throw AnalyticsParseException(
-              'Domain "$domainKey" in ${file.path} violates the configured '
+              'Domain "$domainKey" in ${source.filePath} violates the configured '
               'naming strategy. Update analytics_gen.naming.enforce_snake_case_domains '
               'or rename the domain.',
-              filePath: file.path,
+              filePath: source.filePath,
             );
           }
 
@@ -132,11 +96,11 @@ final class YamlParser {
           final value = parsed[key];
           if (value is! YamlMap) {
             throw FormatException(
-              'Domain "$domainKey" in ${file.path} must be a map of events.',
+              'Domain "$domainKey" in ${source.filePath} must be a map of events.',
             );
           }
           merged[domainKey] = _DomainSource(
-            filePath: file.path,
+            filePath: source.filePath,
             yaml: value,
           );
         } on AnalyticsParseException catch (e) {
@@ -149,7 +113,7 @@ final class YamlParser {
           // Wrap other errors
           final error = AnalyticsParseException(
             e.toString(),
-            filePath: file.path,
+            filePath: source.filePath,
           );
           if (onError != null) {
             onError(error);
@@ -169,7 +133,6 @@ final class YamlParser {
       final eventsYaml = source.yaml;
 
       final parser = YamlParser(
-        eventsPath: eventsPath,
         log: log,
         naming: strategy,
       );
@@ -353,23 +316,18 @@ final class YamlParser {
   /// Parses all configured context files.
   /// Returns a map where the key is the context name (from the YAML root key)
   /// and the value is the list of parameters.
-  Future<Map<String, List<AnalyticsParameter>>> parseContexts() async {
+  Future<Map<String, List<AnalyticsParameter>>> parseContexts(
+    List<AnalyticsSource> sources,
+  ) async {
     final contexts = <String, List<AnalyticsParameter>>{};
 
-    for (final filePath in contextFiles) {
-      final file = File(filePath);
-      if (!file.existsSync()) {
-        log?.call('Context file not found: $filePath');
-        continue;
-      }
-
-      final content = await file.readAsString();
-      final yaml = loadYaml(content);
+    for (final source in sources) {
+      final yaml = loadYaml(source.content);
 
       if (yaml is! YamlMap) {
         throw AnalyticsParseException(
-          'Context file $filePath must be a map.',
-          filePath: filePath,
+          'Context file ${source.filePath} must be a map.',
+          filePath: source.filePath,
         );
       }
 
@@ -377,8 +335,8 @@ final class YamlParser {
       // e.g. user: { ... }
       if (yaml.keys.length != 1) {
         throw AnalyticsParseException(
-          'Context file $filePath must contain exactly one root key defining the context name.',
-          filePath: filePath,
+          'Context file ${source.filePath} must contain exactly one root key defining the context name.',
+          filePath: source.filePath,
         );
       }
 
@@ -387,8 +345,8 @@ final class YamlParser {
 
       if (propertiesYaml is! YamlMap) {
         throw AnalyticsParseException(
-          'The "$contextName" key in $filePath must be a map of properties.',
-          filePath: filePath,
+          'The "$contextName" key in ${source.filePath} must be a map of properties.',
+          filePath: source.filePath,
         );
       }
 
@@ -396,7 +354,7 @@ final class YamlParser {
         propertiesYaml,
         domainName: contextName,
         eventName: 'context', // Dummy
-        filePath: filePath,
+        filePath: source.filePath,
       );
 
       contexts[contextName] = parameters;
@@ -416,9 +374,3 @@ final class _DomainSource {
   });
 }
 
-final class _ParsedFile {
-  final File file;
-  final dynamic yaml;
-
-  _ParsedFile(this.file, this.yaml);
-}

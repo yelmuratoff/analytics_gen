@@ -18,10 +18,10 @@
 - [x] Refactor `YamlParser`: Extract parameter parsing logic into `ParameterParser`.
 - [x] Refactor `CodeGenerator`: Inject renderers via constructor for better testability.
 
-- [ ] **Refactor & Cleanup (Tech Debt)**
-  - [ ] Remove legacy `user_properties.yaml` and `global_context.yaml` handling from `YamlParser` and `GenerationPipeline`. (Use `contexts` configuration instead).
-  - [ ] Refactor `YamlParser`: Separate file discovery (I/O) from parsing logic (SRP).
-  - [ ] Refactor `YamlParser`: Inject `NamingStrategy` via constructor instead of hardcoding default.
+- [x] **Refactor & Cleanup (Tech Debt)**
+  - [x] Remove legacy `user_properties.yaml` and `global_context.yaml` handling from `YamlParser` and `GenerationPipeline`. (Use `contexts` configuration instead).
+  - [x] Refactor `YamlParser`: Separate file discovery (I/O) from parsing logic (SRP).
+  - [x] Refactor `YamlParser`: Inject `NamingStrategy` via constructor instead of hardcoding default.
 
 - [x] **Quality Assurance & Guardrails**
   - [x] **CI Guardrails**: Add a step in CI to verify that generated code is up-to-date (`git diff --exit-code` after generation).

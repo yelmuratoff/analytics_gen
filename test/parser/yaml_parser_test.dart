@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
+import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
@@ -33,13 +35,24 @@ void main() {
       }
     });
 
+    Future<Map<String, AnalyticsDomain>> parseEventsHelper({
+      String? customPath,
+      NamingStrategy? naming,
+      void Function(String)? log,
+    }) async {
+      final p = customPath ?? eventsPath;
+      final loader = EventLoader(eventsPath: p, log: log);
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser(naming: naming, log: log);
+      return parser.parseEvents(sources);
+    }
+
     test('parses simple event without parameters', () async {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
       await yamlFile.writeAsString(
           'auth:\n  logout:\n    description: User logs out\n    parameters: {}\n');
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       expect(domains.length, equals(1));
       expect(domains.containsKey('auth'), isTrue);
@@ -66,8 +79,7 @@ void main() {
         '      user_id: int\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       final loginEvent = domains['auth']!.events.first;
       expect(loginEvent.parameters.length, equals(2));
@@ -90,8 +102,7 @@ void main() {
       await yamlFile.writeAsString(
           'auth:\n  signup:\n    description: User signs up\n    parameters:\n      referral_code: string?\n');
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       final param = domains['auth']!.events.first.parameters.first;
       expect(param.type, equals('string'));
@@ -110,8 +121,7 @@ void main() {
         '        allowed_values: [email, google, apple]\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       final param = domains['auth']!.events.first.parameters.first;
       expect(param.allowedValues, equals(['email', 'google', 'apple']));
@@ -129,8 +139,7 @@ void main() {
         '        param_name: tracking-id\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       final param = domains['auth']!.events.first.parameters.first;
       expect(param.name, equals('tracking-id'));
@@ -153,8 +162,7 @@ void main() {
         '          is_pii: true\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       final event = domains['auth']!.events.first;
       expect(event.meta, equals({'owner': 'team-auth', 'is_pii': false}));
@@ -173,10 +181,8 @@ void main() {
         '    parameters: {}\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -189,17 +195,17 @@ void main() {
 
     test('returns empty map when events directory does not exist', () async {
       final messages = <String>[];
-      final parser =
-          YamlParser(eventsPath: '/nonexistent/path', log: messages.add);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper(
+        customPath: '/nonexistent/path',
+        log: messages.add,
+      );
       expect(domains, isEmpty);
       expect(messages, contains(contains('Events directory not found')));
     });
 
     test('returns empty map when no YAML files found', () async {
       final messages = <String>[];
-      final parser = YamlParser(eventsPath: eventsPath, log: messages.add);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper(log: messages.add);
       expect(domains, isEmpty);
       expect(messages, contains(contains('No YAML files found')));
     });
@@ -210,9 +216,8 @@ void main() {
       await yamlFile.writeAsString('- list_item\n- second_item\n');
 
       final messages = <String>[];
-      final parser = YamlParser(eventsPath: eventsPath, log: messages.add);
+      final domains = await parseEventsHelper(log: messages.add);
 
-      final domains = await parser.parseEvents();
       expect(domains, isEmpty);
       expect(messages, hasLength(2));
       expect(messages.any((m) => m.contains('does not contain a YamlMap')),
@@ -223,10 +228,8 @@ void main() {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
       await yamlFile.writeAsString('auth: 123\n');
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -241,10 +244,8 @@ void main() {
       final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
       await yamlFile.writeAsString('auth:\n  login: 1\n');
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -264,10 +265,8 @@ void main() {
         '    parameters: 1\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -288,10 +287,8 @@ void main() {
         '      Method: string\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -314,12 +311,10 @@ void main() {
         '        identifier: user_id\n',
       );
 
-      final parser = YamlParser(
-        eventsPath: eventsPath,
+      final domains = await parseEventsHelper(
         naming: const NamingStrategy(enforceSnakeCaseParameters: false),
       );
 
-      final domains = await parser.parseEvents();
       final param = domains['auth']!.events.first.parameters.first;
       expect(param.name, equals('User-ID'));
       expect(param.codeName, equals('user_id'));
@@ -336,10 +331,8 @@ void main() {
         '      user__id: string\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -361,10 +354,8 @@ void main() {
         '      a: int\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(isA<YamlException>()),
       );
     });
@@ -411,8 +402,7 @@ void main() {
         '        string: true\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       final param = domains['auth']!.events.first.parameters.first;
       expect(param.type, equals('string'));
@@ -430,10 +420,8 @@ void main() {
         '        allowed_values: 1\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
             'message',
@@ -446,10 +434,8 @@ void main() {
       await yamlFile
           .writeAsString('AuthDomain:\n  login:\n    description: Test\n');
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -469,10 +455,8 @@ void main() {
       await yamlFile2
           .writeAsString('auth:\n  logout:\n    description: Test2\n');
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
             'message',
@@ -497,8 +481,7 @@ void main() {
         '    description: Screen view\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       expect(domains.keys.toList(), equals(['auth', 'screen']));
       final authEvents = domains['auth']!.events.map((e) => e.name).toList();
@@ -524,10 +507,8 @@ void main() {
         '    parameters: {}\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -557,10 +538,8 @@ void main() {
         '    parameters: {}\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-
       expect(
-        () => parser.parseEvents(),
+        () => parseEventsHelper(),
         throwsA(
           isA<AnalyticsAggregateException>().having(
             (e) => e.errors.first.message,
@@ -592,8 +571,7 @@ void main() {
         '    parameters: {}\n',
       );
 
-      final parser = YamlParser(eventsPath: eventsPath);
-      final domains = await parser.parseEvents();
+      final domains = await parseEventsHelper();
 
       expect(domains.length, equals(2));
     });

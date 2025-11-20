@@ -6,6 +6,7 @@ import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as path;
 
@@ -29,17 +30,24 @@ class GenerationPipeline {
       return;
     }
 
-    // Parse YAML files once
-    final parser = YamlParser(
+    // Load files
+    final loader = EventLoader(
       eventsPath: path.join(projectRoot, config.eventsPath),
-      log: request.logger,
-      naming: config.naming,
       contextFiles: config.contexts
           .map((c) => path.join(projectRoot, c))
           .toList(), // Resolve paths
+      log: request.logger,
     );
-    final domains = await parser.parseEvents();
-    final contexts = await parser.parseContexts();
+    final eventSources = await loader.loadEventFiles();
+    final contextSources = await loader.loadContextFiles();
+
+    // Parse YAML files once
+    final parser = YamlParser(
+      log: request.logger,
+      naming: config.naming,
+    );
+    final domains = await parser.parseEvents(eventSources);
+    final contexts = await parser.parseContexts(contextSources);
 
     final tasks = _buildTasks(
       request,

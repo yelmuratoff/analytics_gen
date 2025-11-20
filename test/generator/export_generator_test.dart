@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
@@ -43,10 +44,12 @@ void main() {
         projectRoot: tempDir.path,
       );
 
-      final parser = YamlParser(
+      final loader = EventLoader(
         eventsPath: path.join(tempDir.path, firstConfig.eventsPath),
       );
-      final domains = await parser.parseEvents();
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
 
       await firstGenerator.generate(domains);
 
@@ -89,10 +92,12 @@ void main() {
         log: logs.add,
       );
 
-      final parser = YamlParser(
+      final loader = EventLoader(
         eventsPath: path.join(tempDir.path, config.eventsPath),
       );
-      final domains = await parser.parseEvents();
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
 
       await generator.generate(domains);
 
@@ -131,10 +136,12 @@ void main() {
         log: logs.add,
       );
 
-      final parser = YamlParser(
+      final loader = EventLoader(
         eventsPath: path.join(tempDir.path, config.eventsPath),
       );
-      final domains = await parser.parseEvents();
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
 
       await generator.generate(domains);
 
