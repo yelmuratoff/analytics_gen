@@ -11,6 +11,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
   String renderAnalyticsClass(
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
+    String? planFingerprint,
   }) {
     final buffer = StringBuffer();
 
@@ -104,6 +105,12 @@ class AnalyticsClassRenderer extends BaseRenderer {
 
     if (config.generatePlan) {
       buffer.write(_generateAnalyticsPlanField(domains));
+      buffer.writeln();
+    }
+
+    if (planFingerprint != null) {
+      buffer.writeln('  /// The fingerprint of the plan used to generate this code.');
+      buffer.writeln("  static const String planFingerprint = '$planFingerprint';");
       buffer.writeln();
     }
 

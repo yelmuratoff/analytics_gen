@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/file_utils.dart';
+import 'generation_metadata.dart';
 import 'generation_telemetry.dart';
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
@@ -181,9 +182,11 @@ final class CodeGenerator {
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
   }) async {
+    final metadata = GenerationMetadata.fromDomains(domains);
     final content = _classRenderer.renderAnalyticsClass(
       domains,
       contexts: contexts,
+      planFingerprint: metadata.fingerprint,
     );
 
     // Write to file

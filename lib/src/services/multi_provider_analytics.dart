@@ -204,6 +204,28 @@ final class MultiProviderAnalytics
       providerFilters: newProviderFilters,
     );
   }
+
+  /// Returns a new instance without providers of type [T].
+  ///
+  /// This method does not mutate the current instance.
+  ///
+  /// Example:
+  /// ```dart
+  /// final updated = analytics.removeProviderByType<FirebaseAnalyticsService>();
+  /// ```
+  MultiProviderAnalytics removeProviderByType<T extends IAnalytics>() {
+    final newProviders = _providers.where((p) => p is! T).toList();
+    final newProviderFilters =
+        Map<IAnalytics, EventPredicate?>.from(_providerFilters);
+    newProviderFilters.removeWhere((key, _) => key is T);
+
+    return MultiProviderAnalytics(
+      newProviders,
+      onError: onError,
+      onProviderFailure: onProviderFailure,
+      providerFilters: newProviderFilters,
+    );
+  }
 }
 
 final class _MultiProviderCapabilityResolver

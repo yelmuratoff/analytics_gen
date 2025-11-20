@@ -18,6 +18,8 @@ final class BatchingAnalytics implements IAnalytics {
     required IAsyncAnalytics delegate,
     this.maxBatchSize = 20,
     this.maxRetries = 3,
+    this.minRetryDelay = const Duration(milliseconds: 500),
+    this.maxRetryDelay = const Duration(seconds: 10),
     Duration? flushInterval,
     this.onFlushError,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
@@ -35,6 +37,8 @@ final class BatchingAnalytics implements IAnalytics {
   final IAsyncAnalytics _delegate;
   final int maxBatchSize;
   final int maxRetries;
+  final Duration minRetryDelay;
+  final Duration maxRetryDelay;
   final BatchFlushErrorHandler? onFlushError;
 
   final List<_QueuedAnalyticsEvent> _pending = <_QueuedAnalyticsEvent>[];
@@ -153,6 +157,10 @@ final class BatchingAnalytics implements IAnalytics {
         if (failedEvent.retryCount >= maxRetries) {
           // Drop the poison pill event by skipping it in the re-queue
           nextIndex++;
+        } else {
+          // Backoff before retrying
+          final delay = _calculateBackoff(failedEvent.retryCount);
+          await Future.delayed(delay);
         }
 
         if (nextIndex < batch.length) {
@@ -163,6 +171,11 @@ final class BatchingAnalytics implements IAnalytics {
       onFlushError?.call(error, stackTrace);
       rethrow;
     }
+  }
+
+  Duration _calculateBackoff(int retryCount) {
+    final delay = minRetryDelay * (1 << (retryCount - 1));
+    return delay > maxRetryDelay ? maxRetryDelay : delay;
   }
 }
 

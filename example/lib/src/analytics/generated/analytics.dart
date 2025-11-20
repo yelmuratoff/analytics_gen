@@ -1,5 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Generated at: 2025-11-20T16:55:12.860209
+// Generated at: 2025-11-20T17:08:29.517646
 // ignore_for_file: type=lint, unused_import
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
@@ -261,6 +261,9 @@ final class Analytics extends AnalyticsBase with
       ],
     ),
   ];
+
+  /// The fingerprint of the plan used to generate this code.
+  static const String planFingerprint = '4736e3c8e5d98ffc';
 
   // --- Singleton Compatibility ---
 
