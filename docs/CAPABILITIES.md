@@ -4,11 +4,11 @@ Capabilities let analytics providers expose advanced features (user properties, 
 
 ## Why not just add more methods to `IAnalytics`?
 
-Adding provider-specific calls (`setUserProperty`, `logRevenue`, `setPushToken`, …) directly to `IAnalytics` violates SOLID:
+Adding provider-specific calls (`setUserProperty`, `logRevenue`, `setPushToken`, …) directly to `IAnalytics`:
 
-- **Single Responsibility** – `IAnalytics` would have to change every time one team wants a new helper.
-- **Interface Segregation** – implementers would be forced to stub methods they do not support.
-- **Dependency Inversion** – app code would depend on concrete provider details.
+– `IAnalytics` would have to change every time one team wants a new helper.
+– Implementers would be forced to stub methods they do not support.
+– App code would depend on concrete provider details.
 
 Capabilities keep the generated API minimal (`logEvent` stays simple) while still giving teams access to richer SDK hooks.
 
@@ -164,6 +164,12 @@ Inject `FakeCapabilityProvider` in tests and assert that the capability methods 
 ## Observability
 
 When using `MultiProviderAnalytics`, hook into `onProviderFailure` and `onError` callbacks. They also receive the provider identifiers so you can alert when a capability-backed call fails (for instance, user property updates failing on one provider but not another).
+
+## Multi-Provider Resolution
+
+When using `MultiProviderAnalytics`, capability resolution follows a "first match wins" strategy. If multiple providers support the same capability (e.g., both Firebase and Amplitude support `UserProperties`), `Analytics.instance.capability(...)` returns the implementation from the **first** provider in the list.
+
+This is intentional: capabilities are typically used for setting global state (like user ID) where one successful call is sufficient, or where the implementation delegates to a specific SDK. If you need to fan out capability calls to multiple providers, create a composite capability implementation that wraps them.
 
 ## Next Steps
 

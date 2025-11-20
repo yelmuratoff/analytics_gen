@@ -214,6 +214,9 @@ final class _MultiProviderCapabilityResolver
 
   @override
   T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {
+    // Returns the first provider that supports the requested capability.
+    // If multiple providers support the same capability, the one that appears
+    // earlier in the providers list takes precedence.
     for (final provider in providers) {
       final resolver = analyticsCapabilitiesFor(provider);
       final capability = resolver.getCapability(key);

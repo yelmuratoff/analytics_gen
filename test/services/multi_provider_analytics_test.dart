@@ -294,6 +294,43 @@ void main() {
       expect(service1.totalEvents, equals(1));
       expect(errors, isNotEmpty);
     });
+
+    group('Capability Resolution', () {
+      test('returns capability from first provider that supports it', () {
+        final provider1 = _ProviderWithCapability('provider1');
+        final provider2 = _ProviderWithCapability('provider2');
+        final multi = MultiProviderAnalytics([provider1, provider2]);
+
+        final capability =
+            multi.capabilityResolver.getCapability(_testCapabilityKey);
+
+        expect(capability, isNotNull);
+        expect(capability!.source, equals('provider1'));
+      });
+
+      test('skips providers that do not support the capability', () {
+        final provider1 = MockAnalyticsService(); // No capabilities
+        final provider2 = _ProviderWithCapability('provider2');
+        final multi = MultiProviderAnalytics([provider1, provider2]);
+
+        final capability =
+            multi.capabilityResolver.getCapability(_testCapabilityKey);
+
+        expect(capability, isNotNull);
+        expect(capability!.source, equals('provider2'));
+      });
+
+      test('returns null if no provider supports the capability', () {
+        final provider1 = MockAnalyticsService();
+        final provider2 = MockAnalyticsService();
+        final multi = MultiProviderAnalytics([provider1, provider2]);
+
+        final capability =
+            multi.capabilityResolver.getCapability(_testCapabilityKey);
+
+        expect(capability, isNull);
+      });
+    });
   });
 }
 
@@ -357,4 +394,27 @@ class _FailingFormatAnalyticsService implements IAnalytics {
   void logEvent({required String name, AnalyticsParams? parameters}) {
     throw FormatException('Invalid event');
   }
+}
+
+abstract class _TestCapability implements AnalyticsCapability {
+  String get source;
+}
+
+const _testCapabilityKey = CapabilityKey<_TestCapability>('test_capability');
+
+class _TestCapabilityImpl implements _TestCapability {
+  @override
+  final String source;
+  _TestCapabilityImpl(this.source);
+}
+
+class _ProviderWithCapability with CapabilityProviderMixin implements IAnalytics {
+  final String name;
+
+  _ProviderWithCapability(this.name) {
+    registerCapability(_testCapabilityKey, _TestCapabilityImpl(name));
+  }
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {}
 }

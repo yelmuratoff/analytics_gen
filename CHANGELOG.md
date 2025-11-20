@@ -51,6 +51,8 @@ All notable changes to this project will be documented in this file.
   - Events that fail to send after `maxRetries` attempts are now dropped from the queue to prevent "poison pill" events from blocking the queue indefinitely.
 - **Analytics.initialize Safety**:
   - `Analytics.initialize()` now throws a `StateError` if called when `Analytics` is already initialized. This prevents accidental re-initialization and ensures a stable singleton lifecycle.
+- **Documentation Updates**:
+  - Clarified `MultiProviderAnalytics` capability resolution priority in `CAPABILITIES.md` and code comments. It follows a "first match wins" strategy.
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an

@@ -23,6 +23,7 @@
   - [x] **VALIDATION.md**: Add "Accepted types" section, clarify nullable syntax.
   - [x] **ONBOARDING.md**: Standardize example types, clarify initialization location, tighten phrasing.
   - [x] **CAPABILITIES.md**: Clarify naming conventions, rewrite "optional add-ons" phrasing.
+  - [x] **MultiProviderAnalytics**: Document capability resolution priority (first match wins).
   - [x] **CODE_REVIEW.md**: Add checks for downstream consumers and export verification.
   - [x] **MIGRATION_GUIDES.md**: Add rollback guidance and integration test emphasis.
   - [x] **SCALABILITY.md**: Add machine specs and reproducibility notes to benchmarks.
