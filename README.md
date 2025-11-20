@@ -65,7 +65,7 @@
    - **DI**: `final analytics = Analytics(...)`, then `analytics.logEvent(...)`.
 5. **Review diffs** for generated Dart, docs, and exports during PRs—treat them as production code.
 
-Need a detailed walkthrough? Head to [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
+Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](doc/ONBOARDING.md).
 
 ## Key Features
 
@@ -156,12 +156,12 @@ Contexts allow you to define global properties (like user attributes, device inf
 
 ## Documentation Hub
 
-- [Onboarding Guide](docs/ONBOARDING.md) – setup checklist, command reference, troubleshooting.
-- [Validation & Naming](docs/VALIDATION.md) – schema, strict naming rules, and error explanations.
-- [Capabilities](docs/CAPABILITIES.md) – why capability keys exist and how to expose provider-specific APIs.
-- [Migration Guides](docs/MIGRATION_GUIDES.md) – playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
-- [Code Review checklist](docs/CODE_REVIEW.md) – what to inspect in YAML, generated code, docs, and provider adapters during PRs.
-- [Scalability & Performance](docs/SCALABILITY.md) – benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
+- [Onboarding Guide](doc/ONBOARDING.md) – setup checklist, command reference, troubleshooting.
+- [Validation & Naming](doc/VALIDATION.md) – schema, strict naming rules, and error explanations.
+- [Capabilities](doc/CAPABILITIES.md) – why capability keys exist and how to expose provider-specific APIs.
+- [Migration Guides](doc/MIGRATION_GUIDES.md) – playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
+- [Code Review checklist](doc/CODE_REVIEW.md) – what to inspect in YAML, generated code, docs, and provider adapters during PRs.
+- [Scalability & Performance](doc/SCALABILITY.md) – benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
 
 ## CLI Commands
 
@@ -185,7 +185,7 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 - Naming strategy (`analytics_gen.naming`) enforces consistent identifiers—override per-field when legacy plans demand it.
 - **Strict Event Naming**: Set `strict_event_names: true` in `analytics_gen.yaml` to forbid string interpolation in event names (e.g. `View ${page}`). This prevents high-cardinality events from polluting your analytics data.
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
-- Full details live in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+- Full details live in [`doc/VALIDATION.md`](doc/VALIDATION.md).
 
 ## Analytics Providers & Capabilities
 
@@ -196,7 +196,7 @@ The generated mixins call `logger.logEvent(...)`. You are in control of the unde
 
 - Implement `IAnalytics` for a single SDK.
 - Use `MultiProviderAnalytics` to fan out events while isolating provider failures.
-- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) for a junior-friendly walkthrough.
+- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](doc/CAPABILITIES.md) for a junior-friendly walkthrough.
 
 Mock + async adapters (`MockAnalyticsService`, `AsyncAnalyticsAdapter`) are included for tests and await-heavy flows.
 
@@ -307,9 +307,9 @@ Contributions welcome! Please:
 1. Fork the repo and open a PR with focused changes.
 2. Add unit tests for new features/validations.
 3. Run `dart analyze`, `dart test`, and the generator before submitting.
-4. Document user-facing changes in the README or the relevant doc under `docs/`.
+4. Document user-facing changes in the README or the relevant doc under `doc/`.
 
-Every PR description flows through `.github/pull_request_template.md`, which links directly to [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, docs/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.
+Every PR description flows through `.github/pull_request_template.md`, which links directly to [`doc/CODE_REVIEW.md`](doc/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, doc/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.
 
 ## FAQ
 
@@ -323,7 +323,7 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
   No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
 - **Is it safe to commit generated files?**  
-  Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md)).
+  Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](doc/CODE_REVIEW.md)).
 
 ## License
 
