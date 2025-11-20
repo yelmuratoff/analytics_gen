@@ -216,13 +216,13 @@ class EventRenderer {
     return 'Use ${event.replacement} instead.';
   }
 
+  static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
+
   String _replacePlaceholdersWithInterpolation(
     String eventName,
     List<AnalyticsParameter> parameters,
   ) {
-    final placeholder = RegExp(r'\{([^}]+)\}');
-
-    return eventName.replaceAllMapped(placeholder, (match) {
+    return eventName.replaceAllMapped(_placeholderRegex, (match) {
       final key = match.group(1)!;
       final found = parameters.where((p) => p.name == key).toList();
       if (found.isEmpty) return match.group(0)!;
