@@ -47,13 +47,17 @@ void main() {
       await CsvGenerator(naming: const NamingStrategy())
           .generate(domains, outputDir);
 
-      final eventsCsv = await File(p.join(outputDir, 'analytics_events.csv')).readAsString();
-      final paramsCsv = await File(p.join(outputDir, 'analytics_parameters.csv')).readAsString();
+      final eventsCsv =
+          await File(p.join(outputDir, 'analytics_events.csv')).readAsString();
+      final paramsCsv =
+          await File(p.join(outputDir, 'analytics_parameters.csv'))
+              .readAsString();
 
       expect(eventsCsv, contains('"domain,with,comma"'));
       expect(eventsCsv, contains('login""event'));
-      expect(eventsCsv, contains('"Description with comma, newline\nand ""quote"""'));
-      
+      expect(eventsCsv,
+          contains('"Description with comma, newline\nand ""quote"""'));
+
       expect(paramsCsv, contains('method'));
       expect(paramsCsv, contains('email|google'));
       expect(paramsCsv, contains('"Param desc, newline\nand ""quote"""'));
@@ -86,16 +90,25 @@ void main() {
       await CsvGenerator(naming: const NamingStrategy())
           .generate(domains, outputDir);
 
-      expect(File(p.join(outputDir, 'analytics_events.csv')).existsSync(), isTrue);
-      expect(File(p.join(outputDir, 'analytics_parameters.csv')).existsSync(), isTrue);
-      expect(File(p.join(outputDir, 'analytics_metadata.csv')).existsSync(), isTrue);
-      expect(File(p.join(outputDir, 'analytics_event_parameters.csv')).existsSync(), isTrue);
+      expect(
+          File(p.join(outputDir, 'analytics_events.csv')).existsSync(), isTrue);
+      expect(File(p.join(outputDir, 'analytics_parameters.csv')).existsSync(),
+          isTrue);
+      expect(File(p.join(outputDir, 'analytics_metadata.csv')).existsSync(),
+          isTrue);
+      expect(
+          File(p.join(outputDir, 'analytics_event_parameters.csv'))
+              .existsSync(),
+          isTrue);
 
-      final paramsCsv = await File(p.join(outputDir, 'analytics_parameters.csv')).readAsString();
+      final paramsCsv =
+          await File(p.join(outputDir, 'analytics_parameters.csv'))
+              .readAsString();
       expect(paramsCsv, contains('regex:^[a-z]+\$'));
       expect(paramsCsv, contains('pii=true'));
 
-      final metaCsv = await File(p.join(outputDir, 'analytics_metadata.csv')).readAsString();
+      final metaCsv = await File(p.join(outputDir, 'analytics_metadata.csv'))
+          .readAsString();
       expect(metaCsv, contains('owner,auth-team'));
     });
   });

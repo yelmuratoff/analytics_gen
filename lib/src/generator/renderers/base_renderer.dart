@@ -129,9 +129,13 @@ abstract class BaseRenderer {
     // Length validation (String)
     if (minLength != null || maxLength != null) {
       final lengthCheck = StringBuffer();
-      if (minLength != null) lengthCheck.write('$camelParam.length < $minLength');
+      if (minLength != null) {
+        lengthCheck.write('$camelParam.length < $minLength');
+      }
       if (minLength != null && maxLength != null) lengthCheck.write(' || ');
-      if (maxLength != null) lengthCheck.write('$camelParam.length > $maxLength');
+      if (maxLength != null) {
+        lengthCheck.write('$camelParam.length > $maxLength');
+      }
 
       final condition = isNullable
           ? 'if ($camelParam != null && (${lengthCheck.toString()})) {'

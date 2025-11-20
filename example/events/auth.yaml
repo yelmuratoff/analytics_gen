@@ -3,10 +3,15 @@ auth:
     description: User logs in to the application
     deprecated: true
     replacement: auth.login_v2
+    meta:
+      owner: "auth-team"
+      tier: "critical"
     parameters:
       method:
         type: string
         description: Login method (email, google, apple)
+        meta:
+          pii: true
 
   login_v2:
     description: User logs in to the application (v2)

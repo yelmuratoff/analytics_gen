@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated at: 2025-11-20T16:49:28.341498
 // ignore_for_file: type=lint, unused_import
 
 import 'package:analytics_gen/analytics_gen.dart';
@@ -30,4 +31,5 @@ mixin AnalyticsTheme on AnalyticsBase {
     }
     capability(themeKey)?.setThemeProperty('primary_color', value);
   }
+
 }

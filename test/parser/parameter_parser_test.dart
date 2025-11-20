@@ -77,13 +77,13 @@ void main() {
       );
 
       expect(params, hasLength(2));
-      
+
       final age = params.firstWhere((p) => p.name == 'age');
       expect(age.min, 18);
       expect(age.max, 100);
 
       final username = params.firstWhere((p) => p.name == 'username');
-      expect(username.regex, "^[a-z]+\$");
+      expect(username.regex, '^[a-z]+\$');
       expect(username.minLength, 3);
       expect(username.maxLength, 20);
     });

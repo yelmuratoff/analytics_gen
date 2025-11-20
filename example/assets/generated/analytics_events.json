@@ -18,12 +18,19 @@
           "description": "User logs in to the application",
           "deprecated": true,
           "replacement": "auth.login_v2",
+          "meta": {
+            "owner": "auth-team",
+            "tier": "critical"
+          },
           "parameters": [
             {
               "name": "method",
               "type": "string",
               "nullable": false,
-              "description": "Login method (email, google, apple)"
+              "description": "Login method (email, google, apple)",
+              "meta": {
+                "pii": true
+              }
             }
           ]
         },

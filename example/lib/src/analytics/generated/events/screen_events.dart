@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated at: 2025-11-20T16:49:28.319118
 // ignore_for_file: type=lint, unused_import
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
@@ -11,7 +12,10 @@ mixin AnalyticsScreen on AnalyticsBase {
   ///
   /// Parameters:
   /// - `legacy-screen-code`: string - Three-letter code provided by data team
-  void logScreenLegacyView({required String legacyScreenCode}) {
+  void logScreenLegacyView({
+    required String legacyScreenCode,
+  }) {
+
     logger.logEvent(
       name: "Screen: Legacy",
       parameters: <String, Object?>{
@@ -21,9 +25,7 @@ mixin AnalyticsScreen on AnalyticsBase {
     );
   }
 
-  @Deprecated(
-    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
-  )
+  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
   /// User views a screen
   ///
   /// Parameters:
@@ -35,6 +37,7 @@ mixin AnalyticsScreen on AnalyticsBase {
     String? previousScreen,
     required String screenName,
   }) {
+
     logger.logEvent(
       name: "Screen: ${screenName}",
       parameters: <String, Object?>{
@@ -45,4 +48,5 @@ mixin AnalyticsScreen on AnalyticsBase {
       },
     );
   }
+
 }

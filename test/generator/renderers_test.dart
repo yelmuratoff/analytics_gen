@@ -110,15 +110,15 @@ void main() {
 
       // Regex
       expect(result, contains("if (!RegExp(r'^[a-z]+\$').hasMatch(query)) {"));
-      expect(result, contains("throw ArgumentError.value("));
+      expect(result, contains('throw ArgumentError.value('));
       expect(result, contains("'must match regex ^[a-z]+\$',"));
 
       // Length
-      expect(result, contains("if (query.length < 3 || query.length > 20) {"));
+      expect(result, contains('if (query.length < 3 || query.length > 20) {'));
       expect(result, contains("'length must be between 3 and 20',"));
 
       // Range
-      expect(result, contains("if (count < 1 || count > 100) {"));
+      expect(result, contains('if (count < 1 || count > 100) {'));
       expect(result, contains("'must be between 1 and 100',"));
     });
 

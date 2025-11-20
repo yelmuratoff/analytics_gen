@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated at: 2025-11-20T16:49:28.346482
 // ignore_for_file: type=lint, unused_import
 
 import 'package:analytics_gen/analytics_gen.dart';
@@ -9,17 +10,13 @@ abstract class UserPropertiesCapability implements AnalyticsCapability {
 }
 
 /// Key for UserProperties capability
-const userPropertiesKey = CapabilityKey<UserPropertiesCapability>(
-  'user_properties',
-);
+const userPropertiesKey = CapabilityKey<UserPropertiesCapability>('user_properties');
 
 /// Mixin for Analytics class
 mixin AnalyticsUserProperties on AnalyticsBase {
   /// Whether the user has a premium subscription
   void setUserPropertiesIsPremium(bool value) {
-    capability(
-      userPropertiesKey,
-    )?.setUserPropertiesProperty('is_premium', value);
+    capability(userPropertiesKey)?.setUserPropertiesProperty('is_premium', value);
   }
 
   /// Unique identifier for the user
@@ -37,8 +34,7 @@ mixin AnalyticsUserProperties on AnalyticsBase {
         'must be one of admin, editor, viewer',
       );
     }
-    capability(
-      userPropertiesKey,
-    )?.setUserPropertiesProperty('user_role', value);
+    capability(userPropertiesKey)?.setUserPropertiesProperty('user_role', value);
   }
+
 }

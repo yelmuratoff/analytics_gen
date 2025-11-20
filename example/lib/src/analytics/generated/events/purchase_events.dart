@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated at: 2025-11-20T16:49:28.318978
 // ignore_for_file: type=lint, unused_import
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
@@ -12,7 +13,11 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// Parameters:
   /// - `product_id`: string
   /// - `reason`: string? - Reason for cancellation
-  void logPurchaseCancelled({required String productId, String? reason}) {
+  void logPurchaseCancelled({
+    required String productId,
+    String? reason,
+  }) {
+
     logger.logEvent(
       name: "Purchase Flow: cancelled",
       parameters: <String, Object?>{
@@ -36,6 +41,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
     required String productId,
     required int quantity,
   }) {
+
     logger.logEvent(
       name: "Purchase Flow: completed",
       parameters: <String, Object?>{
@@ -47,4 +53,5 @@ mixin AnalyticsPurchase on AnalyticsBase {
       },
     );
   }
+
 }

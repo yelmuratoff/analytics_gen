@@ -1,0 +1,18 @@
+Event Name,Parameter Name,Required
+auth: login,method,true
+auth: login_v2,login-method,true
+Auth: Phone {phone_country},phone_country,true
+Auth: Phone {phone_country},tracking-token,true
+Auth: Phone {phone_country},user_exists,false
+auth: signup,method,true
+auth: signup,referral_code,false
+Purchase Flow: cancelled,product_id,true
+Purchase Flow: cancelled,reason,false
+Purchase Flow: completed,currency-code,true
+Purchase Flow: completed,amount_value,true
+Purchase Flow: completed,product_id,true
+Purchase Flow: completed,quantity,true
+Screen: Legacy,legacy-screen-code,true
+Screen: {screen_name},duration_ms,false
+Screen: {screen_name},previous_screen,false
+Screen: {screen_name},screen_name,true

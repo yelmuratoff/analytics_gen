@@ -1,0 +1,4 @@
+Type,Name,Key,Value
+Event,auth: login,owner,auth-team
+Event,auth: login,tier,critical
+Parameter,method,pii,true

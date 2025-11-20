@@ -16,7 +16,8 @@ final class CsvGenerator {
     String outputDir,
   ) async {
     await _generateEventsCsv(domains, '$outputDir/analytics_events.csv');
-    await _generateParametersCsv(domains, '$outputDir/analytics_parameters.csv');
+    await _generateParametersCsv(
+        domains, '$outputDir/analytics_parameters.csv');
     await _generateMetadataCsv(domains, '$outputDir/analytics_metadata.csv');
     await _generateEventParametersCsv(
         domains, '$outputDir/analytics_event_parameters.csv');
@@ -73,10 +74,11 @@ final class CsvGenerator {
     }
 
     for (final param in uniqueParams.values) {
-      final allowed = (param.allowedValues != null && param.allowedValues!.isNotEmpty)
-          ? param.allowedValues!.join('|')
-          : '';
-      
+      final allowed =
+          (param.allowedValues != null && param.allowedValues!.isNotEmpty)
+              ? param.allowedValues!.join('|')
+              : '';
+
       final validation = <String>[];
       if (param.regex != null) validation.add('regex:${param.regex}');
       if (param.minLength != null) validation.add('min_len:${param.minLength}');
