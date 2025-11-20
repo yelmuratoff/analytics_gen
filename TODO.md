@@ -2,40 +2,6 @@
 
 ## Active Work Items
 
-- [x] **BatchingAnalytics Resilience**: Implement "Poison Pill" protection.
-  - [x] Add retry counter to queued events.
-  - [x] Drop events that fail to send after N attempts to prevent blocking the queue indefinitely.
-- [x] **Analytics.initialize Safety**: Prevent accidental re-initialization.
-  - [x] Add a check in `Analytics.initialize` to throw or warn if called when `_instance` is already set.
-- [x] **Improve Error Reporting**: Collect all validation errors in `YamlParser` and report them at once instead of failing on the first one.
-- [x] **Strict Mode for Event Names**: Add configuration to treat string interpolation in event names as a build error (high cardinality protection).
-- [x] Refactor `CodeGenerator`: Extract string rendering logic into separate Renderer classes (SRP).
-  - [x] Create `EventRenderer` for domain mixins.
-  - [x] Create `ContextRenderer` for context capabilities.
-  - [x] Create `AnalyticsClassRenderer` for the main singleton.
-  - [x] Update `CodeGenerator` to use renderers and handle only file I/O.
-  - [x] Add unit tests for renderers.
-- [x] Refactor `YamlParser`: Extract parameter parsing logic into `ParameterParser`.
-- [x] Refactor `CodeGenerator`: Inject renderers via constructor for better testability.
-
-- [x] **Refactor & Cleanup (Tech Debt)**
-  - [x] Remove legacy `user_properties.yaml` and `global_context.yaml` handling from `YamlParser` and `GenerationPipeline`. (Use `contexts` configuration instead).
-  - [x] Refactor `YamlParser`: Separate file discovery (I/O) from parsing logic (SRP).
-  - [x] Refactor `YamlParser`: Inject `NamingStrategy` via constructor instead of hardcoding default.
-
-- [x] **Quality Assurance & Guardrails**
-  - [x] **CI Guardrails**: Add a step in CI to verify that generated code is up-to-date (`git diff --exit-code` after generation).
-  - [x] **Linter Upgrade**: Adopt stricter linting rules (using standard `lints` package with additional rules) to enforce higher code quality.
-
-- [x] **Documentation Audit & Polish**
-  - [x] **README.md**: Tighten tone (remove "Absolutely"), standardize YAML types to lowercase, rewrite "Extensible Metadata" intro.
-  - [x] **VALIDATION.md**: Add "Accepted types" section, clarify nullable syntax.
-  - [x] **ONBOARDING.md**: Standardize example types, clarify initialization location, tighten phrasing.
-  - [x] **CAPABILITIES.md**: Clarify naming conventions, rewrite "optional add-ons" phrasing.
-  - [x] **MultiProviderAnalytics**: Document capability resolution priority (first match wins).
-  - [x] **CODE_REVIEW.md**: Add checks for downstream consumers and export verification.
-  - [x] **MIGRATION_GUIDES.md**: Add rollback guidance and integration test emphasis.
-  - [x] **SCALABILITY.md**: Add machine specs and reproducibility notes to benchmarks.
 
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
