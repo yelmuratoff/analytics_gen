@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 
-const _listEq = ListEquality<String>();
+const _listEq = ListEquality<Object>();
 const _mapEq = MapEquality<String, Object?>();
 
 /// Represents a single analytics event parameter.
@@ -14,7 +14,7 @@ final class AnalyticsParameter {
   final String type;
   final bool isNullable;
   final String? description;
-  final List<String>? allowedValues;
+  final List<Object>? allowedValues;
 
   // Validation rules
   final String? regex;

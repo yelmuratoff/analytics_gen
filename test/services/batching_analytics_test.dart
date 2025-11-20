@@ -89,12 +89,13 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 1,
+        minRetryDelay: const Duration(milliseconds: 1),
         onFlushError: (error, _) => errors.add(error),
       );
 
       batching.logEvent(name: 'auto');
 
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
       expect(errors, isNotEmpty);
       expect(delegate.recordedEvents, isEmpty);
 

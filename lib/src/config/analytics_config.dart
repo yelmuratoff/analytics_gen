@@ -57,7 +57,7 @@ final class AnalyticsConfig {
     this.generateDocs = false,
     this.generatePlan = true,
     this.includeEventDescription = false,
-    this.strictEventNames = false,
+    this.strictEventNames = true,
     this.naming = const NamingStrategy(),
     this.contexts = const [],
   });
@@ -78,7 +78,7 @@ final class AnalyticsConfig {
       generatePlan: config['generate_plan'] as bool? ?? true,
       includeEventDescription:
           config['include_event_description'] as bool? ?? false,
-      strictEventNames: config['strict_event_names'] as bool? ?? false,
+      strictEventNames: config['strict_event_names'] as bool? ?? true,
       naming: NamingStrategy.fromYaml(config['naming'] as Map?),
       contexts: (config['contexts'] as List?)?.cast<String>() ?? const [],
     );

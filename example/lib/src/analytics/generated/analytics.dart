@@ -1,5 +1,4 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Generated at: 2025-11-20T17:08:29.517646
 // ignore_for_file: type=lint, unused_import
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
@@ -86,7 +85,7 @@ final class Analytics extends AnalyticsBase with
               isNullable: false,
               description: 'Login method (email, google, apple)',
               meta: <String, Object?>{
-                'pii': 'true',
+                'pii': true,
               },
             ),
           ],

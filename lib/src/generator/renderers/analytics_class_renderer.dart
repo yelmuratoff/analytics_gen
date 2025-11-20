@@ -241,8 +241,12 @@ class AnalyticsClassRenderer extends BaseRenderer {
     if (event.meta.isNotEmpty) {
       buffer.writeln('          meta: <String, Object?>{');
       for (final entry in event.meta.entries) {
+        final value = entry.value;
+        final valueString = value is String
+            ? "'${StringUtils.escapeSingleQuoted(value)}'"
+            : value.toString();
         buffer.writeln(
-          "            '${StringUtils.escapeSingleQuoted(entry.key)}': '${StringUtils.escapeSingleQuoted(entry.value.toString())}',",
+          "            '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
         );
       }
       buffer.writeln('          },');
@@ -277,10 +281,13 @@ class AnalyticsClassRenderer extends BaseRenderer {
       );
     }
     if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
-      buffer.writeln('              allowedValues: <String>[');
+      buffer.writeln('              allowedValues: <Object>[');
       for (final value in param.allowedValues!) {
+        final valueString = value is String
+            ? "'${StringUtils.escapeSingleQuoted(value)}'"
+            : value.toString();
         buffer.writeln(
-          "                '${StringUtils.escapeSingleQuoted(value)}',",
+          '                $valueString,',
         );
       }
       buffer.writeln('              ],');
@@ -288,8 +295,12 @@ class AnalyticsClassRenderer extends BaseRenderer {
     if (param.meta.isNotEmpty) {
       buffer.writeln('              meta: <String, Object?>{');
       for (final entry in param.meta.entries) {
+        final value = entry.value;
+        final valueString = value is String
+            ? "'${StringUtils.escapeSingleQuoted(value)}'"
+            : value.toString();
         buffer.writeln(
-          "                '${StringUtils.escapeSingleQuoted(entry.key)}': '${StringUtils.escapeSingleQuoted(entry.value.toString())}',",
+          "                '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
         );
       }
       buffer.writeln('              },');

@@ -175,6 +175,7 @@ void main() {
       final config = AnalyticsConfig(
         eventsPath: 'events',
         outputPath: 'src/analytics/generated',
+        strictEventNames: false,
       );
 
       final generator = CodeGenerator(

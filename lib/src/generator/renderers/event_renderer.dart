@@ -117,6 +117,7 @@ class EventRenderer extends BaseRenderer {
               'allowed${StringUtils.capitalizePascal(camelParam)}Values';
           final encodedValues = encodeAllowedValues(allowedValues);
           final joinedValues = joinAllowedValues(allowedValues);
+          final dartType = DartTypeMapper.toDartType(param.type);
 
           buffer.write(renderAllowedValuesCheck(
             camelParam: camelParam,
@@ -124,6 +125,7 @@ class EventRenderer extends BaseRenderer {
             encodedValues: encodedValues,
             joinedValues: joinedValues,
             isNullable: param.isNullable,
+            type: dartType,
           ));
         }
 

@@ -13,7 +13,6 @@ abstract class BaseRenderer {
   String renderFileHeader({bool includeCoverageIgnore = true}) {
     final buffer = StringBuffer();
     buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('// Generated at: ${DateTime.now().toIso8601String()}');
     buffer.writeln('// ignore_for_file: type=lint, unused_import');
     if (includeCoverageIgnore) {
       buffer.writeln(
@@ -74,13 +73,18 @@ abstract class BaseRenderer {
     required String encodedValues,
     required String joinedValues,
     required bool isNullable,
+    required String type,
     int indent = 0,
   }) {
     final indentStr = '  ' * indent;
     final buffer = StringBuffer();
 
+    // Strip nullable suffix for the Set type definition
+    final setType =
+        type.endsWith('?') ? type.substring(0, type.length - 1) : type;
+
     buffer.writeln(
-      '$indentStr    const $constName = <String>{$encodedValues};',
+      '$indentStr    const $constName = <$setType>{$encodedValues};',
     );
 
     final condition = isNullable
@@ -186,14 +190,17 @@ abstract class BaseRenderer {
   /// Escapes and encodes a list of allowed values for code generation.
   ///
   /// Returns a comma-separated string of escaped values ready for code.
-  String encodeAllowedValues(List<String> values) {
-    return values
-        .map((value) => '\'${StringUtils.escapeSingleQuoted(value)}\'')
-        .join(', ');
+  String encodeAllowedValues(List<Object> values) {
+    return values.map((value) {
+      if (value is String) {
+        return "'${StringUtils.escapeSingleQuoted(value)}'";
+      }
+      return value.toString();
+    }).join(', ');
   }
 
   /// Joins allowed values for error messages.
-  String joinAllowedValues(List<String> values) {
+  String joinAllowedValues(List<Object> values) {
     return values.join(', ');
   }
 

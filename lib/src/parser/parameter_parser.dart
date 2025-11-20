@@ -83,7 +83,7 @@ class ParameterParser {
 
       String paramType;
       String? description;
-      List<String>? allowedValues;
+      List<Object>? allowedValues;
       String? regex;
       int? minLength;
       int? maxLength;
@@ -129,7 +129,7 @@ class ParameterParser {
               filePath: filePath,
             );
           }
-          allowedValues = rawAllowed.map((e) => e.toString()).toList();
+          allowedValues = List<Object>.from(rawAllowed);
         }
       } else {
         // Simple parameter (just type)

@@ -2,7 +2,7 @@
 
 ## Active Work Items
 
-- [ ] **Generator Determinism & Validation**
+- [x] **Generator Determinism & Validation**
   - Remove non-deterministic timestamps from generated headers to keep diffs clean
   - Make `allowed_values` type-aware (respect ints/bools/doubles) so runtime validation compares correct types
   - Preserve meta value types when emitting runtime plan (avoid stringifying booleans/nums)

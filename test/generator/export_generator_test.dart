@@ -157,7 +157,7 @@ void main() {
       expect(
         logs,
         contains(
-          '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
+          '✓ Generated CSVs at: $outputDir',
         ),
       );
       expect(

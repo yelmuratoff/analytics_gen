@@ -60,6 +60,7 @@ class ContextRenderer extends BaseRenderer {
           encodedValues: encodedValues,
           joinedValues: joinedValues,
           isNullable: prop.isNullable,
+          type: dartType,
         ));
       }
 

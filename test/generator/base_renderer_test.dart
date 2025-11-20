@@ -75,6 +75,7 @@ void main() {
         encodedValues: "'email', 'google'",
         joinedValues: 'email, google',
         isNullable: false,
+        type: 'String',
       );
 
       expect(check, contains('const allowedMethodValues = <String>{'));
@@ -91,6 +92,7 @@ void main() {
         encodedValues: "'email', 'google'",
         joinedValues: 'email, google',
         isNullable: true,
+        type: 'String',
       );
 
       expect(
