@@ -2,7 +2,7 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 import 'generated_events.dart';
 import 'contexts/theme_context.dart';
-import 'contexts/user_properties.dart';
+import 'contexts/user_properties_context.dart';
 
 /// Main Analytics class.
 ///

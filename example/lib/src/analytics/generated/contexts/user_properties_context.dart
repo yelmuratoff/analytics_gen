@@ -5,7 +5,7 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 /// Capability interface for UserProperties
 abstract class UserPropertiesCapability implements AnalyticsCapability {
-  void setUserProperty(String name, Object? value);
+  void setUserPropertiesProperty(String name, Object? value);
 }
 
 /// Key for UserProperties capability
@@ -14,17 +14,17 @@ const userPropertiesKey = CapabilityKey<UserPropertiesCapability>('user_properti
 /// Mixin for Analytics class
 mixin AnalyticsUserProperties on AnalyticsBase {
   /// Whether the user has a premium subscription
-  void setIsPremium(bool value) {
-    capability(userPropertiesKey)?.setUserProperty('is_premium', value);
+  void setUserPropertiesIsPremium(bool value) {
+    capability(userPropertiesKey)?.setUserPropertiesProperty('is_premium', value);
   }
 
   /// Unique identifier for the user
-  void setUserId(String value) {
-    capability(userPropertiesKey)?.setUserProperty('user_id', value);
+  void setUserPropertiesUserId(String value) {
+    capability(userPropertiesKey)?.setUserPropertiesProperty('user_id', value);
   }
 
   /// Role of the user in the system
-  void setUserRole(String value) {
+  void setUserPropertiesUserRole(String value) {
     const allowedUserRoleValues = <String>{'admin', 'editor', 'viewer'};
     if (!allowedUserRoleValues.contains(value)) {
       throw ArgumentError.value(
@@ -33,7 +33,7 @@ mixin AnalyticsUserProperties on AnalyticsBase {
         'must be one of admin, editor, viewer',
       );
     }
-    capability(userPropertiesKey)?.setUserProperty('user_role', value);
+    capability(userPropertiesKey)?.setUserPropertiesProperty('user_role', value);
   }
 
 }

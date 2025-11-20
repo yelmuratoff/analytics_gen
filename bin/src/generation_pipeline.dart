@@ -40,17 +40,7 @@ class GenerationPipeline {
           .toList(), // Resolve paths
     );
     final domains = await parser.parseEvents();
-    final userProperties = await parser.parseUserProperties();
-    final globalContext = await parser.parseGlobalContext();
     final contexts = await parser.parseContexts();
-
-    // Merge legacy contexts if they exist
-    if (userProperties.isNotEmpty) {
-      contexts['user_properties'] = userProperties;
-    }
-    if (globalContext.isNotEmpty) {
-      contexts['global_context'] = globalContext;
-    }
 
     final tasks = _buildTasks(
       request,

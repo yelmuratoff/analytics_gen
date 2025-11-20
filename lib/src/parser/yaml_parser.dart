@@ -86,14 +86,6 @@ final class YamlParser {
         return null;
       }
 
-      // Skip legacy user_properties.yaml and global_context.yaml if they are not explicitly in contextFiles
-      // but we want to avoid parsing them as domains.
-      // If the user explicitly added them to contextFiles, they are skipped above.
-      // If not, we still skip them to preserve legacy behavior unless they are renamed.
-      if (file.path.endsWith('user_properties.yaml') ||
-          file.path.endsWith('global_context.yaml')) {
-        return null;
-      }
       final content = await file.readAsString();
       return _ParsedFile(file, loadYaml(content));
     });
@@ -201,55 +193,6 @@ final class YamlParser {
         }
       }
     }
-  }
-
-  /// Parses user properties from user_properties.yaml
-  Future<List<AnalyticsParameter>> parseUserProperties() async {
-    return _parseSpecialFile('user_properties.yaml', 'user_properties');
-  }
-
-  /// Parses global context from global_context.yaml
-  Future<List<AnalyticsParameter>> parseGlobalContext() async {
-    return _parseSpecialFile('global_context.yaml', 'global_context');
-  }
-
-  Future<List<AnalyticsParameter>> _parseSpecialFile(
-    String fileName,
-    String rootKey,
-  ) async {
-    final file = File('$eventsPath/$fileName');
-    if (!file.existsSync()) {
-      return const [];
-    }
-
-    final content = await file.readAsString();
-    final yaml = loadYaml(content);
-
-    if (yaml is! YamlMap) {
-      throw AnalyticsParseException(
-        '$fileName must be a map.',
-        filePath: file.path,
-      );
-    }
-
-    final propertiesYaml = yaml[rootKey];
-    if (propertiesYaml == null) {
-      return const [];
-    }
-
-    if (propertiesYaml is! YamlMap) {
-      throw AnalyticsParseException(
-        'The "$rootKey" key must be a map.',
-        filePath: file.path,
-      );
-    }
-
-    return _parameterParser.parseParameters(
-      propertiesYaml,
-      domainName: rootKey,
-      eventName: 'global', // Dummy event name for error messages
-      filePath: file.path,
-    );
   }
 
   /// Parses events for a single domain

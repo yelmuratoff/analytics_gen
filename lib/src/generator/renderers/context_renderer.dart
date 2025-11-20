@@ -7,10 +7,6 @@ class ContextRenderer {
     String contextName,
     List<AnalyticsParameter> properties,
   ) {
-    final isLegacyUserProperties = contextName == 'user_properties';
-    final isLegacyGlobalContext = contextName == 'global_context';
-    final isLegacy = isLegacyUserProperties || isLegacyGlobalContext;
-
     final pascalName = StringUtils.capitalizePascal(contextName);
     final camelContextName = StringUtils.toCamelCase(contextName);
 
@@ -25,14 +21,7 @@ class ContextRenderer {
     buffer.writeln(
         'abstract class ${pascalName}Capability implements AnalyticsCapability {');
 
-    String interfaceMethodName;
-    if (isLegacyUserProperties) {
-      interfaceMethodName = 'setUserProperty';
-    } else if (isLegacyGlobalContext) {
-      interfaceMethodName = 'setContextProperty';
-    } else {
-      interfaceMethodName = 'set${pascalName}Property';
-    }
+    final interfaceMethodName = 'set${pascalName}Property';
 
     buffer.writeln('  void $interfaceMethodName(String name, Object? value);');
     buffer.writeln('}');
@@ -49,12 +38,8 @@ class ContextRenderer {
     for (final prop in properties) {
       final camelName = StringUtils.toCamelCase(prop.codeName);
 
-      String methodName;
-      if (isLegacy) {
-        methodName = 'set${StringUtils.capitalizePascal(camelName)}';
-      } else {
-        methodName = 'set$pascalName${StringUtils.capitalizePascal(camelName)}';
-      }
+      final methodName =
+          'set$pascalName${StringUtils.capitalizePascal(camelName)}';
 
       final dartType = DartTypeMapper.toDartType(prop.type);
       final nullableType = prop.isNullable ? '$dartType?' : dartType;

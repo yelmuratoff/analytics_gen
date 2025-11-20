@@ -19,13 +19,7 @@ class AnalyticsClassRenderer {
     buffer.writeln("import 'generated_events.dart';");
 
     for (final contextName in contexts.keys.toList()..sort()) {
-      final isLegacy =
-          contextName == 'user_properties' || contextName == 'global_context';
-      if (isLegacy) {
-        buffer.writeln("import 'contexts/$contextName.dart';");
-      } else {
-        buffer.writeln("import 'contexts/${contextName}_context.dart';");
-      }
+      buffer.writeln("import 'contexts/${contextName}_context.dart';");
     }
     buffer.writeln();
 

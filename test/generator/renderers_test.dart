@@ -139,7 +139,7 @@ void main() {
               "capability(userContextKey)?.setUserContextProperty('user_id', value);"));
     });
 
-    test('renders legacy user properties', () {
+    test('renders user properties context', () {
       final properties = [
         AnalyticsParameter(
           name: 'role',
@@ -151,9 +151,11 @@ void main() {
       final result = renderer.renderContextFile('user_properties', properties);
 
       expect(result, contains('abstract class UserPropertiesCapability'));
-      expect(result,
-          contains('void setUserProperty(String name, Object? value);'));
-      expect(result, contains('void setRole(String? value)'));
+      expect(
+          result,
+          contains(
+              'void setUserPropertiesProperty(String name, Object? value);'));
+      expect(result, contains('void setUserPropertiesRole(String? value)'));
     });
   });
 

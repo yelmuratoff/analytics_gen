@@ -45,7 +45,7 @@ void main() {
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final userPropsFile =
-        File(path.join(outputDir, 'contexts', 'user_properties.dart'));
+        File(path.join(outputDir, 'contexts', 'user_properties_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(userPropsFile.existsSync(), isTrue);
@@ -54,15 +54,16 @@ void main() {
     final userPropsContent = userPropsFile.readAsStringSync();
     expect(userPropsContent, contains('class UserPropertiesCapability'));
     expect(userPropsContent, contains('mixin AnalyticsUserProperties'));
-    expect(userPropsContent, contains('void setUserRole(String value)'));
+    expect(userPropsContent,
+        contains('void setUserPropertiesUserRole(String value)'));
     expect(
         userPropsContent,
         contains(
-            "capability(userPropertiesKey)?.setUserProperty('user_role', value)"));
+            "capability(userPropertiesKey)?.setUserPropertiesProperty('user_role', value)"));
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(
-        analyticsContent, contains("import 'contexts/user_properties.dart';"));
+    expect(analyticsContent,
+        contains("import 'contexts/user_properties_context.dart';"));
     expect(analyticsContent, contains('with AnalyticsUserProperties'));
   });
 
@@ -76,7 +77,7 @@ void main() {
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final userPropsFile =
-        File(path.join(outputDir, 'contexts', 'user_properties.dart'));
+        File(path.join(outputDir, 'contexts', 'user_properties_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(userPropsFile.existsSync(), isFalse);
@@ -103,7 +104,7 @@ void main() {
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final contextFile =
-        File(path.join(outputDir, 'contexts', 'global_context.dart'));
+        File(path.join(outputDir, 'contexts', 'global_context_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(contextFile.existsSync(), isTrue);
@@ -112,15 +113,16 @@ void main() {
     final contextContent = contextFile.readAsStringSync();
     expect(contextContent, contains('class GlobalContextCapability'));
     expect(contextContent, contains('mixin AnalyticsGlobalContext'));
-    expect(contextContent, contains('void setAppVersion(String value)'));
+    expect(contextContent,
+        contains('void setGlobalContextAppVersion(String value)'));
     expect(
         contextContent,
         contains(
-            "capability(globalContextKey)?.setContextProperty('app_version', value)"));
+            "capability(globalContextKey)?.setGlobalContextProperty('app_version', value)"));
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(
-        analyticsContent, contains("import 'contexts/global_context.dart';"));
+    expect(analyticsContent,
+        contains("import 'contexts/global_context_context.dart';"));
     expect(analyticsContent, contains('with AnalyticsGlobalContext'));
   });
 
@@ -155,9 +157,9 @@ void main() {
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final userPropsFile =
-        File(path.join(outputDir, 'contexts', 'user_properties.dart'));
+        File(path.join(outputDir, 'contexts', 'user_properties_context.dart'));
     final contextFile =
-        File(path.join(outputDir, 'contexts', 'global_context.dart'));
+        File(path.join(outputDir, 'contexts', 'global_context_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
 
     expect(userPropsFile.existsSync(), isTrue);
@@ -165,10 +167,10 @@ void main() {
     expect(analyticsFile.existsSync(), isTrue);
 
     final analyticsContent = analyticsFile.readAsStringSync();
-    expect(
-        analyticsContent, contains("import 'contexts/user_properties.dart';"));
-    expect(
-        analyticsContent, contains("import 'contexts/global_context.dart';"));
+    expect(analyticsContent,
+        contains("import 'contexts/user_properties_context.dart';"));
+    expect(analyticsContent,
+        contains("import 'contexts/global_context_context.dart';"));
     expect(analyticsContent,
         contains('with AnalyticsGlobalContext, AnalyticsUserProperties'));
   });

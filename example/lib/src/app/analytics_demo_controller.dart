@@ -57,9 +57,9 @@ class HomeScreenController extends ChangeNotifier {
 
   /// Sets user properties.
   void setUserProperties() {
-    Analytics.instance.setUserId('user_123');
-    Analytics.instance.setUserRole('admin');
-    Analytics.instance.setIsPremium(true);
+    Analytics.instance.setUserPropertiesUserId('user_123');
+    Analytics.instance.setUserPropertiesUserRole('admin');
+    Analytics.instance.setUserPropertiesIsPremium(true);
   }
 
   void clearLog() {

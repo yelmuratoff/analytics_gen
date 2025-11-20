@@ -90,12 +90,9 @@ final class CodeGenerator {
     List<AnalyticsParameter> properties,
     String outputDir,
   ) async {
-    final isLegacy =
-        contextName == 'user_properties' || contextName == 'global_context';
     final content = _contextRenderer.renderContextFile(contextName, properties);
 
-    final fileName =
-        isLegacy ? '$contextName.dart' : '${contextName}_context.dart';
+    final fileName = '${contextName}_context.dart';
     final filePath = path.join(outputDir, fileName);
     await _writeFileIfContentChanged(filePath, content);
     return filePath;

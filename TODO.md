@@ -18,6 +18,11 @@
 - [x] Refactor `YamlParser`: Extract parameter parsing logic into `ParameterParser`.
 - [x] Refactor `CodeGenerator`: Inject renderers via constructor for better testability.
 
+- [ ] **Refactor & Cleanup (Tech Debt)**
+  - [ ] Remove legacy `user_properties.yaml` and `global_context.yaml` handling from `YamlParser` and `GenerationPipeline`. (Use `contexts` configuration instead).
+  - [ ] Refactor `YamlParser`: Separate file discovery (I/O) from parsing logic (SRP).
+  - [ ] Refactor `YamlParser`: Inject `NamingStrategy` via constructor instead of hardcoding default.
+
 - [x] **Documentation Audit & Polish**
   - [x] **README.md**: Tighten tone (remove "Absolutely"), standardize YAML types to lowercase, rewrite "Extensible Metadata" intro.
   - [x] **VALIDATION.md**: Add "Accepted types" section, clarify nullable syntax.
