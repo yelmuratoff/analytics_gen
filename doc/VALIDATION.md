@@ -169,3 +169,35 @@ This workflow:
 1.  Validates the YAML schema.
 2.  Regenerates all artifacts.
 3.  Fails if there are any uncommitted changes (ensuring generated code matches the plan).
+
+## Strict Event Naming
+
+By default, `analytics_gen` enforces strict event naming to prevent high-cardinality issues. This means you cannot use string interpolation (e.g., `View ${page_name}`) in event names.
+
+**Why?**
+Analytics providers like Amplitude and Mixpanel treat each unique event name as a separate event type. If you include dynamic values in event names, you can quickly exceed your event limit and make your data unmanageable.
+
+**Bad Practice (Blocked by Default):**
+```yaml
+view_screen:
+  event_name: "View Screen: {screen_name}" # ❌ Dynamic event name
+  parameters:
+    screen_name:
+      type: string
+```
+
+**Good Practice:**
+```yaml
+view_screen:
+  event_name: "View Screen" # ✅ Static event name
+  parameters:
+    screen_name:
+      type: string
+```
+
+If you absolutely must use dynamic event names (e.g., for legacy reasons), you can disable this check in `analytics_gen.yaml`:
+
+```yaml
+analytics_gen:
+  strict_event_names: false
+```

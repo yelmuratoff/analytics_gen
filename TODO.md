@@ -18,7 +18,7 @@
   - Add GitHub Actions workflow example to documentation.
   - Show how to run `dart run analytics_gen:generate --validate-only` in CI.
 
-- [ ] **Strict Event Naming**
+- [x] **Strict Event Naming**
   - Make `strict_event_names: true` the default in future versions.
   - Ensure documentation strongly encourages strict mode.
 
