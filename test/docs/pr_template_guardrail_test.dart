@@ -14,8 +14,8 @@ void main() {
 
       expect(
         content,
-        contains('docs/CODE_REVIEW.md'),
-        reason: 'Template should link to the docs/CODE_REVIEW.md checklist.',
+        contains('doc/CODE_REVIEW.md'),
+        reason: 'Template should link to the doc/CODE_REVIEW.md checklist.',
       );
       expect(
         content,
