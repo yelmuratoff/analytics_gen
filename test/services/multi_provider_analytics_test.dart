@@ -408,7 +408,9 @@ class _TestCapabilityImpl implements _TestCapability {
   _TestCapabilityImpl(this.source);
 }
 
-class _ProviderWithCapability with CapabilityProviderMixin implements IAnalytics {
+class _ProviderWithCapability
+    with CapabilityProviderMixin
+    implements IAnalytics {
   final String name;
 
   _ProviderWithCapability(this.name) {
