@@ -24,11 +24,15 @@ final class AnalyticsParseException extends FormatException
   /// Optional source span indicating the location of the error.
   final SourceSpan? span;
 
+  /// Optional line number (1-based) if span is not available.
+  final int? lineNumber;
+
   const AnalyticsParseException(
     super.message, {
     this.filePath,
     this.innerError,
     this.span,
+    this.lineNumber,
   });
 
   @override
@@ -38,7 +42,11 @@ final class AnalyticsParseException extends FormatException
     }
     final sb = StringBuffer(super.toString());
     if (filePath != null) {
-      sb.write(' (file: $filePath)');
+      sb.write(' (file: $filePath');
+      if (lineNumber != null) {
+        sb.write(':$lineNumber');
+      }
+      sb.write(')');
     }
     if (innerError != null) {
       sb.write('\n  Caused by: $innerError');
@@ -66,7 +74,24 @@ final class AnalyticsAggregateException implements AnalyticsException {
 
 final class AnalyticsGenerationException implements AnalyticsException {
   final String message;
-  const AnalyticsGenerationException(this.message);
+  final String? sourcePath;
+  final int? lineNumber;
+
+  const AnalyticsGenerationException(
+    this.message, {
+    this.sourcePath,
+    this.lineNumber,
+  });
+
   @override
-  String toString() => 'AnalyticsGenerationException: $message';
+  String toString() {
+    final sb = StringBuffer('AnalyticsGenerationException: $message');
+    if (sourcePath != null) {
+      sb.write('\nSource: $sourcePath');
+      if (lineNumber != null) {
+        sb.write(':$lineNumber');
+      }
+    }
+    return sb.toString();
+  }
 }

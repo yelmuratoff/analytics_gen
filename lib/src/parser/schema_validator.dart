@@ -42,7 +42,8 @@ final class SchemaValidator {
               'in domains "$conflictDomain" and "$domainName". '
               'Provide a custom `identifier` or update '
               '`analytics_gen.naming.identifier_template` to make identifiers unique.',
-              filePath: null,
+              filePath: event.sourcePath,
+              lineNumber: event.lineNumber,
             );
           }
 

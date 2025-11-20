@@ -114,9 +114,11 @@ final class YamlParser {
           _validator.validateDomainName(domainKey, source.filePath);
 
           if (merged.containsKey(domainKey)) {
-            throw StateError(
+            throw AnalyticsParseException(
               'Duplicate domain "$domainKey" found in multiple files. '
               'Each domain must be defined in only one file.',
+              filePath: source.filePath,
+              span: (keyNode is YamlNode) ? keyNode.span : null,
             );
           }
 
