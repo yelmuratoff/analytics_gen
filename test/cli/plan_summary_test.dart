@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -40,7 +41,11 @@ void main() {
 
       await runZonedGuarded(
         () async {
-          await plan.printTrackingPlan(eventsPath, config, verbose: false);
+          await plan.printTrackingPlan(
+            eventsPath,
+            config,
+            logger: const ConsoleLogger(verbose: false),
+          );
         },
         (error, stack) => fail('Unexpected error: $error'),
         zoneSpecification: ZoneSpecification(

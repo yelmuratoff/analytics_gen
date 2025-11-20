@@ -1,26 +1,28 @@
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
-void printUsage(ArgParser parser) {
-  print('Analytics Gen - Code generator for type-safe analytics events');
-  print('');
-  print('Usage: dart run analytics_gen:generate [options]');
-  print('');
-  print('Options:');
-  print(parser.usage);
-  print('');
-  print('Examples:');
-  print('  # Generate code only');
-  print('  dart run analytics_gen:generate');
-  print('');
-  print('  # Generate code and documentation');
-  print('  dart run analytics_gen:generate --docs');
-  print('');
-  print('  # Generate everything');
-  print('  dart run analytics_gen:generate --docs --exports');
-  print('');
-  print('  # Watch mode');
-  print('  dart run analytics_gen:generate --watch');
-  print('');
-  print('  # Validate YAML only (no files written)');
-  print('  dart run analytics_gen:generate --validate-only');
+void printUsage(ArgParser parser, {Logger? logger}) {
+  final log = logger ?? const ConsoleLogger();
+  log.info('Analytics Gen - Code generator for type-safe analytics events');
+  log.info('');
+  log.info('Usage: dart run analytics_gen:generate [options]');
+  log.info('');
+  log.info('Options:');
+  log.info(parser.usage);
+  log.info('');
+  log.info('Examples:');
+  log.info('  # Generate code only');
+  log.info('  dart run analytics_gen:generate');
+  log.info('');
+  log.info('  # Generate code and documentation');
+  log.info('  dart run analytics_gen:generate --docs');
+  log.info('');
+  log.info('  # Generate everything');
+  log.info('  dart run analytics_gen:generate --docs --exports');
+  log.info('');
+  log.info('  # Watch mode');
+  log.info('  dart run analytics_gen:generate --watch');
+  log.info('');
+  log.info('  # Validate YAML only (no files written)');
+  log.info('  dart run analytics_gen:generate --validate-only');
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
 import '../core/async_analytics_interface.dart';
+import '../util/logger.dart';
 
 /// Function used to check whether an event (name + params) should be
 /// forwarded to a particular provider.
@@ -42,6 +43,8 @@ final class MultiProviderAnalytics
   /// will not receive that event.
   final Map<IAnalytics, EventPredicate?> _providerFilters;
 
+  final Logger _logger;
+
   /// Creates an immutable multi-provider analytics service.
   ///
   /// The [providers] list is copied and made unmodifiable to ensure immutability.
@@ -50,8 +53,10 @@ final class MultiProviderAnalytics
     this.onError,
     this.onProviderFailure,
     Map<IAnalytics, EventPredicate?>? providerFilters,
+    Logger? logger,
   })  : _providers = List.unmodifiable(providers),
-        _providerFilters = Map.unmodifiable(providerFilters ?? const {});
+        _providerFilters = Map.unmodifiable(providerFilters ?? const {}),
+        _logger = logger ?? const NoOpLogger();
 
   @override
   AnalyticsCapabilityResolver get capabilityResolver =>
@@ -77,19 +82,14 @@ final class MultiProviderAnalytics
         // Unexpected: Provider bugs - log and continue
         _handleProviderFailure(provider, name, parameters, error, stackTrace);
 
-        // In debug mode, log unexpected errors with more detail
-        assert(() {
-          // Log to console in debug builds
-          // ignore: avoid_print
-          print(
-            '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
-            '  Error: $error\n'
-            '  Event: $name\n'
-            '  Parameters: $parameters\n'
-            '  Stack trace: $stackTrace',
-          );
-          return true;
-        }());
+        _logger.error(
+          '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
+          '  Error: $error\n'
+          '  Event: $name\n'
+          '  Parameters: $parameters',
+          error,
+          stackTrace,
+        );
       }
     }
   }
@@ -180,6 +180,7 @@ final class MultiProviderAnalytics
       onError: onError,
       onProviderFailure: onProviderFailure,
       providerFilters: newProviderFilters,
+      logger: _logger,
     );
   }
 
@@ -202,6 +203,7 @@ final class MultiProviderAnalytics
       onError: onError,
       onProviderFailure: onProviderFailure,
       providerFilters: newProviderFilters,
+      logger: _logger,
     );
   }
 
@@ -224,6 +226,7 @@ final class MultiProviderAnalytics
       onError: onError,
       onProviderFailure: onProviderFailure,
       providerFilters: newProviderFilters,
+      logger: _logger,
     );
   }
 }

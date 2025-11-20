@@ -8,6 +8,7 @@ import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
@@ -23,10 +24,10 @@ class GenerationPipeline {
   final AnalyticsConfig config;
 
   Future<void> run(GenerationRequest request) async {
-    printBanner('Analytics Gen - Code Generation');
+    printBanner('Analytics Gen - Code Generation', logger: request.logger);
 
     if (!request.hasArtifacts) {
-      print('No generation tasks were requested.');
+      request.logger.info('No generation tasks were requested.');
       return;
     }
 
@@ -57,44 +58,46 @@ class GenerationPipeline {
     final startTime = DateTime.now();
 
     try {
-      await _runTasks(tasks);
+      await _runTasks(tasks, request.logger);
       final duration = DateTime.now().difference(startTime);
-      print('✓ All generation tasks completed in ${duration.inMilliseconds}ms');
+      request.logger.info(
+          '✓ All generation tasks completed in ${duration.inMilliseconds}ms');
     } on _TaskFailure catch (failure) {
-      print('✗ ${failure.label} failed: ${failure.error}');
+      request.logger.error('✗ ${failure.label} failed: ${failure.error}');
       if (request.verbose) {
-        print('Stack trace: ${failure.stackTrace}');
+        request.logger.error('Stack trace: ${failure.stackTrace}');
       }
       exit(1);
     } catch (e, stack) {
-      print('✗ Generation failed: $e');
+      request.logger.error('✗ Generation failed: $e');
       if (request.verbose) {
-        print('Stack trace: $stack');
+        request.logger.error('Stack trace: $stack');
       }
       exit(1);
     }
   }
 
   Future<void> watch(GenerationRequest request) async {
-    printBanner('Analytics Gen - Watch Mode');
-    print('');
-    print('Watching for changes in: ${config.eventsPath}');
-    print('Press Ctrl+C to stop');
-    print('');
+    printBanner('Analytics Gen - Watch Mode', logger: request.logger);
+    request.logger.info('');
+    request.logger.info('Watching for changes in: ${config.eventsPath}');
+    request.logger.info('Press Ctrl+C to stop');
+    request.logger.info('');
 
     await run(request);
 
     final eventsDir = Directory(path.join(projectRoot, config.eventsPath));
     if (!eventsDir.existsSync()) {
-      print('Error: Events directory does not exist: ${eventsDir.path}');
+      request.logger
+          .error('Error: Events directory does not exist: ${eventsDir.path}');
       exit(1);
     }
 
     final scheduler = WatchRegenerationScheduler(
       onGenerate: () async {
-        print('');
-        print('Regenerating...');
-        print('');
+        request.logger.info('');
+        request.logger.info('Regenerating...');
+        request.logger.info('');
         await run(request);
       },
     );
@@ -102,8 +105,9 @@ class GenerationPipeline {
     try {
       await for (final event in eventsDir.watch(recursive: true)) {
         if (event.path.endsWith('.yaml') || event.path.endsWith('.yml')) {
-          print('');
-          print('Change detected: ${path.basename(event.path)}');
+          request.logger.info('');
+          request.logger
+              .info('Change detected: ${path.basename(event.path)}');
           scheduler.schedule();
         }
       }
@@ -168,23 +172,23 @@ class GenerationPipeline {
     return tasks;
   }
 
-  Future<void> _runTasks(List<_GeneratorTask> tasks) async {
+  Future<void> _runTasks(List<_GeneratorTask> tasks, Logger logger) async {
     if (tasks.isEmpty) return;
 
     if (tasks.length == 1) {
-      await _invokeTask(tasks.single);
-      print('');
+      await _invokeTask(tasks.single, logger);
+      logger.info('');
       return;
     }
 
-    await Future.wait(tasks.map(_invokeTask));
-    print('');
+    await Future.wait(tasks.map((t) => _invokeTask(t, logger)));
+    logger.info('');
   }
 
-  Future<void> _invokeTask(_GeneratorTask task) async {
+  Future<void> _invokeTask(_GeneratorTask task, Logger logger) async {
     try {
       await task.invoke();
-      print('✓ ${task.label} completed');
+      logger.info('✓ ${task.label} completed');
     } catch (error, stackTrace) {
       throw _TaskFailure(task.label, error, stackTrace);
     }

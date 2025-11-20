@@ -1,6 +1,7 @@
 import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
 import '../models/recorded_event.dart';
+import '../util/logger.dart';
 
 /// Mock analytics service for testing and development.
 ///
@@ -13,9 +14,14 @@ final class MockAnalyticsService
   final bool verbose;
 
   final CapabilityRegistry _capabilities;
+  final Logger _logger;
 
-  MockAnalyticsService({this.verbose = false, CapabilityRegistry? capabilities})
-      : _capabilities = capabilities ?? CapabilityRegistry();
+  MockAnalyticsService({
+    this.verbose = false,
+    CapabilityRegistry? capabilities,
+    Logger? logger,
+  })  : _capabilities = capabilities ?? CapabilityRegistry(),
+        _logger = logger ?? const ConsoleLogger();
 
   /// Immutable view of recorded events as typed records.
   List<RecordedAnalyticsEvent> get records => List.unmodifiable(_records);
@@ -41,7 +47,7 @@ final class MockAnalyticsService
     _records.add(record);
 
     if (verbose) {
-      print('[Analytics] $name $normalizedParameters');
+      _logger.info('[Analytics] $name $normalizedParameters');
     }
   }
 

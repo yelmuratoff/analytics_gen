@@ -13,19 +13,19 @@ import 'banner_printer.dart';
 Future<void> validateTrackingPlan(
   String projectRoot,
   AnalyticsConfig config, {
-  required bool verbose,
+  required Logger logger,
 }) async {
-  printBanner('Analytics Gen - Validation Only');
-  print('');
+  printBanner('Analytics Gen - Validation Only', logger: logger);
+  logger.info('');
 
   final loader = EventLoader(
     eventsPath: path.join(projectRoot, config.eventsPath),
-    log: ConsoleLogger(verbose: verbose),
+    log: logger,
   );
   final sources = await loader.loadEventFiles();
 
   final parser = YamlParser(
-    log: ConsoleLogger(verbose: verbose),
+    log: logger,
     naming: config.naming,
   );
 
@@ -33,23 +33,20 @@ Future<void> validateTrackingPlan(
     final domains = await parser.parseEvents(sources);
 
     if (domains.isEmpty) {
-      print('No analytics events found.');
+      logger.info('No analytics events found.');
     } else {
       final totalEvents =
           domains.values.fold(0, (sum, d) => sum + d.eventCount);
       final totalParams =
           domains.values.fold(0, (sum, d) => sum + d.parameterCount);
 
-      print('✓ Validation successful.');
-      print('  Domains: ${domains.length}');
-      print('  Events: $totalEvents');
-      print('  Parameters: $totalParams');
+      logger.info('✓ Validation successful.');
+      logger.info('  Domains: ${domains.length}');
+      logger.info('  Events: $totalEvents');
+      logger.info('  Parameters: $totalParams');
     }
   } catch (e, stack) {
-    print('✗ Validation failed: $e');
-    if (verbose) {
-      print('Stack trace: $stack');
-    }
+    logger.error('✗ Validation failed: $e', null, stack);
     exit(1);
   }
 }
@@ -57,19 +54,19 @@ Future<void> validateTrackingPlan(
 Future<void> printTrackingPlan(
   String projectRoot,
   AnalyticsConfig config, {
-  required bool verbose,
+  required Logger logger,
 }) async {
-  printBanner('Analytics Gen - Tracking Plan Overview');
-  print('');
+  printBanner('Analytics Gen - Tracking Plan Overview', logger: logger);
+  logger.info('');
 
   final loader = EventLoader(
     eventsPath: path.join(projectRoot, config.eventsPath),
-    log: ConsoleLogger(verbose: verbose),
+    log: logger,
   );
   final sources = await loader.loadEventFiles();
 
   final parser = YamlParser(
-    log: ConsoleLogger(verbose: verbose),
+    log: logger,
     naming: config.naming,
   );
 
@@ -77,14 +74,14 @@ Future<void> printTrackingPlan(
     final domains = await parser.parseEvents(sources);
 
     if (domains.isEmpty) {
-      print('No analytics events are defined yet.');
+      logger.info('No analytics events are defined yet.');
       return;
     }
 
     final metadata = GenerationMetadata.fromDomains(domains);
 
-    print('Fingerprint: ${metadata.fingerprint}');
-    print(
+    logger.info('Fingerprint: ${metadata.fingerprint}');
+    logger.info(
       'Domains: ${metadata.totalDomains} | '
       'Events: ${metadata.totalEvents} | '
       'Parameters: ${metadata.totalParameters}',
@@ -95,8 +92,8 @@ Future<void> printTrackingPlan(
 
     for (final entry in sortedDomains) {
       final domain = entry.value;
-      print('');
-      print(
+      logger.info('');
+      logger.info(
         '- ${domain.name} '
         '(${domain.eventCount} events, ${domain.parameterCount} parameters)',
       );
@@ -115,19 +112,16 @@ Future<void> printTrackingPlan(
           return '${param.name} (${param.type}$nullableSuffix)';
         }).join(', ');
 
-        print('    • $effectiveName [$status]');
+        logger.info('    • $effectiveName [$status]');
         if (params.isEmpty) {
-          print('      - No parameters');
+          logger.info('      - No parameters');
         } else {
-          print('      - Parameters: $params');
+          logger.info('      - Parameters: $params');
         }
       }
     }
   } catch (e, stack) {
-    print('✗ Unable to print tracking plan: $e');
-    if (verbose) {
-      print('Stack trace: $stack');
-    }
+    logger.error('✗ Unable to print tracking plan: $e', null, stack);
     exit(1);
   }
 }
