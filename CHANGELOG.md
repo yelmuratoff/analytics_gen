@@ -42,6 +42,10 @@ All notable changes to this project will be documented in this file.
   - Removed aggressive directory deletion in favor of incremental file writes and stale file cleanup, preserving filesystem caches and reducing I/O.
   - Implemented single-pass YAML parsing: event definitions are now parsed once and shared across code, docs, and export generators, eliminating redundant work.
   - Parallelized export generation tasks (CSV, JSON, SQL).
+- **Improved Error Reporting**:
+  - The generator now collects and reports all validation errors found in YAML files at once, instead of failing on the first error. This significantly improves the developer experience when fixing multiple issues.
+- **Strict Event Naming Configuration**:
+  - Added `strict_event_names` configuration option (default: `false`). When enabled, the generator will treat string interpolation in event names (e.g., `event_name: "View ${page}"`) as a build error instead of a warning. This helps teams enforce strict low-cardinality rules.
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an

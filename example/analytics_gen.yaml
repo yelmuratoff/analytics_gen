@@ -25,6 +25,11 @@ analytics_gen:
   # If true, each generated logEvent call will include the event description
   # under the 'description' key in the parameters map. Default: false
   include_event_description: true
+
+  # If true, forbids string interpolation in event names to prevent high cardinality.
+  # Default: false
+  strict_event_names: false
+
   naming:
     # Keep snake_case domains (files/mixins stay stable) but allow legacy parameter
     # keys to opt-in via per-parameter `identifier`.

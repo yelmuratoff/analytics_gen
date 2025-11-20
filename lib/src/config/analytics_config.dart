@@ -33,6 +33,12 @@ final class AnalyticsConfig {
   /// events.
   final bool includeEventDescription;
 
+  /// Whether to treat string interpolation in event names as an error.
+  ///
+  /// When true, events with names like "Page View: ${page_name}" will cause
+  /// generation to fail. This prevents high-cardinality events.
+  final bool strictEventNames;
+
   /// Naming controls applied across parsing and generation.
   final NamingStrategy naming;
 
@@ -51,6 +57,7 @@ final class AnalyticsConfig {
     this.generateDocs = false,
     this.generatePlan = true,
     this.includeEventDescription = false,
+    this.strictEventNames = false,
     this.naming = const NamingStrategy(),
     this.contexts = const [],
   });
@@ -71,6 +78,7 @@ final class AnalyticsConfig {
       generatePlan: config['generate_plan'] as bool? ?? true,
       includeEventDescription:
           config['include_event_description'] as bool? ?? false,
+      strictEventNames: config['strict_event_names'] as bool? ?? false,
       naming: NamingStrategy.fromYaml(config['naming'] as Map?),
       contexts: (config['contexts'] as List?)?.cast<String>() ?? const [],
     );

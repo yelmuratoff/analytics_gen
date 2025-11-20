@@ -1,4 +1,5 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
@@ -79,6 +80,31 @@ void main() {
           contains("const allowedSortValues = <String>{'asc', 'desc'};"));
       expect(result, contains('if (!allowedSortValues.contains(sort)) {'));
       expect(result, contains('throw ArgumentError.value('));
+    });
+
+    test(
+        'throws AnalyticsGenerationException when strict_event_names is true and interpolation used',
+        () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        strictEventNames: true,
+      );
+      renderer = EventRenderer(config);
+
+      final event = AnalyticsEvent(
+        name: 'view_{page}',
+        description: 'View page',
+        parameters: [
+          AnalyticsParameter(name: 'page', type: 'string', isNullable: false),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'screen', events: [event]);
+
+      expect(
+        () => renderer.renderDomainFile('screen', domain),
+        throwsA(isA<AnalyticsGenerationException>()),
+      );
     });
   });
 

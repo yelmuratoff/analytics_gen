@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/naming_strategy.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as path;
@@ -177,8 +178,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('The "meta" field must be a map'),
           ),
@@ -227,8 +228,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('Domain "auth"'),
           ),
@@ -245,8 +246,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('Event "auth.login"'),
           ),
@@ -268,8 +269,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('Parameters for event "auth.login"'),
           ),
@@ -292,8 +293,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('violates the configured naming strategy'),
           ),
@@ -340,8 +341,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('conflicts with'),
           ),
@@ -433,8 +434,10 @@ void main() {
 
       expect(
         () => parser.parseEvents(),
-        throwsA(isA<FormatException>()
-            .having((e) => e.message, 'message', contains('allowed_values'))),
+        throwsA(isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('allowed_values'))),
       );
     });
 
@@ -448,8 +451,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('violates the configured naming strategy'),
           ),
@@ -470,8 +473,10 @@ void main() {
 
       expect(
         () => parser.parseEvents(),
-        throwsA(isA<StateError>()
-            .having((e) => e.message, 'message', contains('Duplicate domain'))),
+        throwsA(isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('Duplicate domain'))),
       );
     });
 
@@ -524,8 +529,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('Duplicate analytics event identifier "user.login"'),
           ),
@@ -557,8 +562,8 @@ void main() {
       expect(
         () => parser.parseEvents(),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
             'message',
             contains('Duplicate analytics event identifier "auth: login"'),
           ),

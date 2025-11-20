@@ -2,6 +2,8 @@
 
 ## Active Work Items
 
+- [x] **Improve Error Reporting**: Collect all validation errors in `YamlParser` and report them at once instead of failing on the first one.
+- [x] **Strict Mode for Event Names**: Add configuration to treat string interpolation in event names as a build error (high cardinality protection).
 - [x] Refactor `CodeGenerator`: Extract string rendering logic into separate Renderer classes (SRP).
   - [x] Create `EventRenderer` for domain mixins.
   - [x] Create `ContextRenderer` for context capabilities.

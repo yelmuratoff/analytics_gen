@@ -1,3 +1,4 @@
+import '../../core/exceptions.dart';
 import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
@@ -64,6 +65,12 @@ class EventRenderer {
         event.parameters,
       );
       if (interpolatedEventName.contains(r'${')) {
+        if (config.strictEventNames) {
+          throw AnalyticsGenerationException(
+            'Event "$domainName.${event.name}" uses string interpolation in its name ("$eventName"). '
+            'This is forbidden when strict_event_names is true to prevent high cardinality.',
+          );
+        }
         buffer.writeln(
             "  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')");
       }
