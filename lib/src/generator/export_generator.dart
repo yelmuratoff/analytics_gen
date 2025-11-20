@@ -70,10 +70,10 @@ final class ExportGenerator {
         final csvGen = CsvGenerator(naming: config.naming);
         await csvGen.generate(
           domains,
-          path.join(outputDir, 'analytics_events.csv'),
+          outputDir,
         );
         log?.call(
-          '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
+          '✓ Generated CSVs at: $outputDir',
         );
       }());
     }

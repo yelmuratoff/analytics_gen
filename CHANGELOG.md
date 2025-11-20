@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2025-11-20
+
+### Added
+- **Enhanced CSV Export**:
+  - Generates multiple CSV files: `analytics_events.csv`, `analytics_parameters.csv`, `analytics_metadata.csv`, `analytics_event_parameters.csv`.
+  - Improved readability with proper escaping and formatting.
+  - Added parameter-per-row and meta-per-row structures for easier analysis.
+- **Parameter Validation DSL**:
+  - Support for validation rules in YAML: `regex`, `min_length`, `max_length`, `min`, `max`.
+  - Generates runtime validation code for parameters.
+- **Generated Code Improvements**:
+  - Added `ignore_for_file` lints to generated Dart files.
+  - Added timestamp of last generation to file headers.
+
 ## [0.2.1] - 2025-11-20
 
 ### Added

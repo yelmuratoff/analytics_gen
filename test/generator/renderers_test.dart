@@ -82,6 +82,46 @@ void main() {
       expect(result, contains('throw ArgumentError.value('));
     });
 
+    test('renders event with validation rules', () {
+      final event = AnalyticsEvent(
+        name: 'search',
+        description: 'Search items',
+        parameters: [
+          AnalyticsParameter(
+            name: 'query',
+            type: 'string',
+            isNullable: false,
+            regex: '^[a-z]+\$',
+            minLength: 3,
+            maxLength: 20,
+          ),
+          AnalyticsParameter(
+            name: 'count',
+            type: 'int',
+            isNullable: false,
+            min: 1,
+            max: 100,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'items', events: [event]);
+
+      final result = renderer.renderDomainFile('items', domain);
+
+      // Regex
+      expect(result, contains("if (!RegExp(r'^[a-z]+\$').hasMatch(query)) {"));
+      expect(result, contains("throw ArgumentError.value("));
+      expect(result, contains("'must match regex ^[a-z]+\$',"));
+
+      // Length
+      expect(result, contains("if (query.length < 3 || query.length > 20) {"));
+      expect(result, contains("'length must be between 3 and 20',"));
+
+      // Range
+      expect(result, contains("if (count < 1 || count > 100) {"));
+      expect(result, contains("'must be between 1 and 100',"));
+    });
+
     test(
         'throws AnalyticsGenerationException when strict_event_names is true and interpolation used',
         () {

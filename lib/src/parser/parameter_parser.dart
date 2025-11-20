@@ -84,12 +84,24 @@ class ParameterParser {
       String paramType;
       String? description;
       List<String>? allowedValues;
+      String? regex;
+      int? minLength;
+      int? maxLength;
+      num? min;
+      num? max;
       Map<String, Object?> meta = const {};
 
       if (paramValue is YamlMap) {
         // Complex parameter with 'type' and/or 'description'
         description = paramValue['description'] as String?;
         meta = _parseMeta(paramValue['meta'], filePath);
+
+        // Validation rules
+        regex = paramValue['regex'] as String?;
+        minLength = paramValue['min_length'] as int?;
+        maxLength = paramValue['max_length'] as int?;
+        min = paramValue['min'] as num?;
+        max = paramValue['max'] as num?;
 
         // Check if 'type' key exists explicitly
         if (paramValue.containsKey('type')) {
@@ -138,6 +150,11 @@ class ParameterParser {
           isNullable: isNullable,
           description: description,
           allowedValues: allowedValues,
+          regex: regex,
+          minLength: minLength,
+          maxLength: maxLength,
+          min: min,
+          max: max,
           meta: meta,
         ),
       );

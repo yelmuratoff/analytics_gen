@@ -126,6 +126,24 @@ class EventRenderer extends BaseRenderer {
             isNullable: param.isNullable,
           ));
         }
+
+        // Validation rules
+        if (param.regex != null ||
+            param.minLength != null ||
+            param.maxLength != null ||
+            param.min != null ||
+            param.max != null) {
+          final camelParam = StringUtils.toCamelCase(param.codeName);
+          buffer.write(renderValidationChecks(
+            camelParam: camelParam,
+            isNullable: param.isNullable,
+            regex: param.regex,
+            minLength: param.minLength,
+            maxLength: param.maxLength,
+            min: param.min,
+            max: param.max,
+          ));
+        }
       }
     } else {
       buffer.writeln(') {');

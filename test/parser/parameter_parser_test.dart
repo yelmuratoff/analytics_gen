@@ -56,6 +56,38 @@ void main() {
       expect(param.meta, {'pii': true});
     });
 
+    test('parses validation rules', () {
+      final yaml = loadYaml('''
+        username:
+          type: String
+          regex: "^[a-z]+\$"
+          min_length: 3
+          max_length: 20
+        age:
+          type: int
+          min: 18
+          max: 100
+      ''') as YamlMap;
+
+      final params = parser.parseParameters(
+        yaml,
+        domainName: 'test',
+        eventName: 'event',
+        filePath: 'test.yaml',
+      );
+
+      expect(params, hasLength(2));
+      
+      final age = params.firstWhere((p) => p.name == 'age');
+      expect(age.min, 18);
+      expect(age.max, 100);
+
+      final username = params.firstWhere((p) => p.name == 'username');
+      expect(username.regex, "^[a-z]+\$");
+      expect(username.minLength, 3);
+      expect(username.maxLength, 20);
+    });
+
     test('throws on duplicate parameters (camelCase conflict)', () {
       // Use a permissive strategy to allow camelCase identifiers so we can test conflict logic
       // without tripping over the snake_case validation first.

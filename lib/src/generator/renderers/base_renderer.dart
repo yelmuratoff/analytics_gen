@@ -13,6 +13,7 @@ abstract class BaseRenderer {
   String renderFileHeader({bool includeCoverageIgnore = true}) {
     final buffer = StringBuffer();
     buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
+    buffer.writeln('// Generated at: ${DateTime.now().toIso8601String()}');
     buffer.writeln('// ignore_for_file: type=lint, unused_import');
     if (includeCoverageIgnore) {
       buffer.writeln(
@@ -93,6 +94,87 @@ abstract class BaseRenderer {
     buffer.writeln("$indentStr        'must be one of $joinedValues',");
     buffer.writeln('$indentStr      );');
     buffer.writeln('$indentStr    }');
+
+    return buffer.toString();
+  }
+
+  /// Renders validation checks for parameters (regex, length, range).
+  String renderValidationChecks({
+    required String camelParam,
+    required bool isNullable,
+    String? regex,
+    int? minLength,
+    int? maxLength,
+    num? min,
+    num? max,
+    int indent = 0,
+  }) {
+    final indentStr = '  ' * indent;
+    final buffer = StringBuffer();
+
+    // Regex validation
+    if (regex != null) {
+      final condition = isNullable
+          ? 'if ($camelParam != null && !RegExp(r\'$regex\').hasMatch($camelParam)) {'
+          : 'if (!RegExp(r\'$regex\').hasMatch($camelParam)) {';
+      buffer.writeln('$indentStr    $condition');
+      buffer.writeln('$indentStr      throw ArgumentError.value(');
+      buffer.writeln('$indentStr        $camelParam,');
+      buffer.writeln("$indentStr        '$camelParam',");
+      buffer.writeln("$indentStr        'must match regex $regex',");
+      buffer.writeln('$indentStr      );');
+      buffer.writeln('$indentStr    }');
+    }
+
+    // Length validation (String)
+    if (minLength != null || maxLength != null) {
+      final lengthCheck = StringBuffer();
+      if (minLength != null) lengthCheck.write('$camelParam.length < $minLength');
+      if (minLength != null && maxLength != null) lengthCheck.write(' || ');
+      if (maxLength != null) lengthCheck.write('$camelParam.length > $maxLength');
+
+      final condition = isNullable
+          ? 'if ($camelParam != null && (${lengthCheck.toString()})) {'
+          : 'if (${lengthCheck.toString()}) {';
+
+      buffer.writeln('$indentStr    $condition');
+      buffer.writeln('$indentStr      throw ArgumentError.value(');
+      buffer.writeln('$indentStr        $camelParam,');
+      buffer.writeln("$indentStr        '$camelParam',");
+      final msg = minLength != null && maxLength != null
+          ? 'length must be between $minLength and $maxLength'
+          : minLength != null
+              ? 'length must be at least $minLength'
+              : 'length must be at most $maxLength';
+      buffer.writeln("$indentStr        '$msg',");
+      buffer.writeln('$indentStr      );');
+      buffer.writeln('$indentStr    }');
+    }
+
+    // Range validation (num)
+    if (min != null || max != null) {
+      final rangeCheck = StringBuffer();
+      if (min != null) rangeCheck.write('$camelParam < $min');
+      if (min != null && max != null) rangeCheck.write(' || ');
+      if (max != null) rangeCheck.write('$camelParam > $max');
+
+      final condition = isNullable
+          ? 'if ($camelParam != null && (${rangeCheck.toString()})) {'
+          : 'if (${rangeCheck.toString()}) {';
+
+      buffer.writeln('$indentStr    $condition');
+      buffer.writeln('$indentStr      throw ArgumentError.value(');
+      buffer.writeln('$indentStr        $camelParam,');
+      buffer.writeln("$indentStr        '$camelParam',");
+      final msg = min != null && max != null
+          ? 'must be between $min and $max'
+          : min != null
+              ? 'must be at least $min'
+              : 'must be at most $max';
+      buffer.writeln("$indentStr        '$msg',");
+      buffer.writeln('$indentStr      );');
+      buffer.writeln('$indentStr    }');
+    }
 
     return buffer.toString();
   }

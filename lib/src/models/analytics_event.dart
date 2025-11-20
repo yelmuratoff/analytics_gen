@@ -16,6 +16,13 @@ final class AnalyticsParameter {
   final String? description;
   final List<String>? allowedValues;
 
+  // Validation rules
+  final String? regex;
+  final int? minLength;
+  final int? maxLength;
+  final num? min;
+  final num? max;
+
   /// Custom metadata for this parameter (e.g. PII flags, ownership).
   final Map<String, Object?> meta;
 
@@ -26,6 +33,11 @@ final class AnalyticsParameter {
     required this.isNullable,
     this.description,
     this.allowedValues,
+    this.regex,
+    this.minLength,
+    this.maxLength,
+    this.min,
+    this.max,
     this.meta = const {},
   }) : codeName = codeName ?? name;
 
@@ -42,6 +54,11 @@ final class AnalyticsParameter {
         other.isNullable == isNullable &&
         other.description == description &&
         _listEq.equals(other.allowedValues, allowedValues) &&
+        other.regex == regex &&
+        other.minLength == minLength &&
+        other.maxLength == maxLength &&
+        other.min == min &&
+        other.max == max &&
         _mapEq.equals(other.meta, meta);
   }
 
@@ -53,6 +70,11 @@ final class AnalyticsParameter {
         isNullable,
         description,
         _listEq.hash(allowedValues ?? const []),
+        regex,
+        minLength,
+        maxLength,
+        min,
+        max,
         _mapEq.hash(meta),
       );
 }

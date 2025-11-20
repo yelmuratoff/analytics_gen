@@ -76,8 +76,36 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](doc/ONBOARDING.md).
 - **Docs + exports** – Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
 - **Runtime plan** – `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
 - **Extensible Metadata** – attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
+- **Enhanced CSV Export** – generates multiple CSV files (events, parameters, metadata, relationships) for deep analysis.
+- **Parameter Validation** – define validation rules (regex, length, range) in YAML and get runtime checks automatically.
 - **Generation Telemetry** – track generation performance with built-in metrics (domain processing times, total duration, file counts).
 - **Capability Discovery** – auto-generated documentation shows available capabilities and usage examples in generated code.
+
+## Parameter Validation
+
+Define validation rules directly in your YAML to ensure data quality at the source. The generator creates runtime checks that throw `ArgumentError` if constraints are violated.
+
+```yaml
+search_event:
+  description: User searched for content.
+  parameters:
+    query:
+      type: string
+      min_length: 3
+      max_length: 100
+      regex: "^[a-zA-Z0-9 ]+$"
+    result_count:
+      type: int
+      min: 0
+      max: 50
+```
+
+Supported rules:
+- `regex`: Regular expression pattern (String).
+- `min_length`: Minimum string length (int).
+- `max_length`: Maximum string length (int).
+- `min`: Minimum numeric value (num).
+- `max`: Maximum numeric value (num).
 
 ## Extensible Metadata
 
