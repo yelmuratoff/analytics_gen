@@ -5,6 +5,9 @@ import 'package:analytics_gen/analytics_gen.dart';
 
 /// Capability interface for UserProperties
 abstract class UserPropertiesCapability implements AnalyticsCapability {
+  void appendUserPropertiesProperty(String name, Object? value);
+  void incrementUserPropertiesProperty(String name, Object? value);
+  void removeUserPropertiesProperty(String name, Object? value);
   void setUserPropertiesProperty(String name, Object? value);
 }
 
@@ -16,6 +19,26 @@ mixin AnalyticsUserProperties on AnalyticsBase {
   /// Whether the user has a premium subscription
   void setUserPropertiesIsPremium(bool value) {
     capability(userPropertiesKey)?.setUserPropertiesProperty('is_premium', value);
+  }
+
+  /// Total number of logins
+  void setUserPropertiesLoginCount(int value) {
+    capability(userPropertiesKey)?.setUserPropertiesProperty('login_count', value);
+  }
+
+  /// Total number of logins
+  void incrementUserPropertiesLoginCount(int value) {
+    capability(userPropertiesKey)?.incrementUserPropertiesProperty('login_count', value);
+  }
+
+  /// User tags
+  void appendUserPropertiesTags(List<String> value) {
+    capability(userPropertiesKey)?.appendUserPropertiesProperty('tags', value);
+  }
+
+  /// User tags
+  void removeUserPropertiesTags(List<String> value) {
+    capability(userPropertiesKey)?.removeUserPropertiesProperty('tags', value);
   }
 
   /// Unique identifier for the user

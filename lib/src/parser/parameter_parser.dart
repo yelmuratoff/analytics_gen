@@ -104,6 +104,7 @@ class ParameterParser {
       num? min;
       num? max;
       Map<String, Object?> meta = const {};
+      List<String>? operations;
 
       if (paramValue is YamlMap) {
         // Complex parameter with 'type' and/or 'description'
@@ -118,6 +119,20 @@ class ParameterParser {
         maxLength = paramValue['max_length'] as int?;
         min = paramValue['min'] as num?;
         max = paramValue['max'] as num?;
+
+        final rawOperations = paramValue.nodes['operations'];
+        if (rawOperations != null) {
+          if (rawOperations is! YamlList) {
+            throw AnalyticsParseException(
+              'operations for parameter "$rawName" must be a list.',
+              filePath: filePath,
+              span: rawOperations.span,
+            );
+          }
+          operations = List<String>.from(
+            rawOperations.value.map((e) => e.toString()),
+          );
+        }
 
         // Check if 'type' key exists explicitly
         if (paramValue.containsKey('type')) {
@@ -136,7 +151,8 @@ class ParameterParser {
                     k.toString() != 'min_length' &&
                     k.toString() != 'max_length' &&
                     k.toString() != 'min' &&
-                    k.toString() != 'max',
+                    k.toString() != 'max' &&
+                    k.toString() != 'operations',
               )
               .firstOrNull;
           paramType = typeKey?.toString() ?? 'dynamic';
@@ -178,6 +194,7 @@ class ParameterParser {
           min: min,
           max: max,
           meta: meta,
+          operations: operations,
         ),
       );
     }

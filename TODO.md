@@ -22,7 +22,7 @@
   - Make `strict_event_names: true` the default in future versions.
   - Ensure documentation strongly encourages strict mode.
 
-- [ ] **Context Operations**
+- [x] **Context Operations**
   - Support specific operations for user properties (increment, setOnce, append) in YAML.
   - Generate specific capability methods for these operations.
 

@@ -11,3 +11,13 @@ user_properties:
   is_premium:
     type: bool
     description: Whether the user has a premium subscription
+
+  login_count:
+    type: int
+    description: Total number of logins
+    operations: [set, increment]
+
+  tags:
+    type: List<String>
+    description: User tags
+    operations: [append, remove]

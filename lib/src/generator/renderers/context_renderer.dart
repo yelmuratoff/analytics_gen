@@ -24,9 +24,19 @@ class ContextRenderer extends BaseRenderer {
     buffer.writeln(
         'abstract class ${pascalName}Capability implements AnalyticsCapability {');
 
-    final interfaceMethodName = 'set${pascalName}Property';
+    // Collect all unique operations used across properties
+    final operations = <String>{};
+    for (final prop in properties) {
+      final propOps = prop.operations ?? ['set'];
+      operations.addAll(propOps);
+    }
 
-    buffer.writeln('  void $interfaceMethodName(String name, Object? value);');
+    // Generate interface methods for each operation
+    for (final op in operations.toList()..sort()) {
+      final normalizedOp = StringUtils.toCamelCase(op);
+      final interfaceMethodName = '$normalizedOp${pascalName}Property';
+      buffer.writeln('  void $interfaceMethodName(String name, Object? value);');
+    }
     buffer.writeln('}');
     buffer.writeln();
 
@@ -40,38 +50,43 @@ class ContextRenderer extends BaseRenderer {
 
     for (final prop in properties) {
       final camelName = StringUtils.toCamelCase(prop.codeName);
+      final propOps = prop.operations ?? ['set'];
 
-      final methodName =
-          'set$pascalName${StringUtils.capitalizePascal(camelName)}';
+      for (final op in propOps) {
+        final normalizedOp = StringUtils.toCamelCase(op);
+        final methodName =
+            '$normalizedOp$pascalName${StringUtils.capitalizePascal(camelName)}';
+        final interfaceMethodName = '$normalizedOp${pascalName}Property';
 
-      final dartType = DartTypeMapper.toDartType(prop.type);
-      final nullableType = prop.isNullable ? '$dartType?' : dartType;
+        final dartType = DartTypeMapper.toDartType(prop.type);
+        final nullableType = prop.isNullable ? '$dartType?' : dartType;
 
-      if (prop.description != null) {
-        buffer.writeln('  /// ${prop.description}');
+        if (prop.description != null) {
+          buffer.writeln('  /// ${prop.description}');
+        }
+        buffer.writeln('  void $methodName($nullableType value) {');
+
+        if (prop.allowedValues != null && prop.allowedValues!.isNotEmpty) {
+          final constName =
+              'allowed${StringUtils.capitalizePascal(camelName)}Values';
+          final encodedValues = encodeAllowedValues(prop.allowedValues!);
+          final joinedValues = joinAllowedValues(prop.allowedValues!);
+
+          buffer.write(renderAllowedValuesCheck(
+            camelParam: 'value',
+            constName: constName,
+            encodedValues: encodedValues,
+            joinedValues: joinedValues,
+            isNullable: prop.isNullable,
+            type: dartType,
+          ));
+        }
+
+        buffer.writeln(
+            "    capability(${camelContextName}Key)?.$interfaceMethodName('${prop.name}', value);");
+        buffer.writeln('  }');
+        buffer.writeln();
       }
-      buffer.writeln('  void $methodName($nullableType value) {');
-
-      if (prop.allowedValues != null && prop.allowedValues!.isNotEmpty) {
-        final constName =
-            'allowed${StringUtils.capitalizePascal(camelName)}Values';
-        final encodedValues = encodeAllowedValues(prop.allowedValues!);
-        final joinedValues = joinAllowedValues(prop.allowedValues!);
-
-        buffer.write(renderAllowedValuesCheck(
-          camelParam: 'value',
-          constName: constName,
-          encodedValues: encodedValues,
-          joinedValues: joinedValues,
-          isNullable: prop.isNullable,
-          type: dartType,
-        ));
-      }
-
-      buffer.writeln(
-          "    capability(${camelContextName}Key)?.$interfaceMethodName('${prop.name}', value);");
-      buffer.writeln('  }');
-      buffer.writeln();
     }
 
     buffer.writeln('}');

@@ -105,11 +105,13 @@ Count: 2
 
 ## User Properties
 
-Count: 3
+Count: 5
 
 | Property | Type | Description | Allowed Values | Metadata |
 |----------|------|-------------|----------------|----------|
 | is_premium | bool | Whether the user has a premium subscription | - | - |
+| login_count | int | Total number of logins | - | - |
+| tags | List<String> | User tags | - | - |
 | user_id | String | Unique identifier for the user | - | - |
 | user_role | String | Role of the user in the system | admin, editor, viewer | - |
 

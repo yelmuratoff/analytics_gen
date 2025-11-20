@@ -19,6 +19,7 @@ final class AnalyticsParameter {
     this.min,
     this.max,
     this.meta = const {},
+    this.operations,
   }) : codeName = codeName ?? name;
 
   /// Analytics key that gets sent to providers.
@@ -58,6 +59,10 @@ final class AnalyticsParameter {
   /// Custom metadata for this parameter (e.g. PII flags, ownership).
   final Map<String, Object?> meta;
 
+  /// List of operations supported by this parameter (e.g. set, increment).
+  /// Only used for context properties.
+  final List<String>? operations;
+
   @override
   String toString() => '$name: $type${isNullable ? '?' : ''}';
 
@@ -76,7 +81,8 @@ final class AnalyticsParameter {
         other.maxLength == maxLength &&
         other.min == min &&
         other.max == max &&
-        _mapEq.equals(other.meta, meta);
+        _mapEq.equals(other.meta, meta) &&
+        _listEq.equals(other.operations, operations);
   }
 
   @override
@@ -93,6 +99,7 @@ final class AnalyticsParameter {
         min,
         max,
         _mapEq.hash(meta),
+        _listEq.hash(operations ?? const []),
       );
 }
 
