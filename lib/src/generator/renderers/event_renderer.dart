@@ -62,9 +62,12 @@ class EventRenderer extends BaseRenderer {
       );
       if (interpolatedEventName.contains(r'${')) {
         if (config.strictEventNames) {
+          final sourceInfo = event.sourcePath != null
+              ? '\nSource: ${event.sourcePath}:${event.lineNumber}'
+              : '';
           throw AnalyticsGenerationException(
             'Event "$domainName.${event.name}" uses string interpolation in its name ("$eventName"). '
-            'This is forbidden when strict_event_names is true to prevent high cardinality.',
+            'This is forbidden when strict_event_names is true to prevent high cardinality.$sourceInfo',
           );
         }
         buffer.writeln(

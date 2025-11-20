@@ -264,6 +264,8 @@ final class YamlParser {
             replacement: replacement,
             parameters: parameters,
             meta: meta,
+            sourcePath: filePath,
+            lineNumber: keyNode.span.start.line + 1,
           ),
         );
       } on AnalyticsParseException catch (e) {

@@ -94,6 +94,12 @@ final class AnalyticsEvent {
   /// Custom metadata for this event (e.g. ownership, Jira tickets).
   final Map<String, Object?> meta;
 
+  /// The path to the file where this event is defined.
+  final String? sourcePath;
+
+  /// The line number where this event is defined (1-based).
+  final int? lineNumber;
+
   const AnalyticsEvent({
     required this.name,
     required this.description,
@@ -103,6 +109,8 @@ final class AnalyticsEvent {
     this.deprecated = false,
     this.replacement,
     this.meta = const {},
+    this.sourcePath,
+    this.lineNumber,
   });
 
   @override
@@ -119,7 +127,9 @@ final class AnalyticsEvent {
         other.deprecated == deprecated &&
         other.replacement == replacement &&
         _paramListEq.equals(other.parameters, parameters) &&
-        _mapEq.equals(other.meta, meta);
+        _mapEq.equals(other.meta, meta) &&
+        other.sourcePath == sourcePath &&
+        other.lineNumber == lineNumber;
   }
 
   @override
@@ -132,6 +142,8 @@ final class AnalyticsEvent {
         replacement,
         _paramListEq.hash(parameters),
         _mapEq.hash(meta),
+        sourcePath,
+        lineNumber,
       );
 }
 
