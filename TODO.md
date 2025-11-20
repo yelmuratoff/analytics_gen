@@ -2,10 +2,10 @@
 
 ## Active Work Items
 
-- [ ] **Linting & Code Quality**
+- [x] **Linting & Code Quality**
   - Enable `sort_constructors_first` in `analysis_options.yaml`
   - Enable `public_member_api_docs` in `analysis_options.yaml` and fix violations
-- [ ] **Documentation & Reliability**
+- [x] **Documentation & Reliability**
   - Clarify `BatchingAnalytics.flush()` exception behavior in DartDocs
 
 ## Refactoring & Improvements (Priority)

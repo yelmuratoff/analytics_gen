@@ -307,7 +307,7 @@ Future<void> onAppBackground() async {
 - `maxBatchSize` forces a flush when enough events accumulate.
 - `flushInterval` (optional) drains on a timer for long-lived sessions.
 - `flush()` returns a `Future` so lifecycle hooks (`AppLifecycleState.paused`, integration-test teardown) can wait for delivery.
-- If the delegate throws, the batch is requeued and the optional `onFlushError` hook runs; call `flush()` again when the provider is ready.
+- **Exception Handling**: Manual calls to `flush()` will throw if retries are exhausted, allowing you to handle network failures. Automatic background flushes catch errors and report them to `onFlushError` without crashing the app.
 
 Combine `BatchingAnalytics` with `AsyncAnalyticsAdapter` to await multiple providers without changing the generated, synchronous API surface.
 

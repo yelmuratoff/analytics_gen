@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [0.2.1] - Unreleased
 
+### Documentation
+- Clarified `BatchingAnalytics.flush()` exception behavior: manual flushes throw on failure, while auto-flushes suppress errors and report to `onFlushError`.
+- Updated `README.md` with explicit error handling guidance for batching.
+
+### Code Quality
+- Enabled `sort_constructors_first` and `public_member_api_docs` lints.
+- Fixed all lint warnings across the codebase.
+- Improved documentation for public members in `BatchingAnalytics`, `MultiProviderAnalytics`, and core models.
+
 ### Added
 - **Enhanced CSV Export**:
   - Generates multiple CSV files: `analytics_events.csv`, `analytics_parameters.csv`, `analytics_metadata.csv`, `analytics_event_parameters.csv`.

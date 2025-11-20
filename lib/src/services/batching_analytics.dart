@@ -72,7 +72,12 @@ final class BatchingAnalytics implements IAnalytics {
   /// Flushes buffered events and waits for completion.
   ///
   /// If the flush fails (e.g. network error) and retries are exhausted,
-  /// this method will throw the underlying exception.
+  /// this method will throw the underlying exception. This allows callers
+  /// to handle failures when manually flushing (e.g. on app background).
+  ///
+  /// In contrast, automatic background flushes (triggered by [maxBatchSize]
+  /// or `flushInterval`) catch errors and report them to [onFlushError]
+  /// without throwing.
   ///
   /// If a flush is already in progress, this returns the future of the
   /// active flush.
