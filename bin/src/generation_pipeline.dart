@@ -106,8 +106,7 @@ class GenerationPipeline {
       await for (final event in eventsDir.watch(recursive: true)) {
         if (event.path.endsWith('.yaml') || event.path.endsWith('.yml')) {
           request.logger.info('');
-          request.logger
-              .info('Change detected: ${path.basename(event.path)}');
+          request.logger.info('Change detected: ${path.basename(event.path)}');
           scheduler.schedule();
         }
       }

@@ -44,7 +44,8 @@ class AnalyticsGenRunner {
       final validateOnly = results['validate-only'] as bool;
 
       _ensureNotCombined('plan', planOnly, 'watch', watch, logger);
-      _ensureNotCombined('plan', planOnly, 'validate-only', validateOnly, logger);
+      _ensureNotCombined(
+          'plan', planOnly, 'validate-only', validateOnly, logger);
       _ensureNotCombined('validate-only', validateOnly, 'watch', watch, logger);
 
       if (planOnly) {
