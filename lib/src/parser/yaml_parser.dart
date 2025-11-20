@@ -373,4 +373,3 @@ final class _DomainSource {
     required this.yaml,
   });
 }
-
