@@ -23,6 +23,10 @@
   - [ ] Refactor `YamlParser`: Separate file discovery (I/O) from parsing logic (SRP).
   - [ ] Refactor `YamlParser`: Inject `NamingStrategy` via constructor instead of hardcoding default.
 
+- [x] **Quality Assurance & Guardrails**
+  - [x] **CI Guardrails**: Add a step in CI to verify that generated code is up-to-date (`git diff --exit-code` after generation).
+  - [x] **Linter Upgrade**: Adopt stricter linting rules (using standard `lints` package with additional rules) to enforce higher code quality.
+
 - [x] **Documentation Audit & Polish**
   - [x] **README.md**: Tighten tone (remove "Absolutely"), standardize YAML types to lowercase, rewrite "Extensible Metadata" intro.
   - [x] **VALIDATION.md**: Add "Accepted types" section, clarify nullable syntax.

@@ -323,7 +323,7 @@ void main() {
         '    parameters:\n'
         '      method:\n'
         "        type: 'string?'\n"
-        "        description: Payment method description\n",
+        '        description: Payment method description\n',
       );
 
       final config = AnalyticsConfig(
@@ -348,7 +348,7 @@ void main() {
       );
       final billingContent = await billingFile.readAsString();
 
-      expect(billingContent, contains("Use legacy_event instead."));
+      expect(billingContent, contains('Use legacy_event instead.'));
       expect(
         billingContent,
         contains('`method`: string? - Payment method description'),

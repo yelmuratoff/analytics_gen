@@ -1,8 +1,7 @@
-import '../../util/file_utils.dart';
-
 import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
+import '../../util/file_utils.dart';
 import '../generation_metadata.dart';
 
 /// Generates SQL schema and data inserts for analytics events.
@@ -100,9 +99,9 @@ final class SqlGenerator {
     for (final domain in domains.values) {
       domainIdMap[domain.name] = domainId;
       buffer.writeln(
-        "INSERT INTO domains (id, name, event_count, parameter_count) "
+        'INSERT INTO domains (id, name, event_count, parameter_count) '
         "VALUES ($domainId, '${_escape(domain.name)}', "
-        "${domain.eventCount}, ${domain.parameterCount});",
+        '${domain.eventCount}, ${domain.parameterCount});',
       );
       domainId++;
     }
@@ -118,10 +117,10 @@ final class SqlGenerator {
         final eventName =
             EventNaming.resolveEventName(domain.name, event, naming);
         buffer.writeln(
-          "INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) "
+          'INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) '
           "VALUES ($eventId, $dId, '${_escape(event.name)}', "
           "'${_escape(eventName)}', '${_escape(event.description)}', "
-          "${event.deprecated ? 1 : 0}, "
+          '${event.deprecated ? 1 : 0}, '
           "${event.replacement != null ? "'${_escape(event.replacement!)}'" : 'NULL'});",
         );
 
@@ -136,9 +135,9 @@ final class SqlGenerator {
                   ? "'${_escape(param.allowedValues!.join(', '))}'"
                   : 'NULL';
           buffer.writeln(
-            "INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) "
+            'INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) '
             "VALUES ($eventId, '${_escape(param.name)}', '${_escape(param.type)}', "
-            "$nullable, $desc, $allowed);",
+            '$nullable, $desc, $allowed);',
           );
         }
 

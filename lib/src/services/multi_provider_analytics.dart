@@ -1,8 +1,8 @@
 import 'dart:io';
-import '../core/async_analytics_interface.dart';
 
 import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
+import '../core/async_analytics_interface.dart';
 
 /// Function used to check whether an event (name + params) should be
 /// forwarded to a particular provider.

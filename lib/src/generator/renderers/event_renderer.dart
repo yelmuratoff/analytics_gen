@@ -1,5 +1,5 @@
-import '../../core/exceptions.dart';
 import '../../config/analytics_config.dart';
+import '../../core/exceptions.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
@@ -220,7 +220,7 @@ class EventRenderer {
     String eventName,
     List<AnalyticsParameter> parameters,
   ) {
-    final placeholder = RegExp(r"\{([^}]+)\}");
+    final placeholder = RegExp(r'\{([^}]+)\}');
 
     return eventName.replaceAllMapped(placeholder, (match) {
       final key = match.group(1)!;

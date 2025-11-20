@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
-
 import 'package:analytics_gen/src/cli/watch_scheduler.dart';
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
@@ -9,6 +7,7 @@ import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
 import 'generation_request.dart';

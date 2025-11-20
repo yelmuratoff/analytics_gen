@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
-import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
+import 'package:yaml/yaml.dart';
 
 // Helper type used in tests to create map keys that stringify to the same
 // value while remaining distinct map keys (Dart object identity).

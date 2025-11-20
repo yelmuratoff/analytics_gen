@@ -1,5 +1,6 @@
-import 'package:analytics_gen/analytics_gen.dart';
 import 'dart:io';
+
+import 'package:analytics_gen/analytics_gen.dart';
 import 'package:test/test.dart';
 
 void main() {

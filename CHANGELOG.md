@@ -48,7 +48,9 @@ All notable changes to this project will be documented in this file.
   - Added `strict_event_names` configuration option (default: `false`). When enabled, the generator will treat string interpolation in event names (e.g., `event_name: "View ${page}"`) as a build error instead of a warning. This helps teams enforce strict low-cardinality rules.
 - **BatchingAnalytics Resilience**:
   - Added `maxRetries` (default: 3) to `BatchingAnalytics`.
-  - Events that fail to send after `maxRetries` attempts are now dropped from the queue to prevent "poison pill" events from blocking the queue indefinitely.
+- **Quality Assurance**:
+  - Upgraded linter configuration to use `package:lints/recommended.yaml` and added stricter rules (e.g., `unawaited_futures`, `prefer_final_locals`) to enforce higher code quality.
+  - Added CI guardrails to verify that generated code is up-to-date and enforce strict analysis.
 - **Analytics.initialize Safety**:
   - `Analytics.initialize()` now throws a `StateError` if called when `Analytics` is already initialized. This prevents accidental re-initialization and ensures a stable singleton lifecycle.
 - **Documentation Updates**:

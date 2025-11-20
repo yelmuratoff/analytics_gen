@@ -1,10 +1,9 @@
-import '../util/file_utils.dart';
-
 import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
+import '../util/file_utils.dart';
 import '../util/string_utils.dart';
 import 'generation_metadata.dart';
 

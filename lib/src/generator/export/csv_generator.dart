@@ -1,9 +1,8 @@
 // dart:io not required directly
-import '../../util/file_utils.dart';
-
-import '../../util/event_naming.dart';
 import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
+import '../../util/event_naming.dart';
+import '../../util/file_utils.dart';
 
 /// Generates Excel-compatible CSV export of analytics events.
 final class CsvGenerator {

@@ -30,6 +30,21 @@ jobs:
          - name: Install dependencies
            run: dart pub get
 
+         - name: Analyze project
+           run: dart analyze --fatal-infos
+
+         - name: Verify Example Generation
+           run: |
+              cd example
+              dart pub get
+              dart run analytics_gen:generate --docs --exports
+              if [ -n "$(git status --porcelain)" ]; then
+                echo "Error: Example generated code is out of sync."
+                git status
+                git diff
+                exit 1
+              fi
+
          - name: Run tests with coverage
            run: dart test --coverage=coverage
 

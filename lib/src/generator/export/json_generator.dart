@@ -1,11 +1,11 @@
 import 'dart:convert';
-// dart:io not required directly since file utils handle IO
-import '../../util/file_utils.dart';
 
 import '../../config/naming_strategy.dart';
 import '../../models/analytics_event.dart';
-import '../generation_metadata.dart';
 import '../../util/event_naming.dart';
+// dart:io not required directly since file utils handle IO
+import '../../util/file_utils.dart';
+import '../generation_metadata.dart';
 
 /// Generates JSON export of analytics events (pretty and minified).
 final class JsonGenerator {

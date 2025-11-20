@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
-
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
+import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
 

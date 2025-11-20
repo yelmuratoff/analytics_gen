@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import '../core/exceptions.dart';
 import '../config/naming_strategy.dart';
+import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
 import 'parameter_parser.dart';

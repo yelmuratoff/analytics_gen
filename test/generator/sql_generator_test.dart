@@ -84,7 +84,7 @@ void main() {
                   type: 'string',
                   isNullable: false,
                   description: "Plan with 'quote' and comma, yes",
-                  allowedValues: ['basic', "premium,plus", "o'clock"],
+                  allowedValues: ['basic', 'premium,plus', "o'clock"],
                 ),
               ],
             ),

@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
-import 'package:test/test.dart';
 import 'package:path/path.dart' as path;
+import 'package:test/test.dart';
 
 void main() {
   late Directory tempDir;

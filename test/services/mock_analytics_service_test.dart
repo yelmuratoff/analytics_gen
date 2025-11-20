@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:analytics_gen/analytics_gen.dart';
 import 'package:test/test.dart';
-import 'dart:async';
 
 void main() {
   group('MockAnalyticsService', () {
