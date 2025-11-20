@@ -1,5 +1,4 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
-import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
@@ -123,7 +122,7 @@ void main() {
     });
 
     test(
-        'throws AnalyticsGenerationException when strict_event_names is true and interpolation used',
+        'adds @Deprecated when interpolation used (even if strict_event_names is true, assuming parser bypassed)',
         () {
       config = AnalyticsConfig(
         eventsPath: 'events',
@@ -141,10 +140,9 @@ void main() {
       );
       final domain = AnalyticsDomain(name: 'screen', events: [event]);
 
-      expect(
-        () => renderer.renderDomainFile('screen', domain),
-        throwsA(isA<AnalyticsGenerationException>()),
-      );
+      final result = renderer.renderDomainFile('screen', domain);
+      expect(result, contains('@Deprecated'));
+      expect(result, contains('string interpolation'));
     });
   });
 

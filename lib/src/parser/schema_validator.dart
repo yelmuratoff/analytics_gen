@@ -1,3 +1,5 @@
+import 'package:source_span/source_span.dart';
+
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
@@ -6,8 +8,12 @@ import '../util/event_naming.dart';
 /// Validates analytics schema definitions.
 final class SchemaValidator {
   final NamingStrategy naming;
+  final bool strictEventNames;
 
-  const SchemaValidator(this.naming);
+  const SchemaValidator(
+    this.naming, {
+    this.strictEventNames = true,
+  });
 
   /// Validates that a domain name adheres to the naming strategy.
   void validateDomainName(String domainName, String filePath) {
@@ -17,6 +23,20 @@ final class SchemaValidator {
         'naming strategy. Update analytics_gen.naming.enforce_snake_case_domains '
         'or rename the domain.',
         filePath: filePath,
+      );
+    }
+  }
+
+  /// Validates that an event name does not contain interpolation characters if strict mode is enabled.
+  void validateEventName(String eventName, String filePath,
+      {SourceSpan? span}) {
+    if (strictEventNames &&
+        (eventName.contains('{') || eventName.contains('}'))) {
+      throw AnalyticsParseException(
+        'Event name "$eventName" contains interpolation characters "{}" or "{}". '
+        'Dynamic event names are discouraged as they lead to high cardinality.',
+        filePath: filePath,
+        span: span,
       );
     }
   }

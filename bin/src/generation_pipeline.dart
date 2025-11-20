@@ -46,6 +46,7 @@ class GenerationPipeline {
     final parser = YamlParser(
       log: request.logger,
       naming: config.naming,
+      strictEventNames: config.strictEventNames,
     );
     final domains = await parser.parseEvents(eventSources);
     final contexts = await parser.parseContexts(contextSources);

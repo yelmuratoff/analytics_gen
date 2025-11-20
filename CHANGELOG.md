@@ -43,6 +43,9 @@ All notable changes to this project will be documented in this file.
   - Added comprehensive unit tests for validation logic.
 - **Dart 3 Features**:
   - Refactored `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
+- **Refactoring**:
+  - Moved event name interpolation validation from `EventRenderer` to `YamlParser` and `SchemaValidator`.
+  - `YamlParser` now correctly propagates `strictEventNames` configuration to domain parsers.
 
 ### Improved
 - All renderers now extend `BaseRenderer` for consistent code generation

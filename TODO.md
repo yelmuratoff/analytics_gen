@@ -50,6 +50,11 @@
   - Add Parquet export for big data pipelines
   - Add Prometheus metrics format for real-time monitoring
 
+- [x] **Refactor**: Remove redundant event name interpolation check in `EventRenderer`.
+    - The `YamlParser` already handles this validation, making the check in the renderer unnecessary dead code.
+- [x] **Refactor**: Investigate and apply `sealed` classes where appropriate for better type safety and exhaustiveness checks (e.g. Exceptions hierarchy).
+    - `AnalyticsException` is already `sealed`. Models are `final` which is appropriate for data holders.
+
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
 - README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.

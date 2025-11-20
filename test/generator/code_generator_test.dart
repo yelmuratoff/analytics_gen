@@ -133,7 +133,10 @@ void main() {
         eventsPath: p.join(tempProject.path, config.eventsPath),
       );
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser();
+      final parser = YamlParser(
+        naming: config.naming,
+        strictEventNames: config.strictEventNames,
+      );
       final domains = await parser.parseEvents(sources);
 
       await generator.generate(domains);
@@ -189,7 +192,10 @@ void main() {
         eventsPath: p.join(tempProject.path, config.eventsPath),
       );
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser();
+      final parser = YamlParser(
+        naming: config.naming,
+        strictEventNames: config.strictEventNames,
+      );
       final domains = await parser.parseEvents(sources);
 
       await generator.generate(domains);

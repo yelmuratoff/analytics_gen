@@ -12,17 +12,22 @@ import 'schema_validator.dart';
 final class YamlParser {
   final Logger log;
   final NamingStrategy naming;
+  final bool strictEventNames;
   final ParameterParser _parameterParser;
   final SchemaValidator _validator;
 
   YamlParser({
     this.log = const NoOpLogger(),
     NamingStrategy? naming,
+    this.strictEventNames = true,
     SchemaValidator? validator,
   })  : naming = naming ?? const NamingStrategy(),
         _parameterParser = ParameterParser(naming ?? const NamingStrategy()),
-        _validator =
-            validator ?? SchemaValidator(naming ?? const NamingStrategy());
+        _validator = validator ??
+            SchemaValidator(
+              naming ?? const NamingStrategy(),
+              strictEventNames: strictEventNames,
+            );
 
   /// Parses the provided analytics sources and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents(
@@ -168,6 +173,7 @@ final class YamlParser {
       final parser = YamlParser(
         log: log,
         naming: strategy,
+        strictEventNames: strictEventNames,
       );
 
       try {
@@ -210,14 +216,7 @@ final class YamlParser {
 
       try {
         // Strict Event Name Validation: Check for interpolation
-        if (eventName.contains('{') || eventName.contains('}')) {
-          throw AnalyticsParseException(
-            'Event name "$eventName" contains interpolation characters "{}" or "{}". '
-            'Dynamic event names are discouraged as they lead to high cardinality.',
-            filePath: filePath,
-            span: keyNode.span,
-          );
-        }
+        _validator.validateEventName(eventName, filePath, span: keyNode.span);
 
         if (valueNode is! YamlMap) {
           throw AnalyticsParseException(
@@ -232,6 +231,15 @@ final class YamlParser {
         final description =
             eventData['description'] as String? ?? 'No description provided';
         final customEventName = eventData['event_name'] as String?;
+
+        if (customEventName != null) {
+          final customEventNameNode = eventData.nodes['event_name'];
+          _validator.validateEventName(
+            customEventName,
+            filePath,
+            span: customEventNameNode?.span,
+          );
+        }
         final identifier = eventData['identifier'] as String?;
         final deprecated = eventData['deprecated'] as bool? ?? false;
         final replacement = eventData['replacement'] as String?;

@@ -1,5 +1,4 @@
 import '../../config/analytics_config.dart';
-import '../../core/exceptions.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
@@ -61,14 +60,9 @@ class EventRenderer extends BaseRenderer {
         event.parameters,
       );
       if (interpolatedEventName.contains(r'${')) {
-        if (config.strictEventNames) {
-          throw AnalyticsGenerationException(
-            'Event "$domainName.${event.name}" uses string interpolation in its name ("$eventName"). '
-            'This is forbidden when strict_event_names is true to prevent high cardinality.',
-            sourcePath: event.sourcePath,
-            lineNumber: event.lineNumber,
-          );
-        }
+        // Note: If strict_event_names is true, the YamlParser would have already
+        // rejected this event. This check handles the case where strict mode
+        // is disabled but we still want to warn about high cardinality.
         buffer.writeln(
             "  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')");
       }
