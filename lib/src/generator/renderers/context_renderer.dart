@@ -35,7 +35,8 @@ class ContextRenderer extends BaseRenderer {
     for (final op in operations.toList()..sort()) {
       final normalizedOp = StringUtils.toCamelCase(op);
       final interfaceMethodName = '$normalizedOp${pascalName}Property';
-      buffer.writeln('  void $interfaceMethodName(String name, Object? value);');
+      buffer
+          .writeln('  void $interfaceMethodName(String name, Object? value);');
     }
     buffer.writeln('}');
     buffer.writeln();
