@@ -9,7 +9,7 @@
   - Allow for different validation strategies (strict vs lenient).
   - Unit tests for the new validator.
 
-- [ ] **Structured Logging**
+- [x] **Structured Logging**
   - Replace `void Function(String)` callback with a structured logging interface.
   - Improve debuggability for CI/CD pipelines.
 
