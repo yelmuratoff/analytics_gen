@@ -10,7 +10,6 @@ import 'schema_validator.dart';
 
 /// Parses YAML files containing analytics event definitions.
 final class YamlParser {
-
   /// Creates a new YAML parser.
   YamlParser({
     this.log = const NoOpLogger(),
@@ -24,6 +23,7 @@ final class YamlParser {
               naming ?? const NamingStrategy(),
               strictEventNames: strictEventNames,
             );
+
   /// The logger to use.
   final Logger log;
 
@@ -410,7 +410,6 @@ final class YamlParser {
 }
 
 final class _DomainSource {
-
   _DomainSource({
     required this.filePath,
     required this.yaml,

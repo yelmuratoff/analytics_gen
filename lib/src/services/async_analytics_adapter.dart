@@ -5,7 +5,6 @@ import '../core/async_analytics_interface.dart';
 /// an asynchronous `IAsyncAnalytics` API. This is useful when integrating with
 /// async pipelines where callers prefer to await delivery.
 final class AsyncAnalyticsAdapter implements IAsyncAnalytics {
-
   /// Creates a new async adapter.
   AsyncAnalyticsAdapter(this._delegate);
   final IAnalytics _delegate;

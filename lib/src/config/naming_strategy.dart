@@ -3,7 +3,6 @@
 /// The default strategy enforces snake_case domains/parameters and uses a
 /// `<domain>: <event>` template when no custom `event_name` is provided.
 final class NamingStrategy {
-
   /// Creates a new naming strategy.
   const NamingStrategy({
     this.enforceSnakeCaseDomains = true,

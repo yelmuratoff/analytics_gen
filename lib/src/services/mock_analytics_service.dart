@@ -8,7 +8,6 @@ import '../util/logger.dart';
 /// Records events in memory and provides query methods for verification.
 final class MockAnalyticsService
     implements IAnalytics, AnalyticsCapabilityProvider {
-
   /// Creates a new mock analytics service.
   MockAnalyticsService({
     this.verbose = false,

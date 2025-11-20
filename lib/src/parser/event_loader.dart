@@ -4,12 +4,12 @@ import 'package:analytics_gen/src/util/logger.dart';
 
 /// Represents a source file containing analytics definitions.
 final class AnalyticsSource {
-
   /// Creates a new analytics source.
   const AnalyticsSource({
     required this.filePath,
     required this.content,
   });
+
   /// The absolute path to the source file.
   final String filePath;
 
@@ -19,13 +19,13 @@ final class AnalyticsSource {
 
 /// Handles discovery and loading of analytics definition files.
 final class EventLoader {
-
   /// Creates a new event loader.
   EventLoader({
     required this.eventsPath,
     this.contextFiles = const [],
     this.log = const NoOpLogger(),
   });
+
   /// The path to the directory containing event files.
   final String eventsPath;
 

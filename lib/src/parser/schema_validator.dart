@@ -7,12 +7,12 @@ import '../util/event_naming.dart';
 
 /// Validates analytics schema definitions.
 final class SchemaValidator {
-
   /// Creates a new schema validator.
   const SchemaValidator(
     this.naming, {
     this.strictEventNames = true,
   });
+
   /// The naming strategy to use.
   final NamingStrategy naming;
 
