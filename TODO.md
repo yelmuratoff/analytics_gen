@@ -2,6 +2,12 @@
 
 ## Active Work Items
 
+- [ ] **Generator Determinism & Validation**
+  - Remove non-deterministic timestamps from generated headers to keep diffs clean
+  - Make `allowed_values` type-aware (respect ints/bools/doubles) so runtime validation compares correct types
+  - Preserve meta value types when emitting runtime plan (avoid stringifying booleans/nums)
+  - Enforce strict event-name handling to prevent high-cardinality interpolated names from shipping by default
+
 - [ ] **Cloud Integration**
   - BigQuery schema sync
   - Snowflake schema sync
