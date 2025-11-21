@@ -13,6 +13,9 @@ dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info 
 
 if [ -f coverage/lcov.info ]; then
   echo "Coverage file created at coverage/lcov.info"
+  echo "Generating HTML report..."
+  genhtml coverage/lcov.info -o coverage/html
+  echo "HTML report generated at coverage/html/index.html"
 else
   echo "No coverage file created"
   exit 1

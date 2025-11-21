@@ -9,6 +9,44 @@ final class _TestCapability implements AnalyticsCapability {
 const _testCapabilityKey = CapabilityKey<_TestCapability>('test_capability');
 
 void main() {
+  group('CapabilityKey', () {
+    test('== returns true for identical instances', () {
+      const key1 = CapabilityKey<_TestCapability>('test');
+      const key2 = CapabilityKey<_TestCapability>('test');
+
+      expect(key1 == key2, isTrue);
+    });
+
+    test('== returns false for different names', () {
+      const key1 = CapabilityKey<_TestCapability>('test1');
+      const key2 = CapabilityKey<_TestCapability>('test2');
+
+      expect(key1 == key2, isFalse);
+    });
+
+    test('== returns false for different types', () {
+      const key1 = CapabilityKey<_TestCapability>('test');
+      const key2 = CapabilityKey<AnalyticsCapability>('test');
+
+      expect(key1 == key2, isFalse);
+    });
+
+    test('hashCode is consistent with ==', () {
+      const key1 = CapabilityKey<_TestCapability>('test');
+      const key2 = CapabilityKey<_TestCapability>('test');
+      const key3 = CapabilityKey<_TestCapability>('other');
+
+      expect(key1.hashCode, equals(key2.hashCode));
+      expect(key1.hashCode, isNot(equals(key3.hashCode)));
+    });
+
+    test('toString includes type and name', () {
+      const key = CapabilityKey<_TestCapability>('my_key');
+
+      expect(key.toString(), equals('CapabilityKey<_TestCapability>(my_key)'));
+    });
+  });
+
   group('CapabilityRegistry', () {
     test('registers and resolves capability instances', () {
       final registry = CapabilityRegistry();

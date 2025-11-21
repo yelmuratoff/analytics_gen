@@ -175,5 +175,59 @@ void main() {
         ),
       );
     });
+
+    test('cleans up existing CSV file when CSV generation is disabled', () async {
+      final eventsDir = Directory(path.join(tempDir.path, 'events'));
+      eventsDir.createSync(recursive: true);
+
+      final yamlFile = File(path.join(eventsDir.path, 'auth.yaml'));
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters: {}\n',
+      );
+
+      // First, generate CSV to create the file
+      final firstConfig = AnalyticsConfig(
+        eventsPath: 'events',
+        exportsPath: 'exports',
+        generateCsv: true,
+      );
+      final firstGenerator = ExportGenerator(
+        config: firstConfig,
+        projectRoot: tempDir.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: path.join(tempDir.path, firstConfig.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await firstGenerator.generate(domains);
+
+      final outputDir = Directory(path.join(tempDir.path, 'exports'));
+      final csvFile = File(path.join(outputDir.path, 'analytics_events.csv'));
+      expect(csvFile.existsSync(), isTrue);
+
+      // Now disable CSV generation and verify file is cleaned up
+      final secondConfig = AnalyticsConfig(
+        eventsPath: 'events',
+        exportsPath: 'exports',
+        generateCsv: false, // Disabled
+        generateJson: true, // Keep JSON to ensure generation still runs
+      );
+      final secondGenerator = ExportGenerator(
+        config: secondConfig,
+        projectRoot: tempDir.path,
+      );
+
+      await secondGenerator.generate(domains);
+
+      // CSV file should be deleted
+      expect(csvFile.existsSync(), isFalse);
+    });
   });
 }

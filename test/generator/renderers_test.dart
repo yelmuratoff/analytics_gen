@@ -262,5 +262,145 @@ void main() {
       expect(result, contains("name: 'auth',"));
       expect(result, contains("name: 'login',"));
     });
+
+    test('renders analytics plan with event identifier', () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        generatePlan: true,
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              identifier: 'user_login_v2',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(result, contains("identifier: 'user_login_v2',"));
+    });
+
+    test('renders analytics plan with event metadata', () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        generatePlan: true,
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              meta: {
+                'owner': 'auth-team',
+                'pii': false,
+                'version': 2,
+              },
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(result, contains('meta: <String, Object?>{'));
+      expect(result, contains("'owner': 'auth-team',"));
+      expect(result, contains("'pii': false,"));
+      expect(result, contains("'version': 2,"));
+    });
+
+    test('renders analytics plan with parameter codeName', () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        generatePlan: true,
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'login_method',
+                  codeName: 'method',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(result, contains("name: 'login_method',"));
+      expect(result, contains("codeName: 'method',"));
+    });
+
+    test('renders analytics plan with parameter metadata and allowed values', () {
+      config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'lib/analytics',
+        generatePlan: true,
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'method',
+                  type: 'string',
+                  isNullable: false,
+                  allowedValues: ['email', 'google', "it's special"],
+                  meta: {
+                    'pii': true,
+                    'required': true,
+                    "special_key'": "value'with'quotes",
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(result, contains('allowedValues: <Object>['));
+      expect(result, contains("'email',"));
+      expect(result, contains("'google',"));
+      expect(result, contains("'it\\'s special',"));
+      expect(result, contains('meta: <String, Object?>{'));
+      expect(result, contains("'pii': true,"));
+      expect(result, contains("'required': true,"));
+      expect(result, contains("'special_key\\'': 'value\\'with\\'quotes',"));
+    });
   });
 }

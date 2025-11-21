@@ -394,5 +394,175 @@ void main() {
 
       expect(secondRun, equals(firstRun));
     });
+
+    test('documents parameter and event metadata', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    meta:\n'
+        '      owner: auth-team\n'
+        '      pii: false\n'
+        '    parameters:\n'
+        '      method:\n'
+        '        type: string\n'
+        '        description: Login method\n'
+        '        meta:\n'
+        '          pii: true\n'
+        '          source: user_input\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final content = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      // Check parameter metadata in table
+      expect(content, contains('[pii: true, source: user_input]'));
+      // Check event metadata in table
+      expect(content, contains('**owner**: auth-team<br>**pii**: false'));
+    });
+
+    test('documents context properties with metadata and allowed values', () async {
+      final contextFile = File(p.join(tempProject.path, 'events', 'user_properties.yaml'));
+      await contextFile.writeAsString(
+        'user_properties:\n'
+        '  role:\n'
+        '    type: string\n'
+        '    description: User role\n'
+        '    allowed_values: [admin, viewer, editor]\n'
+        '    meta:\n'
+        '      pii: false\n'
+        '      required: true\n'
+        '  theme:\n'
+        '    type: string\n'
+        '    description: UI theme\n'
+        '    meta:\n'
+        '      default: light\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+        contexts: ['events/user_properties.yaml'],
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+        contextFiles: config.contexts
+            .map((c) => p.join(tempProject.path, c))
+            .toList(),
+      );
+      final sources = await loader.loadEventFiles();
+      final contextSources = await loader.loadContextFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+      final contexts = await parser.parseContexts(contextSources);
+
+      await generator.generate(domains, contexts: contexts);
+
+      final content = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      // Check context title generation (tests _getContextTitle)
+      expect(content, contains('## User Properties'));
+
+      // Check allowed values in properties table
+      expect(content, contains('admin, viewer, editor'));
+
+      // Check property metadata
+      expect(content, contains('**pii**: false<br>**required**: true'));
+      expect(content, contains('**default**: light'));
+    });
+
+    test('uses custom context title for known contexts', () async {
+      final userPropsFile = File(p.join(tempProject.path, 'events', 'user_properties.yaml'));
+      await userPropsFile.writeAsString(
+        'user_properties:\n'
+        '  id:\n'
+        '    type: string\n',
+      );
+
+      final globalFile = File(p.join(tempProject.path, 'events', 'global_context.yaml'));
+      await globalFile.writeAsString(
+        'global_context:\n'
+        '  version:\n'
+        '    type: string\n',
+      );
+
+      final customFile = File(p.join(tempProject.path, 'events', 'custom_props.yaml'));
+      await customFile.writeAsString(
+        'custom_props:\n'
+        '  setting:\n'
+        '    type: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        docsPath: 'docs/analytics_events.md',
+        generateDocs: true,
+        contexts: [
+          'events/user_properties.yaml',
+          'events/global_context.yaml',
+          'events/custom_props.yaml',
+        ],
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+        contextFiles: config.contexts
+            .map((c) => p.join(tempProject.path, c))
+            .toList(),
+      );
+      final sources = await loader.loadEventFiles();
+      final contextSources = await loader.loadContextFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+      final contexts = await parser.parseContexts(contextSources);
+
+      await generator.generate(domains, contexts: contexts);
+
+      final content = await File(
+        p.join(tempProject.path, config.docsPath!),
+      ).readAsString();
+
+      // Known contexts get special titles
+      expect(content, contains('## User Properties'));
+      expect(content, contains('## Global Context'));
+      // Custom context gets PascalCase title
+      expect(content, contains('## CustomProps'));
+    });
   });
 }
