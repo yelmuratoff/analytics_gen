@@ -41,12 +41,14 @@ class PiiRenderer extends BaseRenderer {
       return buffer.toString();
     }
 
-    buffer.writeln('  static const Map<String, Set<String>> _piiProperties = {');
+    buffer
+        .writeln('  static const Map<String, Set<String>> _piiProperties = {');
     final sortedEvents = piiMap.keys.toList()..sort();
     for (final eventName in sortedEvents) {
       final params = piiMap[eventName]!.toList()..sort();
-      final paramsString =
-          params.map((p) => "'${StringUtils.escapeSingleQuoted(p)}'").join(', ');
+      final paramsString = params
+          .map((p) => "'${StringUtils.escapeSingleQuoted(p)}'")
+          .join(', ');
       buffer.writeln(
         "    '${StringUtils.escapeSingleQuoted(eventName)}': {$paramsString},",
       );
@@ -59,10 +61,13 @@ class PiiRenderer extends BaseRenderer {
   /// Renders the static sanitizeParams method.
   String renderSanitizeParamsMethod() {
     final buffer = StringBuffer();
-    buffer.writeln('  /// Returns a copy of [parameters] with PII values redacted.');
+    buffer.writeln(
+        '  /// Returns a copy of [parameters] with PII values redacted.');
     buffer.writeln('  ///');
-    buffer.writeln('  /// PII properties are defined in YAML with `meta: { pii: true }`.');
-    buffer.writeln('  /// This method is useful for logging to console or non-secure backends.');
+    buffer.writeln(
+        '  /// PII properties are defined in YAML with `meta: { pii: true }`.');
+    buffer.writeln(
+        '  /// This method is useful for logging to console or non-secure backends.');
     buffer.writeln('  static Map<String, Object?> sanitizeParams(');
     buffer.writeln('    String eventName,');
     buffer.writeln('    Map<String, Object?>? parameters,');
