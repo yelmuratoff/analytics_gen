@@ -13,6 +13,7 @@ final class AnalyticsConfig {
     this.generateSql = false,
     this.generateDocs = false,
     this.generatePlan = true,
+    this.generateTests = false,
     this.includeEventDescription = false,
     this.strictEventNames = true,
     this.naming = const NamingStrategy(),
@@ -33,6 +34,7 @@ final class AnalyticsConfig {
       generateSql: config['generate_sql'] as bool? ?? false,
       generateDocs: config['generate_docs'] as bool? ?? false,
       generatePlan: config['generate_plan'] as bool? ?? true,
+      generateTests: config['generate_tests'] as bool? ?? false,
       includeEventDescription:
           config['include_event_description'] as bool? ?? false,
       strictEventNames: config['strict_event_names'] as bool? ?? true,
@@ -70,6 +72,9 @@ final class AnalyticsConfig {
 
   /// Whether to include the runtime tracking plan in generated code.
   final bool generatePlan;
+
+  /// Whether to generate a test file that verifies event construction.
+  final bool generateTests;
 
   /// Whether to include the event 'description' as a parameter when logging
   /// events.

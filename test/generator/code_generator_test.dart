@@ -490,7 +490,7 @@ delta:
 
       expect(
         analyticsContent,
-        contains("static const Map<String, Set<String>> _piiProperties = {"),
+        contains('static const Map<String, Set<String>> _piiProperties = {'),
       );
       expect(
         analyticsContent,
@@ -504,6 +504,80 @@ delta:
         analyticsContent,
         contains("sanitized[key] = '[REDACTED]';"),
       );
+    });
+
+    test('generates test file when enabled', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+        generateTests: true,
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final testFile = File(
+        p.join(tempProject.path, 'test', 'generated_plan_test.dart'),
+      );
+      expect(testFile.existsSync(), isTrue);
+      final content = await testFile.readAsString();
+      expect(content, contains('logAuthLogin constructs correctly'));
+    });
+
+    test('does not generate test file by default', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+        // generateTests defaults to false
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final testFile = File(
+        p.join(tempProject.path, 'test', 'generated_plan_test.dart'),
+      );
+      expect(testFile.existsSync(), isFalse);
     });
   });
 }

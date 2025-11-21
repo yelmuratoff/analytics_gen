@@ -18,7 +18,7 @@
   - Add runtime support for handling PII parameters defined in YAML.
   - Consider automatic redaction in debug logs or helper methods.
 
-- [ ] **Generated Tests**
+- [x] **Generated Tests**
   - Generate a `test/generated_plan_test.dart` file.
   - Verify that all events defined in YAML can be constructed and pass validation.
 

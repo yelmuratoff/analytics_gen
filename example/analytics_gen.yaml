@@ -22,6 +22,7 @@ analytics_gen:
   generate_json: true
   generate_sql: true
   generate_plan: true
+  generate_tests: true
   # If true, each generated logEvent call will include the event description
   # under the 'description' key in the parameters map. Default: false
   include_event_description: true

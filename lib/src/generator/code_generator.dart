@@ -11,6 +11,7 @@ import 'generation_telemetry.dart';
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
 import 'renderers/event_renderer.dart';
+import 'renderers/test_renderer.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -23,10 +24,12 @@ final class CodeGenerator {
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
+    TestRenderer? testRenderer,
   })  : _telemetry = telemetry ?? LoggingTelemetry(log),
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
-        _eventRenderer = eventRenderer ?? EventRenderer(config);
+        _eventRenderer = eventRenderer ?? EventRenderer(config),
+        _testRenderer = testRenderer ?? TestRenderer(config);
 
   /// The analytics configuration.
   final AnalyticsConfig config;
@@ -41,6 +44,7 @@ final class CodeGenerator {
   final AnalyticsClassRenderer _classRenderer;
   final ContextRenderer _contextRenderer;
   final EventRenderer _eventRenderer;
+  final TestRenderer _testRenderer;
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate(
@@ -129,10 +133,17 @@ final class CodeGenerator {
       contexts: activeContexts,
     );
 
+    // Generate test file
+    if (config.generateTests) {
+      await _generateTestFile(domains);
+    }
+
     final elapsed = DateTime.now().difference(startTime);
     final filesGenerated = generatedFiles.length +
         activeContexts.length +
-        2; // +2 for barrel and analytics
+        (config.generateTests
+            ? 3
+            : 2); // +2 for barrel and analytics, +1 for test
     _telemetry.onGenerationComplete(elapsed, filesGenerated);
   }
 
@@ -205,6 +216,21 @@ final class CodeGenerator {
     await _writeFileIfContentChanged(analyticsPath, content);
 
     log.info('✓ Generated Analytics class at: $analyticsPath');
+  }
+
+  /// Generates a test file to verify event construction
+  Future<void> _generateTestFile(Map<String, AnalyticsDomain> domains) async {
+    final content = _testRenderer.render(domains);
+    final testPath = path.join(projectRoot, 'test', 'generated_plan_test.dart');
+
+    // Ensure test directory exists
+    final testDir = Directory(path.dirname(testPath));
+    if (!testDir.existsSync()) {
+      await testDir.create(recursive: true);
+    }
+
+    await _writeFileIfContentChanged(testPath, content);
+    log.info('✓ Generated test file at: $testPath');
   }
 
   /// Writes a file only if its contents differ from the existing file.
