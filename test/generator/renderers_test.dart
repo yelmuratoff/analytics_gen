@@ -82,6 +82,52 @@ void main() {
       expect(result, contains('"sort": sort.value,'));
     });
 
+    test('renders event with allowed values starting with numbers', () {
+      final event = AnalyticsEvent(
+        name: 'version',
+        description: 'Version selection',
+        parameters: [
+          AnalyticsParameter(
+            name: 'number',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['123test', '456value', '789item'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'app', events: [event]);
+
+      final result = renderer.renderDomainFile('app', domain);
+
+      expect(result, contains('enum AnalyticsAppVersionNumberEnum {'));
+      expect(result, contains("value123test('123test'),"));
+      expect(result, contains("value456value('456value'),"));
+      expect(result, contains("value789item('789item');"));
+    });
+
+    test('renders event with non-string parameter having allowed values', () {
+      final event = AnalyticsEvent(
+        name: 'select',
+        description: 'Select option',
+        parameters: [
+          AnalyticsParameter(
+            name: 'option',
+            type: 'int',
+            isNullable: false,
+            allowedValues: [1, 2, 3],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'ui', events: [event]);
+
+      final result = renderer.renderDomainFile('ui', domain);
+
+      expect(result, contains('const allowedOptionValues = <int>{1, 2, 3};'));
+      expect(result, contains('if (!allowedOptionValues.contains(option))'));
+      expect(result, contains('throw ArgumentError.value('));
+      expect(result, contains('must be one of 1, 2, 3'));
+    });
+
     test('renders event with validation rules', () {
       final event = AnalyticsEvent(
         name: 'search',
