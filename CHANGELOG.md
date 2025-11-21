@@ -43,6 +43,9 @@ All notable changes to this project will be documented in this file.
   - Helps developers discover context property setters
 - **Singleton Reset**: Added `Analytics.reset()` method (visible for testing) to clear the singleton instance, facilitating integration tests and hot restarts.
 - **CI/CD Documentation**: Added GitHub Actions workflow example to `doc/VALIDATION.md` for automated plan validation.
+- **Dead Letter Queue (DLQ)**:
+  - Added `onEventDropped` callback to `BatchingAnalytics`.
+  - Allows handling events that failed to send after max retries (e.g., save to disk).
 
 ### Changed
 - Refactored `YamlParser` to use `loadYamlNode` internally.

@@ -165,6 +165,36 @@ void main() {
       await batching.flush();
       expect(delegate.recordedEvents, isEmpty);
     });
+
+    test('onEventDropped is called when event is dropped', () async {
+      final delegate = _FakeAsyncAnalytics()..alwaysThrow = true;
+      final droppedEvents = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxBatchSize: 1,
+        maxRetries: 2,
+        minRetryDelay: Duration.zero,
+        onEventDropped: (name, params, error, stack) {
+          droppedEvents.add(name);
+        },
+      );
+
+      batching.logEvent(name: 'poison');
+
+      // First attempt (retryCount -> 1)
+      await expectLater(
+        () async => await batching.flush(),
+        throwsA(isA<StateError>()),
+      );
+
+      // Second attempt (retryCount -> 2, dropped)
+      await expectLater(
+        () async => await batching.flush(),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(droppedEvents, ['poison']);
+    });
   });
 }
 

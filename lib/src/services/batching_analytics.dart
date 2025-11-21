@@ -9,6 +9,14 @@ typedef BatchFlushErrorHandler = void Function(
   StackTrace stackTrace,
 );
 
+/// Signature for handler invoked when an event is dropped after max retries.
+typedef EventDroppedHandler = void Function(
+  String name,
+  AnalyticsParams? parameters,
+  Object error,
+  StackTrace stackTrace,
+);
+
 /// Buffers analytics events and flushes them in batches to an async delegate.
 ///
 /// Use this wrapper when you need to control network usage (cellular metering,
@@ -24,6 +32,7 @@ final class BatchingAnalytics implements IAnalytics {
     this.maxRetryDelay = const Duration(seconds: 10),
     Duration? flushInterval,
     this.onFlushError,
+    this.onEventDropped,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
         assert(maxRetries >= 0, 'maxRetries must be non-negative.'),
         _delegate = delegate {
@@ -52,6 +61,9 @@ final class BatchingAnalytics implements IAnalytics {
 
   /// Callback for handling flush errors.
   final BatchFlushErrorHandler? onFlushError;
+
+  /// Callback for handling dropped events (Dead Letter Queue).
+  final EventDroppedHandler? onEventDropped;
 
   final List<_QueuedAnalyticsEvent> _pending = <_QueuedAnalyticsEvent>[];
   Future<void>? _activeFlush;
@@ -179,6 +191,12 @@ final class BatchingAnalytics implements IAnalytics {
 
         if (failedEvent.retryCount >= maxRetries) {
           // Drop the poison pill event by skipping it in the re-queue
+          onEventDropped?.call(
+            failedEvent.name,
+            failedEvent.parameters,
+            error,
+            stackTrace,
+          );
           nextIndex++;
         } else {
           // Backoff before retrying

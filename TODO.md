@@ -10,6 +10,18 @@
 
 ## Refactoring & Improvements (Priority)
 
+- [x] **Dead Letter Queue (DLQ)**
+  - Add `onEventDropped` callback to `BatchingAnalytics`.
+  - Allow handling events that failed to send after max retries (e.g., save to disk).
+
+- [ ] **PII Scrubbing Support**
+  - Add runtime support for handling PII parameters defined in YAML.
+  - Consider automatic redaction in debug logs or helper methods.
+
+- [ ] **Generated Tests**
+  - Generate a `test/generated_plan_test.dart` file.
+  - Verify that all events defined in YAML can be constructed and pass validation.
+
 - [x] **Singleton Reset**
   - Add `Analytics.reset()` method visible for testing to allow clearing the singleton instance.
   - Useful for integration tests and hot restarts.

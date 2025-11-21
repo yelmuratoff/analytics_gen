@@ -293,6 +293,10 @@ final batching = BatchingAnalytics(
   onFlushError: (error, stack) {
     print('Batch flush failed: $error');
   },
+  onEventDropped: (name, params, error, stack) {
+    print('Event dropped after max retries: $name');
+    // Optional: Save to disk (Dead Letter Queue)
+  },
 );
 
 Analytics.initialize(batching);
