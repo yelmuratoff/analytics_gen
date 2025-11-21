@@ -2,83 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.1] - Unreleased
+## [0.2.1] - 2025-11-21
 
-### Documentation
-- Clarified `BatchingAnalytics.flush()` exception behavior: manual flushes throw on failure, while auto-flushes suppress errors and report to `onFlushError`.
-- Updated `README.md` with explicit error handling guidance for batching.
+### Highlights
+- Improved error reporting, validation, and generated code ergonomics.
+- Better CSV/exports, optional PII scrubbing, and safer enum generation for parameter values.
+- Added telemetry hooks and testing helpers (e.g., `Analytics.reset()`).
 
-### Code Quality
-- Enabled `sort_constructors_first` and `public_member_api_docs` lints.
-- Fixed all lint warnings across the codebase.
-- Improved documentation for public members in `BatchingAnalytics`, `MultiProviderAnalytics`, and core models.
+### Documentation & DX
+- Clarified `BatchingAnalytics.flush()` behavior and updated README guidance.
+- Added CI example for plan validation in `doc/VALIDATION.md`.
 
-### Added
-- **Enhanced CSV Export**:
-  - Generates multiple CSV files: `analytics_events.csv`, `analytics_parameters.csv`, `analytics_metadata.csv`, `analytics_event_parameters.csv`.
-  - Improved readability with proper escaping and formatting.
-  - Added parameter-per-row and meta-per-row structures for easier analysis.
-- **Parameter Validation DSL**:
-  - Support for validation rules in YAML: `regex`, `min_length`, `max_length`, `min`, `max`.
-  - Generates runtime validation code for parameters.
-- **Generated Code Improvements**:
-  - Added `ignore_for_file` lints to generated Dart files.
-  - Added timestamp of last generation to file headers.
-- **Better Error Reporting**: Now uses `SourceSpan` to point to the exact line and column in the YAML file where an error occurred.
-- **Strict Event Naming**: The parser now throws an error if event names contain interpolation characters (`{}`) to prevent high cardinality issues.
-- **BaseRenderer**: Extracted common rendering functionality into a base class to reduce code duplication across renderers
-  - Shared methods for file headers, imports, documentation comments, and validation checks
-  - `MethodParameter` class for type-safe parameter definitions
-  - Improved maintainability and consistency across generators
-- **Generation Telemetry**: Added performance tracking and observability for code generation
-  - `GenerationTelemetry` abstract class with lifecycle hooks
-  - `LoggingTelemetry` implementation for console output
-  - `NoOpTelemetry` for production use without overhead
-  - Track domain/context processing times and total generation duration
-  - Integrated into `CodeGenerator` with automatic metrics collection
-- **Capability Discovery**: Enhanced generated Analytics class documentation
-  - Auto-generated capability documentation in class comments
-  - Lists all available capabilities with usage examples
-  - Shows capability keys, types, and method signatures
-  - Helps developers discover context property setters
-- **Singleton Reset**: Added `Analytics.reset()` method (visible for testing) to clear the singleton instance, facilitating integration tests and hot restarts.
-- **CI/CD Documentation**: Added GitHub Actions workflow example to `doc/VALIDATION.md` for automated plan validation.
-- **Dead Letter Queue (DLQ)**:
-  - Added `onEventDropped` callback to `BatchingAnalytics`.
-  - Allows handling events that failed to send after max retries (e.g., save to disk).
-- **PII Scrubbing Support**:
-  - Added `PiiRenderer` to generate PII redaction logic.
-  - Added `Analytics.sanitizeParams` method to redact PII fields defined in YAML.
-- **Enum Generation**:
-  - Automatically generates Dart enums for string parameters with `allowed_values`.
-  - Enums are named `Analytics{Domain}{Event}{Param}Enum` to ensure uniqueness.
-  - Generated methods use these enums for type-safe logging.
+### Key Additions
+- Enhanced CSV export (multiple files, better escaping).
+- Parameter validation DSL: `regex`, `min_length`, `max_length`, `min`, `max` with runtime checks.
+- PII scrubbing support (`PiiRenderer` + `Analytics.sanitizeParams`).
+- Enum generation for parameters with `allowed_values`.
 
-### Changed
-- Refactored `YamlParser` to use `loadYamlNode` internally.
+### Internal Improvements
+- `BaseRenderer` to share common rendering logic across generators.
+- Generation telemetry (`GenerationTelemetry` + implementations) integrated into `CodeGenerator`.
+- Validator separation: `SchemaValidator` extracted from `YamlParser` with tests.
+- `YamlParser` refactored to use `loadYamlNode` and enforces strict event-name rules.
 
-### Refactoring
-- **Validator Separation**:
-  - Extracted validation logic from `YamlParser` into a dedicated `SchemaValidator` class.
-  - Improved separation of concerns and testability.
-  - Added comprehensive unit tests for validation logic.
-- **Dart 3 Features**:
-  - Refactored `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
- - **Event name validation**:
-  - Moved event name interpolation validation from `EventRenderer` to `YamlParser` and `SchemaValidator`.
-  - `YamlParser` now correctly propagates `strictEventNames` configuration to domain parsers.
-
-### Improved
-- All renderers now extend `BaseRenderer` for consistent code generation
-- Reduced code duplication across `EventRenderer`, `ContextRenderer`, and `AnalyticsClassRenderer`
-- Better error messages and validation feedback
-- **Initialization Error**:
-  - Improved the error message when `Analytics.instance` is accessed before initialization to be more actionable.
-
-### Tests
-- Added comprehensive test suite for `BaseRenderer` (23 tests)
-- Added full test coverage for `GenerationTelemetry` (7 tests)
-- All 199 tests passing with 100% coverage maintained
+### Misc
+- Added `ignore_for_file` lints and generation timestamp to generated files.
+- `Analytics.reset()` for testing and hot-restart scenarios.
 
 ## [0.2.0] - 2025-11-20
 - **Updates**:
@@ -96,8 +45,6 @@ All notable changes to this project will be documented in this file.
 - **Quality Assurance**:
   - Full test coverage (100%).
   - Stricter linting rules and CI guardrails.
-
-## [0.1.6] - 2025-11-17
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an
