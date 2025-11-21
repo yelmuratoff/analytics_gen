@@ -48,12 +48,15 @@ auth:
 
 ```yaml
 analytics_gen:
-  events_path: events
-  output_path: lib/src/analytics/generated
-  docs_path: docs/analytics_events.md
-  exports_path: assets/generated
-  generate_docs: true
-  generate_json: true
+  inputs:
+    events: events
+  outputs:
+    dart: lib/src/analytics/generated
+    docs: docs/analytics_events.md
+    exports: assets/generated
+  targets:
+    docs: true
+    json: true
   naming:
     enforce_snake_case_domains: true
     enforce_snake_case_parameters: true

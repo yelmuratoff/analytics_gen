@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 ## [0.2.1] - 2025-11-21
 
+### Breaking Changes
+- **Configuration Structure Update**: The `analytics_gen.yaml` file has been completely restructured into logical groups (`inputs`, `outputs`, `targets`, `rules`) to improve readability and organization.
+  - **Migration Guide**:
+    ```yaml
+    # Old (v0.2.0)
+    analytics_gen:
+      events_path: events
+      output_path: lib/src/analytics
+      docs_path: docs/analytics.md
+      generate_docs: true
+      strict_event_names: true
+      event_parameters_path: events/shared.yaml
+
+    # New (v0.2.1)
+    analytics_gen:
+      inputs:
+        events: events
+        shared_parameters:
+          - events/shared.yaml
+      outputs:
+        dart: lib/src/analytics
+        docs: docs/analytics.md
+      targets:
+        docs: true
+      rules:
+        strict_event_names: true
+    ```
+  - **Note**: The old flat structure is deprecated but may still work for some fields during a transition period, though migration is strongly recommended. `event_parameters_path` is strictly removed in favor of `inputs.shared_parameters`.
+
 ### Highlights
 - Improved error reporting, validation, and generated code ergonomics.
 - Better CSV/exports, optional PII scrubbing, and safer enum generation for parameter values.
@@ -14,7 +43,7 @@ All notable changes to this project will be documented in this file.
 - Added CI example for plan validation in `doc/VALIDATION.md`.
 
 ### Key Additions
-- **Shared Event Parameters**: Support for centrally defined parameters via `event_parameters_path`.
+- **Shared Event Parameters**: Support for centrally defined parameters via `shared_parameters`.
   - Reuse parameters across events by referencing them (or leaving value as `null`).
   - Enforce consistency with `enforce_centrally_defined_parameters`.
   - Prevent duplicates with `prevent_event_parameter_duplicates`.

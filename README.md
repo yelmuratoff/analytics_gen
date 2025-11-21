@@ -172,11 +172,14 @@ Define common parameters in a central file to ensure consistency and reduce dupl
 2. **Configure it** in `analytics_gen.yaml`:
    ```yaml
    analytics_gen:
-     event_parameters_path: events/shared.yaml
-     # Optional: Enforce that all parameters must be defined in shared.yaml
-     enforce_centrally_defined_parameters: false
-     # Optional: Prevent redefining shared parameters in events
-     prevent_event_parameter_duplicates: true
+     inputs:
+       shared_parameters:
+         - events/shared.yaml
+     rules:
+       # Optional: Enforce that all parameters must be defined in shared.yaml
+       enforce_centrally_defined_parameters: false
+       # Optional: Prevent redefining shared parameters in events
+       prevent_event_parameter_duplicates: true
    ```
 
 3. **Reference in events**:
@@ -206,8 +209,9 @@ Contexts allow you to define global properties (like user attributes, device inf
 2. **Register it** in `analytics_gen.yaml`:
    ```yaml
    analytics_gen:
-     contexts:
-       - events/user_properties.yaml
+     inputs:
+       contexts:
+         - events/user_properties.yaml
    ```
 
 3. **Use the generated API**:
