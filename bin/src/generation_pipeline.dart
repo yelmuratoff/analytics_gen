@@ -32,9 +32,8 @@ class GenerationPipeline {
     }
 
     // Resolve shared parameter paths
-    final sharedParameterPaths = config.sharedParameters
-        .map((p) => path.join(projectRoot, p))
-        .toList();
+    final sharedParameterPaths =
+        config.sharedParameters.map((p) => path.join(projectRoot, p)).toList();
 
     // Load files
     final loader = EventLoader(
