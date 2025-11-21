@@ -25,16 +25,50 @@ class DomainParser {
     this.domainHook,
   });
 
+  /// Parser used to parse individual event parameter definitions.
+  ///
+  /// This must be provided by the caller and is reused for every event in the
+  /// domain being parsed.
   final ParameterParser parameterParser;
+
+  /// Validator used to assert the YAML structure and semantics of parsed
+  /// domains and events conform to the schema.
   final SchemaValidator validator;
+
+  /// Function that parses a YAML string into a `YamlNode` for downstream
+  /// validation and parsing.
   final LoadYamlNode loadYamlNode;
+
+  /// Naming convention and strategy used to map domain and parameter names to
+  /// generated Dart identifiers (file names, class names, and parameter
+  /// `codeName`s).
   final NamingStrategy naming;
+
+  /// Logger used by the parser to emit warnings and debugging messages.
   final Logger log;
+
+  /// Logger used by the parser to emit warnings and debugging messages.
   final bool strictEventNames;
+
+  /// Whether to enforce strict event names and disallow string interpolation
+  /// inside event names to reduce cardinality.
   final bool enforceCentrallyDefinedParameters;
+
+  /// If enabled, parameters must be defined in shared configuration files and
+  /// cannot be defined ad-hoc in events.
   final bool preventEventParameterDuplicates;
+
+  /// If enabled, prevents repeated parameter definitions in an event when the
+  /// same parameter already exists in `sharedParameters`.
   final Map<String, AnalyticsParameter> sharedParameters;
+
+  /// Map of shared parameters (name -> definition) loaded from configured
+  /// shared parameter files. These may be referenced by events across
+  /// domains.
   final void Function(String domainKey, YamlNode? valueNode)? domainHook;
+
+  /// Optional test seam invoked for each domain key during parsing. Useful in
+  /// tests to inspect intermediate YAML nodes or to inject behavior.
 
   /// Parses the provided analytics sources and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents(
@@ -233,6 +267,22 @@ class DomainParser {
         final identifier = eventData['identifier'] as String?;
         final deprecated = eventData['deprecated'] as bool? ?? false;
         final replacement = eventData['replacement'] as String?;
+        final addedIn = eventData['added_in'] as String?;
+        final deprecatedIn = eventData['deprecated_in'] as String?;
+
+        final dualWriteToNode = eventData.nodes['dual_write_to'];
+        List<String>? dualWriteTo;
+        if (dualWriteToNode != null) {
+          if (dualWriteToNode is YamlList) {
+            dualWriteTo = dualWriteToNode.map((e) => e.toString()).toList();
+          } else {
+            throw AnalyticsParseException(
+              'Field "dual_write_to" must be a list of strings.',
+              filePath: filePath,
+              span: dualWriteToNode.span,
+            );
+          }
+        }
 
         final metaNode = eventData.nodes['meta'];
         final meta = _parseMeta(metaNode, filePath);
@@ -270,6 +320,9 @@ class DomainParser {
             meta: meta,
             sourcePath: filePath,
             lineNumber: keyNode.span.start.line + 1,
+            addedIn: addedIn,
+            deprecatedIn: deprecatedIn,
+            dualWriteTo: dualWriteTo,
           ),
         );
       } on AnalyticsParseException catch (e) {

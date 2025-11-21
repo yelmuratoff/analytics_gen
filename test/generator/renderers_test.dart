@@ -31,8 +31,9 @@ void main() {
         ],
       );
       final domain = AnalyticsDomain(name: 'auth', events: [event]);
+      final allDomains = {'auth': domain};
 
-      final result = renderer.renderDomainFile('auth', domain);
+      final result = renderer.renderDomainFile('auth', domain, allDomains);
 
       expect(result, contains('mixin AnalyticsAuth on AnalyticsBase'));
       expect(result, contains('void logAuthLogin({'));
@@ -50,12 +51,16 @@ void main() {
         replacement: 'legacy.new_event',
       );
       final domain = AnalyticsDomain(name: 'legacy', events: [event]);
+      final allDomains = {'legacy': domain};
 
-      final result = renderer.renderDomainFile('legacy', domain);
+      final result = renderer.renderDomainFile('legacy', domain, allDomains);
 
       expect(
           result, contains('@Deprecated(\'Use logLegacyNewEvent instead.\')'));
-      expect(result, contains('void logLegacyOldEvent()'));
+      // The generated event includes an optional `parameters` named argument
+      // (the default code generator adds event parameter maps to all events
+      // so every event function has the same optional parameter signature).
+      expect(result, contains('void logLegacyOldEvent({'));
     });
 
     test('renders event with allowed values', () {
@@ -72,8 +77,9 @@ void main() {
         ],
       );
       final domain = AnalyticsDomain(name: 'items', events: [event]);
+      final allDomains = {'items': domain};
 
-      final result = renderer.renderDomainFile('items', domain);
+      final result = renderer.renderDomainFile('items', domain, allDomains);
 
       expect(result, contains('enum AnalyticsItemsFilterSortEnum {'));
       expect(result, contains("asc('asc'),"));
@@ -96,8 +102,9 @@ void main() {
         ],
       );
       final domain = AnalyticsDomain(name: 'app', events: [event]);
+      final allDomains = {'app': domain};
 
-      final result = renderer.renderDomainFile('app', domain);
+      final result = renderer.renderDomainFile('app', domain, allDomains);
 
       expect(result, contains('enum AnalyticsAppVersionNumberEnum {'));
       expect(result, contains("value123test('123test'),"));
@@ -119,8 +126,9 @@ void main() {
         ],
       );
       final domain = AnalyticsDomain(name: 'ui', events: [event]);
+      final allDomains = {'ui': domain};
 
-      final result = renderer.renderDomainFile('ui', domain);
+      final result = renderer.renderDomainFile('ui', domain, allDomains);
 
       expect(result, contains('const allowedOptionValues = <int>{1, 2, 3};'));
       expect(result, contains('if (!allowedOptionValues.contains(option))'));
@@ -151,13 +159,14 @@ void main() {
         ],
       );
       final domain = AnalyticsDomain(name: 'items', events: [event]);
+      final allDomains = {'items': domain};
 
-      final result = renderer.renderDomainFile('items', domain);
+      final result = renderer.renderDomainFile('items', domain, allDomains);
 
       // Regex
       expect(result, contains("if (!RegExp(r'^[a-z]+\$').hasMatch(query)) {"));
       expect(result, contains('throw ArgumentError.value('));
-      expect(result, contains("'must match regex ^[a-z]+\$',"));
+      expect(result, contains(r"'must match regex ^[a-z]+\$',"));
 
       // Length
       expect(result, contains('if (query.length < 3 || query.length > 20) {'));
@@ -186,8 +195,9 @@ void main() {
         ],
       );
       final domain = AnalyticsDomain(name: 'screen', events: [event]);
+      final allDomains = {'screen': domain};
 
-      final result = renderer.renderDomainFile('screen', domain);
+      final result = renderer.renderDomainFile('screen', domain, allDomains);
       expect(result, contains('@Deprecated'));
       expect(result, contains('string interpolation'));
     });

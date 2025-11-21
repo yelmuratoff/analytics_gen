@@ -16,8 +16,17 @@ class SharedParameterParser {
     required this.loadYamlNode,
   });
 
+  /// The parser responsible for parsing `parameters` YAML maps into
+  /// `AnalyticsParameter` model instances.
   final ParameterParser parameterParser;
+
+  /// The schema validator used to validate the structure and types
+  /// of the shared parameters YAML before parsing.
   final SchemaValidator validator;
+
+  /// A callback to load YAML into a `YamlNode` from a string. This is
+  /// injected to facilitate testing and to avoid a direct dependency on
+  /// `package:yaml` in places where different loading behavior is needed.
   final LoadYamlNode loadYamlNode;
 
   /// Parses shared parameters from a YAML source.

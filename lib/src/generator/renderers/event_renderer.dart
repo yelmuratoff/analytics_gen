@@ -17,7 +17,11 @@ class EventRenderer extends BaseRenderer {
   static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
 
   /// Renders a domain file with event methods.
-  String renderDomainFile(String domainName, AnalyticsDomain domain) {
+  String renderDomainFile(
+    String domainName,
+    AnalyticsDomain domain,
+    Map<String, AnalyticsDomain> allDomains,
+  ) {
     final buffer = StringBuffer();
 
     // File header
@@ -28,13 +32,17 @@ class EventRenderer extends BaseRenderer {
     buffer.write(const EnumRenderer().renderEnums(domainName, domain));
 
     // Generate mixin
-    buffer.write(renderDomainMixin(domainName, domain));
+    buffer.write(renderDomainMixin(domainName, domain, allDomains));
 
     return buffer.toString();
   }
 
   /// Renders a domain mixin with event methods.
-  String renderDomainMixin(String domainName, AnalyticsDomain domain) {
+  String renderDomainMixin(
+    String domainName,
+    AnalyticsDomain domain,
+    Map<String, AnalyticsDomain> allDomains,
+  ) {
     final buffer = StringBuffer();
     final className = 'Analytics${StringUtils.capitalizePascal(domainName)}';
 
@@ -42,7 +50,7 @@ class EventRenderer extends BaseRenderer {
     buffer.writeln('mixin $className on AnalyticsBase {');
 
     for (final event in domain.events) {
-      buffer.write(_renderEventMethod(domainName, event));
+      buffer.write(_renderEventMethod(domainName, event, allDomains));
     }
 
     buffer.writeln('}');
@@ -50,7 +58,11 @@ class EventRenderer extends BaseRenderer {
     return buffer.toString();
   }
 
-  String _renderEventMethod(String domainName, AnalyticsEvent event) {
+  String _renderEventMethod(
+    String domainName,
+    AnalyticsEvent event,
+    Map<String, AnalyticsDomain> allDomains,
+  ) {
     final buffer = StringBuffer();
     final methodName = EventNaming.buildLoggerMethodName(
       domainName,
@@ -129,6 +141,13 @@ class EventRenderer extends BaseRenderer {
         final camelParam = StringUtils.toCamelCase(param.codeName);
         buffer.writeln('    $required$nullableType $camelParam,');
       }
+      // Add optional parameters override
+      final hasParametersParam = event.parameters
+          .any((p) => StringUtils.toCamelCase(p.codeName) == 'parameters');
+      final parametersArgName =
+          hasParametersParam ? 'analyticsParameters' : 'parameters';
+      buffer.writeln('    Map<String, Object?>? $parametersArgName,');
+
       buffer.writeln('  }) {');
       buffer.writeln();
 
@@ -177,7 +196,8 @@ class EventRenderer extends BaseRenderer {
         }
       }
     } else {
-      buffer.writeln(') {');
+      // Add optional parameters override even if no params
+      buffer.writeln('{Map<String, Object?>? parameters}) {');
     }
 
     // Method body
@@ -188,15 +208,18 @@ class EventRenderer extends BaseRenderer {
       event.parameters,
     );
 
-    buffer.writeln('    logger.logEvent(');
-    buffer.writeln('      name: "$interpolatedEventName",');
+    final hasParametersParam = event.parameters
+        .any((p) => StringUtils.toCamelCase(p.codeName) == 'parameters');
+    final parametersArgName =
+        hasParametersParam ? 'analyticsParameters' : 'parameters';
 
     if (event.parameters.isNotEmpty || includeDescription) {
-      buffer.writeln('      parameters: <String, Object?>{');
+      buffer.writeln(
+          '    final eventParameters = $parametersArgName ?? <String, Object?>{');
 
       if (includeDescription) {
         buffer.writeln(
-          "        'description': '${StringUtils.escapeSingleQuoted(event.description)}',",
+          "      'description': '${StringUtils.escapeSingleQuoted(event.description)}',",
         );
       }
       for (final param in event.parameters) {
@@ -211,22 +234,196 @@ class EventRenderer extends BaseRenderer {
 
         if (param.isNullable) {
           buffer.writeln(
-            '        if ($camelParam != null) "${param.name}": $valueAccess,',
+            '      if ($camelParam != null) "${param.name}": $valueAccess,',
           );
         } else {
-          buffer.writeln('        "${param.name}": $valueAccess,');
+          buffer.writeln('      "${param.name}": $valueAccess,');
         }
       }
-      buffer.writeln('      },');
+      buffer.writeln('    };');
+      buffer.writeln();
+
+      buffer.writeln('    logger.logEvent(');
+      buffer.writeln('      name: "$interpolatedEventName",');
+      buffer.writeln('      parameters: eventParameters,');
+      buffer.writeln('    );');
+
+      if (event.dualWriteTo != null) {
+        for (final target in event.dualWriteTo!) {
+          buffer.writeln();
+          buffer.writeln('    // Dual-write to: $target');
+
+          final methodCall = _tryGenerateMethodCall(
+            target,
+            domainName,
+            event,
+            allDomains,
+            parametersArgName: parametersArgName,
+          );
+
+          if (methodCall != null) {
+            buffer.writeln('    $methodCall');
+          } else {
+            final resolvedName = _resolveTargetEventName(target, allDomains);
+            buffer.writeln('    logger.logEvent(');
+            buffer.writeln('      name: "$resolvedName",');
+            buffer.writeln('      parameters: eventParameters,');
+            buffer.writeln('    );');
+          }
+        }
+      }
     } else {
-      buffer.writeln('      parameters: const {},');
+      buffer.writeln(
+          '    final eventParameters = parameters ?? const <String, Object?>{};');
+      buffer.writeln('    logger.logEvent(');
+      buffer.writeln('      name: "$interpolatedEventName",');
+      buffer.writeln('      parameters: eventParameters,');
+      buffer.writeln('    );');
+
+      if (event.dualWriteTo != null) {
+        for (final target in event.dualWriteTo!) {
+          buffer.writeln();
+          buffer.writeln('    // Dual-write to: $target');
+
+          final methodCall = _tryGenerateMethodCall(
+            target,
+            domainName,
+            event,
+            allDomains,
+            parametersArgName: parametersArgName,
+          );
+
+          if (methodCall != null) {
+            buffer.writeln('    $methodCall');
+          } else {
+            final resolvedName = _resolveTargetEventName(target, allDomains);
+            buffer.writeln('    logger.logEvent(');
+            buffer.writeln('      name: "$resolvedName",');
+            buffer.writeln('      parameters: eventParameters,');
+            buffer.writeln('    );');
+          }
+        }
+      }
     }
 
-    buffer.writeln('    );');
     buffer.writeln('  }');
     buffer.writeln();
 
     return buffer.toString();
+  }
+
+  String? _tryGenerateMethodCall(
+    String target,
+    String currentDomain,
+    AnalyticsEvent currentEvent,
+    Map<String, AnalyticsDomain> allDomains, {
+    String parametersArgName = 'parameters',
+  }) {
+    final parts = target.split('.');
+    if (parts.length != 2) return null;
+
+    final targetDomainName = parts[0];
+    final targetEventName = parts[1];
+
+    // Can only call methods within the same domain (mixin)
+    if (targetDomainName != currentDomain) return null;
+
+    final domain = allDomains[targetDomainName];
+    if (domain == null) return null;
+
+    final targetEvent = domain.events
+        .cast<AnalyticsEvent?>()
+        .firstWhere((e) => e?.name == targetEventName, orElse: () => null);
+
+    if (targetEvent == null) return null;
+
+    final methodName = EventNaming.buildLoggerMethodName(
+      targetDomainName,
+      targetEvent.name,
+    );
+
+    final args = <String>[];
+    for (final targetParam in targetEvent.parameters) {
+      // Find matching parameter in current event
+      final sourceParam =
+          currentEvent.parameters.cast<AnalyticsParameter?>().firstWhere((p) {
+        if (p == null) return false;
+        // Match by source name (YAML key) if available
+        if (p.sourceName != null && targetParam.sourceName != null) {
+          return p.sourceName == targetParam.sourceName;
+        }
+        // Fallback to code name
+        return p.codeName == targetParam.codeName;
+      }, orElse: () => null);
+
+      if (sourceParam == null) {
+        if (!targetParam.isNullable) {
+          // Required parameter missing in source -> cannot call method safely
+          return null;
+        }
+        continue;
+      }
+
+      final targetArgName = StringUtils.toCamelCase(targetParam.codeName);
+      final sourceVarName = StringUtils.toCamelCase(sourceParam.codeName);
+
+      final sourceIsEnum = sourceParam.type == 'string' &&
+          sourceParam.allowedValues != null &&
+          sourceParam.allowedValues!.isNotEmpty;
+      final targetIsEnum = targetParam.type == 'string' &&
+          targetParam.allowedValues != null &&
+          targetParam.allowedValues!.isNotEmpty;
+
+      if (targetParam.type == sourceParam.type) {
+        if (sourceIsEnum && !targetIsEnum) {
+          // Enum -> String
+          args.add('$targetArgName: $sourceVarName.value');
+        } else if (sourceIsEnum == targetIsEnum) {
+          // Both Enum or Both String (or other types)
+          args.add('$targetArgName: $sourceVarName');
+        } else {
+          // String -> Enum (Cannot handle easily)
+          return null;
+        }
+      } else {
+        // Type mismatch -> cannot call method safely
+        return null;
+      }
+    }
+
+    // Pass the parameters map to preserve extra parameters
+    args.add('parameters: $parametersArgName');
+
+    return '$methodName(${args.join(', ')});';
+  }
+
+  String _resolveTargetEventName(
+    String target,
+    Map<String, AnalyticsDomain> allDomains,
+  ) {
+    final parts = target.split('.');
+    if (parts.length != 2) {
+      // Fallback if format is not domain.event
+      return target;
+    }
+
+    final domainName = parts[0];
+    final eventName = parts[1];
+
+    final domain = allDomains[domainName];
+    if (domain == null) {
+      return target;
+    }
+
+    final event = domain.events
+        .cast<AnalyticsEvent?>()
+        .firstWhere((e) => e?.name == eventName, orElse: () => null);
+
+    if (event == null) {
+      return target;
+    }
+
+    return EventNaming.resolveEventName(domainName, event, config.naming);
   }
 
   String _buildDeprecationMessage(AnalyticsEvent event) {

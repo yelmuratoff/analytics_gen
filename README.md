@@ -131,6 +131,21 @@ enum AnalyticsAuthLoginMethodEnum {
 void logAuthLogin({required AnalyticsAuthLoginMethodEnum method}) { ... }
 ```
 
+## Dual-Write Migration
+
+When migrating from an old event to a new one, you can use `dual_write_to` to automatically log to both events during the transition period.
+
+```yaml
+auth:
+  login_v2:
+    description: New login event
+    dual_write_to: ["auth.login"] # Logs to 'auth.login' as well
+    parameters:
+      method: string
+```
+
+The generator will attempt to call the generated method for the target event if it exists in the same domain, ensuring type safety and logic reuse. If the target is in a different domain or parameters cannot be matched automatically, it falls back to a generic `logEvent` call.
+
 ## Extensible Metadata
 
 Attach metadata to events and parameters using the `meta` key. Use metadata for ownership, PII flags, and other attributes that should travel with the plan but not the runtime code.

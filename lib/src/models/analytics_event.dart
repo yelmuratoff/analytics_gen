@@ -20,10 +20,16 @@ final class AnalyticsParameter {
     this.max,
     this.meta = const {},
     this.operations,
+    this.addedIn,
+    this.deprecatedIn,
+    this.sourceName,
   }) : codeName = codeName ?? name;
 
   /// Analytics key that gets sent to providers.
   final String name;
+
+  /// The original key in the YAML file (if different from name).
+  final String? sourceName;
 
   /// Identifier used when generating Dart API (defaults to [name]).
   final String codeName;
@@ -63,6 +69,12 @@ final class AnalyticsParameter {
   /// Only used for context properties.
   final List<String>? operations;
 
+  /// Version when this parameter was added.
+  final String? addedIn;
+
+  /// Version when this parameter was deprecated.
+  final String? deprecatedIn;
+
   @override
   String toString() => '$name: $type${isNullable ? '?' : ''}';
 
@@ -82,7 +94,10 @@ final class AnalyticsParameter {
         other.min == min &&
         other.max == max &&
         _mapEq.equals(other.meta, meta) &&
-        _listEq.equals(other.operations, operations);
+        _listEq.equals(other.operations, operations) &&
+        other.addedIn == addedIn &&
+        other.deprecatedIn == deprecatedIn &&
+        other.sourceName == sourceName;
   }
 
   @override
@@ -100,6 +115,9 @@ final class AnalyticsParameter {
         max,
         _mapEq.hash(meta),
         _listEq.hash(operations ?? const []),
+        addedIn,
+        deprecatedIn,
+        sourceName,
       );
 }
 
@@ -119,6 +137,9 @@ final class AnalyticsEvent {
     this.meta = const {},
     this.sourcePath,
     this.lineNumber,
+    this.addedIn,
+    this.deprecatedIn,
+    this.dualWriteTo,
   });
 
   /// The name of the event.
@@ -151,6 +172,15 @@ final class AnalyticsEvent {
   /// The line number where this event is defined (1-based).
   final int? lineNumber;
 
+  /// Version when this event was added.
+  final String? addedIn;
+
+  /// Version when this event was deprecated.
+  final String? deprecatedIn;
+
+  /// List of other events to trigger when this event is logged (dual-write).
+  final List<String>? dualWriteTo;
+
   @override
   String toString() => '$name (${parameters.length} parameters)';
 
@@ -167,7 +197,10 @@ final class AnalyticsEvent {
         _paramListEq.equals(other.parameters, parameters) &&
         _mapEq.equals(other.meta, meta) &&
         other.sourcePath == sourcePath &&
-        other.lineNumber == lineNumber;
+        other.lineNumber == lineNumber &&
+        other.addedIn == addedIn &&
+        other.deprecatedIn == deprecatedIn &&
+        _listEq.equals(other.dualWriteTo, dualWriteTo);
   }
 
   @override
@@ -182,6 +215,9 @@ final class AnalyticsEvent {
         _mapEq.hash(meta),
         sourcePath,
         lineNumber,
+        addedIn,
+        deprecatedIn,
+        _listEq.hash(dualWriteTo ?? const []),
       );
 }
 

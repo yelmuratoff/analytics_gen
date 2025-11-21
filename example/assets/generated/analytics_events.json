@@ -40,6 +40,9 @@
           "identifier": "auth.login_v2",
           "description": "User logs in to the application (v2)",
           "deprecated": false,
+          "dual_write_to": [
+            "auth.login"
+          ],
           "parameters": [
             {
               "name": "login-method",
@@ -113,7 +116,8 @@
               "name": "referral_code",
               "type": "string",
               "nullable": true,
-              "description": "Optional referral code used during signup"
+              "description": "Optional referral code used during signup",
+              "regex": "^[A-Z0-9]{6}$"
             }
           ]
         }

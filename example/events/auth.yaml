@@ -15,6 +15,7 @@ auth:
 
   login_v2:
     description: User logs in to the application (v2)
+    dual_write_to: ["auth.login"]
     parameters:
       session_id: # Shared
       method:

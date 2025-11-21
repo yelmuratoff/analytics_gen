@@ -93,8 +93,12 @@ final class CodeGenerator {
     // Generate individual domain files with telemetry
     await Future.wait(domains.entries.map((entry) async {
       final domainStartTime = DateTime.now();
-      final filePath =
-          await _generateDomainFile(entry.key, entry.value, eventsDir);
+      final filePath = await _generateDomainFile(
+        entry.key,
+        entry.value,
+        eventsDir,
+        domains,
+      );
       generatedFiles.add(filePath);
 
       final domainElapsed = DateTime.now().difference(domainStartTime);
@@ -165,8 +169,10 @@ final class CodeGenerator {
     String domainName,
     AnalyticsDomain domain,
     String eventsDir,
+    Map<String, AnalyticsDomain> allDomains,
   ) async {
-    final content = _eventRenderer.renderDomainFile(domainName, domain);
+    final content =
+        _eventRenderer.renderDomainFile(domainName, domain, allDomains);
 
     final fileName = '${domainName}_events.dart';
     final filePath = path.join(eventsDir, fileName);

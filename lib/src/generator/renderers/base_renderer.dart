@@ -126,7 +126,8 @@ abstract class BaseRenderer {
       buffer.writeln('$indentStr      throw ArgumentError.value(');
       buffer.writeln('$indentStr        $camelParam,');
       buffer.writeln("$indentStr        '$camelParam',");
-      buffer.writeln("$indentStr        'must match regex $regex',");
+      buffer.writeln(
+          "$indentStr        'must match regex ${StringUtils.escapeSingleQuoted(regex)}',");
       buffer.writeln('$indentStr      );');
       buffer.writeln('$indentStr    }');
     }

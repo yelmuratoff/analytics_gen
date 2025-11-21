@@ -16,8 +16,14 @@ class ContextParser {
     required this.loadYamlNode,
   });
 
+  /// Parser used to parse individual context parameters.
   final ParameterParser parameterParser;
+
+  /// Validator used to assert that the YAML structure conforms to the
+  /// expected context schema.
   final SchemaValidator validator;
+
+  /// Function that parses a YAML string into a `YamlNode` instance.
   final LoadYamlNode loadYamlNode;
 
   /// Parses all configured context files.

@@ -83,7 +83,7 @@ void main() {
 
       final output = renderer.render(domains);
 
-      expect(output, contains("option: 'option1',"));
+      expect(output, contains('option: AnalyticsUiSelectOptionEnum.option1,'));
       expect(output, contains('count: 1,'));
     });
 

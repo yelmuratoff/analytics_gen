@@ -9,6 +9,7 @@ import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:analytics_gen/src/util/logger.dart';
+import 'package:analytics_gen/src/util/schema_comparator.dart';
 import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
@@ -202,7 +203,72 @@ class GenerationPipeline {
       );
     }
 
+    // Schema evolution check
+    if (config.exportsPath != null) {
+      tasks.add(
+        _GeneratorTask(
+          label: 'Schema evolution check',
+          invoke: () => _checkSchemaEvolution(
+            domains,
+            rootLogger.scoped('Schema check'),
+          ),
+        ),
+      );
+    }
+
     return tasks;
+  }
+
+  Future<void> _checkSchemaEvolution(
+    Map<String, AnalyticsDomain> currentDomains,
+    Logger logger,
+  ) async {
+    final exportsPath = config.exportsPath;
+    if (exportsPath == null) return;
+
+    final jsonFile = File(path.join(
+      projectRoot,
+      exportsPath,
+      'analytics_events.json',
+    ));
+
+    if (!jsonFile.existsSync()) {
+      logger.debug('No previous schema found at ${jsonFile.path}');
+      return;
+    }
+
+    try {
+      final jsonContent = await jsonFile.readAsString();
+      final previousDomains = SchemaComparator.loadSchemaFromJson(jsonContent);
+      final changes =
+          SchemaComparator().compare(currentDomains, previousDomains);
+
+      if (changes.isEmpty) {
+        logger.debug('No schema changes detected.');
+        return;
+      }
+
+      final breakingChanges = changes.where((c) => c.isBreaking).toList();
+      final nonBreakingChanges = changes.where((c) => !c.isBreaking).toList();
+
+      if (nonBreakingChanges.isNotEmpty) {
+        logger.info('Detected ${nonBreakingChanges.length} schema changes:');
+        for (final change in nonBreakingChanges) {
+          logger.info('  - $change');
+        }
+      }
+
+      if (breakingChanges.isNotEmpty) {
+        logger.warning(
+            'Detected ${breakingChanges.length} BREAKING schema changes:');
+        for (final change in breakingChanges) {
+          logger.warning('  - $change');
+        }
+        // We could throw here if a strict flag was enabled
+      }
+    } catch (e) {
+      logger.warning('Failed to check schema evolution: $e');
+    }
   }
 
   Future<void> _runTasks(List<_GeneratorTask> tasks, Logger logger) async {

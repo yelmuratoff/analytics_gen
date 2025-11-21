@@ -50,8 +50,11 @@ final class StringUtils {
             .join();
   }
 
-  /// Escapes single quotes and backslashes for use in Dart string literals.
+  /// Escapes single quotes, backslashes, and dollar signs for use in Dart string literals.
   static String escapeSingleQuoted(String value) {
-    return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
+    return value
+        .replaceAll('\\', '\\\\')
+        .replaceAll("'", "\\'")
+        .replaceAll(r'$', r'\$');
   }
 }

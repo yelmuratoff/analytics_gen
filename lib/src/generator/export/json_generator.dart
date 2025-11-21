@@ -56,6 +56,11 @@ final class JsonGenerator {
               'description': event.description,
               'deprecated': event.deprecated,
               if (event.replacement != null) 'replacement': event.replacement,
+              if (event.addedIn != null) 'added_in': event.addedIn,
+              if (event.deprecatedIn != null)
+                'deprecated_in': event.deprecatedIn,
+              if (event.dualWriteTo != null && event.dualWriteTo!.isNotEmpty)
+                'dual_write_to': event.dualWriteTo,
               if (event.meta.isNotEmpty) 'meta': event.meta,
               'parameters': event.parameters.map((p) {
                 return {
@@ -66,6 +71,13 @@ final class JsonGenerator {
                   if (p.description != null) 'description': p.description,
                   if (p.allowedValues != null && p.allowedValues!.isNotEmpty)
                     'allowed_values': p.allowedValues,
+                  if (p.regex != null) 'regex': p.regex,
+                  if (p.minLength != null) 'min_length': p.minLength,
+                  if (p.maxLength != null) 'max_length': p.maxLength,
+                  if (p.min != null) 'min': p.min,
+                  if (p.max != null) 'max': p.max,
+                  if (p.addedIn != null) 'added_in': p.addedIn,
+                  if (p.deprecatedIn != null) 'deprecated_in': p.deprecatedIn,
                   if (p.meta.isNotEmpty) 'meta': p.meta,
                 };
               }).toList(),

@@ -630,11 +630,11 @@ delta:
       );
       expect(
         authContent,
-        contains("throw ArgumentError.value("),
+        contains('throw ArgumentError.value('),
       );
       expect(
         authContent,
-        contains("'must match regex ^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$',"),
+        contains("'must match regex ^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\\\$',"),
       );
     });
   });
