@@ -160,8 +160,8 @@ void main() {
       test('throws for non-map', () {
         final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
         expect(
-          () => validator.validateEventMap(
-              node, 'domain', 'event', 'test.yaml'),
+          () =>
+              validator.validateEventMap(node, 'domain', 'event', 'test.yaml'),
           throwsA(isA<AnalyticsParseException>()),
         );
       });
@@ -239,8 +239,8 @@ void main() {
       test('throws for non-map', () {
         final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
         expect(
-          () => validator.validateContextProperties(
-              node, 'context', 'test.yaml'),
+          () =>
+              validator.validateContextProperties(node, 'context', 'test.yaml'),
           throwsA(isA<AnalyticsParseException>()),
         );
       });
