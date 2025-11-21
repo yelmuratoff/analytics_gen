@@ -22,6 +22,12 @@ class KeyWithToString {
   String toString() => 'dup';
 }
 
+// A helper key used to simulate throwing exceptions from toString().
+class ThrowingKey {
+  @override
+  String toString() => throw AnalyticsParseException('boom', filePath: 'file.yaml');
+}
+
 void main() {
   group('YamlParser', () {
     late Directory tempDir;
@@ -37,6 +43,8 @@ void main() {
         tempDir.deleteSync(recursive: true);
       }
     });
+
+    // (Removed duplicate ThrowingKey definition) 
 
     Future<Map<String, AnalyticsDomain>> parseEventsHelper({
       String? customPath,
@@ -591,5 +599,148 @@ void main() {
 
       expect(domains.length, equals(2));
     });
+
+    test('throws on YAML parsing error in context files', () async {
+      final contextFile = File(path.join(eventsPath, 'context.yaml'));
+      await contextFile.writeAsString('invalid: yaml: content: [\n');
+
+      final loader =
+          EventLoader(eventsPath: eventsPath, contextFiles: [contextFile.path]);
+      final sources = await loader.loadContextFiles();
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseContexts(sources),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Failed to parse YAML file'),
+        )),
+      );
+    });
+
+    test('wraps YAML parse error for event files into AnalyticsParseException',
+        () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      // invalid YAML content causing loadYamlNode to throw
+      await yamlFile.writeAsString('invalid: yaml: content: [\n');
+
+      expect(
+        () => parseEventsHelper(),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.message,
+          'message',
+          contains('Failed to parse YAML file'),
+        )),
+      );
+    });
+
+    test('wraps non-Analytics exception during event parsing', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      // Make description a list so the cast to String? throws a TypeError
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description:\n'
+        '      - not_a_string\n'
+        '    parameters: {}\n',
+      );
+
+      expect(
+        () => parseEventsHelper(),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.innerError,
+          'innerError',
+          isNotNull,
+        )),
+      );
+    });
+
+    test('throws when context file is not a map', () async {
+      final contextFile = File(path.join(eventsPath, 'context.yaml'));
+      await contextFile.writeAsString('- list_item\n- second_item\n');
+
+      final loader =
+          EventLoader(eventsPath: eventsPath, contextFiles: [contextFile.path]);
+      final sources = await loader.loadContextFiles();
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseContexts(sources),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Context file must be a map'),
+        )),
+      );
+    });
+
+    test('throws when context properties node is null', () async {
+      final contextFile = File(path.join(eventsPath, 'context.yaml'));
+      await contextFile.writeAsString('context_name:\n');
+
+      final loader =
+          EventLoader(eventsPath: eventsPath, contextFiles: [contextFile.path]);
+      final sources = await loader.loadContextFiles();
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseContexts(sources),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('key must be a map of properties'),
+        )),
+      );
+    });
+
+    test('wraps non-Analytics exception during domain parsing', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString('auth:\n  login:\n    description: Test\n');
+
+      final messages = <String>[];
+      final loader = EventLoader(eventsPath: eventsPath, log: TestLogger(messages));
+      final sources = await loader.loadEventFiles();
+
+      // Fake validator that throws a non-Analytics exception during domain validation
+      final parser = YamlParser(
+        log: const NoOpLogger(),
+        domainHook: (domainKey, valueNode) {
+          throw FormatException('boom');
+        },
+      );
+
+      expect(
+        () => parser.parseEvents(sources),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.innerError, 'innerError', isA<FormatException>(),
+        )),
+      );
+    });
+
+    test('calls onError when _parseEventsForDomain throws AnalyticsParseException', () async {
+      // Craft a YamlMap where the event key's toString throws an AnalyticsParseException
+      final throwingKey = ThrowingKey();
+      final eventsMap = YamlMap.wrap({throwingKey: YamlMap.wrap({})});
+
+      // Provide a loader that returns a root map with a single domain 'auth'
+      final rootMap = YamlMap.wrap({'auth': eventsMap});
+      final loader = (String content, {dynamic sourceUrl, dynamic recover, dynamic errorListener}) => rootMap;
+
+      final parser = YamlParser(log: const NoOpLogger(), loadYaml: loader);
+      final sources = [AnalyticsSource(filePath: 'file.yaml', content: 'unused')];
+
+      expect(
+        () => parser.parseEvents(sources),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.message, 'message', contains('boom'),
+        )),
+      );
+    });
+
+    // Note: The branch checking for a missing properties node is exercised by
+    // the existing test above which writes `context_name:\n` and triggers a
+    // YamlScalar null value; we consider that coverage for the missing-node
+    // and explicit null value cases combined.
   });
 }

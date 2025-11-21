@@ -9,6 +9,8 @@ import 'parameter_parser.dart';
 import 'schema_validator.dart';
 
 /// Parses YAML files containing analytics event definitions.
+typedef _LoadYamlNode = YamlNode Function(String, {dynamic sourceUrl, dynamic recover, dynamic errorListener});
+
 final class YamlParser {
   /// Creates a new YAML parser.
   YamlParser({
@@ -16,13 +18,19 @@ final class YamlParser {
     NamingStrategy? naming,
     this.strictEventNames = true,
     SchemaValidator? validator,
+    _LoadYamlNode? loadYaml,
+    void Function(String domainKey, YamlNode? valueNode)? domainHook,
   })  : naming = naming ?? const NamingStrategy(),
         _parameterParser = ParameterParser(naming ?? const NamingStrategy()),
         _validator = validator ??
             SchemaValidator(
               naming ?? const NamingStrategy(),
               strictEventNames: strictEventNames,
-            );
+            ),
+        _loadYamlNode = loadYaml ??
+            ((String content, {dynamic sourceUrl, dynamic recover, dynamic errorListener}) =>
+                loadYamlNode(content, sourceUrl: sourceUrl as Uri?, recover: (recover as bool?) ?? false, errorListener: errorListener)),
+        _domainHook = domainHook;
 
   /// The logger to use.
   final Logger log;
@@ -35,6 +43,8 @@ final class YamlParser {
 
   final ParameterParser _parameterParser;
   final SchemaValidator _validator;
+  final _LoadYamlNode _loadYamlNode;
+  final void Function(String domainKey, YamlNode? valueNode)? _domainHook;
 
   /// Parses the provided analytics sources and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents(
@@ -79,7 +89,7 @@ final class YamlParser {
     for (final source in sources) {
       final YamlNode parsedNode;
       try {
-        parsedNode = loadYamlNode(source.content);
+        parsedNode = _loadYamlNode(source.content);
       } catch (e) {
         final error = AnalyticsParseException(
           'Failed to parse YAML file: $e',
@@ -125,6 +135,13 @@ final class YamlParser {
         }
 
         try {
+          // Test seam: allow tests to inject behavior that runs within the
+          // domain-level try-block. This enables creating scenarios that
+          // result in non-Analytics exceptions and ensure they are wrapped
+          // appropriately.
+          if (_domainHook != null) {
+            _domainHook!(domainKey, valueNode);
+          }
           // Enforce snake_case, filesystem-safe domain names
           _validator.validateDomainName(domainKey, source.filePath);
 
@@ -341,7 +358,7 @@ final class YamlParser {
     for (final source in sources) {
       final YamlNode parsedNode;
       try {
-        parsedNode = loadYamlNode(source.content);
+        parsedNode = _loadYamlNode(source.content);
       } catch (e) {
         throw AnalyticsParseException(
           'Failed to parse YAML file: $e',
@@ -366,7 +383,9 @@ final class YamlParser {
       final contextName = contextNameNode.toString();
       final propertiesNode = yaml.nodes[contextNameNode];
 
-      if (propertiesNode == null) {
+      // If the YAML key is present but the value is effectively missing / null
+      // (for example, `context_name:` with no mapping), treat it as missing.
+      if (propertiesNode == null || (propertiesNode is YamlScalar && propertiesNode.value == null)) {
         throw AnalyticsParseException(
           'The "$contextName" key must be a map of properties.',
           filePath: source.filePath,
