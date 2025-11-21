@@ -85,7 +85,9 @@ void main() {
       expect(config.contexts, ['shared/user.yaml']);
     });
 
-    test('falls back to top-level config values for sharedParameters and contexts', () {
+    test(
+        'falls back to top-level config values for sharedParameters and contexts',
+        () {
       final yaml = {
         'analytics_gen': {
           'shared_parameters': [
@@ -103,7 +105,9 @@ void main() {
       expect(config.contexts, ['shared/config_context.yaml']);
     });
 
-    test('inputs override config-level values for sharedParameters and contexts', () {
+    test(
+        'inputs override config-level values for sharedParameters and contexts',
+        () {
       final yaml = {
         'analytics_gen': {
           'shared_parameters': [
