@@ -18,6 +18,8 @@ void main() {
       expect(config.naming.enforceSnakeCaseDomains, isTrue);
       expect(config.naming.enforceSnakeCaseParameters, isTrue);
       expect(config.naming.eventNameTemplate, '{domain}: {event}');
+      expect(config.sharedParameters, isEmpty);
+      expect(config.contexts, isEmpty);
     });
 
     test('applies overrides when analytics_gen section exists', () {
@@ -60,6 +62,71 @@ void main() {
       expect(config.naming.eventNameTemplate, '{domain_alias}.{event}');
       expect(config.naming.identifierTemplate, '{domain}.{event}');
       expect(config.naming.domainAliases['auth'], 'AuthDomain');
+    });
+
+    test('parses sharedParameters from inputs and config override', () {
+      final yaml = {
+        'analytics_gen': {
+          'inputs': {
+            'shared_parameters': [
+              'shared/one.yaml',
+              'shared/two.yaml',
+            ],
+            'contexts': [
+              'shared/user.yaml',
+            ],
+          },
+        },
+      };
+
+      final config = AnalyticsConfig.fromYaml(yaml);
+
+      expect(config.sharedParameters, ['shared/one.yaml', 'shared/two.yaml']);
+      expect(config.contexts, ['shared/user.yaml']);
+    });
+
+    test('falls back to top-level config values for sharedParameters and contexts', () {
+      final yaml = {
+        'analytics_gen': {
+          'shared_parameters': [
+            'shared/config_level.yaml',
+          ],
+          'contexts': [
+            'shared/config_context.yaml',
+          ],
+        },
+      };
+
+      final config = AnalyticsConfig.fromYaml(yaml);
+
+      expect(config.sharedParameters, ['shared/config_level.yaml']);
+      expect(config.contexts, ['shared/config_context.yaml']);
+    });
+
+    test('inputs override config-level values for sharedParameters and contexts', () {
+      final yaml = {
+        'analytics_gen': {
+          'shared_parameters': [
+            'shared/config_level.yaml',
+          ],
+          'contexts': [
+            'shared/config_context.yaml',
+          ],
+          'inputs': {
+            'shared_parameters': [
+              'shared/from_inputs.yaml',
+            ],
+            'contexts': [
+              'shared/from_inputs_context.yaml',
+            ],
+          }
+        },
+      };
+
+      final config = AnalyticsConfig.fromYaml(yaml);
+
+      expect(config.sharedParameters, ['shared/from_inputs.yaml']);
+      expect(config.contexts, ['shared/from_inputs_context.yaml']);
     });
   });
 }
