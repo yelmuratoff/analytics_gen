@@ -66,6 +66,11 @@
 - [x] **Initialization Error Clarity**
   - Review and improve `ensureAnalyticsInitialized` error message to be more actionable for junior developers.
 
+- [x] **Refactor YamlParser**
+  - Move validation logic from `YamlParser` to `SchemaValidator`.
+  - Ensure `YamlParser` is focused on parsing and `SchemaValidator` on validation.
+  - Add tests for the new validation methods.
+
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
 - README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.

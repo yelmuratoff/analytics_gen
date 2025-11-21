@@ -3,6 +3,7 @@ import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/schema_validator.dart';
 import 'package:test/test.dart';
+import 'package:yaml/yaml.dart';
 
 void main() {
   group('SchemaValidator', () {
@@ -106,6 +107,142 @@ void main() {
           },
         );
         expect(errorCount, 1);
+      });
+    });
+
+    group('validateRootMap', () {
+      test('accepts valid map', () {
+        final node = loadYamlNode('domain: {}');
+        expect(() => validator.validateRootMap(node, 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('[]', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateRootMap(node, 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+
+      test('ignores empty file (null scalar)', () {
+        final node = loadYamlNode('');
+        expect(() => validator.validateRootMap(node, 'test.yaml'),
+            returnsNormally);
+      });
+    });
+
+    group('validateDomainMap', () {
+      test('accepts valid map', () {
+        final node = loadYamlNode('event: {}');
+        expect(() => validator.validateDomainMap(node, 'domain', 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateDomainMap(node, 'domain', 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+    });
+
+    group('validateEventMap', () {
+      test('accepts valid map', () {
+        final node = loadYamlNode('description: test');
+        expect(
+            () => validator.validateEventMap(
+                node, 'domain', 'event', 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateEventMap(
+              node, 'domain', 'event', 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+    });
+
+    group('validateParametersMap', () {
+      test('accepts valid map', () {
+        final node = loadYamlNode('param: { type: string }');
+        expect(
+            () => validator.validateParametersMap(
+                node, 'domain', 'event', 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('[]', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateParametersMap(
+              node, 'domain', 'event', 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+    });
+
+    group('validateMetaMap', () {
+      test('accepts valid map', () {
+        final node = loadYamlNode('key: value');
+        expect(() => validator.validateMetaMap(node, 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateMetaMap(node, 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+    });
+
+    group('validateContextRoot', () {
+      test('accepts valid map with single key', () {
+        final node = loadYamlNode('context: {}');
+        expect(() => validator.validateContextRoot(node, 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('[]', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateContextRoot(node, 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+
+      test('throws for map with multiple keys', () {
+        final node = loadYamlNode('context1: {}\ncontext2: {}',
+            sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateContextRoot(node, 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
+      });
+    });
+
+    group('validateContextProperties', () {
+      test('accepts valid map', () {
+        final node = loadYamlNode('prop: { type: string }');
+        expect(
+            () => validator.validateContextProperties(
+                node, 'context', 'test.yaml'),
+            returnsNormally);
+      });
+
+      test('throws for non-map', () {
+        final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
+        expect(
+          () => validator.validateContextProperties(
+              node, 'context', 'test.yaml'),
+          throwsA(isA<AnalyticsParseException>()),
+        );
       });
     });
   });

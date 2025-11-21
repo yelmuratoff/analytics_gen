@@ -100,26 +100,29 @@ final class YamlParser {
           continue;
         }
 
-        final error = AnalyticsParseException(
-          'Root of the YAML file must be a map.',
-          filePath: source.filePath,
-          span: parsedNode.span,
-        );
-        if (onError != null) {
-          onError(error);
-        } else {
-          throw error;
+        try {
+          _validator.validateRootMap(parsedNode, source.filePath);
+        } on AnalyticsParseException catch (e) {
+          if (onError != null) {
+            onError(e);
+          } else {
+            rethrow;
+          }
+          continue;
         }
-        continue;
       }
 
-      final parsedMap = parsedNode;
+      final parsedMap = parsedNode as YamlMap;
       final sortedDomainKeys = parsedMap.nodes.keys.toList()
         ..sort((a, b) => a.toString().compareTo(b.toString()));
 
       for (final keyNode in sortedDomainKeys) {
         final domainKey = keyNode.toString();
         final valueNode = parsedMap.nodes[keyNode];
+
+        if (valueNode == null) {
+          continue;
+        }
 
         try {
           // Enforce snake_case, filesystem-safe domain names
@@ -134,17 +137,11 @@ final class YamlParser {
             );
           }
 
-          if (valueNode is! YamlMap) {
-            throw AnalyticsParseException(
-              'Domain "$domainKey" must be a map of events.',
-              filePath: source.filePath,
-              span: valueNode?.span ?? keyNode.span,
-            );
-          }
+          _validator.validateDomainMap(valueNode, domainKey, source.filePath);
 
           merged[domainKey] = _DomainSource(
             filePath: source.filePath,
-            yaml: valueNode,
+            yaml: valueNode as YamlMap,
           );
         } on AnalyticsParseException catch (e) {
           if (onError != null) {
@@ -225,15 +222,9 @@ final class YamlParser {
         // Strict Event Name Validation: Check for interpolation
         _validator.validateEventName(eventName, filePath, span: keyNode.span);
 
-        if (valueNode is! YamlMap) {
-          throw AnalyticsParseException(
-            'Event "$domainName.$eventName" must be a map.',
-            filePath: filePath,
-            span: valueNode.span,
-          );
-        }
+        _validator.validateEventMap(valueNode, domainName, eventName, filePath);
 
-        final eventData = valueNode;
+        final eventData = valueNode as YamlMap;
 
         final description =
             eventData['description'] as String? ?? 'No description provided';
@@ -255,11 +246,12 @@ final class YamlParser {
         final meta = _parseMeta(metaNode, filePath);
 
         final rawParameters = eventData.nodes['parameters'];
-        if (rawParameters != null && rawParameters is! YamlMap) {
-          throw AnalyticsParseException(
-            'Parameters for event "$domainName.$eventName" must be a map.',
-            filePath: filePath,
-            span: rawParameters.span,
+        if (rawParameters != null) {
+          _validator.validateParametersMap(
+            rawParameters,
+            domainName,
+            eventName,
+            filePath,
           );
         }
 
@@ -311,15 +303,10 @@ final class YamlParser {
 
   Map<String, Object?> _parseMeta(YamlNode? metaNode, String filePath) {
     if (metaNode == null) return const {};
-    if (metaNode is! YamlMap) {
-      throw AnalyticsParseException(
-        'The "meta" field must be a map.',
-        filePath: filePath,
-        span: metaNode.span,
-      );
-    }
+    _validator.validateMetaMap(metaNode, filePath);
     // Convert YamlMap to Map<String, Object?>
-    return metaNode.map((key, value) => MapEntry(key.toString(), value));
+    return (metaNode as YamlMap)
+        .map((key, value) => MapEntry(key.toString(), value));
   }
 
   /// Public helper used by tests to exercise parameter parsing logic
@@ -371,32 +358,30 @@ final class YamlParser {
         );
       }
 
-      final yaml = parsedNode;
+      _validator.validateContextRoot(parsedNode, source.filePath);
 
-      // We expect a single root key which defines the context name
-      // e.g. user: { ... }
-      if (yaml.keys.length != 1) {
-        throw AnalyticsParseException(
-          'Context file must contain exactly one root key defining the context name.',
-          filePath: source.filePath,
-          span: yaml.span,
-        );
-      }
+      final yaml = parsedNode;
 
       final contextNameNode = yaml.nodes.keys.first as YamlNode;
       final contextName = contextNameNode.toString();
       final propertiesNode = yaml.nodes[contextNameNode];
 
-      if (propertiesNode is! YamlMap) {
+      if (propertiesNode == null) {
         throw AnalyticsParseException(
           'The "$contextName" key must be a map of properties.',
           filePath: source.filePath,
-          span: propertiesNode?.span ?? contextNameNode.span,
+          span: contextNameNode.span,
         );
       }
 
-      final parameters = _parameterParser.parseParameters(
+      _validator.validateContextProperties(
         propertiesNode,
+        contextName,
+        source.filePath,
+      );
+
+      final parameters = _parameterParser.parseParameters(
+        propertiesNode as YamlMap,
         domainName: contextName,
         eventName: 'context', // Dummy
         filePath: source.filePath,
