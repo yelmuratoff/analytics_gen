@@ -182,6 +182,110 @@ void main() {
 
       expect(params, equals('()'));
     });
+
+    test('renderValidationChecks generates regex validation for non-nullable', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'email',
+        isNullable: false,
+        regex: r'^[^@]+@[^@]+\.[^@]+$',
+      );
+
+      expect(checks, contains("if (!RegExp(r'^[^@]+@[^@]+\\.[^@]+\$').hasMatch(email))"));
+      expect(checks, contains('throw ArgumentError.value'));
+      expect(checks, contains('must match regex'));
+    });
+
+    test('renderValidationChecks generates regex validation for nullable', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'email',
+        isNullable: true,
+        regex: r'^[^@]+@[^@]+\.[^@]+$',
+      );
+
+      expect(checks, contains("if (email != null && !RegExp(r'^[^@]+@[^@]+\\.[^@]+\$').hasMatch(email))"));
+    });
+
+    test('renderValidationChecks generates length validation for non-nullable with min and max', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'name',
+        isNullable: false,
+        minLength: 2,
+        maxLength: 50,
+      );
+
+      expect(checks, contains('if (name.length < 2 || name.length > 50)'));
+      expect(checks, contains('length must be between 2 and 50'));
+    });
+
+    test('renderValidationChecks generates length validation for nullable with max only', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'description',
+        isNullable: true,
+        maxLength: 100,
+      );
+
+      expect(checks, contains('if (description != null && (description.length > 100))'));
+      expect(checks, contains('length must be at most 100'));
+    });
+
+    test('renderValidationChecks generates length validation for non-nullable with min only', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'code',
+        isNullable: false,
+        minLength: 5,
+      );
+
+      expect(checks, contains('if (code.length < 5)'));
+      expect(checks, contains('length must be at least 5'));
+    });
+
+    test('renderValidationChecks generates range validation for non-nullable with min and max', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'age',
+        isNullable: false,
+        min: 0,
+        max: 120,
+      );
+
+      expect(checks, contains('if (age < 0 || age > 120)'));
+      expect(checks, contains('must be between 0 and 120'));
+    });
+
+    test('renderValidationChecks generates range validation for nullable with max only', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'score',
+        isNullable: true,
+        max: 100,
+      );
+
+      expect(checks, contains('if (score != null && (score > 100))'));
+      expect(checks, contains('must be at most 100'));
+    });
+
+    test('renderValidationChecks generates range validation for non-nullable with min only', () {
+      final checks = renderer.renderValidationChecks(
+        camelParam: 'temperature',
+        isNullable: false,
+        min: -50,
+      );
+
+      expect(checks, contains('if (temperature < -50)'));
+      expect(checks, contains('must be at least -50'));
+    });
+
+    test('encodeAllowedValues handles non-string values', () {
+      final encoded = renderer.encodeAllowedValues([1, 2.5, true]);
+
+      expect(encoded, equals('1, 2.5, true'));
+    });
+
+    test('renderClassHeader generates plain class declaration', () {
+      final header = renderer.renderClassHeader(
+        className: 'TestClass',
+      );
+
+      expect(header, contains('class TestClass {'));
+    });
   });
 }
 
