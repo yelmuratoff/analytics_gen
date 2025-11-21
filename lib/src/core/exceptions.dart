@@ -4,9 +4,7 @@ import 'package:source_span/source_span.dart';
 ///
 /// This is a sealed hierarchy, allowing consumers to exhaustively match
 /// on specific error types.
-sealed class AnalyticsException implements Exception {
-  const AnalyticsException();
-}
+sealed class AnalyticsException implements Exception {}
 
 /// Analytics-specific exceptions used by parsers and generation tools.
 ///
