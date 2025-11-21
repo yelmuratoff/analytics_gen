@@ -35,6 +35,7 @@ auth:
       referral_code:
         type: string?
         description: Optional referral code used during signup
+        regex: "^[A-Z0-9]{6}$"
 
   phone_login:
     description: When user logs in via phone

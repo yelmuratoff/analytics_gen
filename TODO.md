@@ -9,7 +9,7 @@
   - Implement `ParameterResolver` to merge shared parameters into event definitions during parsing.
   - Support referencing shared parameters in YAML (e.g. by name or with `null` value).
 
-- [ ] **Advanced Parameter Validation**
+- [x] **Advanced Parameter Validation**
   - Add `regex` property to parameter definitions for validation.
   - Generate runtime validation code in Dart to enforce regex patterns.
 

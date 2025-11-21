@@ -100,6 +100,13 @@ mixin AnalyticsAuth on AnalyticsBase {
     String? referralCode,
   }) {
 
+    if (referralCode != null && !RegExp(r'^[A-Z0-9]{6}$').hasMatch(referralCode)) {
+      throw ArgumentError.value(
+        referralCode,
+        'referralCode',
+        'must match regex ^[A-Z0-9]{6}$',
+      );
+    }
     logger.logEvent(
       name: "auth: signup",
       parameters: <String, Object?>{

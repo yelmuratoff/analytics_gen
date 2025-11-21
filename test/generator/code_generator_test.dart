@@ -382,7 +382,7 @@ void main() {
       expect(billingContent, contains('Use legacy_event instead.'));
       expect(
         billingContent,
-        contains('`method`: string? - Payment method description'),
+        contains('`method`: String? - Payment method description'),
       );
       expect(
         billingContent,
@@ -585,6 +585,57 @@ delta:
         p.join(tempProject.path, 'test', 'generated_plan_test.dart'),
       );
       expect(testFile.existsSync(), isFalse);
+    });
+
+    test('generates regex validation code', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      email:\n'
+        '        type: string\n'
+        '        regex: "^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$"\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(
+        authContent,
+        contains(
+            "if (!RegExp(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$').hasMatch(email)) {"),
+      );
+      expect(
+        authContent,
+        contains("throw ArgumentError.value("),
+      );
+      expect(
+        authContent,
+        contains("'must match regex ^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$',"),
+      );
     });
   });
 }
