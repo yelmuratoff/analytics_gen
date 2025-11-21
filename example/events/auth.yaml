@@ -21,6 +21,7 @@ auth:
         description: Login method v2 (email, google, apple)
         identifier: login_method
         param_name: login-method
+        allowed_values: ['email', 'google', 'apple']
 
   logout:
     description: User logs out

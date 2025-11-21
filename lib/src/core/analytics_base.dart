@@ -32,7 +32,8 @@ abstract class AnalyticsBase {
 IAnalytics ensureAnalyticsInitialized(IAnalytics? analytics) {
   if (analytics == null) {
     throw StateError(
-      'Analytics.initialize(...) must be called before logging events.',
+      'Analytics.initialize(...) must be called before logging events.\n'
+      'Ensure you call Analytics.initialize() in your main() function or before using any analytics features.',
     );
   }
   return analytics;

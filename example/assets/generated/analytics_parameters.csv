@@ -1,6 +1,6 @@
 Parameter Name,Type,Nullable,Description,Allowed Values,Validation,Metadata
 method,string,false,"Login method (email, google, apple)",,,pii=true
-login-method,string,false,"Login method v2 (email, google, apple)",,,
+login-method,string,false,"Login method v2 (email, google, apple)",email|google|apple,,
 phone_country,string,false,ISO country code for the dialed number,,,
 tracking-token,string,false,Legacy token kept for backend reconciliation,,,
 user_exists,bool,true,Whether the user exists or not,,,

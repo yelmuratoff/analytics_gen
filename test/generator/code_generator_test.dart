@@ -148,13 +148,20 @@ void main() {
 
       expect(
         authContent,
-        contains("const allowedMethodValues = <String>{'email', 'google'};"),
+        contains('enum AnalyticsAuthLoginMethodEnum {'),
       );
       expect(
         authContent,
-        contains('if (!allowedMethodValues.contains(method)) {'),
+        contains("email('email'),"),
       );
-      expect(authContent, contains('throw ArgumentError.value('));
+      expect(
+        authContent,
+        contains("google('google');"),
+      );
+      expect(
+        authContent,
+        contains('required AnalyticsAuthLoginMethodEnum method,'),
+      );
       expect(authContent, contains('required DateTime timestamp,'));
     });
 

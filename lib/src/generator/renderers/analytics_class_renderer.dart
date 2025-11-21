@@ -139,7 +139,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln('  static Analytics get instance {');
     buffer.writeln('    if (_instance == null) {');
     buffer.writeln(
-        "      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');");
+        "      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance.\\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.');");
     buffer.writeln('    }');
     buffer.writeln('    return _instance!;');
     buffer.writeln('  }');

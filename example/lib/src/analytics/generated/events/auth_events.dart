@@ -5,6 +5,16 @@
 
 import 'package:analytics_gen/analytics_gen.dart';
 
+/// Enum for login_v2 - login-method
+enum AnalyticsAuthLoginV2LoginMethodEnum {
+  email('email'),
+  google('google'),
+  apple('apple');
+
+  final String value;
+  const AnalyticsAuthLoginV2LoginMethodEnum(this.value);
+}
+
 /// Generated mixin for auth analytics events
 mixin AnalyticsAuth on AnalyticsBase {
   @Deprecated('Use logAuthLoginV2 instead.')
@@ -28,16 +38,16 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// User logs in to the application (v2)
   ///
   /// Parameters:
-  /// - `login-method`: string - Login method v2 (email, google, apple)
+  /// - `login-method`: AnalyticsAuthLoginV2LoginMethodEnum - Login method v2 (email, google, apple)
   void logAuthLoginV2({
-    required String loginMethod,
+    required AnalyticsAuthLoginV2LoginMethodEnum loginMethod,
   }) {
 
     logger.logEvent(
       name: "auth: login_v2",
       parameters: <String, Object?>{
         'description': 'User logs in to the application (v2)',
-        "login-method": loginMethod,
+        "login-method": loginMethod.value,
       },
     );
   }

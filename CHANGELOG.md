@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - Unreleased
+
+### Added
+- **Enum Generation**:
+  - Automatically generates Dart enums for string parameters with `allowed_values`.
+  - Enums are named `Analytics{Domain}{Event}{Param}Enum` to ensure uniqueness.
+  - Generated methods use these enums for type-safe logging.
+
+### Improved
+- **Initialization Error**:
+  - Improved the error message when `Analytics.instance` is accessed before initialization to be more actionable.
+
 ## [0.2.1] - Unreleased
 
 ### Documentation

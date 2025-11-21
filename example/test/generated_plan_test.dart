@@ -21,7 +21,7 @@ void main() {
       });
       test('logAuthLoginV2 constructs correctly', () {
         expect(() => analytics.logAuthLoginV2(
-          loginMethod: 'test',
+          loginMethod: 'email',
         ), returnsNormally);
       });
       test('logAuthLogout constructs correctly', () {

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fingerprint": "4736e3c8e5d98ffc",
+    "fingerprint": "-793406a6e0411e6f",
     "total_domains": 3,
     "total_events": 9,
     "total_parameters": 17
@@ -46,7 +46,12 @@
               "code_name": "login_method",
               "type": "string",
               "nullable": false,
-              "description": "Login method v2 (email, google, apple)"
+              "description": "Login method v2 (email, google, apple)",
+              "allowed_values": [
+                "email",
+                "google",
+                "apple"
+              ]
             }
           ]
         },

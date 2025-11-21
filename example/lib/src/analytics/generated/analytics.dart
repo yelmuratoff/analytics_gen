@@ -102,6 +102,11 @@ final class Analytics extends AnalyticsBase with
               type: 'string',
               isNullable: false,
               description: 'Login method v2 (email, google, apple)',
+              allowedValues: <Object>[
+                'email',
+                'google',
+                'apple',
+              ],
             ),
           ],
         ),
@@ -267,7 +272,7 @@ final class Analytics extends AnalyticsBase with
   };
 
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '4736e3c8e5d98ffc';
+  static const String planFingerprint = '-793406a6e0411e6f';
 
   // --- Singleton Compatibility ---
 
@@ -276,7 +281,7 @@ final class Analytics extends AnalyticsBase with
   /// Access the singleton instance
   static Analytics get instance {
     if (_instance == null) {
-      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');
+      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance.\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.');
     }
     return _instance!;
   }

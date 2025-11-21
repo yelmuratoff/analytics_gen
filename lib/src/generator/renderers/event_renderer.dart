@@ -4,6 +4,7 @@ import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
 import 'base_renderer.dart';
+import 'enum_renderer.dart';
 
 /// Renders analytics event domain files.
 class EventRenderer extends BaseRenderer {
@@ -22,6 +23,9 @@ class EventRenderer extends BaseRenderer {
     // File header
     buffer.write(renderFileHeader());
     buffer.write(renderImports(['package:analytics_gen/analytics_gen.dart']));
+
+    // Generate Enums
+    buffer.write(const EnumRenderer().renderEnums(domainName, domain));
 
     // Generate mixin
     buffer.write(renderDomainMixin(domainName, domain));
@@ -83,13 +87,20 @@ class EventRenderer extends BaseRenderer {
     if (event.parameters.isNotEmpty) {
       buffer.writeln('  /// Parameters:');
       for (final param in event.parameters) {
+        final isEnum = param.type == 'string' &&
+            param.allowedValues != null &&
+            param.allowedValues!.isNotEmpty;
+        final typeName = isEnum
+            ? const EnumRenderer().buildEnumName(domainName, event, param)
+            : param.type;
+
         if (param.description != null) {
           buffer.writeln(
-            '  /// - `${param.name}`: ${param.type}${param.isNullable ? '?' : ''} - ${param.description}',
+            '  /// - `${param.name}`: $typeName${param.isNullable ? '?' : ''} - ${param.description}',
           );
         } else {
           buffer.writeln(
-            '  /// - `${param.name}`: ${param.type}${param.isNullable ? '?' : ''}',
+            '  /// - `${param.name}`: $typeName${param.isNullable ? '?' : ''}',
           );
         }
       }
@@ -101,7 +112,17 @@ class EventRenderer extends BaseRenderer {
     if (event.parameters.isNotEmpty) {
       buffer.writeln('{');
       for (final param in event.parameters) {
-        final dartType = DartTypeMapper.toDartType(param.type);
+        final isEnum = param.type == 'string' &&
+            param.allowedValues != null &&
+            param.allowedValues!.isNotEmpty;
+
+        String dartType;
+        if (isEnum) {
+          dartType = const EnumRenderer().buildEnumName(domainName, event, param);
+        } else {
+          dartType = DartTypeMapper.toDartType(param.type);
+        }
+
         final nullableType = param.isNullable ? '$dartType?' : dartType;
         final required = param.isNullable ? '' : 'required ';
         final camelParam = StringUtils.toCamelCase(param.codeName);
@@ -111,23 +132,29 @@ class EventRenderer extends BaseRenderer {
       buffer.writeln();
 
       for (final param in event.parameters) {
-        final allowedValues = param.allowedValues;
-        if (allowedValues != null && allowedValues.isNotEmpty) {
-          final camelParam = StringUtils.toCamelCase(param.codeName);
-          final constName =
-              'allowed${StringUtils.capitalizePascal(camelParam)}Values';
-          final encodedValues = encodeAllowedValues(allowedValues);
-          final joinedValues = joinAllowedValues(allowedValues);
-          final dartType = DartTypeMapper.toDartType(param.type);
+        final isEnum = param.type == 'string' &&
+            param.allowedValues != null &&
+            param.allowedValues!.isNotEmpty;
 
-          buffer.write(renderAllowedValuesCheck(
-            camelParam: camelParam,
-            constName: constName,
-            encodedValues: encodedValues,
-            joinedValues: joinedValues,
-            isNullable: param.isNullable,
-            type: dartType,
-          ));
+        if (!isEnum) {
+          final allowedValues = param.allowedValues;
+          if (allowedValues != null && allowedValues.isNotEmpty) {
+            final camelParam = StringUtils.toCamelCase(param.codeName);
+            final constName =
+                'allowed${StringUtils.capitalizePascal(camelParam)}Values';
+            final encodedValues = encodeAllowedValues(allowedValues);
+            final joinedValues = joinAllowedValues(allowedValues);
+            final dartType = DartTypeMapper.toDartType(param.type);
+
+            buffer.write(renderAllowedValuesCheck(
+              camelParam: camelParam,
+              constName: constName,
+              encodedValues: encodedValues,
+              joinedValues: joinedValues,
+              isNullable: param.isNullable,
+              type: dartType,
+            ));
+          }
         }
 
         // Validation rules
@@ -173,12 +200,20 @@ class EventRenderer extends BaseRenderer {
       }
       for (final param in event.parameters) {
         final camelParam = StringUtils.toCamelCase(param.codeName);
+        final isEnum = param.type == 'string' &&
+            param.allowedValues != null &&
+            param.allowedValues!.isNotEmpty;
+
+        final valueAccess = isEnum
+            ? (param.isNullable ? '$camelParam?.value' : '$camelParam.value')
+            : camelParam;
+
         if (param.isNullable) {
           buffer.writeln(
-            '        if ($camelParam != null) "${param.name}": $camelParam,',
+            '        if ($camelParam != null) "${param.name}": $valueAccess,',
           );
         } else {
-          buffer.writeln('        "${param.name}": $camelParam,');
+          buffer.writeln('        "${param.name}": $valueAccess,');
         }
       }
       buffer.writeln('      },');

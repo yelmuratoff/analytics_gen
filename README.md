@@ -107,6 +107,30 @@ Supported rules:
 - `min`: Minimum numeric value (num).
 - `max`: Maximum numeric value (num).
 
+## Enums for Allowed Values
+
+If a string parameter defines `allowed_values`, the generator automatically creates a Dart `enum` to enforce type safety.
+
+```yaml
+login:
+  parameters:
+    method:
+      type: string
+      allowed_values: ['email', 'google', 'apple']
+```
+
+Generated code:
+```dart
+enum AnalyticsAuthLoginMethodEnum {
+  email('email'),
+  google('google'),
+  apple('apple');
+  // ...
+}
+
+void logAuthLogin({required AnalyticsAuthLoginMethodEnum method}) { ... }
+```
+
 ## Extensible Metadata
 
 Attach metadata to events and parameters using the `meta` key. Use metadata for ownership, PII flags, and other attributes that should travel with the plan but not the runtime code.

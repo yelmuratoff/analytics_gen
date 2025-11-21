@@ -75,10 +75,11 @@ void main() {
 
       final result = renderer.renderDomainFile('items', domain);
 
-      expect(result,
-          contains("const allowedSortValues = <String>{'asc', 'desc'};"));
-      expect(result, contains('if (!allowedSortValues.contains(sort)) {'));
-      expect(result, contains('throw ArgumentError.value('));
+      expect(result, contains('enum AnalyticsItemsFilterSortEnum {'));
+      expect(result, contains("asc('asc'),"));
+      expect(result, contains("desc('desc');"));
+      expect(result, contains('required AnalyticsItemsFilterSortEnum sort,'));
+      expect(result, contains('"sort": sort.value,'));
     });
 
     test('renders event with validation rules', () {
@@ -225,6 +226,7 @@ void main() {
           contains('with AnalyticsAuth, AnalyticsShop, AnalyticsUserContext'));
       expect(result, contains('static Analytics get instance'));
       expect(result, contains('static void initialize(IAnalytics analytics)'));
+      expect(result, contains('Analytics.initialize() must be called before accessing Analytics.instance'));
     });
 
     test('renders analytics plan', () {

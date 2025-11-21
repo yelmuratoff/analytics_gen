@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Fingerprint: `4736e3c8e5d98ffc`
+Fingerprint: `-793406a6e0411e6f`
 Domains: 3 | Events: 9 | Parameters: 17
 
 ## Table of Contents
@@ -24,7 +24,7 @@ Events: 5 | Parameters: 7
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
 | auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) [pii: true] | **owner**: auth-team<br>**tier**: critical |
-| auth: login_v2 | User logs in to the application (v2) | Active | `login-method` (string): Login method v2 (email, google, apple) | - |
+| auth: login_v2 | User logs in to the application (v2) | Active | `login-method` (string): Login method v2 (email, google, apple) (allowed: email, google, apple) | - |
 | auth: logout | User logs out | Active | - | - |
 | Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (string): ISO country code for the dialed number<br>`tracking-token` (string): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not | - |
 | auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup | - |

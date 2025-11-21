@@ -58,6 +58,14 @@
   - Add Parquet export for big data pipelines
   - Add Prometheus metrics format for real-time monitoring
 
+- [x] **Enum Generation for Allowed Values**
+  - Generate Dart enums for string parameters with `allowed_values`.
+  - Use prefixed naming (e.g., `Analytics{Event}{Param}Enum`) to avoid conflicts with app code.
+  - Update `CodeGenerator` and `EventRenderer` to support enum generation.
+
+- [x] **Initialization Error Clarity**
+  - Review and improve `ensureAnalyticsInitialized` error message to be more actionable for junior developers.
+
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
 - README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.
