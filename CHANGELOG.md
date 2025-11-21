@@ -2,18 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.2] - Unreleased
-
-### Added
-- **Enum Generation**:
-  - Automatically generates Dart enums for string parameters with `allowed_values`.
-  - Enums are named `Analytics{Domain}{Event}{Param}Enum` to ensure uniqueness.
-  - Generated methods use these enums for type-safe logging.
-
-### Improved
-- **Initialization Error**:
-  - Improved the error message when `Analytics.instance` is accessed before initialization to be more actionable.
-
 ## [0.2.1] - Unreleased
 
 ### Documentation
@@ -61,6 +49,10 @@ All notable changes to this project will be documented in this file.
 - **PII Scrubbing Support**:
   - Added `PiiRenderer` to generate PII redaction logic.
   - Added `Analytics.sanitizeParams` method to redact PII fields defined in YAML.
+- **Enum Generation**:
+  - Automatically generates Dart enums for string parameters with `allowed_values`.
+  - Enums are named `Analytics{Domain}{Event}{Param}Enum` to ensure uniqueness.
+  - Generated methods use these enums for type-safe logging.
 
 ### Changed
 - Refactored `YamlParser` to use `loadYamlNode` internally.
@@ -72,7 +64,7 @@ All notable changes to this project will be documented in this file.
   - Added comprehensive unit tests for validation logic.
 - **Dart 3 Features**:
   - Refactored `AnalyticsException` hierarchy to use `sealed class` for exhaustive error handling.
-- **Refactoring**:
+ - **Event name validation**:
   - Moved event name interpolation validation from `EventRenderer` to `YamlParser` and `SchemaValidator`.
   - `YamlParser` now correctly propagates `strictEventNames` configuration to domain parsers.
 
@@ -80,6 +72,8 @@ All notable changes to this project will be documented in this file.
 - All renderers now extend `BaseRenderer` for consistent code generation
 - Reduced code duplication across `EventRenderer`, `ContextRenderer`, and `AnalyticsClassRenderer`
 - Better error messages and validation feedback
+- **Initialization Error**:
+  - Improved the error message when `Analytics.instance` is accessed before initialization to be more actionable.
 
 ### Tests
 - Added comprehensive test suite for `BaseRenderer` (23 tests)
