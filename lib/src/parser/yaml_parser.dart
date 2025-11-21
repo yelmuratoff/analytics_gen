@@ -9,8 +9,10 @@ import 'parameter_parser.dart';
 import 'schema_validator.dart';
 
 /// Parses YAML files containing analytics event definitions.
-typedef _LoadYamlNode = YamlNode Function(String, {dynamic sourceUrl, dynamic recover, dynamic errorListener});
+typedef LoadYamlNode = YamlNode Function(String,
+    {dynamic sourceUrl, dynamic recover, dynamic errorListener});
 
+/// YAML parser for analytics event definitions.
 final class YamlParser {
   /// Creates a new YAML parser.
   YamlParser({
@@ -18,7 +20,7 @@ final class YamlParser {
     NamingStrategy? naming,
     this.strictEventNames = true,
     SchemaValidator? validator,
-    _LoadYamlNode? loadYaml,
+    LoadYamlNode? loadYaml,
     void Function(String domainKey, YamlNode? valueNode)? domainHook,
   })  : naming = naming ?? const NamingStrategy(),
         _parameterParser = ParameterParser(naming ?? const NamingStrategy()),
@@ -28,8 +30,14 @@ final class YamlParser {
               strictEventNames: strictEventNames,
             ),
         _loadYamlNode = loadYaml ??
-            ((String content, {dynamic sourceUrl, dynamic recover, dynamic errorListener}) =>
-                loadYamlNode(content, sourceUrl: sourceUrl as Uri?, recover: (recover as bool?) ?? false, errorListener: errorListener)),
+            ((String content,
+                    {dynamic sourceUrl,
+                    dynamic recover,
+                    dynamic errorListener}) =>
+                loadYamlNode(content,
+                    sourceUrl: sourceUrl as Uri?,
+                    recover: (recover as bool?) ?? false,
+                    errorListener: errorListener)),
         _domainHook = domainHook;
 
   /// The logger to use.
@@ -43,7 +51,7 @@ final class YamlParser {
 
   final ParameterParser _parameterParser;
   final SchemaValidator _validator;
-  final _LoadYamlNode _loadYamlNode;
+  final LoadYamlNode _loadYamlNode;
   final void Function(String domainKey, YamlNode? valueNode)? _domainHook;
 
   /// Parses the provided analytics sources and returns a map of domains.
@@ -385,7 +393,8 @@ final class YamlParser {
 
       // If the YAML key is present but the value is effectively missing / null
       // (for example, `context_name:` with no mapping), treat it as missing.
-      if (propertiesNode == null || (propertiesNode is YamlScalar && propertiesNode.value == null)) {
+      if (propertiesNode == null ||
+          (propertiesNode is YamlScalar && propertiesNode.value == null)) {
         throw AnalyticsParseException(
           'The "$contextName" key must be a map of properties.',
           filePath: source.filePath,

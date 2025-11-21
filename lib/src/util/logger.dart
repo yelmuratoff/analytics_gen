@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'package:meta/meta.dart';
 
 /// Log levels for the logger.
 enum LogLevel {
@@ -124,6 +125,10 @@ class ConsoleLogger implements Logger {
         print('[$level] $p$message');
     }
   }
+
+  /// Visible for testing: allows invoking `_print` with a custom level.
+  @visibleForTesting
+  void printForTest(String level, String message) => _print(level, message);
 }
 
 /// No-operation logger that ignores all log messages.

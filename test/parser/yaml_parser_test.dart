@@ -25,7 +25,8 @@ class KeyWithToString {
 // A helper key used to simulate throwing exceptions from toString().
 class ThrowingKey {
   @override
-  String toString() => throw AnalyticsParseException('boom', filePath: 'file.yaml');
+  String toString() =>
+      throw AnalyticsParseException('boom', filePath: 'file.yaml');
 }
 
 void main() {
@@ -44,7 +45,7 @@ void main() {
       }
     });
 
-    // (Removed duplicate ThrowingKey definition) 
+    // (Removed duplicate ThrowingKey definition)
 
     Future<Map<String, AnalyticsDomain>> parseEventsHelper({
       String? customPath,
@@ -699,7 +700,8 @@ void main() {
       await yamlFile.writeAsString('auth:\n  login:\n    description: Test\n');
 
       final messages = <String>[];
-      final loader = EventLoader(eventsPath: eventsPath, log: TestLogger(messages));
+      final loader =
+          EventLoader(eventsPath: eventsPath, log: TestLogger(messages));
       final sources = await loader.loadEventFiles();
 
       // Fake validator that throws a non-Analytics exception during domain validation
@@ -713,27 +715,37 @@ void main() {
       expect(
         () => parser.parseEvents(sources),
         throwsA(isA<AnalyticsAggregateException>().having(
-          (e) => e.errors.first.innerError, 'innerError', isA<FormatException>(),
+          (e) => e.errors.first.innerError,
+          'innerError',
+          isA<FormatException>(),
         )),
       );
     });
 
-    test('calls onError when _parseEventsForDomain throws AnalyticsParseException', () async {
+    test(
+        'calls onError when _parseEventsForDomain throws AnalyticsParseException',
+        () async {
       // Craft a YamlMap where the event key's toString throws an AnalyticsParseException
       final throwingKey = ThrowingKey();
       final eventsMap = YamlMap.wrap({throwingKey: YamlMap.wrap({})});
 
       // Provide a loader that returns a root map with a single domain 'auth'
       final rootMap = YamlMap.wrap({'auth': eventsMap});
-      final loader = (String content, {dynamic sourceUrl, dynamic recover, dynamic errorListener}) => rootMap;
+      YamlMap loader(String content,
+              {dynamic sourceUrl, dynamic recover, dynamic errorListener}) =>
+          rootMap;
 
       final parser = YamlParser(log: const NoOpLogger(), loadYaml: loader);
-      final sources = [AnalyticsSource(filePath: 'file.yaml', content: 'unused')];
+      final sources = [
+        AnalyticsSource(filePath: 'file.yaml', content: 'unused')
+      ];
 
       expect(
         () => parser.parseEvents(sources),
         throwsA(isA<AnalyticsAggregateException>().having(
-          (e) => e.errors.first.message, 'message', contains('boom'),
+          (e) => e.errors.first.message,
+          'message',
+          contains('boom'),
         )),
       );
     });

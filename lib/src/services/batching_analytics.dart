@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:meta/meta.dart';
 
 import '../core/analytics_interface.dart';
 import '../core/async_analytics_interface.dart';
@@ -166,6 +167,11 @@ final class BatchingAnalytics implements IAnalytics {
 
     return future;
   }
+
+  /// Exposes [_startFlush] for testing only.
+  @visibleForTesting
+  Future<void> startFlushForTest({required bool propagateErrors}) =>
+      _startFlush(propagateErrors: propagateErrors);
 
   Future<void> _drainPending() async {
     if (_pending.isEmpty) {

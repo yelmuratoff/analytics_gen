@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:analytics_gen/analytics_gen.dart';
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('MultiProviderAnalytics', () {
     late MockAnalyticsService service1;
@@ -178,6 +180,62 @@ void main() {
       expect(service1.totalEvents, equals(1)); // only allowed_event
       expect(service2.totalEvents, equals(0)); // never allowed
       expect(service3.totalEvents, equals(2)); // both calls allowed
+    });
+
+    test(
+        'removeProviderByType removes all providers of given type and providerFilters',
+        () {
+      // Arrange
+      final otherProvider = _RecordingOtherAnalyticsService();
+
+      // filters: only service1 and service3 should receive allowed_event
+      final multi = MultiProviderAnalytics([
+        service1,
+        service2,
+        otherProvider,
+      ], providerFilters: {
+        service1: (name, _) => name == 'allowed',
+        service2: (name, _) => true,
+        otherProvider: (name, _) => true,
+      });
+
+      expect(multi.providerCount, equals(3));
+
+      // Act - remove by type MockAnalyticsService
+      final reduced = multi.removeProviderByType<MockAnalyticsService>();
+
+      // Assert - should only have otherProvider left
+      expect(reduced.providerCount, equals(1));
+
+      // Logging an event should only reach the remaining provider
+      reduced.logEvent(name: 'allowed');
+      expect(service1.totalEvents, equals(0)); // removed
+      expect(service2.totalEvents, equals(0)); // removed
+      expect(otherProvider.recordedEvents.map((e) => e['name']),
+          equals(['allowed']));
+    });
+
+    test(
+        'removeProviderByType preserves onError and onProviderFailure and logger',
+        () {
+      final errors = <Object>[];
+      final failures = <MultiProviderAnalyticsFailure>[];
+      final logger = TestLogger([]);
+
+      final multi = MultiProviderAnalytics([
+        service1,
+        service2,
+      ],
+          onError: (e, _) => errors.add(e),
+          onProviderFailure: (f) => failures.add(f),
+          logger: logger);
+
+      final reduced = multi.removeProviderByType<MockAnalyticsService>();
+
+      // Ensure callbacks and logger are preserved
+      expect(reduced.onError, equals(multi.onError));
+      expect(reduced.onProviderFailure, equals(multi.onProviderFailure));
+      // Logger is internal; behavior should be preserved indirectly via hooks.
     });
 
     test('addProvider preserves providerFilter passed in', () {
@@ -418,4 +476,13 @@ class _ProviderWithCapability
 
   @override
   void logEvent({required String name, AnalyticsParams? parameters}) {}
+}
+
+class _RecordingOtherAnalyticsService implements IAnalytics {
+  final List<Map<String, Object?>> recordedEvents = [];
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    recordedEvents.add({'name': name, 'parameters': parameters ?? {}});
+  }
 }
