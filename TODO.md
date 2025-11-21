@@ -1,42 +1,24 @@
 # TODO – `analytics_gen`
 
-## Active Work Items
+## Community Feature Requests
 
-- [x] **Linting & Code Quality**
-  - Enable `sort_constructors_first` in `analysis_options.yaml`
-  - Enable `public_member_api_docs` in `analysis_options.yaml` and fix violations
-- [x] **Documentation & Reliability**
-  - Clarify `BatchingAnalytics.flush()` exception behavior in DartDocs
+- [ ] **Shared Event Parameters** (Issue #123)
+  - Add `event_parameters_path` to `AnalyticsConfig` to define a central location for shared parameters.
+  - Add `enforce_centrally_defined_parameters` config to restrict ad-hoc parameter definitions.
+  - Add `prevent_event_parameter_duplicates` config to encourage reuse.
+  - Implement `ParameterResolver` to merge shared parameters into event definitions during parsing.
+  - Support referencing shared parameters in YAML (e.g. by name or with `null` value).
 
-## Refactoring & Improvements (Priority)
+- [ ] **Advanced Parameter Validation**
+  - Add `regex` property to parameter definitions for string validation.
+  - Generate runtime validation code in Dart to enforce regex patterns.
 
-- [x] **Dead Letter Queue (DLQ)**
-  - Add `onEventDropped` callback to `BatchingAnalytics`.
-  - Allow handling events that failed to send after max retries (e.g., save to disk).
+- [ ] **Schema Evolution & Migration**
+  - Implement breaking change detection (compare current schema vs previous).
+  - Add `added_in` and `deprecated_in` version metadata to events/parameters.
+  - Support "dual-write" migration strategies (sending old and new events simultaneously).
 
-- [x] **PII Scrubbing Support**
-  - Add runtime support for handling PII parameters defined in YAML.
-  - Consider automatic redaction in debug logs or helper methods.
-
-- [x] **Generated Tests**
-  - Generate a `test/generated_plan_test.dart` file.
-  - Verify that all events defined in YAML can be constructed and pass validation.
-
-- [x] **Singleton Reset**
-  - Add `Analytics.reset()` method visible for testing to allow clearing the singleton instance.
-  - Useful for integration tests and hot restarts.
-
-- [x] **CI/CD Integration Guide**
-  - Add GitHub Actions workflow example to documentation.
-  - Show how to run `dart run analytics_gen:generate --validate-only` in CI.
-
-- [x] **Strict Event Naming**
-  - Make `strict_event_names: true` the default in future versions.
-  - Ensure documentation strongly encourages strict mode.
-
-- [x] **Context Operations**
-  - Support specific operations for user properties (increment, setOnce, append) in YAML.
-  - Generate specific capability methods for these operations.
+## Low Priority Improvements
 
 - [ ] **Cloud Integration**
   - BigQuery schema sync
@@ -57,19 +39,6 @@
   - Add Protobuf schema generator for type-safe integrations
   - Add Parquet export for big data pipelines
   - Add Prometheus metrics format for real-time monitoring
-
-- [x] **Enum Generation for Allowed Values**
-  - Generate Dart enums for string parameters with `allowed_values`.
-  - Use prefixed naming (e.g., `Analytics{Event}{Param}Enum`) to avoid conflicts with app code.
-  - Update `CodeGenerator` and `EventRenderer` to support enum generation.
-
-- [x] **Initialization Error Clarity**
-  - Review and improve `ensureAnalyticsInitialized` error message to be more actionable for junior developers.
-
-- [x] **Refactor YamlParser**
-  - Move validation logic from `YamlParser` to `SchemaValidator`.
-  - Ensure `YamlParser` is focused on parsing and `SchemaValidator` on validation.
-  - Add tests for the new validation methods.
 
 ## Notes
 - Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
