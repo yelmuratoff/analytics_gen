@@ -46,6 +46,9 @@ All notable changes to this project will be documented in this file.
 - **Dead Letter Queue (DLQ)**:
   - Added `onEventDropped` callback to `BatchingAnalytics`.
   - Allows handling events that failed to send after max retries (e.g., save to disk).
+- **PII Scrubbing Support**:
+  - Added `PiiRenderer` to generate PII redaction logic.
+  - Added `Analytics.sanitizeParams` method to redact PII fields defined in YAML.
 
 ### Changed
 - Refactored `YamlParser` to use `loadYamlNode` internally.

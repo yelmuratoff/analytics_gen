@@ -14,7 +14,7 @@
   - Add `onEventDropped` callback to `BatchingAnalytics`.
   - Allow handling events that failed to send after max retries (e.g., save to disk).
 
-- [ ] **PII Scrubbing Support**
+- [x] **PII Scrubbing Support**
   - Add runtime support for handling PII parameters defined in YAML.
   - Consider automatic redaction in debug logs or helper methods.
 

@@ -262,6 +262,10 @@ final class Analytics extends AnalyticsBase with
     ),
   ];
 
+  static const Map<String, Set<String>> _piiProperties = {
+    'auth: login': {'method'},
+  };
+
   /// The fingerprint of the plan used to generate this code.
   static const String planFingerprint = '4736e3c8e5d98ffc';
 
@@ -294,6 +298,32 @@ final class Analytics extends AnalyticsBase with
   @visibleForTesting
   static void reset() {
     _instance = null;
+  }
+
+  /// Returns a copy of [parameters] with PII values redacted.
+  ///
+  /// PII properties are defined in YAML with `meta: { pii: true }`.
+  /// This method is useful for logging to console or non-secure backends.
+  static Map<String, Object?> sanitizeParams(
+    String eventName,
+    Map<String, Object?>? parameters,
+  ) {
+    if (parameters == null || parameters.isEmpty) {
+      return const {};
+    }
+
+    final piiKeys = _piiProperties[eventName];
+    if (piiKeys == null) {
+      return Map.of(parameters);
+    }
+
+    final sanitized = Map.of(parameters);
+    for (final key in piiKeys) {
+      if (sanitized.containsKey(key)) {
+        sanitized[key] = '[REDACTED]';
+      }
+    }
+    return sanitized;
   }
 
   // --- Implementation ---
