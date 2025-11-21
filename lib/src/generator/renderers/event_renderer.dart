@@ -118,7 +118,8 @@ class EventRenderer extends BaseRenderer {
 
         String dartType;
         if (isEnum) {
-          dartType = const EnumRenderer().buildEnumName(domainName, event, param);
+          dartType =
+              const EnumRenderer().buildEnumName(domainName, event, param);
         } else {
           dartType = DartTypeMapper.toDartType(param.type);
         }

@@ -226,7 +226,10 @@ void main() {
           contains('with AnalyticsAuth, AnalyticsShop, AnalyticsUserContext'));
       expect(result, contains('static Analytics get instance'));
       expect(result, contains('static void initialize(IAnalytics analytics)'));
-      expect(result, contains('Analytics.initialize() must be called before accessing Analytics.instance'));
+      expect(
+          result,
+          contains(
+              'Analytics.initialize() must be called before accessing Analytics.instance'));
     });
 
     test('renders analytics plan', () {
