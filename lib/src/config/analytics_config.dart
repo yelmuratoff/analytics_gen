@@ -8,7 +8,6 @@ final class AnalyticsConfig {
     this.outputPath = 'src/analytics/generated',
     this.docsPath,
     this.exportsPath,
-    this.eventParametersPath,
     this.sharedParameters = const [],
     this.generateCsv = false,
     this.generateJson = false,
@@ -33,7 +32,6 @@ final class AnalyticsConfig {
       outputPath: config['output_path'] as String? ?? 'src/analytics/generated',
       docsPath: config['docs_path'] as String?,
       exportsPath: config['exports_path'] as String?,
-      eventParametersPath: config['event_parameters_path'] as String?,
       sharedParameters:
           (config['shared_parameters'] as List?)?.cast<String>() ?? const [],
       generateCsv: config['generate_csv'] as bool? ?? false,
@@ -68,9 +66,6 @@ final class AnalyticsConfig {
 
   /// Path where database exports will be generated (optional)
   final String? exportsPath;
-
-  /// Path to the shared event parameters file (optional)
-  final String? eventParametersPath;
 
   /// List of paths to shared event parameter files (relative to project root).
   final List<String> sharedParameters;

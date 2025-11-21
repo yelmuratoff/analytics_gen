@@ -2,9 +2,6 @@ analytics_gen:
   # Path to YAML event files (relative to project root)
   events_path: events
 
-  # Path to shared parameters file (optional)
-  event_parameters_path: events/shared.yaml
-
   # Path where generated code will be written (relative to lib/)
   output_path: src/analytics/generated
 
@@ -18,6 +15,10 @@ analytics_gen:
   contexts:
     - events/theme_context.yaml
     - events/user_properties.yaml
+
+  shared_parameters:
+    - events/shared_user.yaml
+    - events/shared_app.yaml
 
   # Enable/disable various generators
   generate_docs: true
