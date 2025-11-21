@@ -155,6 +155,39 @@ This metadata is:
 - Included in the generated Markdown documentation.
 - Exported to JSON and CSV for external analysis.
 
+## Shared Event Parameters
+
+Define common parameters in a central file to ensure consistency and reduce duplication.
+
+1. **Create a shared parameters file** (e.g., `events/shared.yaml`):
+   ```yaml
+   parameters:
+     flow_id:
+       type: string
+       description: Unique identifier for the user flow.
+     user_id:
+       type: int
+   ```
+
+2. **Configure it** in `analytics_gen.yaml`:
+   ```yaml
+   analytics_gen:
+     event_parameters_path: events/shared.yaml
+     # Optional: Enforce that all parameters must be defined in shared.yaml
+     enforce_centrally_defined_parameters: false
+     # Optional: Prevent redefining shared parameters in events
+     prevent_event_parameter_duplicates: true
+   ```
+
+3. **Reference in events**:
+   ```yaml
+   checkout_started:
+     parameters:
+       flow_id: # Inherits type and description from shared.yaml
+       item_count:
+         type: int
+   ```
+
 ## Contexts & Global Properties
 
 Contexts allow you to define global properties (like user attributes, device info, or theme settings) that are managed separately from individual events.

@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "fingerprint": "-793406a6e0411e6f",
+    "fingerprint": "61c5a4357487b877",
     "total_domains": 3,
     "total_events": 9,
-    "total_parameters": 17
+    "total_parameters": 18
   },
   "domains": [
     {
       "name": "auth",
       "event_count": 5,
-      "parameter_count": 7,
+      "parameter_count": 8,
       "events": [
         {
           "name": "login",
@@ -52,6 +52,12 @@
                 "google",
                 "apple"
               ]
+            },
+            {
+              "name": "session_id",
+              "type": "String",
+              "nullable": false,
+              "description": "Unique identifier for the current session."
             }
           ]
         },

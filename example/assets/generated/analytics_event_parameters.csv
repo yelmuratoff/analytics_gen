@@ -1,6 +1,7 @@
 Event Name,Parameter Name,Required
 auth: login,method,true
 auth: login_v2,login-method,true
+auth: login_v2,session_id,true
 Auth: Phone {phone_country},phone_country,true
 Auth: Phone {phone_country},tracking-token,true
 Auth: Phone {phone_country},user_exists,false

@@ -23,6 +23,7 @@ final class EventLoader {
   EventLoader({
     required this.eventsPath,
     this.contextFiles = const [],
+    this.sharedParameterFiles = const [],
     this.log = const NoOpLogger(),
   });
 
@@ -31,6 +32,9 @@ final class EventLoader {
 
   /// The list of context files to load.
   final List<String> contextFiles;
+
+  /// The list of shared parameter files to ignore.
+  final List<String> sharedParameterFiles;
 
   /// The logger to use.
   final Logger log;
@@ -65,6 +69,9 @@ final class EventLoader {
       if (contextFiles.any((c) => normalizedPath.endsWith(c))) {
         return null;
       }
+      if (sharedParameterFiles.any((c) => normalizedPath.endsWith(c))) {
+        return null;
+      }
 
       final content = await file.readAsString();
       return AnalyticsSource(
@@ -95,5 +102,20 @@ final class EventLoader {
     }
 
     return sources;
+  }
+
+  /// Loads a single source file.
+  Future<AnalyticsSource?> loadSourceFile(String filePath) async {
+    final file = File(filePath);
+    if (!file.existsSync()) {
+      log.warning('File not found: $filePath');
+      return null;
+    }
+
+    final content = await file.readAsString();
+    return AnalyticsSource(
+      filePath: filePath,
+      content: content,
+    );
   }
 }

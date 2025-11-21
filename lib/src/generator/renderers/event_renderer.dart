@@ -92,7 +92,7 @@ class EventRenderer extends BaseRenderer {
             param.allowedValues!.isNotEmpty;
         final typeName = isEnum
             ? const EnumRenderer().buildEnumName(domainName, event, param)
-            : param.type;
+            : DartTypeMapper.toDartType(param.type);
 
         if (param.description != null) {
           buffer.writeln(

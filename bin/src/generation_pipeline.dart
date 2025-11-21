@@ -31,22 +31,57 @@ class GenerationPipeline {
       return;
     }
 
+    // Resolve shared parameter paths
+    final sharedParameterPaths = [
+      if (config.eventParametersPath != null) config.eventParametersPath!,
+      ...config.sharedParameters,
+    ].map((p) => path.join(projectRoot, p)).toList();
+
     // Load files
     final loader = EventLoader(
       eventsPath: path.join(projectRoot, config.eventsPath),
       contextFiles: config.contexts
           .map((c) => path.join(projectRoot, c))
           .toList(), // Resolve paths
+      sharedParameterFiles: sharedParameterPaths,
       log: request.logger,
     );
     final eventSources = await loader.loadEventFiles();
     final contextSources = await loader.loadContextFiles();
+
+    Map<String, AnalyticsParameter> sharedParameters = {};
+    if (sharedParameterPaths.isNotEmpty) {
+      final sharedParser = YamlParser(
+        log: request.logger,
+        naming: config.naming,
+      );
+
+      for (final sharedPath in sharedParameterPaths) {
+        final sharedSource = await loader.loadSourceFile(sharedPath);
+        if (sharedSource != null) {
+          try {
+            final params = sharedParser.parseSharedParameters(sharedSource);
+            sharedParameters.addAll(params);
+            request.logger.info(
+                'Loaded ${params.length} shared parameters from ${path.relative(sharedPath, from: projectRoot)}');
+          } catch (e) {
+            // If shared parameters fail to parse, we should probably fail hard
+            request.logger.error('Failed to parse shared parameters: $e');
+            exit(1);
+          }
+        }
+      }
+    }
 
     // Parse YAML files once
     final parser = YamlParser(
       log: request.logger,
       naming: config.naming,
       strictEventNames: config.strictEventNames,
+      enforceCentrallyDefinedParameters:
+          config.enforceCentrallyDefinedParameters,
+      preventEventParameterDuplicates: config.preventEventParameterDuplicates,
+      sharedParameters: sharedParameters,
     );
     final domains = await parser.parseEvents(eventSources);
     final contexts = await parser.parseContexts(contextSources);

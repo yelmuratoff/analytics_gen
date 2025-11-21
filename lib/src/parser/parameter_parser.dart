@@ -19,6 +19,9 @@ class ParameterParser {
     required String domainName,
     required String eventName,
     required String filePath,
+    Map<String, AnalyticsParameter> sharedParameters = const {},
+    bool enforceCentrallyDefinedParameters = false,
+    bool preventEventParameterDuplicates = false,
   }) {
     final parameters = <AnalyticsParameter>[];
     final seenRawNames = <String>{};
@@ -40,8 +43,40 @@ class ParameterParser {
         );
       }
 
+      final sharedParam = sharedParameters[rawName];
+
+      if (enforceCentrallyDefinedParameters && sharedParam == null) {
+        throw AnalyticsParseException(
+          'Parameter "$rawName" is not defined in the shared parameters file. '
+          'All parameters must be centrally defined when '
+          'enforce_centrally_defined_parameters is true.',
+          filePath: filePath,
+          span: keyNode.span,
+        );
+      }
+
       final valueNode = entry.value;
       final paramValue = valueNode;
+
+      // Case 1: Reference to shared parameter (value is null)
+      if (paramValue is YamlScalar && paramValue.value == null) {
+        if (sharedParam != null) {
+          parameters.add(sharedParam);
+          continue;
+        }
+        // If not shared, fall through to error or dynamic (likely error in strict mode)
+      }
+
+      // Case 2: Redefinition of shared parameter
+      if (sharedParam != null && preventEventParameterDuplicates) {
+        throw AnalyticsParseException(
+          'Parameter "$rawName" is already defined in the shared parameters file. '
+          'Remove the definition from the event to use the shared version, '
+          'or disable prevent_event_parameter_duplicates.',
+          filePath: filePath,
+          span: keyNode.span,
+        );
+      }
 
       String? identifierOverride;
       String? wireNameOverride;

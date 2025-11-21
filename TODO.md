@@ -2,7 +2,7 @@
 
 ## Community Feature Requests
 
-- [ ] **Shared Event Parameters** (Issue #123)
+- [x] **Shared Event Parameters** (Issue #123)
   - Add `event_parameters_path` to `AnalyticsConfig` to define a central location for shared parameters.
   - Add `enforce_centrally_defined_parameters` config to restrict ad-hoc parameter definitions.
   - Add `prevent_event_parameter_duplicates` config to encourage reuse.

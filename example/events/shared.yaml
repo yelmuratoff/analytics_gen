@@ -1,0 +1,7 @@
+parameters:
+  session_id:
+    type: String
+    description: Unique identifier for the current session.
+  platform:
+    type: String
+    allowed_values: ['ios', 'android', 'web']

@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 - Added CI example for plan validation in `doc/VALIDATION.md`.
 
 ### Key Additions
+- **Shared Event Parameters**: Support for centrally defined parameters via `event_parameters_path`.
+  - Reuse parameters across events by referencing them (or leaving value as `null`).
+  - Enforce consistency with `enforce_centrally_defined_parameters`.
+  - Prevent duplicates with `prevent_event_parameter_duplicates`.
 - Enhanced CSV export (multiple files, better escaping).
 - Parameter validation DSL: `regex`, `min_length`, `max_length`, `min`, `max` with runtime checks.
 - PII scrubbing support (`PiiRenderer` + `Analytics.sanitizeParams`).

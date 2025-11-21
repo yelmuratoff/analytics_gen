@@ -1,7 +1,7 @@
 # Analytics Events Documentation
 
-Fingerprint: `-793406a6e0411e6f`
-Domains: 3 | Events: 9 | Parameters: 17
+Fingerprint: `61c5a4357487b877`
+Domains: 3 | Events: 9 | Parameters: 18
 
 ## Table of Contents
 
@@ -15,16 +15,16 @@ Domains: 3 | Events: 9 | Parameters: 17
 
 - **Total Domains**: 3
 - **Total Events**: 9
-- **Total Parameters**: 17
+- **Total Parameters**: 18
 
 ## auth
 
-Events: 5 | Parameters: 7
+Events: 5 | Parameters: 8
 
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
 | auth: login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (string): Login method (email, google, apple) [pii: true] | **owner**: auth-team<br>**tier**: critical |
-| auth: login_v2 | User logs in to the application (v2) | Active | `login-method` (string): Login method v2 (email, google, apple) (allowed: email, google, apple) | - |
+| auth: login_v2 | User logs in to the application (v2) | Active | `login-method` (string): Login method v2 (email, google, apple) (allowed: email, google, apple)<br>`session_id` (String): Unique identifier for the current session. | - |
 | auth: logout | User logs out | Active | - | - |
 | Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (string): ISO country code for the dialed number<br>`tracking-token` (string): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not | - |
 | auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup | - |
@@ -38,6 +38,7 @@ Analytics.instance.logAuthLogin(
 
 Analytics.instance.logAuthLoginV2(
   loginMethod: 'example',
+  sessionId: 'example',
 );
 
 Analytics.instance.logAuthLogout();

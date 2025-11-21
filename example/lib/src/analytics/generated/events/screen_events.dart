@@ -10,8 +10,11 @@ mixin AnalyticsScreen on AnalyticsBase {
   /// Legacy backend identifier kept for parity
   ///
   /// Parameters:
-  /// - `legacy-screen-code`: string - Three-letter code provided by data team
-  void logScreenLegacyView({required String legacyScreenCode}) {
+  /// - `legacy-screen-code`: String - Three-letter code provided by data team
+  void logScreenLegacyView({
+    required String legacyScreenCode,
+  }) {
+
     logger.logEvent(
       name: "Screen: Legacy",
       parameters: <String, Object?>{
@@ -21,20 +24,19 @@ mixin AnalyticsScreen on AnalyticsBase {
     );
   }
 
-  @Deprecated(
-    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
-  )
+  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
   /// User views a screen
   ///
   /// Parameters:
   /// - `duration_ms`: int? - Time spent on previous screen in milliseconds
-  /// - `previous_screen`: string? - Name of the previous screen
-  /// - `screen_name`: string
+  /// - `previous_screen`: String? - Name of the previous screen
+  /// - `screen_name`: String
   void logScreenView({
     int? durationMs,
     String? previousScreen,
     required String screenName,
   }) {
+
     logger.logEvent(
       name: "Screen: ${screenName}",
       parameters: <String, Object?>{
@@ -45,4 +47,5 @@ mixin AnalyticsScreen on AnalyticsBase {
       },
     );
   }
+
 }

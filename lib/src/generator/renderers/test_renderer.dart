@@ -3,6 +3,7 @@ import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
+import 'enum_renderer.dart';
 
 /// Renders a Dart test file to verify generated analytics events.
 class TestRenderer {
@@ -63,7 +64,7 @@ class TestRenderer {
 
     for (final param in event.parameters) {
       if (!param.isNullable) {
-        final value = _generateValue(param);
+        final value = _generateValue(domain, event, param);
         final camelParam = StringUtils.toCamelCase(param.codeName);
         buffer.writeln('          $camelParam: $value,');
       }
@@ -73,7 +74,21 @@ class TestRenderer {
     buffer.writeln('      });');
   }
 
-  String _generateValue(AnalyticsParameter param) {
+  String _generateValue(
+    AnalyticsDomain domain,
+    AnalyticsEvent event,
+    AnalyticsParameter param,
+  ) {
+    if (param.type == 'string' &&
+        param.allowedValues != null &&
+        param.allowedValues!.isNotEmpty) {
+      final enumName =
+          const EnumRenderer().buildEnumName(domain.name, event, param);
+      final firstValue = param.allowedValues!.first.toString();
+      final enumIdentifier = const EnumRenderer().toEnumIdentifier(firstValue);
+      return '$enumName.$enumIdentifier';
+    }
+
     if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
       final value = param.allowedValues!.first;
       if (value is String) return "'$value'";

@@ -16,6 +16,7 @@ auth:
   login_v2:
     description: User logs in to the application (v2)
     parameters:
+      session_id: # Shared
       method:
         type: string
         description: Login method v2 (email, google, apple)

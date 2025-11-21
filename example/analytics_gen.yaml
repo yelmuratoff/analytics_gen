@@ -2,6 +2,9 @@ analytics_gen:
   # Path to YAML event files (relative to project root)
   events_path: events
 
+  # Path to shared parameters file (optional)
+  event_parameters_path: events/shared.yaml
+
   # Path where generated code will be written (relative to lib/)
   output_path: src/analytics/generated
 

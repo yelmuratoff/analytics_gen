@@ -21,8 +21,11 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// User logs in to the application
   ///
   /// Parameters:
-  /// - `method`: string - Login method (email, google, apple)
-  void logAuthLogin({required String method}) {
+  /// - `method`: String - Login method (email, google, apple)
+  void logAuthLogin({
+    required String method,
+  }) {
+
     logger.logEvent(
       name: "auth: login",
       parameters: <String, Object?>{
@@ -36,14 +39,18 @@ mixin AnalyticsAuth on AnalyticsBase {
   ///
   /// Parameters:
   /// - `login-method`: AnalyticsAuthLoginV2LoginMethodEnum - Login method v2 (email, google, apple)
+  /// - `session_id`: String - Unique identifier for the current session.
   void logAuthLoginV2({
     required AnalyticsAuthLoginV2LoginMethodEnum loginMethod,
+    required String sessionId,
   }) {
+
     logger.logEvent(
       name: "auth: login_v2",
       parameters: <String, Object?>{
         'description': 'User logs in to the application (v2)',
         "login-method": loginMethod.value,
+        "session_id": sessionId,
       },
     );
   }
@@ -53,24 +60,25 @@ mixin AnalyticsAuth on AnalyticsBase {
   void logAuthLogout() {
     logger.logEvent(
       name: "auth: logout",
-      parameters: <String, Object?>{'description': 'User logs out'},
+      parameters: <String, Object?>{
+        'description': 'User logs out',
+      },
     );
   }
 
-  @Deprecated(
-    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
-  )
+  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
   /// When user logs in via phone
   ///
   /// Parameters:
-  /// - `phone_country`: string - ISO country code for the dialed number
-  /// - `tracking-token`: string - Legacy token kept for backend reconciliation
+  /// - `phone_country`: String - ISO country code for the dialed number
+  /// - `tracking-token`: String - Legacy token kept for backend reconciliation
   /// - `user_exists`: bool? - Whether the user exists or not
   void logAuthPhoneLogin({
     required String phoneCountry,
     required String trackingToken,
     bool? userExists,
   }) {
+
     logger.logEvent(
       name: "Auth: Phone ${phoneCountry}",
       parameters: <String, Object?>{
@@ -85,9 +93,13 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// User creates a new account
   ///
   /// Parameters:
-  /// - `method`: string
-  /// - `referral_code`: string? - Optional referral code used during signup
-  void logAuthSignup({required String method, String? referralCode}) {
+  /// - `method`: String
+  /// - `referral_code`: String? - Optional referral code used during signup
+  void logAuthSignup({
+    required String method,
+    String? referralCode,
+  }) {
+
     logger.logEvent(
       name: "auth: signup",
       parameters: <String, Object?>{
@@ -97,4 +109,5 @@ mixin AnalyticsAuth on AnalyticsBase {
       },
     );
   }
+
 }
