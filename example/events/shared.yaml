@@ -4,4 +4,4 @@ parameters:
     description: Unique identifier for the current session.
   platform:
     type: String
-    allowed_values: ['ios', 'android', 'web']
+    allowed_values: ["ios", "android", "web"]
