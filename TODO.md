@@ -10,7 +10,7 @@
   - Support referencing shared parameters in YAML (e.g. by name or with `null` value).
 
 - [ ] **Advanced Parameter Validation**
-  - Add `regex` property to parameter definitions for string validation.
+  - Add `regex` property to parameter definitions for validation.
   - Generate runtime validation code in Dart to enforce regex patterns.
 
 - [ ] **Schema Evolution & Migration**

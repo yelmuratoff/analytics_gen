@@ -32,22 +32,20 @@ final class AnalyticsConfig {
     final rules = config['rules'] as Map<dynamic, dynamic>? ?? {};
 
     return AnalyticsConfig(
-      eventsPath: (inputs['events'] ?? config['events_path']) as String? ??
-          'events',
+      eventsPath:
+          (inputs['events'] ?? config['events_path']) as String? ?? 'events',
       outputPath: (outputs['dart'] ?? config['output_path']) as String? ??
           'src/analytics/generated',
       docsPath: (outputs['docs'] ?? config['docs_path']) as String?,
       exportsPath: (outputs['exports'] ?? config['exports_path']) as String?,
-      sharedParameters: (inputs['shared_parameters'] ??
-              config['shared_parameters'] as List?)
-          ?.cast<String>() ??
-          const [],
-      generateCsv:
-          (targets['csv'] ?? config['generate_csv']) as bool? ?? false,
+      sharedParameters:
+          (inputs['shared_parameters'] ?? config['shared_parameters'] as List?)
+                  ?.cast<String>() ??
+              const [],
+      generateCsv: (targets['csv'] ?? config['generate_csv']) as bool? ?? false,
       generateJson:
           (targets['json'] ?? config['generate_json']) as bool? ?? false,
-      generateSql:
-          (targets['sql'] ?? config['generate_sql']) as bool? ?? false,
+      generateSql: (targets['sql'] ?? config['generate_sql']) as bool? ?? false,
       generateDocs:
           (targets['docs'] ?? config['generate_docs']) as bool? ?? false,
       generatePlan:
@@ -69,9 +67,9 @@ final class AnalyticsConfig {
                   config['prevent_event_parameter_duplicates']) as bool? ??
               false,
       naming: NamingStrategy.fromYaml(config['naming'] as Map?),
-      contexts: (inputs['contexts'] ?? config['contexts'] as List?)
-              ?.cast<String>() ??
-          const [],
+      contexts:
+          (inputs['contexts'] ?? config['contexts'] as List?)?.cast<String>() ??
+              const [],
     );
   }
 

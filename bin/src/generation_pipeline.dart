@@ -47,7 +47,7 @@ class GenerationPipeline {
     final eventSources = await loader.loadEventFiles();
     final contextSources = await loader.loadContextFiles();
 
-    Map<String, AnalyticsParameter> sharedParameters = {};
+    final Map<String, AnalyticsParameter> sharedParameters = {};
     if (sharedParameterPaths.isNotEmpty) {
       final sharedParser = YamlParser(
         log: request.logger,
