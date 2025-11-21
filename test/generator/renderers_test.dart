@@ -358,7 +358,8 @@ void main() {
       expect(result, contains("codeName: 'method',"));
     });
 
-    test('renders analytics plan with parameter metadata and allowed values', () {
+    test('renders analytics plan with parameter metadata and allowed values',
+        () {
       config = AnalyticsConfig(
         eventsPath: 'events',
         outputPath: 'lib/analytics',

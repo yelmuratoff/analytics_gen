@@ -443,8 +443,10 @@ void main() {
       expect(content, contains('**owner**: auth-team<br>**pii**: false'));
     });
 
-    test('documents context properties with metadata and allowed values', () async {
-      final contextFile = File(p.join(tempProject.path, 'events', 'user_properties.yaml'));
+    test('documents context properties with metadata and allowed values',
+        () async {
+      final contextFile =
+          File(p.join(tempProject.path, 'events', 'user_properties.yaml'));
       await contextFile.writeAsString(
         'user_properties:\n'
         '  role:\n'
@@ -475,9 +477,8 @@ void main() {
 
       final loader = EventLoader(
         eventsPath: p.join(tempProject.path, config.eventsPath),
-        contextFiles: config.contexts
-            .map((c) => p.join(tempProject.path, c))
-            .toList(),
+        contextFiles:
+            config.contexts.map((c) => p.join(tempProject.path, c)).toList(),
       );
       final sources = await loader.loadEventFiles();
       final contextSources = await loader.loadContextFiles();
@@ -503,21 +504,24 @@ void main() {
     });
 
     test('uses custom context title for known contexts', () async {
-      final userPropsFile = File(p.join(tempProject.path, 'events', 'user_properties.yaml'));
+      final userPropsFile =
+          File(p.join(tempProject.path, 'events', 'user_properties.yaml'));
       await userPropsFile.writeAsString(
         'user_properties:\n'
         '  id:\n'
         '    type: string\n',
       );
 
-      final globalFile = File(p.join(tempProject.path, 'events', 'global_context.yaml'));
+      final globalFile =
+          File(p.join(tempProject.path, 'events', 'global_context.yaml'));
       await globalFile.writeAsString(
         'global_context:\n'
         '  version:\n'
         '    type: string\n',
       );
 
-      final customFile = File(p.join(tempProject.path, 'events', 'custom_props.yaml'));
+      final customFile =
+          File(p.join(tempProject.path, 'events', 'custom_props.yaml'));
       await customFile.writeAsString(
         'custom_props:\n'
         '  setting:\n'
@@ -542,9 +546,8 @@ void main() {
 
       final loader = EventLoader(
         eventsPath: p.join(tempProject.path, config.eventsPath),
-        contextFiles: config.contexts
-            .map((c) => p.join(tempProject.path, c))
-            .toList(),
+        contextFiles:
+            config.contexts.map((c) => p.join(tempProject.path, c)).toList(),
       );
       final sources = await loader.loadEventFiles();
       final contextSources = await loader.loadContextFiles();

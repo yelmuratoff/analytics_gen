@@ -176,7 +176,8 @@ void main() {
       );
     });
 
-    test('cleans up existing CSV file when CSV generation is disabled', () async {
+    test('cleans up existing CSV file when CSV generation is disabled',
+        () async {
       final eventsDir = Directory(path.join(tempDir.path, 'events'));
       eventsDir.createSync(recursive: true);
 
