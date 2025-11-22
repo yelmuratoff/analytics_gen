@@ -283,7 +283,9 @@ void main() {
       expect(result, isNot(contains('logAuthLoginLegacy(method:')));
     });
 
-    test('renders dual-write event with method call when both parameters are enums', () {
+    test(
+        'renders dual-write event with method call when both parameters are enums',
+        () {
       final sourceEvent = AnalyticsEvent(
         name: 'login',
         description: 'User logs in',
@@ -309,16 +311,22 @@ void main() {
           ),
         ],
       );
-      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final domain =
+          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
       final allDomains = {'auth': domain};
 
       final result = renderer.renderDomainFile('auth', domain, allDomains);
 
       expect(result, contains('logAuthLogin('));
-      expect(result, contains('logAuthLoginLegacy(method: method, parameters: parameters);'));
+      expect(
+          result,
+          contains(
+              'logAuthLoginLegacy(method: method, parameters: parameters);'));
     });
 
-    test('renders dual-write event with method call when source is enum and target is string', () {
+    test(
+        'renders dual-write event with method call when source is enum and target is string',
+        () {
       final sourceEvent = AnalyticsEvent(
         name: 'login',
         description: 'User logs in',
@@ -344,13 +352,17 @@ void main() {
           ),
         ],
       );
-      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final domain =
+          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
       final allDomains = {'auth': domain};
 
       final result = renderer.renderDomainFile('auth', domain, allDomains);
 
       expect(result, contains('logAuthLogin('));
-      expect(result, contains('logAuthLoginLegacy(method: method.value, parameters: parameters);'));
+      expect(
+          result,
+          contains(
+              'logAuthLoginLegacy(method: method.value, parameters: parameters);'));
     });
   });
 
