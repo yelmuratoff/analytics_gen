@@ -138,7 +138,8 @@ void main() {
       expect(minifiedSecond, equals(minifiedFirst));
     });
 
-    test('includes deprecated_in and dual_write_to when set on events', () async {
+    test('includes deprecated_in and dual_write_to when set on events',
+        () async {
       final domains = <String, AnalyticsDomain>{
         'auth': AnalyticsDomain(
           name: 'auth',
@@ -173,7 +174,8 @@ void main() {
       final login = eventsJson.first as Map<String, dynamic>;
 
       expect(login['deprecated_in'], equals('1.2.3'));
-      expect(login['dual_write_to'], equals(['auth.legacy_login', 'tracking.login']));
+      expect(login['dual_write_to'],
+          equals(['auth.legacy_login', 'tracking.login']));
     });
 
     test('omits dual_write_to when empty list is provided', () async {
