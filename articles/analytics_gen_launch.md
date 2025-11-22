@@ -1,16 +1,16 @@
 <div align="center">
   <h1>Stop Writing Analytics Code. Start Defining It.</h1>
-  
+
   <a href="https://pub.dev/packages/analytics_gen">
     <img src="../assets/analytics_gen_banner.png" width="600">
   </a>
 
-  <h3>Type-safe analytics, automated documentation, and data integrity—from a single source of truth.</h3>
+  <h3>Type-safe analytics, automated documentation, and data integrity-from a single source of truth.</h3>
 </div>
 
 ---
 
-As a Developer who has seen the inside of massive codebases, I’ve witnessed the same tragedy play out in almost every product team.
+As a Developer who has seen the inside of massive codebases, I've witnessed the same tragedy play out in almost every product team.
 
 > It starts innocently. A Product Manager asks for a new event: `user_clicked_button`.
 > A developer adds `analytics.logEvent('user_clicked_button')`.
@@ -18,9 +18,9 @@ As a Developer who has seen the inside of massive codebases, I’ve witnessed th
 > A month later, a data analyst asks why the `button_id` parameter is a string in iOS but an integer in Android.
 > **Six months later, your dashboard is a graveyard of untrustworthy data.**
 
-We treat our production code with rigor—CI/CD, type safety, code reviews. Yet we treat our analytics—the very data that drives our business decisions—like a "stringly typed" afterthought.
+We treat our production code with rigor-CI/CD, type safety, code reviews. Yet we treat our analytics-the very data that drives our business decisions-like a "stringly typed" afterthought.
 
-**It’s time to stop writing analytics code by hand.**
+**It's time to stop writing analytics code by hand.**
 
 Meet **`analytics_gen`**, a tool designed to bring engineering discipline to your data pipeline.
 
@@ -95,9 +95,9 @@ The generated code doesn't lock you into a specific provider. It sits *above* yo
 
 ## Try It Out
 
-If you’re tired of debugging why your funnel drop-off looks wrong, or if you just want the same level of tooling for your data as you have for your app logic, give `analytics_gen` a try.
+If you're tired of debugging why your funnel drop-off looks wrong, or if you just want the same level of tooling for your data as you have for your app logic, give `analytics_gen` a try.
 
-It’s not just a code generator; it’s a contract between your code and your data.
+It's not just a code generator; it's a contract between your code and your data.
 
 <div align="center">
 
