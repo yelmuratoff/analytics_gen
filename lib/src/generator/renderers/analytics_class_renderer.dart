@@ -2,20 +2,33 @@ import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';
 import 'base_renderer.dart';
+import 'pii_renderer.dart';
 
+/// Renders the main Analytics class with domain mixins and capabilities.
 class AnalyticsClassRenderer extends BaseRenderer {
+  /// Creates a new analytics class renderer.
+  AnalyticsClassRenderer(
+    this.config, {
+    PiiRenderer? piiRenderer,
+  }) : _piiRenderer = piiRenderer ?? PiiRenderer(config);
+
+  /// The analytics configuration.
   final AnalyticsConfig config;
 
-  const AnalyticsClassRenderer(this.config);
+  final PiiRenderer _piiRenderer;
 
+  /// Renders the Analytics class code.
   String renderAnalyticsClass(
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
+    String? planFingerprint,
   }) {
     final buffer = StringBuffer();
 
     // File header
+    buffer.write(renderFileHeader());
     buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
+    buffer.writeln("import 'package:meta/meta.dart';");
     buffer.writeln();
     buffer.writeln("import 'generated_events.dart';");
 
@@ -106,6 +119,17 @@ class AnalyticsClassRenderer extends BaseRenderer {
       buffer.writeln();
     }
 
+    buffer.write(_piiRenderer.renderPiiPropertiesField(domains));
+    buffer.writeln();
+
+    if (planFingerprint != null) {
+      buffer.writeln(
+          '  /// The fingerprint of the plan used to generate this code.');
+      buffer.writeln(
+          "  static const String planFingerprint = '$planFingerprint';");
+      buffer.writeln();
+    }
+
     // Singleton implementation
     buffer.writeln('  // --- Singleton Compatibility ---');
     buffer.writeln();
@@ -115,7 +139,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln('  static Analytics get instance {');
     buffer.writeln('    if (_instance == null) {');
     buffer.writeln(
-        "      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance');");
+        "      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance.\\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.');");
     buffer.writeln('    }');
     buffer.writeln('    return _instance!;');
     buffer.writeln('  }');
@@ -135,6 +159,16 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln(
         '    _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));');
     buffer.writeln('  }');
+    buffer.writeln();
+
+    buffer.writeln('  /// Resets the singleton instance. Useful for testing.');
+    buffer.writeln('  @visibleForTesting');
+    buffer.writeln('  static void reset() {');
+    buffer.writeln('    _instance = null;');
+    buffer.writeln('  }');
+    buffer.writeln();
+
+    buffer.write(_piiRenderer.renderSanitizeParamsMethod());
     buffer.writeln();
 
     // Overrides
@@ -231,8 +265,12 @@ class AnalyticsClassRenderer extends BaseRenderer {
     if (event.meta.isNotEmpty) {
       buffer.writeln('          meta: <String, Object?>{');
       for (final entry in event.meta.entries) {
+        final value = entry.value;
+        final valueString = value is String
+            ? "'${StringUtils.escapeSingleQuoted(value)}'"
+            : value.toString();
         buffer.writeln(
-          "            '${StringUtils.escapeSingleQuoted(entry.key)}': '${StringUtils.escapeSingleQuoted(entry.value.toString())}',",
+          "            '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
         );
       }
       buffer.writeln('          },');
@@ -267,10 +305,13 @@ class AnalyticsClassRenderer extends BaseRenderer {
       );
     }
     if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
-      buffer.writeln('              allowedValues: <String>[');
+      buffer.writeln('              allowedValues: <Object>[');
       for (final value in param.allowedValues!) {
+        final valueString = value is String
+            ? "'${StringUtils.escapeSingleQuoted(value)}'"
+            : value.toString();
         buffer.writeln(
-          "                '${StringUtils.escapeSingleQuoted(value)}',",
+          '                $valueString,',
         );
       }
       buffer.writeln('              ],');
@@ -278,8 +319,12 @@ class AnalyticsClassRenderer extends BaseRenderer {
     if (param.meta.isNotEmpty) {
       buffer.writeln('              meta: <String, Object?>{');
       for (final entry in param.meta.entries) {
+        final value = entry.value;
+        final valueString = value is String
+            ? "'${StringUtils.escapeSingleQuoted(value)}'"
+            : value.toString();
         buffer.writeln(
-          "                '${StringUtils.escapeSingleQuoted(entry.key)}': '${StringUtils.escapeSingleQuoted(entry.value.toString())}',",
+          "                '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
         );
       }
       buffer.writeln('              },');

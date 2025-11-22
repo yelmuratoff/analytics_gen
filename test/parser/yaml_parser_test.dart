@@ -5,18 +5,28 @@ import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
 
+import '../test_utils.dart';
+
 // Helper type used in tests to create map keys that stringify to the same
 // value while remaining distinct map keys (Dart object identity).
 class KeyWithToString {
-  final String id;
   KeyWithToString(this.id);
+  final String id;
 
   @override
   String toString() => 'dup';
+}
+
+// A helper key used to simulate throwing exceptions from toString().
+class ThrowingKey {
+  @override
+  String toString() =>
+      throw AnalyticsParseException('boom', filePath: 'file.yaml');
 }
 
 void main() {
@@ -35,15 +45,18 @@ void main() {
       }
     });
 
+    // (Removed duplicate ThrowingKey definition)
+
     Future<Map<String, AnalyticsDomain>> parseEventsHelper({
       String? customPath,
       NamingStrategy? naming,
-      void Function(String)? log,
+      Logger? log,
     }) async {
       final p = customPath ?? eventsPath;
-      final loader = EventLoader(eventsPath: p, log: log);
+      final logger = log ?? const NoOpLogger();
+      final loader = EventLoader(eventsPath: p, log: logger);
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser(naming: naming, log: log);
+      final parser = YamlParser(naming: naming, log: logger);
       return parser.parseEvents(sources);
     }
 
@@ -197,7 +210,7 @@ void main() {
       final messages = <String>[];
       final domains = await parseEventsHelper(
         customPath: '/nonexistent/path',
-        log: messages.add,
+        log: TestLogger(messages),
       );
       expect(domains, isEmpty);
       expect(messages, contains(contains('Events directory not found')));
@@ -205,23 +218,25 @@ void main() {
 
     test('returns empty map when no YAML files found', () async {
       final messages = <String>[];
-      final domains = await parseEventsHelper(log: messages.add);
+      final domains = await parseEventsHelper(log: TestLogger(messages));
       expect(domains, isEmpty);
       expect(messages, contains(contains('No YAML files found')));
     });
 
-    test('logs and skips files that do not contain a top-level YamlMap',
-        () async {
+    test('throws when file does not contain a top-level YamlMap', () async {
       final yamlFile = File(path.join(eventsPath, 'not_map.yaml'));
       await yamlFile.writeAsString('- list_item\n- second_item\n');
 
-      final messages = <String>[];
-      final domains = await parseEventsHelper(log: messages.add);
-
-      expect(domains, isEmpty);
-      expect(messages, hasLength(2));
-      expect(messages.any((m) => m.contains('does not contain a YamlMap')),
-          isTrue);
+      expect(
+        () => parseEventsHelper(),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('Root of the YAML file must be a map'),
+          ),
+        ),
+      );
     });
 
     test('throws when domain value is not a map', () async {
@@ -356,7 +371,17 @@ void main() {
 
       expect(
         () => parseEventsHelper(),
-        throwsA(isA<YamlException>()),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first,
+            'error',
+            isA<AnalyticsParseException>().having(
+              (e) => e.message,
+              'message',
+              contains('Duplicate mapping key'),
+            ),
+          ),
+        ),
       );
     });
 
@@ -575,5 +600,159 @@ void main() {
 
       expect(domains.length, equals(2));
     });
+
+    test('throws on YAML parsing error in context files', () async {
+      final contextFile = File(path.join(eventsPath, 'context.yaml'));
+      await contextFile.writeAsString('invalid: yaml: content: [\n');
+
+      final loader =
+          EventLoader(eventsPath: eventsPath, contextFiles: [contextFile.path]);
+      final sources = await loader.loadContextFiles();
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseContexts(sources),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Failed to parse YAML file'),
+        )),
+      );
+    });
+
+    test('wraps YAML parse error for event files into AnalyticsParseException',
+        () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      // invalid YAML content causing loadYamlNode to throw
+      await yamlFile.writeAsString('invalid: yaml: content: [\n');
+
+      expect(
+        () => parseEventsHelper(),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.message,
+          'message',
+          contains('Failed to parse YAML file'),
+        )),
+      );
+    });
+
+    test('wraps non-Analytics exception during event parsing', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      // Make description a list so the cast to String? throws a TypeError
+      await yamlFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description:\n'
+        '      - not_a_string\n'
+        '    parameters: {}\n',
+      );
+
+      expect(
+        () => parseEventsHelper(),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.innerError,
+          'innerError',
+          isNotNull,
+        )),
+      );
+    });
+
+    test('throws when context file is not a map', () async {
+      final contextFile = File(path.join(eventsPath, 'context.yaml'));
+      await contextFile.writeAsString('- list_item\n- second_item\n');
+
+      final loader =
+          EventLoader(eventsPath: eventsPath, contextFiles: [contextFile.path]);
+      final sources = await loader.loadContextFiles();
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseContexts(sources),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Context file must be a map'),
+        )),
+      );
+    });
+
+    test('throws when context properties node is null', () async {
+      final contextFile = File(path.join(eventsPath, 'context.yaml'));
+      await contextFile.writeAsString('context_name:\n');
+
+      final loader =
+          EventLoader(eventsPath: eventsPath, contextFiles: [contextFile.path]);
+      final sources = await loader.loadContextFiles();
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseContexts(sources),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('key must be a map of properties'),
+        )),
+      );
+    });
+
+    test('wraps non-Analytics exception during domain parsing', () async {
+      final yamlFile = File(path.join(eventsPath, 'auth.yaml'));
+      await yamlFile.writeAsString('auth:\n  login:\n    description: Test\n');
+
+      final messages = <String>[];
+      final loader =
+          EventLoader(eventsPath: eventsPath, log: TestLogger(messages));
+      final sources = await loader.loadEventFiles();
+
+      // Fake validator that throws a non-Analytics exception during domain validation
+      final parser = YamlParser(
+        log: const NoOpLogger(),
+        domainHook: (domainKey, valueNode) {
+          throw FormatException('boom');
+        },
+      );
+
+      expect(
+        () => parser.parseEvents(sources),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.innerError,
+          'innerError',
+          isA<FormatException>(),
+        )),
+      );
+    });
+
+    test(
+        'calls onError when _parseEventsForDomain throws AnalyticsParseException',
+        () async {
+      // Craft a YamlMap where the event key's toString throws an AnalyticsParseException
+      final throwingKey = ThrowingKey();
+      final eventsMap = YamlMap.wrap({throwingKey: YamlMap.wrap({})});
+
+      // Provide a loader that returns a root map with a single domain 'auth'
+      final rootMap = YamlMap.wrap({'auth': eventsMap});
+      YamlMap loader(String content,
+              {dynamic sourceUrl, dynamic recover, dynamic errorListener}) =>
+          rootMap;
+
+      final parser = YamlParser(log: const NoOpLogger(), loadYaml: loader);
+      final sources = [
+        AnalyticsSource(filePath: 'file.yaml', content: 'unused')
+      ];
+
+      expect(
+        () => parser.parseEvents(sources),
+        throwsA(isA<AnalyticsAggregateException>().having(
+          (e) => e.errors.first.message,
+          'message',
+          contains('boom'),
+        )),
+      );
+    });
+
+    // Note: The branch checking for a missing properties node is exercised by
+    // the existing test above which writes `context_name:\n` and triggers a
+    // YamlScalar null value; we consider that coverage for the missing-node
+    // and explicit null value cases combined.
   });
 }

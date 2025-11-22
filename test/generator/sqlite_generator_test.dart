@@ -6,6 +6,8 @@ import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('SqliteGenerator', () {
     late Directory tempDir;
@@ -45,7 +47,7 @@ void main() {
       File(sqlPath).writeAsStringSync('prebuilt');
 
       final generator = SqliteGenerator(
-        log: logs.add,
+        log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: (executable, arguments) async {
           if (executable == 'sqlite3' && arguments.contains('--version')) {
@@ -96,7 +98,7 @@ void main() {
       }
 
       final generator = SqliteGenerator(
-        log: logs.add,
+        log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: fakeRun,
       );
@@ -136,7 +138,7 @@ void main() {
       }
 
       final generator = SqliteGenerator(
-        log: logs.add,
+        log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: fakeRun,
       );

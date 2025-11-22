@@ -7,11 +7,7 @@ import '../models/analytics_event.dart';
 /// Captures totals and a fingerprint derived from the canonical ordering of
 /// domains, events, and parameters so repeated runs are diff-friendly.
 final class GenerationMetadata {
-  final int totalDomains;
-  final int totalEvents;
-  final int totalParameters;
-  final String fingerprint;
-
+  /// Creates a new generation metadata instance.
   const GenerationMetadata({
     required this.totalDomains,
     required this.totalEvents,
@@ -19,6 +15,7 @@ final class GenerationMetadata {
     required this.fingerprint,
   });
 
+  /// Creates metadata from analytics domains.
   factory GenerationMetadata.fromDomains(
     Map<String, AnalyticsDomain> domains,
   ) {
@@ -37,6 +34,18 @@ final class GenerationMetadata {
       fingerprint: fingerprint,
     );
   }
+
+  /// The total number of domains.
+  final int totalDomains;
+
+  /// The total number of events.
+  final int totalEvents;
+
+  /// The total number of parameters.
+  final int totalParameters;
+
+  /// A fingerprint representing the current state of domains/events/parameters.
+  final String fingerprint;
 
   /// Serializes metadata for JSON exports.
   Map<String, dynamic> toJson() => {

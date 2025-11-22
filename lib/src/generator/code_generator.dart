@@ -5,35 +5,46 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/file_utils.dart';
+import '../util/logger.dart';
+import 'generation_metadata.dart';
 import 'generation_telemetry.dart';
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
 import 'renderers/event_renderer.dart';
+import 'renderers/test_renderer.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
-  final AnalyticsConfig config;
-  final String projectRoot;
-  final void Function(String message)? log;
-  final GenerationTelemetry _telemetry;
-
-  final AnalyticsClassRenderer _classRenderer;
-  final ContextRenderer _contextRenderer;
-  final EventRenderer _eventRenderer;
-
+  /// Creates a new code generator.
   CodeGenerator({
     required this.config,
     required this.projectRoot,
-    this.log,
+    this.log = const NoOpLogger(),
     GenerationTelemetry? telemetry,
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
-  })  : _telemetry = telemetry ??
-            (log != null ? LoggingTelemetry(log) : const NoOpTelemetry()),
+    TestRenderer? testRenderer,
+  })  : _telemetry = telemetry ?? LoggingTelemetry(log),
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
-        _eventRenderer = eventRenderer ?? EventRenderer(config);
+        _eventRenderer = eventRenderer ?? EventRenderer(config),
+        _testRenderer = testRenderer ?? TestRenderer(config);
+
+  /// The analytics configuration.
+  final AnalyticsConfig config;
+
+  /// The root directory of the project.
+  final String projectRoot;
+
+  /// The logger to use.
+  final Logger log;
+
+  final GenerationTelemetry _telemetry;
+  final AnalyticsClassRenderer _classRenderer;
+  final ContextRenderer _contextRenderer;
+  final EventRenderer _eventRenderer;
+  final TestRenderer _testRenderer;
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate(
@@ -47,7 +58,7 @@ final class CodeGenerator {
       ..removeWhere((_, value) => value.isEmpty);
 
     if (domains.isEmpty && activeContexts.isEmpty) {
-      log?.call(
+      log.warning(
           'No analytics events or properties found. Skipping generation.');
       return;
     }
@@ -67,7 +78,7 @@ final class CodeGenerator {
     );
 
     _telemetry.onGenerationStart(context);
-    log?.call('Starting analytics code generation...');
+    log.info('Starting analytics code generation...');
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
     final eventsDir = path.join(outputDir, 'events');
@@ -82,8 +93,12 @@ final class CodeGenerator {
     // Generate individual domain files with telemetry
     await Future.wait(domains.entries.map((entry) async {
       final domainStartTime = DateTime.now();
-      final filePath =
-          await _generateDomainFile(entry.key, entry.value, eventsDir);
+      final filePath = await _generateDomainFile(
+        entry.key,
+        entry.value,
+        eventsDir,
+        domains,
+      );
       generatedFiles.add(filePath);
 
       final domainElapsed = DateTime.now().difference(domainStartTime);
@@ -113,8 +128,8 @@ final class CodeGenerator {
     // Generate barrel file with all exports
     await _generateBarrelFile(domains, outputDir);
 
-    log?.call('✓ Generated ${domains.length} domain files');
-    log?.call('  Domains: ${domains.keys.join(', ')}');
+    log.info('✓ Generated ${domains.length} domain files');
+    log.debug('  Domains: ${domains.keys.join(', ')}');
 
     // Generate Analytics singleton class
     await _generateAnalyticsClass(
@@ -122,10 +137,17 @@ final class CodeGenerator {
       contexts: activeContexts,
     );
 
+    // Generate test file
+    if (config.generateTests) {
+      await _generateTestFile(domains);
+    }
+
     final elapsed = DateTime.now().difference(startTime);
     final filesGenerated = generatedFiles.length +
         activeContexts.length +
-        2; // +2 for barrel and analytics
+        (config.generateTests
+            ? 3
+            : 2); // +2 for barrel and analytics, +1 for test
     _telemetry.onGenerationComplete(elapsed, filesGenerated);
   }
 
@@ -147,8 +169,10 @@ final class CodeGenerator {
     String domainName,
     AnalyticsDomain domain,
     String eventsDir,
+    Map<String, AnalyticsDomain> allDomains,
   ) async {
-    final content = _eventRenderer.renderDomainFile(domainName, domain);
+    final content =
+        _eventRenderer.renderDomainFile(domainName, domain, allDomains);
 
     final fileName = '${domainName}_events.dart';
     final filePath = path.join(eventsDir, fileName);
@@ -181,9 +205,11 @@ final class CodeGenerator {
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
   }) async {
+    final metadata = GenerationMetadata.fromDomains(domains);
     final content = _classRenderer.renderAnalyticsClass(
       domains,
       contexts: contexts,
+      planFingerprint: metadata.fingerprint,
     );
 
     // Write to file
@@ -195,7 +221,22 @@ final class CodeGenerator {
     );
     await _writeFileIfContentChanged(analyticsPath, content);
 
-    log?.call('✓ Generated Analytics class at: $analyticsPath');
+    log.info('✓ Generated Analytics class at: $analyticsPath');
+  }
+
+  /// Generates a test file to verify event construction
+  Future<void> _generateTestFile(Map<String, AnalyticsDomain> domains) async {
+    final content = _testRenderer.render(domains);
+    final testPath = path.join(projectRoot, 'test', 'generated_plan_test.dart');
+
+    // Ensure test directory exists
+    final testDir = Directory(path.dirname(testPath));
+    if (!testDir.existsSync()) {
+      await testDir.create(recursive: true);
+    }
+
+    await _writeFileIfContentChanged(testPath, content);
+    log.info('✓ Generated test file at: $testPath');
   }
 
   /// Writes a file only if its contents differ from the existing file.

@@ -2,36 +2,65 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.1] - 2025-11-20
+## [0.2.1] - 2025-11-21
 
-### Added
-- **BaseRenderer**: Extracted common rendering functionality into a base class to reduce code duplication across renderers
-  - Shared methods for file headers, imports, documentation comments, and validation checks
-  - `MethodParameter` class for type-safe parameter definitions
-  - Improved maintainability and consistency across generators
-  
-- **Generation Telemetry**: Added performance tracking and observability for code generation
-  - `GenerationTelemetry` abstract class with lifecycle hooks
-  - `LoggingTelemetry` implementation for console output
-  - `NoOpTelemetry` for production use without overhead
-  - Track domain/context processing times and total generation duration
-  - Integrated into `CodeGenerator` with automatic metrics collection
-  
-- **Capability Discovery**: Enhanced generated Analytics class documentation
-  - Auto-generated capability documentation in class comments
-  - Lists all available capabilities with usage examples
-  - Shows capability keys, types, and method signatures
-  - Helps developers discover context property setters
+### Breaking Changes
+- **Configuration Structure Update**: The `analytics_gen.yaml` file has been completely restructured into logical groups (`inputs`, `outputs`, `targets`, `rules`) to improve readability and organization.
+  - **Migration Guide**:
+    ```yaml
+    # Old (v0.2.0)
+    analytics_gen:
+      events_path: events
+      output_path: lib/src/analytics
+      docs_path: docs/analytics.md
+      generate_docs: true
+      strict_event_names: true
+      event_parameters_path: events/shared.yaml
 
-### Improved
-- All renderers now extend `BaseRenderer` for consistent code generation
-- Reduced code duplication across `EventRenderer`, `ContextRenderer`, and `AnalyticsClassRenderer`
-- Better error messages and validation feedback
+    # New (v0.2.1)
+    analytics_gen:
+      inputs:
+        events: events
+        shared_parameters:
+          - events/shared.yaml
+      outputs:
+        dart: lib/src/analytics
+        docs: docs/analytics.md
+      targets:
+        docs: true
+      rules:
+        strict_event_names: true
+    ```
+  - **Note**: The old flat structure is deprecated but may still work for some fields during a transition period, though migration is strongly recommended. `event_parameters_path` is strictly removed in favor of `inputs.shared_parameters`.
 
-### Tests
-- Added comprehensive test suite for `BaseRenderer` (23 tests)
-- Added full test coverage for `GenerationTelemetry` (7 tests)
-- All 199 tests passing with 100% coverage maintained
+### Highlights
+- Improved error reporting, validation, and generated code ergonomics.
+- Better CSV/exports, optional PII scrubbing, and safer enum generation for parameter values.
+- Added telemetry hooks and testing helpers (e.g., `Analytics.reset()`).
+
+### Documentation & DX
+- Clarified `BatchingAnalytics.flush()` behavior and updated README guidance.
+- Added CI example for plan validation in `doc/VALIDATION.md`.
+
+### Key Additions
+- **Shared Event Parameters**: Support for centrally defined parameters via `shared_parameters`.
+  - Reuse parameters across events by referencing them (or leaving value as `null`).
+  - Enforce consistency with `enforce_centrally_defined_parameters`.
+  - Prevent duplicates with `prevent_event_parameter_duplicates`.
+- Enhanced CSV export (multiple files, better escaping).
+- Parameter validation DSL: `regex`, `min_length`, `max_length`, `min`, `max` with runtime checks.
+- PII scrubbing support (`PiiRenderer` + `Analytics.sanitizeParams`).
+- Enum generation for parameters with `allowed_values`.
+
+### Internal Improvements
+- `BaseRenderer` to share common rendering logic across generators.
+- Generation telemetry (`GenerationTelemetry` + implementations) integrated into `CodeGenerator`.
+- Validator separation: `SchemaValidator` extracted from `YamlParser` with tests.
+- `YamlParser` refactored to use `loadYamlNode` and enforces strict event-name rules.
+
+### Misc
+- Added `ignore_for_file` lints and generation timestamp to generated files.
+- `Analytics.reset()` for testing and hot-restart scenarios.
 
 ## [0.2.0] - 2025-11-20
 - **Updates**:
@@ -49,8 +78,6 @@ All notable changes to this project will be documented in this file.
 - **Quality Assurance**:
   - Full test coverage (100%).
   - Stricter linting rules and CI guardrails.
-
-## [0.1.6] - 2025-11-17
 
 ## [0.1.6] - 2025-11-17
 - Add `include_event_description` config option to optionally include an

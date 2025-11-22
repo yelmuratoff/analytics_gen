@@ -22,3 +22,4 @@ export 'src/services/batching_analytics.dart';
 // Service implementations
 export 'src/services/mock_analytics_service.dart';
 export 'src/services/multi_provider_analytics.dart';
+export 'src/util/logger.dart';

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
 import 'arguments.dart';
@@ -16,35 +17,42 @@ class AnalyticsGenRunner {
   final ArgParser _parser;
 
   Future<void> run(List<String> arguments) async {
+    Logger? logger;
     try {
       final results = _parser.parse(arguments);
+      final verbose = results['verbose'] as bool;
+      logger = ConsoleLogger(verbose: verbose);
 
       if (results['help'] as bool) {
-        printUsage(_parser);
+        printUsage(_parser, logger: logger);
         return;
       }
 
       final projectRoot = Directory.current.path;
       final configPath = results['config'] as String;
-      final config = await loadAnalyticsConfig(projectRoot, configPath);
+      final config = await loadAnalyticsConfig(
+        projectRoot,
+        configPath,
+        logger: logger,
+      );
 
       final generateCode = results['code'] as bool;
       final generateDocs = resolveDocsFlag(results, config);
       final generateExports = resolveExportsFlag(results, config);
-      final verbose = results['verbose'] as bool;
       final watch = results['watch'] as bool;
       final planOnly = results['plan'] as bool;
       final validateOnly = results['validate-only'] as bool;
 
-      _ensureNotCombined('plan', planOnly, 'watch', watch);
-      _ensureNotCombined('plan', planOnly, 'validate-only', validateOnly);
-      _ensureNotCombined('validate-only', validateOnly, 'watch', watch);
+      _ensureNotCombined('plan', planOnly, 'watch', watch, logger);
+      _ensureNotCombined(
+          'plan', planOnly, 'validate-only', validateOnly, logger);
+      _ensureNotCombined('validate-only', validateOnly, 'watch', watch, logger);
 
       if (planOnly) {
         await printTrackingPlan(
           projectRoot,
           config,
-          verbose: verbose,
+          logger: logger,
         );
         return;
       }
@@ -53,7 +61,7 @@ class AnalyticsGenRunner {
         await validateTrackingPlan(
           projectRoot,
           config,
-          verbose: verbose,
+          logger: logger,
         );
         return;
       }
@@ -63,6 +71,7 @@ class AnalyticsGenRunner {
         generateDocs: generateDocs,
         generateExports: generateExports,
         verbose: verbose,
+        logger: logger,
       );
 
       final pipeline = GenerationPipeline(
@@ -76,7 +85,7 @@ class AnalyticsGenRunner {
         await pipeline.run(request);
       }
     } catch (e) {
-      print('Error: $e');
+      (logger ?? const ConsoleLogger()).error('Error: $e');
       exit(1);
     }
   }
@@ -86,9 +95,10 @@ class AnalyticsGenRunner {
     bool primaryValue,
     String secondaryFlag,
     bool secondaryValue,
+    Logger logger,
   ) {
     if (primaryValue && secondaryValue) {
-      print(
+      logger.error(
           'Error: --$primaryFlag cannot be used together with --$secondaryFlag.');
       exit(1);
     }

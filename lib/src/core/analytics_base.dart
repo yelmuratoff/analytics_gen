@@ -6,6 +6,7 @@ import 'analytics_interface.dart';
 /// All generated domain mixins will be mixed onto this base class,
 /// which provides access to the underlying [IAnalytics] implementation.
 abstract class AnalyticsBase {
+  /// Creates a new analytics base.
   const AnalyticsBase();
 
   /// The analytics service implementation used to log events.
@@ -31,7 +32,8 @@ abstract class AnalyticsBase {
 IAnalytics ensureAnalyticsInitialized(IAnalytics? analytics) {
   if (analytics == null) {
     throw StateError(
-      'Analytics.initialize(...) must be called before logging events.',
+      'Analytics.initialize(...) must be called before logging events.\n'
+      'Ensure you call Analytics.initialize() in your main() function or before using any analytics features.',
     );
   }
   return analytics;

@@ -1,5 +1,5 @@
 -- Analytics Events Database Schema
--- Fingerprint: 4736e3c8e5d98ffc (domains=3, events=9, parameters=17)
+-- Fingerprint: 61c5a4357487b877 (domains=3, events=9, parameters=18)
 
 -- Create domains table
 CREATE TABLE IF NOT EXISTS domains (
@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_events_domain ON events(domain_id);
 CREATE INDEX IF NOT EXISTS idx_parameters_event ON parameters(event_id);
 
 -- Insert domain data
-INSERT INTO domains (id, name, event_count, parameter_count) VALUES (1, 'auth', 5, 7);
+INSERT INTO domains (id, name, event_count, parameter_count) VALUES (1, 'auth', 5, 8);
 INSERT INTO domains (id, name, event_count, parameter_count) VALUES (2, 'purchase', 2, 6);
 INSERT INTO domains (id, name, event_count, parameter_count) VALUES (3, 'screen', 2, 4);
 
@@ -47,7 +47,8 @@ INSERT INTO domains (id, name, event_count, parameter_count) VALUES (3, 'screen'
 INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (1, 1, 'login', 'auth: login', 'User logs in to the application', 1, 'auth.login_v2');
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (1, 'method', 'string', 0, 'Login method (email, google, apple)', NULL);
 INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (2, 1, 'login_v2', 'auth: login_v2', 'User logs in to the application (v2)', 0, NULL);
-INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (2, 'login-method', 'string', 0, 'Login method v2 (email, google, apple)', NULL);
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (2, 'login-method', 'string', 0, 'Login method v2 (email, google, apple)', 'email, google, apple');
+INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (2, 'session_id', 'String', 0, 'Unique identifier for the current session.', NULL);
 INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (3, 1, 'logout', 'auth: logout', 'User logs out', 0, NULL);
 INSERT INTO events (id, domain_id, name, event_name, description, deprecated, replacement) VALUES (4, 1, 'phone_login', 'Auth: Phone {phone_country}', 'When user logs in via phone', 0, NULL);
 INSERT INTO parameters (event_id, name, type, nullable, description, allowed_values) VALUES (4, 'phone_country', 'string', 0, 'ISO country code for the dialed number', NULL);

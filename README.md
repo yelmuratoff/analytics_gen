@@ -76,8 +76,75 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](doc/ONBOARDING.md).
 - **Docs + exports** – Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
 - **Runtime plan** – `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
 - **Extensible Metadata** – attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
+- **Enhanced CSV Export** – generates multiple CSV files (events, parameters, metadata, relationships) for deep analysis.
+- **Parameter Validation** – define validation rules (regex, length, range) in YAML and get runtime checks automatically.
 - **Generation Telemetry** – track generation performance with built-in metrics (domain processing times, total duration, file counts).
 - **Capability Discovery** – auto-generated documentation shows available capabilities and usage examples in generated code.
+
+## Parameter Validation
+
+Define validation rules directly in your YAML to ensure data quality at the source. The generator creates runtime checks that throw `ArgumentError` if constraints are violated.
+
+```yaml
+search_event:
+  description: User searched for content.
+  parameters:
+    query:
+      type: string
+      min_length: 3
+      max_length: 100
+      regex: "^[a-zA-Z0-9 ]+$"
+    result_count:
+      type: int
+      min: 0
+      max: 50
+```
+
+Supported rules:
+- `regex`: Regular expression pattern (String).
+- `min_length`: Minimum string length (int).
+- `max_length`: Maximum string length (int).
+- `min`: Minimum numeric value (num).
+- `max`: Maximum numeric value (num).
+
+## Enums for Allowed Values
+
+If a string parameter defines `allowed_values`, the generator automatically creates a Dart `enum` to enforce type safety.
+
+```yaml
+login:
+  parameters:
+    method:
+      type: string
+      allowed_values: ['email', 'google', 'apple']
+```
+
+Generated code:
+```dart
+enum AnalyticsAuthLoginMethodEnum {
+  email('email'),
+  google('google'),
+  apple('apple');
+  // ...
+}
+
+void logAuthLogin({required AnalyticsAuthLoginMethodEnum method}) { ... }
+```
+
+## Dual-Write Migration
+
+When migrating from an old event to a new one, you can use `dual_write_to` to automatically log to both events during the transition period.
+
+```yaml
+auth:
+  login_v2:
+    description: New login event
+    dual_write_to: ["auth.login"] # Logs to 'auth.login' as well
+    parameters:
+      method: string
+```
+
+The generator will attempt to call the generated method for the target event if it exists in the same domain, ensuring type safety and logic reuse. If the target is in a different domain or parameters cannot be matched automatically, it falls back to a generic `logEvent` call.
 
 ## Extensible Metadata
 
@@ -103,6 +170,42 @@ This metadata is:
 - Included in the generated Markdown documentation.
 - Exported to JSON and CSV for external analysis.
 
+## Shared Event Parameters
+
+Define common parameters in a central file to ensure consistency and reduce duplication.
+
+1. **Create a shared parameters file** (e.g., `events/shared.yaml`):
+   ```yaml
+   parameters:
+     flow_id:
+       type: string
+       description: Unique identifier for the user flow.
+     user_id:
+       type: int
+   ```
+
+2. **Configure it** in `analytics_gen.yaml`:
+   ```yaml
+   analytics_gen:
+     inputs:
+       shared_parameters:
+         - events/shared.yaml
+     rules:
+       # Optional: Enforce that all parameters must be defined in shared.yaml
+       enforce_centrally_defined_parameters: false
+       # Optional: Prevent redefining shared parameters in events
+       prevent_event_parameter_duplicates: true
+   ```
+
+3. **Reference in events**:
+   ```yaml
+   checkout_started:
+     parameters:
+       flow_id: # Inherits type and description from shared.yaml
+       item_count:
+         type: int
+   ```
+
 ## Contexts & Global Properties
 
 Contexts allow you to define global properties (like user attributes, device info, or theme settings) that are managed separately from individual events.
@@ -121,8 +224,9 @@ Contexts allow you to define global properties (like user attributes, device inf
 2. **Register it** in `analytics_gen.yaml`:
    ```yaml
    analytics_gen:
-     contexts:
-       - events/user_properties.yaml
+     inputs:
+       contexts:
+         - events/user_properties.yaml
    ```
 
 3. **Use the generated API**:
@@ -185,7 +289,7 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 - Run `dart run analytics_gen:generate --validate-only` in CI to block invalid YAML before files are written.
 - **CI Guardrails**: Add a step in your CI pipeline to run generation and check for uncommitted changes (`git diff --exit-code`). This ensures that the generated code, docs, and exports are always in sync with the YAML definitions.
 - Naming strategy (`analytics_gen.naming`) enforces consistent identifiers—override per-field when legacy plans demand it.
-- **Strict Event Naming**: Set `strict_event_names: true` in `analytics_gen.yaml` to forbid string interpolation in event names (e.g. `View ${page}`). This prevents high-cardinality events from polluting your analytics data.
+- **Strict Event Naming**: The parser forbids string interpolation in event names (e.g. `View ${page}`) to prevent high-cardinality events from polluting your analytics data. This is now enforced by default.
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
 - Full details live in [`doc/VALIDATION.md`](doc/VALIDATION.md).
 
@@ -265,6 +369,10 @@ final batching = BatchingAnalytics(
   onFlushError: (error, stack) {
     print('Batch flush failed: $error');
   },
+  onEventDropped: (name, params, error, stack) {
+    print('Event dropped after max retries: $name');
+    // Optional: Save to disk (Dead Letter Queue)
+  },
 );
 
 Analytics.initialize(batching);
@@ -279,7 +387,7 @@ Future<void> onAppBackground() async {
 - `maxBatchSize` forces a flush when enough events accumulate.
 - `flushInterval` (optional) drains on a timer for long-lived sessions.
 - `flush()` returns a `Future` so lifecycle hooks (`AppLifecycleState.paused`, integration-test teardown) can wait for delivery.
-- If the delegate throws, the batch is requeued and the optional `onFlushError` hook runs; call `flush()` again when the provider is ready.
+- **Exception Handling**: Manual calls to `flush()` will throw if retries are exhausted, allowing you to handle network failures. Automatic background flushes catch errors and report them to `onFlushError` without crashing the app.
 
 Combine `BatchingAnalytics` with `AsyncAnalyticsAdapter` to await multiple providers without changing the generated, synchronous API surface.
 
@@ -299,6 +407,7 @@ Generated artifacts inside the example mirror what your app will emit. Use it as
 ## Testing
 
 - Unit tests should initialize `Analytics` with `MockAnalyticsService` (or the async adapter) and assert on recorded events.
+- Use `Analytics.reset()` in `tearDown` to clear the singleton instance between tests.
 - Add `dart run analytics_gen:generate --validate-only` to CI so schema errors fail fast.
 - Run `dart analyze` + `dart test` before committing—analytics code follows the same standards as the rest of your Flutter/Dart app.
 

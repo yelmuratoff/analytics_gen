@@ -5,9 +5,11 @@ abstract interface class AnalyticsCapability {}
 
 /// Strongly typed key used to look up [AnalyticsCapability] instances.
 final class CapabilityKey<T extends AnalyticsCapability> {
-  final String name;
-
+  /// Creates a new capability key.
   const CapabilityKey(this.name);
+
+  /// The unique name of the capability.
+  final String name;
 
   @override
   bool operator ==(Object other) {
@@ -30,11 +32,13 @@ abstract interface class AnalyticsCapabilityResolver {
 
 /// Providers implement this interface to surface their available capabilities.
 abstract interface class AnalyticsCapabilityProvider {
+  /// The resolver that provides access to capabilities.
   AnalyticsCapabilityResolver get capabilityResolver;
 }
 
 /// Empty resolver used when a provider does not support any capabilities.
 class NullCapabilityResolver implements AnalyticsCapabilityResolver {
+  /// Creates a new null resolver.
   const NullCapabilityResolver();
 
   @override
@@ -43,13 +47,14 @@ class NullCapabilityResolver implements AnalyticsCapabilityResolver {
 
 /// Mutable registry that providers can use to register their capabilities.
 class CapabilityRegistry implements AnalyticsCapabilityResolver {
-  final Map<CapabilityKey<Object?>, AnalyticsCapability> _capabilities;
-
+  /// Creates a new capability registry.
   CapabilityRegistry({
     Map<CapabilityKey<Object?>, AnalyticsCapability>? seed,
   }) : _capabilities = Map<CapabilityKey<Object?>, AnalyticsCapability>.from(
           seed ?? const <CapabilityKey<Object?>, AnalyticsCapability>{},
         );
+
+  final Map<CapabilityKey<Object?>, AnalyticsCapability> _capabilities;
 
   /// Registers a capability under the provided [key].
   void register<T extends AnalyticsCapability>(

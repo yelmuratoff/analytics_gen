@@ -1,9 +1,19 @@
 import 'dart:async';
+import 'package:meta/meta.dart';
 
 import '../core/analytics_interface.dart';
 import '../core/async_analytics_interface.dart';
 
+/// Signature for error handler invoked when batch flush fails.
 typedef BatchFlushErrorHandler = void Function(
+  Object error,
+  StackTrace stackTrace,
+);
+
+/// Signature for handler invoked when an event is dropped after max retries.
+typedef EventDroppedHandler = void Function(
+  String name,
+  AnalyticsParams? parameters,
   Object error,
   StackTrace stackTrace,
 );
@@ -14,12 +24,16 @@ typedef BatchFlushErrorHandler = void Function(
 /// flaky providers, cold starts) without changing the synchronous
 /// `IAnalytics.logEvent` contract exposed to the rest of the app.
 final class BatchingAnalytics implements IAnalytics {
+  /// Creates a new batching analytics service.
   BatchingAnalytics({
     required IAsyncAnalytics delegate,
     this.maxBatchSize = 20,
     this.maxRetries = 3,
+    this.minRetryDelay = const Duration(milliseconds: 500),
+    this.maxRetryDelay = const Duration(seconds: 10),
     Duration? flushInterval,
     this.onFlushError,
+    this.onEventDropped,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
         assert(maxRetries >= 0, 'maxRetries must be non-negative.'),
         _delegate = delegate {
@@ -33,9 +47,24 @@ final class BatchingAnalytics implements IAnalytics {
   }
 
   final IAsyncAnalytics _delegate;
+
+  /// The maximum number of events to buffer before flushing.
   final int maxBatchSize;
+
+  /// The maximum number of times to retry a failed batch.
   final int maxRetries;
+
+  /// The minimum delay between retries.
+  final Duration minRetryDelay;
+
+  /// The maximum delay between retries.
+  final Duration maxRetryDelay;
+
+  /// Callback for handling flush errors.
   final BatchFlushErrorHandler? onFlushError;
+
+  /// Callback for handling dropped events (Dead Letter Queue).
+  final EventDroppedHandler? onEventDropped;
 
   final List<_QueuedAnalyticsEvent> _pending = <_QueuedAnalyticsEvent>[];
   Future<void>? _activeFlush;
@@ -54,6 +83,17 @@ final class BatchingAnalytics implements IAnalytics {
   }
 
   /// Flushes buffered events and waits for completion.
+  ///
+  /// If the flush fails (e.g. network error) and retries are exhausted,
+  /// this method will throw the underlying exception. This allows callers
+  /// to handle failures when manually flushing (e.g. on app background).
+  ///
+  /// In contrast, automatic background flushes (triggered by [maxBatchSize]
+  /// or `flushInterval`) catch errors and report them to [onFlushError]
+  /// without throwing.
+  ///
+  /// If a flush is already in progress, this returns the future of the
+  /// active flush.
   Future<void> flush() {
     if (_pending.isEmpty && _activeFlush == null) {
       return Future<void>.value();
@@ -128,6 +168,11 @@ final class BatchingAnalytics implements IAnalytics {
     return future;
   }
 
+  /// Exposes [_startFlush] for testing only.
+  @visibleForTesting
+  Future<void> startFlushForTest({required bool propagateErrors}) =>
+      _startFlush(propagateErrors: propagateErrors);
+
   Future<void> _drainPending() async {
     if (_pending.isEmpty) {
       return;
@@ -152,7 +197,17 @@ final class BatchingAnalytics implements IAnalytics {
 
         if (failedEvent.retryCount >= maxRetries) {
           // Drop the poison pill event by skipping it in the re-queue
+          onEventDropped?.call(
+            failedEvent.name,
+            failedEvent.parameters,
+            error,
+            stackTrace,
+          );
           nextIndex++;
+        } else {
+          // Backoff before retrying
+          final delay = _calculateBackoff(failedEvent.retryCount);
+          await Future.delayed(delay);
         }
 
         if (nextIndex < batch.length) {
@@ -163,6 +218,11 @@ final class BatchingAnalytics implements IAnalytics {
       onFlushError?.call(error, stackTrace);
       rethrow;
     }
+  }
+
+  Duration _calculateBackoff(int retryCount) {
+    final delay = minRetryDelay * (1 << (retryCount - 1));
+    return delay > maxRetryDelay ? maxRetryDelay : delay;
   }
 }
 

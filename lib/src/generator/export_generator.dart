@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
+import '../util/logger.dart';
 import 'export/csv_generator.dart';
 import 'export/json_generator.dart';
 import 'export/sql_generator.dart';
@@ -13,22 +14,28 @@ import 'export/sqlite_generator.dart';
 ///
 /// Delegates to specialized generators for each format.
 final class ExportGenerator {
-  final AnalyticsConfig config;
-  final String projectRoot;
-  final void Function(String message)? log;
-
+  /// Creates a new export generator.
   ExportGenerator({
     required this.config,
     required this.projectRoot,
-    this.log,
+    this.log = const NoOpLogger(),
   });
+
+  /// The analytics configuration.
+  final AnalyticsConfig config;
+
+  /// The root directory of the project.
+  final String projectRoot;
+
+  /// The logger to use.
+  final Logger log;
 
   /// Generates all configured export files
   Future<void> generate(Map<String, AnalyticsDomain> domains) async {
-    log?.call('Starting analytics export generation...');
+    log.info('Starting analytics export generation...');
 
     if (domains.isEmpty) {
-      log?.call('No analytics events found. Skipping export generation.');
+      log.warning('No analytics events found. Skipping export generation.');
       return;
     }
 
@@ -70,10 +77,10 @@ final class ExportGenerator {
         final csvGen = CsvGenerator(naming: config.naming);
         await csvGen.generate(
           domains,
-          path.join(outputDir, 'analytics_events.csv'),
+          outputDir,
         );
-        log?.call(
-          '✓ Generated CSV at: ${path.join(outputDir, 'analytics_events.csv')}',
+        log.info(
+          '✓ Generated CSVs at: $outputDir',
         );
       }());
     }
@@ -82,10 +89,10 @@ final class ExportGenerator {
       tasks.add(() async {
         final jsonGen = JsonGenerator(naming: config.naming);
         await jsonGen.generate(domains, outputDir);
-        log?.call(
+        log.info(
           '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
         );
-        log?.call(
+        log.debug(
           '✓ Generated minified JSON at: ${path.join(outputDir, 'analytics_events.min.json')}',
         );
       }());
@@ -101,7 +108,7 @@ final class ExportGenerator {
 
         final sqlPath = path.join(outputDir, 'create_database.sql');
         await sqlGen.generate(domains, sqlPath);
-        log?.call(
+        log.info(
           '✓ Generated SQL at: $sqlPath',
         );
 
@@ -116,6 +123,6 @@ final class ExportGenerator {
 
     await Future.wait(tasks);
 
-    log?.call('✓ Export generation completed');
+    log.info('✓ Export generation completed');
   }
 }

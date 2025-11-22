@@ -1,8 +1,11 @@
+import '../util/logger.dart';
+
 /// Telemetry callbacks for tracking generation performance.
 ///
 /// Use these callbacks to monitor generation performance, identify bottlenecks,
 /// and collect metrics for optimization.
 abstract class GenerationTelemetry {
+  /// Creates a new generation telemetry instance.
   const GenerationTelemetry();
 
   /// Called when generation starts.
@@ -49,14 +52,7 @@ abstract class GenerationTelemetry {
 
 /// Context information about the generation request.
 class GenerationContext {
-  final int domainCount;
-  final int contextCount;
-  final int totalEventCount;
-  final int totalParameterCount;
-  final bool generateDocs;
-  final bool generateExports;
-  final bool generateCode;
-
+  /// Creates a new generation context.
   const GenerationContext({
     required this.domainCount,
     required this.contextCount,
@@ -66,6 +62,27 @@ class GenerationContext {
     required this.generateExports,
     required this.generateCode,
   });
+
+  /// The number of domains to generate.
+  final int domainCount;
+
+  /// The number of contexts to generate.
+  final int contextCount;
+
+  /// The total number of events to generate.
+  final int totalEventCount;
+
+  /// The total number of parameters to generate.
+  final int totalParameterCount;
+
+  /// Whether documentation generation is enabled.
+  final bool generateDocs;
+
+  /// Whether export generation is enabled.
+  final bool generateExports;
+
+  /// Whether code generation is enabled.
+  final bool generateCode;
 
   @override
   String toString() => 'GenerationContext('
@@ -80,13 +97,15 @@ class GenerationContext {
 
 /// Default implementation that logs telemetry to a callback.
 class LoggingTelemetry extends GenerationTelemetry {
-  final void Function(String message) log;
-
+  /// Creates a new logging telemetry instance.
   const LoggingTelemetry(this.log);
+
+  /// The logger to use.
+  final Logger log;
 
   @override
   void onGenerationStart(GenerationContext context) {
-    log('Starting generation: $context');
+    log.info('Starting generation: $context');
   }
 
   @override
@@ -95,7 +114,7 @@ class LoggingTelemetry extends GenerationTelemetry {
     Duration elapsed,
     int eventCount,
   ) {
-    log(
+    log.debug(
       'Processed domain "$domainName" '
       '($eventCount events) in ${elapsed.inMilliseconds}ms',
     );
@@ -107,7 +126,7 @@ class LoggingTelemetry extends GenerationTelemetry {
     Duration elapsed,
     int propertyCount,
   ) {
-    log(
+    log.debug(
       'Processed context "$contextName" '
       '($propertyCount properties) in ${elapsed.inMilliseconds}ms',
     );
@@ -115,7 +134,7 @@ class LoggingTelemetry extends GenerationTelemetry {
 
   @override
   void onGenerationComplete(Duration elapsed, int filesGenerated) {
-    log(
+    log.info(
       'Generation completed successfully: '
       '$filesGenerated files in ${elapsed.inMilliseconds}ms',
     );
@@ -124,13 +143,16 @@ class LoggingTelemetry extends GenerationTelemetry {
   @override
   void onGenerationError(
       Object error, StackTrace stackTrace, Duration elapsed) {
-    log(
+    log.error(
       'Generation failed after ${elapsed.inMilliseconds}ms: $error',
+      error,
+      stackTrace,
     );
   }
 }
 
 /// No-op implementation that does nothing.
 class NoOpTelemetry extends GenerationTelemetry {
+  /// Creates a new no-op telemetry instance.
   const NoOpTelemetry();
 }

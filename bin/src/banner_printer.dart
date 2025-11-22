@@ -1,4 +1,7 @@
-void printBanner(String title) {
+import 'package:analytics_gen/src/util/logger.dart';
+
+void printBanner(String title, {Logger? logger}) {
+  final log = logger ?? const ConsoleLogger();
   const border = '╔════════════════════════════════════════════════╗';
   const footer = '╚════════════════════════════════════════════════╝';
   const interiorWidth = 48;
@@ -10,7 +13,7 @@ void printBanner(String title) {
   final trailingSpaces = interiorWidth - leftIndent - trimmedTitle.length;
   final spacing = ' ' * trailingSpaces;
 
-  print(border);
-  print('║   $trimmedTitle$spacing║');
-  print(footer);
+  log.info(border);
+  log.info('║   $trimmedTitle$spacing║');
+  log.info(footer);
 }

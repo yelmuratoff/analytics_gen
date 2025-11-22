@@ -56,6 +56,38 @@ void main() {
       expect(param.meta, {'pii': true});
     });
 
+    test('parses validation rules', () {
+      final yaml = loadYaml('''
+        username:
+          type: String
+          regex: "^[a-z]+\$"
+          min_length: 3
+          max_length: 20
+        age:
+          type: int
+          min: 18
+          max: 100
+      ''') as YamlMap;
+
+      final params = parser.parseParameters(
+        yaml,
+        domainName: 'test',
+        eventName: 'event',
+        filePath: 'test.yaml',
+      );
+
+      expect(params, hasLength(2));
+
+      final age = params.firstWhere((p) => p.name == 'age');
+      expect(age.min, 18);
+      expect(age.max, 100);
+
+      final username = params.firstWhere((p) => p.name == 'username');
+      expect(username.regex, '^[a-z]+\$');
+      expect(username.minLength, 3);
+      expect(username.maxLength, 20);
+    });
+
     test('throws on duplicate parameters (camelCase conflict)', () {
       // Use a permissive strategy to allow camelCase identifiers so we can test conflict logic
       // without tripping over the snake_case validation first.
@@ -101,6 +133,119 @@ void main() {
           contains('violates the configured naming strategy'),
         )),
       );
+    });
+
+    test('throws on empty identifier', () {
+      final yaml = loadYaml('''
+        param:
+          type: String
+          identifier: ""
+      ''') as YamlMap;
+
+      expect(
+        () => parser.parseParameters(
+          yaml,
+          domainName: 'test',
+          eventName: 'event',
+          filePath: 'test.yaml',
+        ),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('must declare a non-empty identifier'),
+        )),
+      );
+    });
+
+    test('throws on duplicate analytics parameter names', () {
+      final yaml = loadYaml('''
+        param1:
+          type: String
+          param_name: duplicate_name
+        param2:
+          type: int
+          param_name: duplicate_name
+      ''') as YamlMap;
+
+      expect(
+        () => parser.parseParameters(
+          yaml,
+          domainName: 'test',
+          eventName: 'event',
+          filePath: 'test.yaml',
+        ),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Duplicate analytics parameter "duplicate_name" found'),
+        )),
+      );
+    });
+
+    test('throws on operations not being a list', () {
+      final yaml = loadYaml('''
+        param:
+          type: String
+          operations: "not_a_list"
+      ''') as YamlMap;
+
+      expect(
+        () => parser.parseParameters(
+          yaml,
+          domainName: 'test',
+          eventName: 'event',
+          filePath: 'test.yaml',
+        ),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('operations for parameter "param" must be a list'),
+        )),
+      );
+    });
+
+    test('throws on meta field not being a map', () {
+      final yaml = loadYaml('''
+        param:
+          type: String
+          meta: "not_a_map"
+      ''') as YamlMap;
+
+      expect(
+        () => parser.parseParameters(
+          yaml,
+          domainName: 'test',
+          eventName: 'event',
+          filePath: 'test.yaml',
+        ),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('The "meta" field must be a map'),
+        )),
+      );
+    });
+
+    test('parses operations as list of strings', () {
+      final yaml = loadYaml('''
+        param:
+          type: String
+          operations:
+            - add
+            - remove
+            - update
+      ''') as YamlMap;
+
+      final params = parser.parseParameters(
+        yaml,
+        domainName: 'test',
+        eventName: 'event',
+        filePath: 'test.yaml',
+      );
+
+      expect(params, hasLength(1));
+      final param = params.first;
+      expect(param.operations, ['add', 'remove', 'update']);
     });
   });
 }

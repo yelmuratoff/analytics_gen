@@ -1,4 +1,10 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, unused_import
+// ignore_for_file: directives_ordering, unnecessary_string_interpolations
+// coverage:ignore-file
+
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:meta/meta.dart';
 
 import 'generated_events.dart';
 import 'contexts/theme_context.dart';
@@ -69,12 +75,14 @@ final class Analytics extends AnalyticsBase
           description: 'User logs in to the application',
           deprecated: true,
           replacement: 'auth.login_v2',
+          meta: <String, Object?>{'owner': 'auth-team', 'tier': 'critical'},
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'method',
               type: 'string',
               isNullable: false,
               description: 'Login method (email, google, apple)',
+              meta: <String, Object?>{'pii': true},
             ),
           ],
         ),
@@ -89,6 +97,13 @@ final class Analytics extends AnalyticsBase
               type: 'string',
               isNullable: false,
               description: 'Login method v2 (email, google, apple)',
+              allowedValues: <Object>['email', 'google', 'apple'],
+            ),
+            AnalyticsParameter(
+              name: 'session_id',
+              type: 'String',
+              isNullable: false,
+              description: 'Unique identifier for the current session.',
             ),
           ],
         ),
@@ -248,6 +263,13 @@ final class Analytics extends AnalyticsBase
     ),
   ];
 
+  static const Map<String, Set<String>> _piiProperties = {
+    'auth: login': {'method'},
+  };
+
+  /// The fingerprint of the plan used to generate this code.
+  static const String planFingerprint = '61c5a4357487b877';
+
   // --- Singleton Compatibility ---
 
   static Analytics? _instance;
@@ -256,7 +278,7 @@ final class Analytics extends AnalyticsBase
   static Analytics get instance {
     if (_instance == null) {
       throw StateError(
-        'Analytics.initialize() must be called before accessing Analytics.instance',
+        'Analytics.initialize() must be called before accessing Analytics.instance.\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.',
       );
     }
     return _instance!;
@@ -273,6 +295,38 @@ final class Analytics extends AnalyticsBase
       throw StateError('Analytics is already initialized.');
     }
     _instance = Analytics(analytics, analyticsCapabilitiesFor(analytics));
+  }
+
+  /// Resets the singleton instance. Useful for testing.
+  @visibleForTesting
+  static void reset() {
+    _instance = null;
+  }
+
+  /// Returns a copy of [parameters] with PII values redacted.
+  ///
+  /// PII properties are defined in YAML with `meta: { pii: true }`.
+  /// This method is useful for logging to console or non-secure backends.
+  static Map<String, Object?> sanitizeParams(
+    String eventName,
+    Map<String, Object?>? parameters,
+  ) {
+    if (parameters == null || parameters.isEmpty) {
+      return const {};
+    }
+
+    final piiKeys = _piiProperties[eventName];
+    if (piiKeys == null) {
+      return Map.of(parameters);
+    }
+
+    final sanitized = Map.of(parameters);
+    for (final key in piiKeys) {
+      if (sanitized.containsKey(key)) {
+        sanitized[key] = '[REDACTED]';
+      }
+    }
+    return sanitized;
   }
 
   // --- Implementation ---

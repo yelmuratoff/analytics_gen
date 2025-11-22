@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "fingerprint": "4736e3c8e5d98ffc",
+    "fingerprint": "61c5a4357487b877",
     "total_domains": 3,
     "total_events": 9,
-    "total_parameters": 17
+    "total_parameters": 18
   },
   "domains": [
     {
       "name": "auth",
       "event_count": 5,
-      "parameter_count": 7,
+      "parameter_count": 8,
       "events": [
         {
           "name": "login",
@@ -18,12 +18,19 @@
           "description": "User logs in to the application",
           "deprecated": true,
           "replacement": "auth.login_v2",
+          "meta": {
+            "owner": "auth-team",
+            "tier": "critical"
+          },
           "parameters": [
             {
               "name": "method",
               "type": "string",
               "nullable": false,
-              "description": "Login method (email, google, apple)"
+              "description": "Login method (email, google, apple)",
+              "meta": {
+                "pii": true
+              }
             }
           ]
         },
@@ -33,13 +40,27 @@
           "identifier": "auth.login_v2",
           "description": "User logs in to the application (v2)",
           "deprecated": false,
+          "dual_write_to": [
+            "auth.login"
+          ],
           "parameters": [
             {
               "name": "login-method",
               "code_name": "login_method",
               "type": "string",
               "nullable": false,
-              "description": "Login method v2 (email, google, apple)"
+              "description": "Login method v2 (email, google, apple)",
+              "allowed_values": [
+                "email",
+                "google",
+                "apple"
+              ]
+            },
+            {
+              "name": "session_id",
+              "type": "String",
+              "nullable": false,
+              "description": "Unique identifier for the current session."
             }
           ]
         },
@@ -95,7 +116,8 @@
               "name": "referral_code",
               "type": "string",
               "nullable": true,
-              "description": "Optional referral code used during signup"
+              "description": "Optional referral code used during signup",
+              "regex": "^[A-Z0-9]{6}$"
             }
           ]
         }

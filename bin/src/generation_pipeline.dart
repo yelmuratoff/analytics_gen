@@ -8,6 +8,8 @@ import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/logger.dart';
+import 'package:analytics_gen/src/util/schema_comparator.dart';
 import 'package:path/path.dart' as path;
 
 import 'banner_printer.dart';
@@ -23,12 +25,16 @@ class GenerationPipeline {
   final AnalyticsConfig config;
 
   Future<void> run(GenerationRequest request) async {
-    printBanner('Analytics Gen - Code Generation');
+    printBanner('Analytics Gen - Code Generation', logger: request.logger);
 
     if (!request.hasArtifacts) {
-      print('No generation tasks were requested.');
+      request.logger.info('No generation tasks were requested.');
       return;
     }
+
+    // Resolve shared parameter paths
+    final sharedParameterPaths =
+        config.sharedParameters.map((p) => path.join(projectRoot, p)).toList();
 
     // Load files
     final loader = EventLoader(
@@ -36,15 +42,45 @@ class GenerationPipeline {
       contextFiles: config.contexts
           .map((c) => path.join(projectRoot, c))
           .toList(), // Resolve paths
+      sharedParameterFiles: sharedParameterPaths,
       log: request.logger,
     );
     final eventSources = await loader.loadEventFiles();
     final contextSources = await loader.loadContextFiles();
 
+    final Map<String, AnalyticsParameter> sharedParameters = {};
+    if (sharedParameterPaths.isNotEmpty) {
+      final sharedParser = YamlParser(
+        log: request.logger,
+        naming: config.naming,
+      );
+
+      for (final sharedPath in sharedParameterPaths) {
+        final sharedSource = await loader.loadSourceFile(sharedPath);
+        if (sharedSource != null) {
+          try {
+            final params = sharedParser.parseSharedParameters(sharedSource);
+            sharedParameters.addAll(params);
+            request.logger.info(
+                'Loaded ${params.length} shared parameters from ${path.relative(sharedPath, from: projectRoot)}');
+          } catch (e) {
+            // If shared parameters fail to parse, we should probably fail hard
+            request.logger.error('Failed to parse shared parameters: $e');
+            exit(1);
+          }
+        }
+      }
+    }
+
     // Parse YAML files once
     final parser = YamlParser(
       log: request.logger,
       naming: config.naming,
+      strictEventNames: config.strictEventNames,
+      enforceCentrallyDefinedParameters:
+          config.enforceCentrallyDefinedParameters,
+      preventEventParameterDuplicates: config.preventEventParameterDuplicates,
+      sharedParameters: sharedParameters,
     );
     final domains = await parser.parseEvents(eventSources);
     final contexts = await parser.parseContexts(contextSources);
@@ -57,44 +93,46 @@ class GenerationPipeline {
     final startTime = DateTime.now();
 
     try {
-      await _runTasks(tasks);
+      await _runTasks(tasks, request.logger);
       final duration = DateTime.now().difference(startTime);
-      print('✓ All generation tasks completed in ${duration.inMilliseconds}ms');
+      request.logger.info(
+          '✓ All generation tasks completed in ${duration.inMilliseconds}ms');
     } on _TaskFailure catch (failure) {
-      print('✗ ${failure.label} failed: ${failure.error}');
+      request.logger.error('✗ ${failure.label} failed: ${failure.error}');
       if (request.verbose) {
-        print('Stack trace: ${failure.stackTrace}');
+        request.logger.error('Stack trace: ${failure.stackTrace}');
       }
       exit(1);
     } catch (e, stack) {
-      print('✗ Generation failed: $e');
+      request.logger.error('✗ Generation failed: $e');
       if (request.verbose) {
-        print('Stack trace: $stack');
+        request.logger.error('Stack trace: $stack');
       }
       exit(1);
     }
   }
 
   Future<void> watch(GenerationRequest request) async {
-    printBanner('Analytics Gen - Watch Mode');
-    print('');
-    print('Watching for changes in: ${config.eventsPath}');
-    print('Press Ctrl+C to stop');
-    print('');
+    printBanner('Analytics Gen - Watch Mode', logger: request.logger);
+    request.logger.info('');
+    request.logger.info('Watching for changes in: ${config.eventsPath}');
+    request.logger.info('Press Ctrl+C to stop');
+    request.logger.info('');
 
     await run(request);
 
     final eventsDir = Directory(path.join(projectRoot, config.eventsPath));
     if (!eventsDir.existsSync()) {
-      print('Error: Events directory does not exist: ${eventsDir.path}');
+      request.logger
+          .error('Error: Events directory does not exist: ${eventsDir.path}');
       exit(1);
     }
 
     final scheduler = WatchRegenerationScheduler(
       onGenerate: () async {
-        print('');
-        print('Regenerating...');
-        print('');
+        request.logger.info('');
+        request.logger.info('Regenerating...');
+        request.logger.info('');
         await run(request);
       },
     );
@@ -102,8 +140,8 @@ class GenerationPipeline {
     try {
       await for (final event in eventsDir.watch(recursive: true)) {
         if (event.path.endsWith('.yaml') || event.path.endsWith('.yml')) {
-          print('');
-          print('Change detected: ${path.basename(event.path)}');
+          request.logger.info('');
+          request.logger.info('Change detected: ${path.basename(event.path)}');
           scheduler.schedule();
         }
       }
@@ -127,7 +165,7 @@ class GenerationPipeline {
           invoke: () => CodeGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: _scopedLogger('Code generation', rootLogger),
+            log: rootLogger.scoped('Code generation'),
           ).generate(
             domains,
             contexts: contexts,
@@ -143,7 +181,7 @@ class GenerationPipeline {
           invoke: () => DocsGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: _scopedLogger('Documentation generation', rootLogger),
+            log: rootLogger.scoped('Documentation generation'),
           ).generate(
             domains,
             contexts: contexts,
@@ -159,8 +197,21 @@ class GenerationPipeline {
           invoke: () => ExportGenerator(
             config: config,
             projectRoot: projectRoot,
-            log: _scopedLogger('Export generation', rootLogger),
+            log: rootLogger.scoped('Export generation'),
           ).generate(domains),
+        ),
+      );
+    }
+
+    // Schema evolution check
+    if (config.exportsPath != null) {
+      tasks.add(
+        _GeneratorTask(
+          label: 'Schema evolution check',
+          invoke: () => _checkSchemaEvolution(
+            domains,
+            rootLogger.scoped('Schema check'),
+          ),
         ),
       );
     }
@@ -168,31 +219,78 @@ class GenerationPipeline {
     return tasks;
   }
 
-  Future<void> _runTasks(List<_GeneratorTask> tasks) async {
-    if (tasks.isEmpty) return;
+  Future<void> _checkSchemaEvolution(
+    Map<String, AnalyticsDomain> currentDomains,
+    Logger logger,
+  ) async {
+    final exportsPath = config.exportsPath;
+    if (exportsPath == null) return;
 
-    if (tasks.length == 1) {
-      await _invokeTask(tasks.single);
-      print('');
+    final jsonFile = File(path.join(
+      projectRoot,
+      exportsPath,
+      'analytics_events.json',
+    ));
+
+    if (!jsonFile.existsSync()) {
+      logger.debug('No previous schema found at ${jsonFile.path}');
       return;
     }
 
-    await Future.wait(tasks.map(_invokeTask));
-    print('');
-  }
-
-  Future<void> _invokeTask(_GeneratorTask task) async {
     try {
-      await task.invoke();
-      print('✓ ${task.label} completed');
-    } catch (error, stackTrace) {
-      throw _TaskFailure(task.label, error, stackTrace);
+      final jsonContent = await jsonFile.readAsString();
+      final previousDomains = SchemaComparator.loadSchemaFromJson(jsonContent);
+      final changes =
+          SchemaComparator().compare(currentDomains, previousDomains);
+
+      if (changes.isEmpty) {
+        logger.debug('No schema changes detected.');
+        return;
+      }
+
+      final breakingChanges = changes.where((c) => c.isBreaking).toList();
+      final nonBreakingChanges = changes.where((c) => !c.isBreaking).toList();
+
+      if (nonBreakingChanges.isNotEmpty) {
+        logger.info('Detected ${nonBreakingChanges.length} schema changes:');
+        for (final change in nonBreakingChanges) {
+          logger.info('  - $change');
+        }
+      }
+
+      if (breakingChanges.isNotEmpty) {
+        logger.warning(
+            'Detected ${breakingChanges.length} BREAKING schema changes:');
+        for (final change in breakingChanges) {
+          logger.warning('  - $change');
+        }
+        // We could throw here if a strict flag was enabled
+      }
+    } catch (e) {
+      logger.warning('Failed to check schema evolution: $e');
     }
   }
 
-  Logger? _scopedLogger(String label, Logger? root) {
-    if (root == null) return null;
-    return (message) => root('[$label] $message');
+  Future<void> _runTasks(List<_GeneratorTask> tasks, Logger logger) async {
+    if (tasks.isEmpty) return;
+
+    if (tasks.length == 1) {
+      await _invokeTask(tasks.single, logger);
+      logger.info('');
+      return;
+    }
+
+    await Future.wait(tasks.map((t) => _invokeTask(t, logger)));
+    logger.info('');
+  }
+
+  Future<void> _invokeTask(_GeneratorTask task, Logger logger) async {
+    try {
+      await task.invoke();
+      logger.info('✓ ${task.label} completed');
+    } catch (error, stackTrace) {
+      throw _TaskFailure(task.label, error, stackTrace);
+    }
   }
 }
 

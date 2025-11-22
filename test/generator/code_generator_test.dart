@@ -7,6 +7,8 @@ import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('CodeGenerator', () {
     late Directory tempProject;
@@ -45,7 +47,7 @@ void main() {
       final generator = CodeGenerator(
         config: config,
         projectRoot: tempProject.path,
-        log: logs.add,
+        log: TestLogger(logs),
       );
 
       final loader = EventLoader(
@@ -131,7 +133,10 @@ void main() {
         eventsPath: p.join(tempProject.path, config.eventsPath),
       );
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser();
+      final parser = YamlParser(
+        naming: config.naming,
+        strictEventNames: config.strictEventNames,
+      );
       final domains = await parser.parseEvents(sources);
 
       await generator.generate(domains);
@@ -143,13 +148,20 @@ void main() {
 
       expect(
         authContent,
-        contains("const allowedMethodValues = <String>{'email', 'google'};"),
+        contains('enum AnalyticsAuthLoginMethodEnum {'),
       );
       expect(
         authContent,
-        contains('if (!allowedMethodValues.contains(method)) {'),
+        contains("email('email'),"),
       );
-      expect(authContent, contains('throw ArgumentError.value('));
+      expect(
+        authContent,
+        contains("google('google');"),
+      );
+      expect(
+        authContent,
+        contains('required AnalyticsAuthLoginMethodEnum method,'),
+      );
       expect(authContent, contains('required DateTime timestamp,'));
     });
 
@@ -175,6 +187,7 @@ void main() {
       final config = AnalyticsConfig(
         eventsPath: 'events',
         outputPath: 'src/analytics/generated',
+        strictEventNames: false,
       );
 
       final generator = CodeGenerator(
@@ -186,7 +199,10 @@ void main() {
         eventsPath: p.join(tempProject.path, config.eventsPath),
       );
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser();
+      final parser = YamlParser(
+        naming: config.naming,
+        strictEventNames: config.strictEventNames,
+      );
       final domains = await parser.parseEvents(sources);
 
       await generator.generate(domains);
@@ -300,7 +316,7 @@ void main() {
       final generator = CodeGenerator(
         config: config,
         projectRoot: tempProject.path,
-        log: logs.add,
+        log: TestLogger(logs),
       );
 
       final loader = EventLoader(
@@ -366,7 +382,7 @@ void main() {
       expect(billingContent, contains('Use legacy_event instead.'));
       expect(
         billingContent,
-        contains('`method`: string? - Payment method description'),
+        contains('`method`: String? - Payment method description'),
       );
       expect(
         billingContent,
@@ -438,6 +454,393 @@ delta:
       expect(
         analyticsContent,
         contains("description: 'Detailed info'"),
+      );
+    });
+
+    test('generates PII properties and sanitizeParams method', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      email:\n'
+        '        type: string\n'
+        '        meta:\n'
+        '          pii: true\n'
+        '      method: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final analyticsFile = File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'analytics.dart'),
+      );
+      final analyticsContent = await analyticsFile.readAsString();
+
+      expect(
+        analyticsContent,
+        contains('static const Map<String, Set<String>> _piiProperties = {'),
+      );
+      expect(
+        analyticsContent,
+        contains("'auth: login': {'email'},"),
+      );
+      expect(
+        analyticsContent,
+        contains('static Map<String, Object?> sanitizeParams('),
+      );
+      expect(
+        analyticsContent,
+        contains("sanitized[key] = '[REDACTED]';"),
+      );
+    });
+
+    test('generates dual-write method call within same domain when possible',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary event\n'
+        '    parameters:\n'
+        '      id: string\n'
+        '    dual_write_to: [auth.secondary]\n'
+        '  secondary:\n'
+        '    description: Secondary event\n'
+        '    parameters:\n'
+        '      id: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      // Should include the dual write comment and a generated method call to the
+      // secondary event (method call within same domain when possible).
+      expect(
+        authContent,
+        contains('// Dual-write to: auth.secondary'),
+      );
+      expect(
+        authContent,
+        contains('logAuthSecondary(id: id, parameters: parameters);'),
+      );
+    });
+
+    test(
+        'falls back to logger.logEvent for dual-write across domains (no method call)',
+        () async {
+      final authFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary event\n'
+        '    parameters:\n'
+        '      id: string\n'
+        '    dual_write_to: [tracking.track]\n',
+      );
+
+      final trackingFile =
+          File(p.join(tempProject.path, 'events', 'tracking.yaml'));
+      await trackingFile.writeAsString(
+        'tracking:\n'
+        '  track:\n'
+        '    description: Tracking event\n'
+        '    parameters:\n'
+        '      id: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      // Should contain fallback to logger.logEvent with resolved target name.
+      expect(
+        authContent,
+        contains('// Dual-write to: tracking.track'),
+      );
+      expect(
+        authContent,
+        contains('name: "tracking: track",'),
+      );
+      expect(
+        authContent,
+        contains('logger.logEvent('),
+      );
+    });
+
+    test(
+        'generates dual-write method call in else (no parameters) when same domain',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary no-params event\n'
+        '    dual_write_to: [auth.secondary]\n'
+        '  secondary:\n'
+        '    description: Secondary no-params event\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(authContent, contains('// Dual-write to: auth.secondary'));
+      expect(
+        authContent,
+        contains('logAuthSecondary(parameters: parameters);'),
+      );
+    });
+
+    test(
+        'falls back to logger.logEvent in else (no parameters) for cross domain',
+        () async {
+      final authFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary no-params event\n'
+        '    dual_write_to: [tracking.track]\n',
+      );
+
+      final trackingFile =
+          File(p.join(tempProject.path, 'events', 'tracking.yaml'));
+      await trackingFile.writeAsString(
+        'tracking:\n'
+        '  track:\n'
+        '    description: Track no-params event\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(authContent, contains('// Dual-write to: tracking.track'));
+      expect(authContent, contains('name: "tracking: track",'));
+      expect(authContent, contains('logger.logEvent('));
+    });
+
+    test('generates test file when enabled', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+        generateTests: true,
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final testFile = File(
+        p.join(tempProject.path, 'test', 'generated_plan_test.dart'),
+      );
+      expect(testFile.existsSync(), isTrue);
+      final content = await testFile.readAsString();
+      expect(content, contains('logAuthLogin constructs correctly'));
+    });
+
+    test('does not generate test file by default', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+        // generateTests defaults to false
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final testFile = File(
+        p.join(tempProject.path, 'test', 'generated_plan_test.dart'),
+      );
+      expect(testFile.existsSync(), isFalse);
+    });
+
+    test('generates regex validation code', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      email:\n'
+        '        type: string\n'
+        '        regex: "^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$"\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(
+        authContent,
+        contains(
+            "if (!RegExp(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$').hasMatch(email)) {"),
+      );
+      expect(
+        authContent,
+        contains('throw ArgumentError.value('),
+      );
+      expect(
+        authContent,
+        contains("'must match regex ^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\\\$',"),
       );
     });
   });

@@ -3,19 +3,27 @@ auth:
     description: User logs in to the application
     deprecated: true
     replacement: auth.login_v2
+    meta:
+      owner: "auth-team"
+      tier: "critical"
     parameters:
       method:
         type: string
         description: Login method (email, google, apple)
+        meta:
+          pii: true
 
   login_v2:
     description: User logs in to the application (v2)
+    dual_write_to: ["auth.login"]
     parameters:
+      session_id: # Shared
       method:
         type: string
         description: Login method v2 (email, google, apple)
         identifier: login_method
         param_name: login-method
+        allowed_values: ["email", "google", "apple"]
 
   logout:
     description: User logs out
@@ -28,6 +36,7 @@ auth:
       referral_code:
         type: string?
         description: Optional referral code used during signup
+        regex: "^[A-Z0-9]{6}$"
 
   phone_login:
     description: When user logs in via phone

@@ -3,6 +3,7 @@ import 'dart:io';
 import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
 import '../core/async_analytics_interface.dart';
+import '../util/logger.dart';
 
 /// Function used to check whether an event (name + params) should be
 /// forwarded to a particular provider.
@@ -31,7 +32,21 @@ typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
 /// ```
 final class MultiProviderAnalytics
     implements IAnalytics, IAsyncAnalytics, AnalyticsCapabilityProvider {
+  /// Creates an immutable multi-provider analytics service.
+  ///
+  /// The [providers] list is copied and made unmodifiable to ensure immutability.
+  MultiProviderAnalytics(
+    List<IAnalytics> providers, {
+    this.onError,
+    this.onProviderFailure,
+    Map<IAnalytics, EventPredicate?>? providerFilters,
+    Logger? logger,
+  })  : _providers = List.unmodifiable(providers),
+        _providerFilters = Map.unmodifiable(providerFilters ?? const {}),
+        _logger = logger ?? const NoOpLogger();
   final List<IAnalytics> _providers;
+
+  /// Notifies observers when any provider fails.
   final void Function(Object error, StackTrace stackTrace)? onError;
 
   /// Notifies observers when a specific provider fails.
@@ -42,16 +57,7 @@ final class MultiProviderAnalytics
   /// will not receive that event.
   final Map<IAnalytics, EventPredicate?> _providerFilters;
 
-  /// Creates an immutable multi-provider analytics service.
-  ///
-  /// The [providers] list is copied and made unmodifiable to ensure immutability.
-  MultiProviderAnalytics(
-    List<IAnalytics> providers, {
-    this.onError,
-    this.onProviderFailure,
-    Map<IAnalytics, EventPredicate?>? providerFilters,
-  })  : _providers = List.unmodifiable(providers),
-        _providerFilters = Map.unmodifiable(providerFilters ?? const {});
+  final Logger _logger;
 
   @override
   AnalyticsCapabilityResolver get capabilityResolver =>
@@ -77,19 +83,14 @@ final class MultiProviderAnalytics
         // Unexpected: Provider bugs - log and continue
         _handleProviderFailure(provider, name, parameters, error, stackTrace);
 
-        // In debug mode, log unexpected errors with more detail
-        assert(() {
-          // Log to console in debug builds
-          // ignore: avoid_print
-          print(
-            '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
-            '  Error: $error\n'
-            '  Event: $name\n'
-            '  Parameters: $parameters\n'
-            '  Stack trace: $stackTrace',
-          );
-          return true;
-        }());
+        _logger.error(
+          '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
+          '  Error: $error\n'
+          '  Event: $name\n'
+          '  Parameters: $parameters',
+          error,
+          stackTrace,
+        );
       }
     }
   }
@@ -180,6 +181,7 @@ final class MultiProviderAnalytics
       onError: onError,
       onProviderFailure: onProviderFailure,
       providerFilters: newProviderFilters,
+      logger: _logger,
     );
   }
 
@@ -202,15 +204,38 @@ final class MultiProviderAnalytics
       onError: onError,
       onProviderFailure: onProviderFailure,
       providerFilters: newProviderFilters,
+      logger: _logger,
+    );
+  }
+
+  /// Returns a new instance without providers of type [T].
+  ///
+  /// This method does not mutate the current instance.
+  ///
+  /// Example:
+  /// ```dart
+  /// final updated = analytics.removeProviderByType<FirebaseAnalyticsService>();
+  /// ```
+  MultiProviderAnalytics removeProviderByType<T extends IAnalytics>() {
+    final newProviders = _providers.where((p) => p is! T).toList();
+    final newProviderFilters =
+        Map<IAnalytics, EventPredicate?>.from(_providerFilters);
+    newProviderFilters.removeWhere((key, _) => key is T);
+
+    return MultiProviderAnalytics(
+      newProviders,
+      onError: onError,
+      onProviderFailure: onProviderFailure,
+      providerFilters: newProviderFilters,
+      logger: _logger,
     );
   }
 }
 
 final class _MultiProviderCapabilityResolver
     implements AnalyticsCapabilityResolver {
-  final List<IAnalytics> providers;
-
   _MultiProviderCapabilityResolver(this.providers);
+  final List<IAnalytics> providers;
 
   @override
   T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {

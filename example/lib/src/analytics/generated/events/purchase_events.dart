@@ -10,41 +10,54 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// User cancelled a purchase
   ///
   /// Parameters:
-  /// - `product_id`: string
-  /// - `reason`: string? - Reason for cancellation
-  void logPurchaseCancelled({required String productId, String? reason}) {
+  /// - `product_id`: String
+  /// - `reason`: String? - Reason for cancellation
+  void logPurchaseCancelled({
+    required String productId,
+    String? reason,
+    Map<String, Object?>? parameters,
+  }) {
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'User cancelled a purchase',
+          "product_id": productId,
+          if (reason != null) "reason": reason,
+        };
+
     logger.logEvent(
       name: "Purchase Flow: cancelled",
-      parameters: <String, Object?>{
-        'description': 'User cancelled a purchase',
-        "product_id": productId,
-        if (reason != null) "reason": reason,
-      },
+      parameters: eventParameters,
     );
   }
 
   /// User completed a purchase
   ///
   /// Parameters:
-  /// - `currency-code`: string
+  /// - `currency-code`: String
   /// - `amount_value`: double - Localized amount used by legacy dashboards
-  /// - `product_id`: string
+  /// - `product_id`: String
   /// - `quantity`: int - Number of items purchased
   void logPurchaseCompleted({
     required String currencyCode,
     required double price,
     required String productId,
     required int quantity,
+    Map<String, Object?>? parameters,
   }) {
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'User completed a purchase',
+          "currency-code": currencyCode,
+          "amount_value": price,
+          "product_id": productId,
+          "quantity": quantity,
+        };
+
     logger.logEvent(
       name: "Purchase Flow: completed",
-      parameters: <String, Object?>{
-        'description': 'User completed a purchase',
-        "currency-code": currencyCode,
-        "amount_value": price,
-        "product_id": productId,
-        "quantity": quantity,
-      },
+      parameters: eventParameters,
     );
   }
 }

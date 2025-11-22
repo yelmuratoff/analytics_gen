@@ -1,24 +1,6 @@
 # TODO – `analytics_gen`
 
-## Active Work Items
-
-### High Priority
-
-- [ ] **Enhanced CSV Export for Analytics** (Analyst-Friendly)
-  - Add separate parameters CSV with parameter-per-row structure for filtering
-  - Add metadata CSV with meta-per-row structure for easy querying
-  - Create events-parameters relationship table for SQL-like joins
-  - Improve readability with proper escaping and formatting
-  - Add export documentation for analysts
-
-### Medium Priority
-
-- [ ] **Parameter Validation DSL** (Future enhancement)
-  - Add validation rules support in YAML (regex, min_length, max_length, range)
-  - Generate runtime validation code for parameters
-  - Update docs with validation examples
-
-### Low Priority
+## Low Priority Improvements
 
 - [ ] **Cloud Integration**
   - BigQuery schema sync

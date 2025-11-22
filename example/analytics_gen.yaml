@@ -1,34 +1,56 @@
 analytics_gen:
-  # Path to YAML event files (relative to project root)
-  events_path: events
+  # Input configurations
+  inputs:
+    # Path to YAML event files (relative to project root)
+    events: events
 
-  # Path where generated code will be written (relative to lib/)
-  output_path: src/analytics/generated
+    # Shared parameter definitions
+    shared_parameters:
+      - events/shared_user.yaml
+      - events/shared_app.yaml
 
-  # Path for documentation (optional)
-  docs_path: docs/analytics_events.md
+    # Additional context files (e.g. user properties, theme context)
+    contexts:
+      - events/theme_context.yaml
+      - events/user_properties.yaml
 
-  # Path for export files (optional)
-  exports_path: assets/generated
+  # Output configurations
+  outputs:
+    # Path where generated Dart code will be written (relative to lib/)
+    dart: src/analytics/generated
 
-  # Additional context files (optional)
-  contexts:
-    - events/theme_context.yaml
-    - events/user_properties.yaml
+    # Path for documentation (optional)
+    docs: docs/analytics_events.md
 
-  # Enable/disable various generators
-  generate_docs: true
-  generate_csv: true
-  generate_json: true
-  generate_sql: true
-  generate_plan: true
-  # If true, each generated logEvent call will include the event description
-  # under the 'description' key in the parameters map. Default: false
-  include_event_description: true
+    # Path for export files (optional)
+    exports: assets/generated
 
-  # If true, forbids string interpolation in event names to prevent high cardinality.
-  # Default: false
-  strict_event_names: false
+  # Generation targets (what to build)
+  targets:
+    docs: true
+    csv: true
+    json: true
+    sql: true
+    plan: true
+    tests: true
+
+  # Validation and generation rules
+  rules:
+    # If true, each generated logEvent call will include the event description
+    # under the 'description' key in the parameters map. Default: false
+    include_event_description: true
+
+    # If true, forbids string interpolation in event names to prevent high cardinality.
+    # Default: false
+    strict_event_names: false
+
+    # If true, enforces that all parameters must be defined in shared_parameters files.
+    # Default: false
+    enforce_centrally_defined_parameters: false
+
+    # If true, prevents defining parameters in events that are already defined in shared_parameters.
+    # Default: false
+    prevent_event_parameter_duplicates: false
 
   naming:
     # Keep snake_case domains (files/mixins stay stable) but allow legacy parameter

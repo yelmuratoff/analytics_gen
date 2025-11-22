@@ -6,6 +6,13 @@ const _mapEq = MapEquality<String, Object?>();
 
 /// Immutable snapshot of an analytics event recorded by [MockAnalyticsService].
 final class RecordedAnalyticsEvent {
+  /// Creates a new recorded event.
+  RecordedAnalyticsEvent({
+    required this.name,
+    required AnalyticsParams parameters,
+    required this.timestamp,
+  }) : parameters = Map.unmodifiable(parameters);
+
   /// Name of the logged event (e.g., `auth: login` or a custom `event_name`).
   final String name;
 
@@ -14,12 +21,6 @@ final class RecordedAnalyticsEvent {
 
   /// Timestamp captured when the event was logged.
   final DateTime timestamp;
-
-  RecordedAnalyticsEvent({
-    required this.name,
-    required AnalyticsParams parameters,
-    required this.timestamp,
-  }) : parameters = Map.unmodifiable(parameters);
 
   /// Returns a JSON-friendly map identical to the legacy [MockAnalyticsService.events] entries.
   Map<String, Object?> toMap() => {
