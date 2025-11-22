@@ -2,7 +2,7 @@
   <h1>Stop Writing Analytics Code. Start Defining It.</h1>
   
   <a href="https://pub.dev/packages/analytics_gen">
-    <img src="https://github.com/yelmuratoff/packages_assets/blob/main/assets/analytics_gen.png?raw=true" width="600">
+    <img src="../assets/analytics_gen_banner.png" width="600">
   </a>
 
   <h3>Type-safe analytics, automated documentation, and data integrity—from a single source of truth.</h3>
