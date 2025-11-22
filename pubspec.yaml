@@ -1,6 +1,8 @@
 name: analytics_gen
 description: Type-safe analytics event tracking with code generation from YAML configuration. Supports multiple providers, testing utilities, and export formats.
 version: 0.2.1
+homepage: https://github.com/yelmuratoff/analytics_gen
+documentation: https://pub.dev/documentation/analytics_gen/latest/
 repository: https://github.com/yelmuratoff/analytics_gen
 issue_tracker: https://github.com/yelmuratoff/analytics_gen/issues
 
@@ -25,3 +27,7 @@ dependencies:
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.27.0
+
+dartdoc:
+  include:
+    - "doc/**"
