@@ -13,7 +13,7 @@
   - Add `regex` property to parameter definitions for validation.
   - Generate runtime validation code in Dart to enforce regex patterns.
 
-- [ ] **Schema Evolution & Migration**
+- [x] **Schema Evolution & Migration**
   - Implement breaking change detection (compare current schema vs previous).
   - Add `added_in` and `deprecated_in` version metadata to events/parameters.
   - Support "dual-write" migration strategies (sending old and new events simultaneously).
