@@ -144,5 +144,93 @@ events:
         )),
       );
     });
+
+    test('throws AnalyticsParseException when YAML parsing fails', () {
+      final source = AnalyticsSource(
+        filePath: 'shared.yaml',
+        content: 'some content',
+      );
+
+      // Inject a loadYaml function that always throws to verify error handling
+      final parser = YamlParser(
+        loadYaml: (content, {sourceUrl, recover, errorListener}) {
+          throw FormatException('Mock parsing error');
+        },
+      );
+
+      expect(
+        () => parser.parseSharedParameters(source),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Failed to parse shared parameters YAML'),
+        )),
+      );
+    });
+
+    test('returns empty map when shared parameters file is empty', () {
+      final source = AnalyticsSource(
+        filePath: 'shared.yaml',
+        content: '',
+      );
+
+      final parser = YamlParser();
+      final shared = parser.parseSharedParameters(source);
+
+      expect(shared, isEmpty);
+    });
+
+    test(
+        'throws AnalyticsParseException when shared parameters file is not a map',
+        () {
+      final source = AnalyticsSource(
+        filePath: 'shared.yaml',
+        content: '- list item',
+      );
+
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseSharedParameters(source),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('Shared parameters file must be a map'),
+        )),
+      );
+    });
+
+    test('returns empty map when parameters key is missing', () {
+      final source = AnalyticsSource(
+        filePath: 'shared.yaml',
+        content: 'other_config: value',
+      );
+
+      final parser = YamlParser();
+      final shared = parser.parseSharedParameters(source);
+
+      expect(shared, isEmpty);
+    });
+
+    test('throws AnalyticsParseException when parameters key is not a map', () {
+      final source = AnalyticsSource(
+        filePath: 'shared.yaml',
+        content: '''
+parameters:
+  - list item
+''',
+      );
+
+      final parser = YamlParser();
+
+      expect(
+        () => parser.parseSharedParameters(source),
+        throwsA(isA<AnalyticsParseException>().having(
+          (e) => e.message,
+          'message',
+          contains('The "parameters" key must be a map'),
+        )),
+      );
+    });
   });
 }
