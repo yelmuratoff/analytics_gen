@@ -131,7 +131,8 @@ void main() {
       final sources = await loader.loadEventFiles();
 
       expect(sources, isEmpty);
-      expect(logger.messages, contains('WARNING: Events directory not found at: $nonExistentPath'));
+      expect(logger.messages,
+          contains('WARNING: Events directory not found at: $nonExistentPath'));
     });
 
     test('loadEventFiles returns YAML files and skips non-yaml', () async {
@@ -146,11 +147,16 @@ void main() {
       final sources = await loader.loadEventFiles();
 
       // Should only find the two YAML files and they should be sorted by filename
-      expect(sources.map((s) => File(s.filePath).uri.pathSegments.last).toList(), equals(['a.yaml', 'b.yaml']));
-      expect(logger.messages, contains('INFO: Found 2 YAML file(s) in $eventsPath'));
+      expect(
+          sources.map((s) => File(s.filePath).uri.pathSegments.last).toList(),
+          equals(['a.yaml', 'b.yaml']));
+      expect(logger.messages,
+          contains('INFO: Found 2 YAML file(s) in $eventsPath'));
     });
 
-    test('loadEventFiles skips files present in contextFiles and sharedParameterFiles', () async {
+    test(
+        'loadEventFiles skips files present in contextFiles and sharedParameterFiles',
+        () async {
       final eventFile = File('${tempDir.path}/event.yaml');
       final contextFile = File('${tempDir.path}/context.yaml');
       final sharedFile = File('${tempDir.path}/shared.yaml');
@@ -169,7 +175,8 @@ void main() {
 
       expect(sources, hasLength(1));
       expect(sources.first.filePath, eventFile.path);
-      expect(logger.messages, contains('INFO: Found 3 YAML file(s) in $eventsPath'));
+      expect(logger.messages,
+          contains('INFO: Found 3 YAML file(s) in $eventsPath'));
     });
   });
 }
