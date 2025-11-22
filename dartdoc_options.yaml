@@ -1,3 +1,35 @@
 dartdoc:
-  include:
-    - "doc/**"
+  categories:
+    overview:
+      markdown: doc/README.md
+      displayName: Overview
+    onboarding:
+      markdown: doc/ONBOARDING.md
+      displayName: Onboarding
+    validation:
+      markdown: doc/VALIDATION.md
+      displayName: Validation & Naming
+    capabilities:
+      markdown: doc/CAPABILITIES.md
+      displayName: Capabilities
+    migration:
+      markdown: doc/MIGRATION_GUIDES.md
+      displayName: Migration Guides
+    scalability:
+      markdown: doc/SCALABILITY.md
+      displayName: Scalability & Performance
+    code_review:
+      markdown: doc/CODE_REVIEW.md
+      displayName: Code Review
+  categoryOrder:
+    - overview
+    - onboarding
+    - validation
+    - capabilities
+    - migration
+    - scalability
+    - code_review
+  showUndocumentedCategories: true
+  linkToSource:
+    root: "."
+    uriTemplate: "https://github.com/yelmuratoff/analytics_gen/blob/main/%f%#L%l%"

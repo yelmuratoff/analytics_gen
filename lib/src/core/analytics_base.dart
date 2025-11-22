@@ -11,7 +11,7 @@ abstract class AnalyticsBase {
 
   /// The analytics service implementation used to log events.
   ///
-  /// Generated mixins call [logger.logEvent] to send events to
+  /// Generated mixins call [IAnalytics.logEvent] to send events to
   /// the configured analytics provider.
   IAnalytics get logger;
 

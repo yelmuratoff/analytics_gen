@@ -173,5 +173,5 @@ This is intentional: capabilities are typically used for setting global state (l
 
 ## Next Steps
 
-- Read the [Onboarding Guide](./ONBOARDING.md) if you are wiring the generator for the first time.
+- Read the [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) if you are wiring the generator for the first time.
 - Follow the [Code Review checklist](./CODE_REVIEW.md) when verifying new capabilities in PRs (pay special attention to provider registration and generated method usage).

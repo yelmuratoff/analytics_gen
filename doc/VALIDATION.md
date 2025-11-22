@@ -118,7 +118,7 @@ YAML files, domains, and events are sorted before emission. Docs, JSON, SQL, and
 3. Search for duplicate `identifier` strings across the plan (`rg "identifier:" events`).
 4. Re-run `--validate-only` before generating code to ensure errors are resolved.
 
-Still confused? Pair this doc with the [Onboarding Guide](./ONBOARDING.md) and share plan context in PR descriptions so reviewers can spot issues faster.
+Still confused? Pair this doc with the [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) and share plan context in PR descriptions so reviewers can spot issues faster.
 
 ## CI/CD Integration
 

@@ -120,13 +120,13 @@ Future<void> login(String method) async {
 2. Docs (`docs/analytics_events.md`) – fingerprint + totals must change only when YAML changes. Ensure descriptions stay informative and status (active/deprecated) is correct.
 3. Exports (`assets/generated/*`) – CSV/JSON/SQL/SQLite outputs are consumed by stakeholders; verify column additions, identifier changes, and plan metadata.
 
-Use the [Code Review checklist](./CODE_REVIEW.md) during PRs so instrumentation stays compliant.
+Use the [Code Review checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) during PRs so instrumentation stays compliant.
 
 ## Troubleshooting
 
 - Run `dart run analytics_gen:generate --plan` to inspect the parsed plan when something looks wrong.
-- See [Validation & Naming](./VALIDATION.md) for common schema errors and the rationale behind strict identifiers.
-- For capability questions (provider-specific APIs such as user properties), start with [Capabilities](./CAPABILITIES.md).
+- See [Validation & Naming](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) for common schema errors and the rationale behind strict identifiers.
+- For capability questions (provider-specific APIs such as user properties), start with [Capabilities](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md).
 
 ## Local Quality Gate
 

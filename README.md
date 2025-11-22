@@ -65,7 +65,7 @@
    - **DI**: `final analytics = Analytics(...)`, then `analytics.logEvent(...)`.
 5. **Review diffs** for generated Dart, docs, and exports during PRs-treat them as production code.
 
-Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](doc/ONBOARDING.md).
+Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md).
 
 ## Key Features
 
@@ -262,12 +262,13 @@ Contexts allow you to define global properties (like user attributes, device inf
 
 ## Documentation Hub
 
-- [Onboarding Guide](doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
-- [Validation & Naming](doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
-- [Capabilities](doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
-- [Migration Guides](doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
-- [Code Review checklist](doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
-- [Scalability & Performance](doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
+- [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
+- [Validation & Naming](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
+- [Capabilities](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
+- [Migration Guides](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
+- [Code Review checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
+- [Scalability & Performance](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
+- [API Reference](https://pub.dev/documentation/analytics_gen/latest/) - generated Dart API docs on pub.dev.
 
 ## CLI Commands
 
@@ -291,7 +292,7 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 - Naming strategy (`analytics_gen.naming`) enforces consistent identifiers-override per-field when legacy plans demand it.
 - **Strict Event Naming**: The parser forbids string interpolation in event names (e.g. `View ${page}`) to prevent high-cardinality events from polluting your analytics data. This is now enforced by default.
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
-- Full details live in [`doc/VALIDATION.md`](doc/VALIDATION.md).
+- Full details live in [`doc/VALIDATION.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md).
 
 ## Analytics Providers & Capabilities
 
@@ -302,7 +303,7 @@ The generated mixins call `logger.logEvent(...)`. You are in control of the unde
 
 - Implement `IAnalytics` for a single SDK.
 - Use `MultiProviderAnalytics` to fan out events while isolating provider failures.
-- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](doc/CAPABILITIES.md) for a junior-friendly walkthrough.
+- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) for a junior-friendly walkthrough.
 
 Mock + async adapters (`MockAnalyticsService`, `AsyncAnalyticsAdapter`) are included for tests and await-heavy flows.
 
@@ -347,7 +348,7 @@ Analytics.initialize(QueueingAnalytics(asyncProvider));
 - `QueueingAnalytics` tracks outstanding futures so diagnostics/tests can `await` `flush()`.
 - `AsyncAnalyticsAdapter` wires into existing synchronous providers, which keeps compatibility with code gen.
 
-This same pattern appears in `example/lib/main.dart`, where the async adapter is exercised alongside the synchronous runtime.
+This same pattern appears in [`example/lib/main.dart`](https://github.com/yelmuratoff/analytics_gen/blob/main/example/lib/main.dart), where the async adapter is exercised alongside the synchronous runtime.
 
 ## Batch Logging Buffers
 
@@ -393,7 +394,7 @@ Combine `BatchingAnalytics` with `AsyncAnalyticsAdapter` to await multiple provi
 
 ## Example
 
-The [`example/`](example/) directory shows a working tracking plan + app integration.
+The [`example/`](https://github.com/yelmuratoff/analytics_gen/tree/main/example) directory shows a working tracking plan + app integration.
 
 ```bash
 cd example
@@ -418,9 +419,9 @@ Contributions welcome! Please:
 1. Fork the repo and open a PR with focused changes.
 2. Add unit tests for new features/validations.
 3. Run `dart analyze`, `dart test`, and the generator before submitting.
-4. Document user-facing changes in the README or the relevant doc under `doc/`.
+4. Document user-facing changes in the README or the relevant doc under [`doc/`](https://github.com/yelmuratoff/analytics_gen/tree/main/doc).
 
-Every PR description flows through `.github/pull_request_template.md`, which links directly to [`doc/CODE_REVIEW.md`](doc/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, doc/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.
+Every PR description flows through `.github/pull_request_template.md`, which links directly to [`doc/CODE_REVIEW.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, doc/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.
 
 ## FAQ
 
@@ -434,8 +435,8 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
   No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
 - **Is it safe to commit generated files?**
-  Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](doc/CODE_REVIEW.md)).
+  Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md)).
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [`LICENSE`](LICENSE) for details.
+Licensed under the Apache License, Version 2.0. See [`LICENSE`](https://github.com/yelmuratoff/analytics_gen/blob/main/LICENSE) for details.

@@ -10,40 +10,40 @@ Instrumentation changes are compliance-sensitive: a typo in the tracking plan ca
 
 ## Tracking Plan & YAML
 
-- [ ] Domain/event names stay consistent with naming strategy; overrides include justification.
-- [ ] Descriptions are meaningful and updated when behavior changes.
-- [ ] Parameters document types, nullability, and allowed values when applicable.
-- [ ] Deprecations include `replacement` pointers and a migration plan.
-- [ ] Search for duplicate `identifier` or payload collisions when renaming events (e.g., `rg "identifier:" events`).
+- Domain/event names stay consistent with naming strategy; overrides include justification.
+- Descriptions are meaningful and updated when behavior changes.
+- Parameters document types, nullability, and allowed values when applicable.
+- Deprecations include `replacement` pointers and a migration plan.
+- Search for duplicate `identifier` or payload collisions when renaming events (e.g., `rg "identifier:" events`).
 
 ## Generated Dart (`lib/src/analytics/generated`)
 
-- [ ] Added/removed mixin methods match YAML changes exactly—no extra manual edits.
-- [ ] Method signatures reflect types + nullability expectations.
-- [ ] Allowed-value guards exist when defined.
-- [ ] `Analytics.plan` metadata updated (fingerprint, totals) whenever events change.
-- [ ] Capability usage remains optional (no provider-specific imports inside generated code).
+- Added/removed mixin methods match YAML changes exactly—no extra manual edits.
+- Method signatures reflect types + nullability expectations.
+- Allowed-value guards exist when defined.
+- `Analytics.plan` metadata updated (fingerprint, totals) whenever events change.
+- Capability usage remains optional (no provider-specific imports inside generated code).
 
 ## Documentation & Exports
 
-- [ ] `docs/analytics_events.md` fingerprint matches YAML changes; table entries reflect new descriptions/status.
-- [ ] CSV/JSON/SQL/SQLite artifacts only change when necessary; verify schema shifts with downstream consumers before approving.
-- [ ] Confirm downstream consumers have been notified and assigned (owner metadata present) when identifiers or exported schemas change.
-- [ ] Verify export schema changes with at least one consumer (analyst/BI) before merge.
-- [ ] New docs (`docs/*.md`) include actionable guidance and link back to README.
+- `docs/analytics_events.md` fingerprint matches YAML changes; table entries reflect new descriptions/status.
+- CSV/JSON/SQL/SQLite artifacts only change when necessary; verify schema shifts with downstream consumers before approving.
+- Confirm downstream consumers have been notified and assigned (owner metadata present) when identifiers or exported schemas change.
+- Verify export schema changes with at least one consumer (analyst/BI) before merge.
+- New docs (`docs/*.md`) include actionable guidance and link back to README.
 
 ## Runtime / Provider Changes
 
-- [ ] New providers implement `IAnalytics`/`AnalyticsCapabilityProvider` cleanly and register required capabilities.
-- [ ] `MultiProviderAnalytics` filters or failure handlers log enough context (provider name, event, parameters).
-- [ ] Async adapters handle errors + await semantics correctly.
-- [ ] Capabilities include clear key names and typed interfaces; fallback behavior is documented.
+- New providers implement `IAnalytics`/`AnalyticsCapabilityProvider` cleanly and register required capabilities.
+- `MultiProviderAnalytics` filters or failure handlers log enough context (provider name, event, parameters).
+- Async adapters handle errors + await semantics correctly.
+- Capabilities include clear key names and typed interfaces; fallback behavior is documented.
 
 ## Security & Compliance
 
-- [ ] No secrets, tokens, or PII logged/committed in docs or code.
-- [ ] Provider capability implementations avoid leaking raw user data into logs.
-- [ ] Exports destined for stakeholders omit sensitive columns unless explicitly intended.
+- No secrets, tokens, or PII logged/committed in docs or code.
+- Provider capability implementations avoid leaking raw user data into logs.
+- Exports destined for stakeholders omit sensitive columns unless explicitly intended.
 
 ## When to Ask for Clarification
 
@@ -52,4 +52,4 @@ Instrumentation changes are compliance-sensitive: a typo in the tracking plan ca
 - Capability additions that duplicate what a simpler provider method could do.
 - Tests missing for new capability flows or provider adapters.
 
-Keep this checklist in PR templates or link it in review comments so the entire team holds the same quality bar. Pair it with the [Onboarding](./ONBOARDING.md) and [Validation](./VALIDATION.md) guides when mentoring new contributors.
+Keep this checklist in PR templates or link it in review comments so the entire team holds the same quality bar. Pair it with the [Onboarding](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) and [Validation](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) guides when mentoring new contributors.
