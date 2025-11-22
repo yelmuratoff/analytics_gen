@@ -513,6 +513,120 @@ delta:
       );
     });
 
+    test('generates dual-write method call within same domain when possible',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary event\n'
+        '    parameters:\n'
+        '      id: string\n'
+        '    dual_write_to: [auth.secondary]\n'
+        '  secondary:\n'
+        '    description: Secondary event\n'
+        '    parameters:\n'
+        '      id: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      // Should include the dual write comment and a generated method call to the
+      // secondary event (method call within same domain when possible).
+      expect(
+        authContent,
+        contains('// Dual-write to: auth.secondary'),
+      );
+      expect(
+        authContent,
+        contains('logAuthSecondary(id: id, parameters: parameters);'),
+      );
+    });
+
+    test(
+        'falls back to logger.logEvent for dual-write across domains (no method call)',
+        () async {
+      final authFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary event\n'
+        '    parameters:\n'
+        '      id: string\n'
+        '    dual_write_to: [tracking.track]\n',
+      );
+
+      final trackingFile =
+          File(p.join(tempProject.path, 'events', 'tracking.yaml'));
+      await trackingFile.writeAsString(
+        'tracking:\n'
+        '  track:\n'
+        '    description: Tracking event\n'
+        '    parameters:\n'
+        '      id: string\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      // Should contain fallback to logger.logEvent with resolved target name.
+      expect(
+        authContent,
+        contains('// Dual-write to: tracking.track'),
+      );
+      expect(
+        authContent,
+        contains('name: "tracking: track",'),
+      );
+      expect(
+        authContent,
+        contains('logger.logEvent('),
+      );
+    });
+
     test('generates test file when enabled', () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(
