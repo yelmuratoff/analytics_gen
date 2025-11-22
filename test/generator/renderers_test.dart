@@ -226,16 +226,22 @@ void main() {
           ),
         ],
       );
-      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final domain =
+          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
       final allDomains = {'auth': domain};
 
       final result = renderer.renderDomainFile('auth', domain, allDomains);
 
       expect(result, contains('logAuthLogin('));
-      expect(result, contains('logAuthLoginLegacy(method: method, parameters: parameters);'));
+      expect(
+          result,
+          contains(
+              'logAuthLoginLegacy(method: method, parameters: parameters);'));
     });
 
-    test('renders dual-write event with logEvent when required parameter missing', () {
+    test(
+        'renders dual-write event with logEvent when required parameter missing',
+        () {
       final sourceEvent = AnalyticsEvent(
         name: 'login',
         description: 'User logs in',
@@ -264,7 +270,8 @@ void main() {
           ),
         ],
       );
-      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final domain =
+          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
       final allDomains = {'auth': domain};
 
       final result = renderer.renderDomainFile('auth', domain, allDomains);
@@ -274,6 +281,76 @@ void main() {
       expect(result, contains('logger.logEvent('));
       expect(result, contains('name: "auth: login_legacy",'));
       expect(result, isNot(contains('logAuthLoginLegacy(method:')));
+    });
+
+    test('renders dual-write event with method call when both parameters are enums', () {
+      final sourceEvent = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['email', 'google'],
+          ),
+        ],
+        dualWriteTo: ['auth.login_legacy'],
+      );
+      final targetEvent = AnalyticsEvent(
+        name: 'login_legacy',
+        description: 'Legacy login event',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['email', 'google'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final allDomains = {'auth': domain};
+
+      final result = renderer.renderDomainFile('auth', domain, allDomains);
+
+      expect(result, contains('logAuthLogin('));
+      expect(result, contains('logAuthLoginLegacy(method: method, parameters: parameters);'));
+    });
+
+    test('renders dual-write event with method call when source is enum and target is string', () {
+      final sourceEvent = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['email', 'google'],
+          ),
+        ],
+        dualWriteTo: ['auth.login_legacy'],
+      );
+      final targetEvent = AnalyticsEvent(
+        name: 'login_legacy',
+        description: 'Legacy login event',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            // No allowedValues, so it's a plain string
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final allDomains = {'auth': domain};
+
+      final result = renderer.renderDomainFile('auth', domain, allDomains);
+
+      expect(result, contains('logAuthLogin('));
+      expect(result, contains('logAuthLoginLegacy(method: method.value, parameters: parameters);'));
     });
   });
 
