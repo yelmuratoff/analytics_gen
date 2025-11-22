@@ -100,5 +100,76 @@ void main() {
       expect(logger.messages.where((msg) => msg.contains('WARNING')),
           hasLength(1));
     });
+
+    test('loadSourceFile logs warning for missing file and returns null',
+        () async {
+      final loader = EventLoader(eventsPath: eventsPath, log: logger);
+
+      final source = await loader.loadSourceFile('missing_file.yaml');
+
+      expect(source, isNull);
+      expect(logger.messages,
+          contains('WARNING: File not found: missing_file.yaml'));
+    });
+
+    test('loadSourceFile loads existing file', () async {
+      final file = File('${tempDir.path}/shared.yaml');
+      await file.writeAsString('shared: content');
+
+      final loader = EventLoader(eventsPath: eventsPath, log: logger);
+      final source = await loader.loadSourceFile(file.path);
+
+      expect(source, isNotNull);
+      expect(source!.filePath, file.path);
+      expect(source.content, 'shared: content');
+    });
+
+    test('loadEventFiles warns when events directory missing', () async {
+      final nonExistentPath = '${tempDir.path}/does_not_exist';
+      final loader = EventLoader(eventsPath: nonExistentPath, log: logger);
+
+      final sources = await loader.loadEventFiles();
+
+      expect(sources, isEmpty);
+      expect(logger.messages, contains('WARNING: Events directory not found at: $nonExistentPath'));
+    });
+
+    test('loadEventFiles returns YAML files and skips non-yaml', () async {
+      final fileA = File('${tempDir.path}/b.yaml');
+      final fileB = File('${tempDir.path}/a.yaml');
+      final fileC = File('${tempDir.path}/ignore.txt');
+      await fileA.writeAsString('b: 1');
+      await fileB.writeAsString('a: 2');
+      await fileC.writeAsString('not yaml');
+
+      final loader = EventLoader(eventsPath: eventsPath, log: logger);
+      final sources = await loader.loadEventFiles();
+
+      // Should only find the two YAML files and they should be sorted by filename
+      expect(sources.map((s) => File(s.filePath).uri.pathSegments.last).toList(), equals(['a.yaml', 'b.yaml']));
+      expect(logger.messages, contains('INFO: Found 2 YAML file(s) in $eventsPath'));
+    });
+
+    test('loadEventFiles skips files present in contextFiles and sharedParameterFiles', () async {
+      final eventFile = File('${tempDir.path}/event.yaml');
+      final contextFile = File('${tempDir.path}/context.yaml');
+      final sharedFile = File('${tempDir.path}/shared.yaml');
+      await eventFile.writeAsString('name: event');
+      await contextFile.writeAsString('ctx: data');
+      await sharedFile.writeAsString('shared: data');
+
+      final loader = EventLoader(
+        eventsPath: eventsPath,
+        contextFiles: [contextFile.path],
+        sharedParameterFiles: [sharedFile.path],
+        log: logger,
+      );
+
+      final sources = await loader.loadEventFiles();
+
+      expect(sources, hasLength(1));
+      expect(sources.first.filePath, eventFile.path);
+      expect(logger.messages, contains('INFO: Found 3 YAML file(s) in $eventsPath'));
+    });
   });
 }
