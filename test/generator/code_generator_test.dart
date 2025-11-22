@@ -627,6 +627,98 @@ delta:
       );
     });
 
+    test(
+        'generates dual-write method call in else (no parameters) when same domain',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary no-params event\n'
+        '    dual_write_to: [auth.secondary]\n'
+        '  secondary:\n'
+        '    description: Secondary no-params event\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(authContent, contains('// Dual-write to: auth.secondary'));
+      expect(
+        authContent,
+        contains('logAuthSecondary(parameters: parameters);'),
+      );
+    });
+
+    test(
+        'falls back to logger.logEvent in else (no parameters) for cross domain',
+        () async {
+      final authFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await authFile.writeAsString(
+        'auth:\n'
+        '  primary:\n'
+        '    description: Primary no-params event\n'
+        '    dual_write_to: [tracking.track]\n',
+      );
+
+      final trackingFile =
+          File(p.join(tempProject.path, 'events', 'tracking.yaml'));
+      await trackingFile.writeAsString(
+        'tracking:\n'
+        '  track:\n'
+        '    description: Track no-params event\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final authContent = await File(
+        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+            'auth_events.dart'),
+      ).readAsString();
+
+      expect(authContent, contains('// Dual-write to: tracking.track'));
+      expect(authContent, contains('name: "tracking: track",'));
+      expect(authContent, contains('logger.logEvent('));
+    });
+
     test('generates test file when enabled', () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(

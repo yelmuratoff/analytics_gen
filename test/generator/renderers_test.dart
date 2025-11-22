@@ -201,6 +201,80 @@ void main() {
       expect(result, contains('@Deprecated'));
       expect(result, contains('string interpolation'));
     });
+
+    test('renders dual-write event with method call when parameters match', () {
+      final sourceEvent = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+          ),
+        ],
+        dualWriteTo: ['auth.login_legacy'],
+      );
+      final targetEvent = AnalyticsEvent(
+        name: 'login_legacy',
+        description: 'Legacy login event',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final allDomains = {'auth': domain};
+
+      final result = renderer.renderDomainFile('auth', domain, allDomains);
+
+      expect(result, contains('logAuthLogin('));
+      expect(result, contains('logAuthLoginLegacy(method: method, parameters: parameters);'));
+    });
+
+    test('renders dual-write event with logEvent when required parameter missing', () {
+      final sourceEvent = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+          ),
+        ],
+        dualWriteTo: ['auth.login_legacy'],
+      );
+      final targetEvent = AnalyticsEvent(
+        name: 'login_legacy',
+        description: 'Legacy login event',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+          ),
+          AnalyticsParameter(
+            name: 'device',
+            type: 'string',
+            isNullable: false, // Required parameter not in source
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+      final allDomains = {'auth': domain};
+
+      final result = renderer.renderDomainFile('auth', domain, allDomains);
+
+      expect(result, contains('logAuthLogin('));
+      expect(result, contains('// Dual-write to: auth.login_legacy'));
+      expect(result, contains('logger.logEvent('));
+      expect(result, contains('name: "auth: login_legacy",'));
+      expect(result, isNot(contains('logAuthLoginLegacy(method:')));
+    });
   });
 
   group('ContextRenderer', () {
