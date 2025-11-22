@@ -247,5 +247,244 @@ void main() {
       expect(login.parameters, hasLength(1));
       expect(login.parameters.first.addedIn, '1.0.0');
     });
+    test('SchemaChange.toString formats correctly', () {
+      const change = SchemaChange(
+        type: SchemaChangeType.added,
+        description: 'Test description',
+        path: 'test.path',
+        isBreaking: true,
+      );
+      expect(
+        change.toString(),
+        '[ADDED] test.path: Test description (BREAKING)',
+      );
+    });
+
+    test('detects event deprecation change', () {
+      final previous = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              deprecated: false,
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+      final current = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              deprecated: true,
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final changes = comparator.compare(current, previous);
+      expect(changes, hasLength(1));
+      expect(changes.first.type, SchemaChangeType.modified);
+      expect(changes.first.description, 'Event was deprecated.');
+    });
+
+    test('detects dual-write removed (breaking)', () {
+      final previous = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              dualWriteTo: ['firebase'],
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+      final current = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final changes = comparator.compare(current, previous);
+      expect(changes, hasLength(1));
+      expect(changes.first.isBreaking, isTrue);
+      expect(changes.first.description, contains('Dual-write targets removed'));
+    });
+
+    test('detects dual-write added (non-breaking)', () {
+      final previous = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+      final current = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              dualWriteTo: ['firebase'],
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final changes = comparator.compare(current, previous);
+      expect(changes, hasLength(1));
+      expect(changes.first.isBreaking, isFalse);
+      expect(changes.first.description, contains('Dual-write targets added'));
+    });
+
+    test('detects parameter removed (breaking)', () {
+      final previous = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'method',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+      final current = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final changes = comparator.compare(current, previous);
+      expect(changes, hasLength(1));
+      expect(changes.first.type, SchemaChangeType.removed);
+      expect(changes.first.isBreaking, isTrue);
+      expect(changes.first.description,
+          contains('Parameter "method" was removed'));
+    });
+
+    test('detects parameter added (breaking if required)', () {
+      final previous = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+      final current = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'method',
+                  type: 'string',
+                  isNullable: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final changes = comparator.compare(current, previous);
+      expect(changes, hasLength(1));
+      expect(changes.first.type, SchemaChangeType.added);
+      expect(changes.first.isBreaking, isTrue);
+      expect(
+          changes.first.description, contains('Parameter "method" was added'));
+    });
+
+    test('detects regex validation change (breaking)', () {
+      final previous = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'email',
+                  type: 'string',
+                  isNullable: false,
+                  regex: r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+      final current = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              parameters: [
+                AnalyticsParameter(
+                  name: 'email',
+                  type: 'string',
+                  isNullable: false,
+                  regex: r'^.+@.+$', // Changed regex
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final changes = comparator.compare(current, previous);
+      expect(changes, hasLength(1));
+      expect(changes.first.type, SchemaChangeType.modified);
+      expect(changes.first.isBreaking, isTrue);
+      expect(changes.first.description, 'Regex validation changed.');
+    });
   });
 }
