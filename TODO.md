@@ -1,23 +1,5 @@
 # TODO – `analytics_gen`
 
-## Community Feature Requests
-
-- [x] **Shared Event Parameters** (Issue #123)
-  - Add `event_parameters_path` to `AnalyticsConfig` to define a central location for shared parameters.
-  - Add `enforce_centrally_defined_parameters` config to restrict ad-hoc parameter definitions.
-  - Add `prevent_event_parameter_duplicates` config to encourage reuse.
-  - Implement `ParameterResolver` to merge shared parameters into event definitions during parsing.
-  - Support referencing shared parameters in YAML (e.g. by name or with `null` value).
-
-- [x] **Advanced Parameter Validation**
-  - Add `regex` property to parameter definitions for validation.
-  - Generate runtime validation code in Dart to enforce regex patterns.
-
-- [x] **Schema Evolution & Migration**
-  - Implement breaking change detection (compare current schema vs previous).
-  - Add `added_in` and `deprecated_in` version metadata to events/parameters.
-  - Support "dual-write" migration strategies (sending old and new events simultaneously).
-
 ## Low Priority Improvements
 
 - [ ] **Cloud Integration**
