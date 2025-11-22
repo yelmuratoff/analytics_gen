@@ -199,5 +199,6 @@ If you absolutely must use dynamic event names (e.g., for legacy reasons), you c
 
 ```yaml
 analytics_gen:
-  strict_event_names: false
+  rules:
+    strict_event_names: false
 ```
