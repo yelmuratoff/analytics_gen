@@ -63,23 +63,23 @@
 4. **Initialize + use** the generated API:
    - **Singleton**: `Analytics.initialize(...)`, then `Analytics.instance.logEvent(...)`.
    - **DI**: `final analytics = Analytics(...)`, then `analytics.logEvent(...)`.
-5. **Review diffs** for generated Dart, docs, and exports during PRs—treat them as production code.
+5. **Review diffs** for generated Dart, docs, and exports during PRs-treat them as production code.
 
 Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](doc/ONBOARDING.md).
 
 ## Key Features
 
-- **Type-safe analytics** – compile-time event + parameter checking, optional allowed-value guards.
-- **Domain-per-file generation** – readable diffs, mixins scoped to a single domain.
-- **Deterministic outputs** – sorted parsing with fingerprints to keep reviewers sane.
-- **Multi-provider fan-out** – send the same event to multiple SDKs with error handling.
-- **Docs + exports** – Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
-- **Runtime plan** – `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
-- **Extensible Metadata** – attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
-- **Enhanced CSV Export** – generates multiple CSV files (events, parameters, metadata, relationships) for deep analysis.
-- **Parameter Validation** – define validation rules (regex, length, range) in YAML and get runtime checks automatically.
-- **Generation Telemetry** – track generation performance with built-in metrics (domain processing times, total duration, file counts).
-- **Capability Discovery** – auto-generated documentation shows available capabilities and usage examples in generated code.
+- **Type-safe analytics** - compile-time event + parameter checking, optional allowed-value guards.
+- **Domain-per-file generation** - readable diffs, mixins scoped to a single domain.
+- **Deterministic outputs** - sorted parsing with fingerprints to keep reviewers sane.
+- **Multi-provider fan-out** - send the same event to multiple SDKs with error handling.
+- **Docs + exports** - Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
+- **Runtime plan** - `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
+- **Extensible Metadata** - attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
+- **Enhanced CSV Export** - generates multiple CSV files (events, parameters, metadata, relationships) for deep analysis.
+- **Parameter Validation** - define validation rules (regex, length, range) in YAML and get runtime checks automatically.
+- **Generation Telemetry** - track generation performance with built-in metrics (domain processing times, total duration, file counts).
+- **Capability Discovery** - auto-generated documentation shows available capabilities and usage examples in generated code.
 
 ## Parameter Validation
 
@@ -262,12 +262,12 @@ Contexts allow you to define global properties (like user attributes, device inf
 
 ## Documentation Hub
 
-- [Onboarding Guide](doc/ONBOARDING.md) – setup checklist, command reference, troubleshooting.
-- [Validation & Naming](doc/VALIDATION.md) – schema, strict naming rules, and error explanations.
-- [Capabilities](doc/CAPABILITIES.md) – why capability keys exist and how to expose provider-specific APIs.
-- [Migration Guides](doc/MIGRATION_GUIDES.md) – playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
-- [Code Review checklist](doc/CODE_REVIEW.md) – what to inspect in YAML, generated code, docs, and provider adapters during PRs.
-- [Scalability & Performance](doc/SCALABILITY.md) – benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
+- [Onboarding Guide](doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
+- [Validation & Naming](doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
+- [Capabilities](doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
+- [Migration Guides](doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
+- [Code Review checklist](doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
+- [Scalability & Performance](doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
 
 ## CLI Commands
 
@@ -282,13 +282,13 @@ dart run analytics_gen:generate --plan
 dart run analytics_gen:generate --watch              # incremental rebuilds on file change
 ```
 
-Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop—the config still drives CI.
+Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop-the config still drives CI.
 
 ## Validation & Quality
 
 - Run `dart run analytics_gen:generate --validate-only` in CI to block invalid YAML before files are written.
 - **CI Guardrails**: Add a step in your CI pipeline to run generation and check for uncommitted changes (`git diff --exit-code`). This ensures that the generated code, docs, and exports are always in sync with the YAML definitions.
-- Naming strategy (`analytics_gen.naming`) enforces consistent identifiers—override per-field when legacy plans demand it.
+- Naming strategy (`analytics_gen.naming`) enforces consistent identifiers-override per-field when legacy plans demand it.
 - **Strict Event Naming**: The parser forbids string interpolation in event names (e.g. `View ${page}`) to prevent high-cardinality events from polluting your analytics data. This is now enforced by default.
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
 - Full details live in [`doc/VALIDATION.md`](doc/VALIDATION.md).
@@ -351,7 +351,7 @@ This same pattern appears in `example/lib/main.dart`, where the async adapter is
 
 ## Batch Logging Buffers
 
-When you need to control network fan-out—slow uplinks, cellular metering, or provider SDKs that enforce batch delivery—wrap your async provider with `BatchingAnalytics`.
+When you need to control network fan-out-slow uplinks, cellular metering, or provider SDKs that enforce batch delivery-wrap your async provider with `BatchingAnalytics`.
 
 ```dart
 final asyncAdapter = AsyncAnalyticsAdapter(
@@ -402,14 +402,14 @@ dart run analytics_gen:generate --docs --exports
 dart run lib/main.dart
 ```
 
-Generated artifacts inside the example mirror what your app will emit. Use it as a sandbox before editing your production plan. Prefer running the Flutter sample via `flutter run` so you can tap through the buttons and inspect recorded events live—the UI simply calls into a controller that wraps the generated mixins so logging stays out of widgets.
+Generated artifacts inside the example mirror what your app will emit. Use it as a sandbox before editing your production plan. Prefer running the Flutter sample via `flutter run` so you can tap through the buttons and inspect recorded events live-the UI simply calls into a controller that wraps the generated mixins so logging stays out of widgets.
 
 ## Testing
 
 - Unit tests should initialize `Analytics` with `MockAnalyticsService` (or the async adapter) and assert on recorded events.
 - Use `Analytics.reset()` in `tearDown` to clear the singleton instance between tests.
 - Add `dart run analytics_gen:generate --validate-only` to CI so schema errors fail fast.
-- Run `dart analyze` + `dart test` before committing—analytics code follows the same standards as the rest of your Flutter/Dart app.
+- Run `dart analyze` + `dart test` before committing-analytics code follows the same standards as the rest of your Flutter/Dart app.
 
 ## Contributing
 
@@ -424,16 +424,16 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
 
 ## FAQ
 
-- **Why YAML instead of defining events directly in Dart?**  
+- **Why YAML instead of defining events directly in Dart?**
   YAML is tooling-agnostic and easy for product/analytics teams to edit. `analytics_gen` transforms it into code, docs, and exports without duplication.
 
-- **Can I migrate existing events?**  
+- **Can I migrate existing events?**
   Yes. Start by mirroring your current events in YAML, run the generator, and gradually replace hard-coded `logEvent` calls with generated methods.
 
-- **Does this lock me into one provider?**  
+- **Does this lock me into one provider?**
   No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
-- **Is it safe to commit generated files?**  
+- **Is it safe to commit generated files?**
   Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](doc/CODE_REVIEW.md)).
 
 ## License
