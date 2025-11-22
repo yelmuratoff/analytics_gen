@@ -5,14 +5,6 @@
 /// - Code generation from YAML configuration
 /// - Multiple analytics provider support
 /// - Testing utilities
-///
-/// {@category overview}
-/// {@category onboarding}
-/// {@category validation}
-/// {@category capabilities}
-/// {@category migration}
-/// {@category scalability}
-/// {@category code_review}
 library;
 
 // Configuration
