@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0-dev01]
+- Add new documentation files and configure pubspec for API reference links and dartdoc inclusion.
+
 ## [0.2.1]
 
 ### Breaking Changes
