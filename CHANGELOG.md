@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.1] - 2025-11-21
+## [0.2.1]
 
 ### Breaking Changes
 - **Configuration Structure Update**: The `analytics_gen.yaml` file has been completely restructured into logical groups (`inputs`, `outputs`, `targets`, `rules`) to improve readability and organization.
@@ -62,7 +62,7 @@ All notable changes to this project will be documented in this file.
 - Added `ignore_for_file` lints and generation timestamp to generated files.
 - `Analytics.reset()` for testing and hot-restart scenarios.
 
-## [0.2.0] - 2025-11-20
+## [0.2.0]
 - **Updates**:
   - Optimized generator performance with parallel processing and smart I/O.
   - Stable API supporting both Dependency Injection and Singleton patterns.
@@ -79,7 +79,7 @@ All notable changes to this project will be documented in this file.
   - Full test coverage (100%).
   - Stricter linting rules and CI guardrails.
 
-## [0.1.6] - 2025-11-17
+## [0.1.6]
 - Add `include_event_description` config option to optionally include an
   event's `description` property inside the emitted `logger.logEvent`
    parameters map. This flag defaults to `false` to preserve existing
@@ -100,12 +100,12 @@ All notable changes to this project will be documented in this file.
     (no silent mutations), so designs and engineers can detect typos
     or handle advanced use cases explicitly.
 
-## [0.1.5] - 2025-11-16
+## [0.1.5]
 - The entire package is 100% tested.
 - Github Actions have been added for code review and testing.
 - Improved documentation with usage examples.
 
-## [0.1.4] - 2025-11-15
+## [0.1.4]
 - Library vs CLI logging cleanup: internal generators and parsers now emit logs only when a verbose callback is provided, while the CLI keeps the rich user-friendly output.
 - Core models (`AnalyticsParameter`, `AnalyticsEvent`, `AnalyticsDomain`) implement value semantics and have dedicated equality tests.
 - YAML parser is much stricter: domains/events/parameters must be maps, errors surface file + key context, and malformed structures throw `FormatException`.
@@ -131,17 +131,17 @@ All notable changes to this project will be documented in this file.
 - Parser now enforces that every analytics event name (custom `event_name` or the default `<domain>: <event>`) is unique across domains so generation fails fast on collisions.
 - Added a `--plan` CLI flag that surfaces the tracking plan fingerprint, domain/event counts, and parameter lists without writing files so teams can inspect instrumentation quickly.
 
-## [0.1.3] - 2025-11-14
+## [0.1.3]
 - Fix badge issues
 
-## [0.1.2] - 2025-11-14
+## [0.1.2]
 - Refactor string interpolation and formatting in code generation
 
-## [0.1.1] - 2025-11-13
+## [0.1.1]
 - Some minor updates and fixes.
 
-## [0.1.0] - 2025-11-13
+## [0.1.0]
 - Some minor updates and fixes.
 
-## [0.0.1] - 2025-11-13
+## [0.0.1]
 - Initial release of `analytics_gen` package.
