@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.1]
+## [1.0.2]
 - Enhance SQL generator with additional event and parameter metadata, sorting, and utility functions for improved data representation.
 - Update analytics CSV and JSON export formats with new event metadata fields and improved structure.
 - Delete `ParameterParser` and its tests, consolidating parameter parsing logic into shared components.

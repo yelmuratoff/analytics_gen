@@ -15,19 +15,17 @@
 /// {@category code_review}
 library;
 
-// Configuration
 export 'src/config/analytics_config.dart';
-// Core interfaces and base classes
 export 'src/core/analytics_base.dart';
 export 'src/core/analytics_capabilities.dart';
 export 'src/core/analytics_interface.dart';
 export 'src/core/async_analytics_interface.dart';
-// Models (useful for advanced usage)
+export 'src/models/analytics_domain.dart';
 export 'src/models/analytics_event.dart';
+export 'src/models/analytics_parameter.dart';
 export 'src/models/recorded_event.dart';
 export 'src/services/async_analytics_adapter.dart';
 export 'src/services/batching_analytics.dart';
-// Service implementations
 export 'src/services/mock_analytics_service.dart';
 export 'src/services/multi_provider_analytics.dart';
 export 'src/util/logger.dart';
