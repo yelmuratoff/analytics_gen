@@ -1,7 +1,8 @@
 import 'dart:convert';
 
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+
 import '../../config/naming_strategy.dart';
-import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 // dart:io not required directly since file utils handle IO
 import '../../util/file_utils.dart';

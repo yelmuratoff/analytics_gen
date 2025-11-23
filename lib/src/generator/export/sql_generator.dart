@@ -1,5 +1,6 @@
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+
 import '../../config/naming_strategy.dart';
-import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/file_utils.dart';
 import '../generation_metadata.dart';

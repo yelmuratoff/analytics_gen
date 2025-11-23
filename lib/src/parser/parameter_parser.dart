@@ -1,8 +1,8 @@
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
-import '../models/analytics_event.dart';
 import '../util/string_utils.dart';
 
 /// Helper class responsible for parsing analytics parameters from YAML.

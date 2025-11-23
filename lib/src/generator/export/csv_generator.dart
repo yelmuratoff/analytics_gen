@@ -1,6 +1,8 @@
 // dart:io not required directly
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
+
 import '../../config/naming_strategy.dart';
-import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/file_utils.dart';
 
@@ -197,10 +199,12 @@ final class CsvGenerator {
 
             final validation = <String>[];
             if (param.regex != null) validation.add('regex:${param.regex}');
-            if (param.minLength != null)
+            if (param.minLength != null) {
               validation.add('min_len:${param.minLength}');
-            if (param.maxLength != null)
+            }
+            if (param.maxLength != null) {
               validation.add('max_len:${param.maxLength}');
+            }
             if (param.min != null) validation.add('min:${param.min}');
             if (param.max != null) validation.add('max:${param.max}');
 

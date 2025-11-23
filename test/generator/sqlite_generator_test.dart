@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/sqlite_generator.dart';
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 

@@ -192,7 +192,7 @@ abstract class BaseRenderer {
   /// Escapes and encodes a list of allowed values for code generation.
   ///
   /// Returns a comma-separated string of escaped values ready for code.
-  String encodeAllowedValues(List<Object> values) {
+  String encodeAllowedValues(List<dynamic> values) {
     return values.map((value) {
       if (value is String) {
         return "'${StringUtils.escapeSingleQuoted(value)}'";
@@ -202,7 +202,7 @@ abstract class BaseRenderer {
   }
 
   /// Joins allowed values for error messages.
-  String joinAllowedValues(List<Object> values) {
+  String joinAllowedValues(List<dynamic> values) {
     return values.join(', ');
   }
 

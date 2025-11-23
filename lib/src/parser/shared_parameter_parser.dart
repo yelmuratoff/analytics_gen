@@ -1,7 +1,7 @@
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:yaml/yaml.dart';
 
 import '../core/exceptions.dart';
-import '../models/analytics_event.dart';
 import 'event_loader.dart';
 import 'parameter_parser.dart';
 import 'schema_validator.dart';
