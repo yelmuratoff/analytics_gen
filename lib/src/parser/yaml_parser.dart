@@ -7,7 +7,6 @@ import '../util/logger.dart';
 import 'context_parser.dart';
 import 'domain_parser.dart';
 import 'event_loader.dart';
-import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'shared_parameter_parser.dart';
 
@@ -43,9 +42,8 @@ final class YamlParser {
           this.naming,
           strictEventNames: strictEventNames,
         );
-    _parameterParser = ParameterParser(this.naming);
+    // _parameterParser removed
     _domainParser = DomainParser(
-      parameterParser: _parameterParser,
       validator: _validator,
       loadYamlNode: _loadYamlNode,
       naming: this.naming,
@@ -57,14 +55,14 @@ final class YamlParser {
       domainHook: domainHook,
     );
     _contextParser = ContextParser(
-      parameterParser: _parameterParser,
       validator: _validator,
       loadYamlNode: _loadYamlNode,
+      naming: this.naming,
     );
     _sharedParameterParser = SharedParameterParser(
-      parameterParser: _parameterParser,
       validator: _validator,
       loadYamlNode: _loadYamlNode,
+      naming: this.naming,
     );
   }
 
@@ -88,7 +86,6 @@ final class YamlParser {
   /// Shared parameters available to all events.
   final Map<String, AnalyticsParameter> sharedParameters;
 
-  late final ParameterParser _parameterParser;
   late final SchemaValidator _validator;
   late final DomainParser _domainParser;
   late final ContextParser _contextParser;
@@ -117,12 +114,13 @@ final class YamlParser {
     required String eventName,
     required String filePath,
   }) {
-    final parser = ParameterParser(const NamingStrategy());
-    return parser.parseParameters(
+    // Use the static method on AnalyticsParameter
+    return AnalyticsParameter.fromYamlMap(
       parametersYaml,
       domainName: domainName,
       eventName: eventName,
       filePath: filePath,
+      naming: const NamingStrategy(),
     );
   }
 

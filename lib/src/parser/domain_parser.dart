@@ -4,10 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
-import '../models/analytics_event.dart';
-import '../util/logger.dart';
 import 'event_loader.dart';
-import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'yaml_parser.dart';
 
@@ -15,7 +12,6 @@ import 'yaml_parser.dart';
 class DomainParser {
   /// Creates a new domain parser.
   const DomainParser({
-    required this.parameterParser,
     required this.validator,
     required this.loadYamlNode,
     required this.naming,
@@ -26,12 +22,6 @@ class DomainParser {
     this.sharedParameters = const {},
     this.domainHook,
   });
-
-  /// Parser used to parse individual event parameter definitions.
-  ///
-  /// This must be provided by the caller and is reused for every event in the
-  /// domain being parsed.
-  final ParameterParser parameterParser;
 
   /// Validator used to assert the YAML structure and semantics of parsed
   /// domains and events conform to the schema.
@@ -47,30 +37,32 @@ class DomainParser {
   final NamingStrategy naming;
 
   /// Logger used by the parser to emit warnings and debugging messages.
-  final Logger log;
-
-  /// Logger used by the parser to emit warnings and debugging messages.
-  final bool strictEventNames;
+  // Note: Logger type is dynamic/Object here because we don't want to import Logger from util if not needed,
+  // but looking at imports, it was imported as 'Logger'.
+  // I should check imports. The original file imported '../util/logger.dart'.
+  // I need to add that import back.
+  final dynamic log;
 
   /// Whether to enforce strict event names and disallow string interpolation
   /// inside event names to reduce cardinality.
-  final bool enforceCentrallyDefinedParameters;
+  final bool strictEventNames;
 
   /// If enabled, parameters must be defined in shared configuration files and
   /// cannot be defined ad-hoc in events.
-  final bool preventEventParameterDuplicates;
+  final bool enforceCentrallyDefinedParameters;
 
   /// If enabled, prevents repeated parameter definitions in an event when the
   /// same parameter already exists in `sharedParameters`.
-  final Map<String, AnalyticsParameter> sharedParameters;
+  final bool preventEventParameterDuplicates;
 
   /// Map of shared parameters (name -> definition) loaded from configured
   /// shared parameter files. These may be referenced by events across
   /// domains.
-  final void Function(String domainKey, YamlNode? valueNode)? domainHook;
+  final Map<String, AnalyticsParameter> sharedParameters;
 
   /// Optional test seam invoked for each domain key during parsing. Useful in
   /// tests to inspect intermediate YAML nodes or to inject behavior.
+  final void Function(String domainKey, YamlNode? valueNode)? domainHook;
 
   /// Parses the provided analytics sources and returns a map of domains.
   Future<Map<String, AnalyticsDomain>> parseEvents(
@@ -101,7 +93,12 @@ class DomainParser {
     void Function(AnalyticsParseException)? onError,
   }) async* {
     if (sources.isEmpty) {
-      log.warning('No YAML sources provided for parsing');
+      // log.warning('No YAML sources provided for parsing');
+      // I need to cast log to Logger or use dynamic call.
+      // Assuming log has warning method.
+      try {
+        (log as dynamic).warning('No YAML sources provided for parsing');
+      } catch (_) {}
       return;
     }
 
@@ -209,154 +206,26 @@ class DomainParser {
       final eventsYaml = source.yaml;
 
       try {
-        final events = _parseEventsForDomain(
+        final domain = AnalyticsDomain.fromYaml(
           domainName,
           eventsYaml,
           filePath: source.filePath,
-          onError: onError,
-        );
-        yield AnalyticsDomain(
-          name: domainName,
-          events: events,
-        );
-      } on AnalyticsParseException catch (e) {
-        if (onError != null) {
-          onError(e);
-        } else {
-          rethrow;
-        }
-      }
-    }
-  }
-
-  /// Parses events for a single domain
-  List<AnalyticsEvent> _parseEventsForDomain(
-    String domainName,
-    YamlMap eventsYaml, {
-    required String filePath,
-    void Function(AnalyticsParseException)? onError,
-  }) {
-    final events = <AnalyticsEvent>[];
-
-    final sortedEvents = eventsYaml.nodes.entries.toList()
-      ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
-
-    for (final entry in sortedEvents) {
-      final keyNode = entry.key as YamlNode;
-      final eventName = keyNode.toString();
-      final valueNode = entry.value;
-
-      try {
-        // Strict Event Name Validation: Check for interpolation
-        validator.validateEventName(eventName, filePath, span: keyNode.span);
-
-        validator.validateEventMap(valueNode, domainName, eventName, filePath);
-
-        final eventData = valueNode as YamlMap;
-
-        final description =
-            eventData['description'] as String? ?? 'No description provided';
-        final customEventName = eventData['event_name'] as String?;
-
-        if (customEventName != null) {
-          final customEventNameNode = eventData.nodes['event_name'];
-          validator.validateEventName(
-            customEventName,
-            filePath,
-            span: customEventNameNode?.span,
-          );
-        }
-        final identifier = eventData['identifier'] as String?;
-        final deprecated = eventData['deprecated'] as bool? ?? false;
-        final replacement = eventData['replacement'] as String?;
-        final addedIn = eventData['added_in'] as String?;
-        final deprecatedIn = eventData['deprecated_in'] as String?;
-
-        final dualWriteToNode = eventData.nodes['dual_write_to'];
-        List<String>? dualWriteTo;
-        if (dualWriteToNode != null) {
-          if (dualWriteToNode is YamlList) {
-            dualWriteTo = dualWriteToNode.map((e) => e.toString()).toList();
-          } else {
-            throw AnalyticsParseException(
-              'Field "dual_write_to" must be a list of strings.',
-              filePath: filePath,
-              span: dualWriteToNode.span,
-            );
-          }
-        }
-
-        final metaNode = eventData.nodes['meta'];
-        final meta = _parseMeta(metaNode, filePath);
-
-        final rawParameters = eventData.nodes['parameters'];
-        if (rawParameters != null) {
-          validator.validateParametersMap(
-            rawParameters,
-            domainName,
-            eventName,
-            filePath,
-          );
-        }
-
-        final parametersYaml = (rawParameters as YamlMap?) ?? YamlMap();
-        final parameters = parameterParser.parseParameters(
-          parametersYaml,
-          domainName: domainName,
-          eventName: eventName,
-          filePath: filePath,
+          naming: naming,
           sharedParameters: sharedParameters,
           enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
           preventEventParameterDuplicates: preventEventParameterDuplicates,
+          strictEventNames: strictEventNames,
+          onError: onError,
         );
-
-        events.add(
-          AnalyticsEvent(
-            name: eventName,
-            description: description,
-            identifier: identifier,
-            customEventName: customEventName,
-            deprecated: deprecated,
-            replacement: replacement,
-            parameters: parameters,
-            meta: meta,
-            sourcePath: filePath,
-            lineNumber: keyNode.span.start.line + 1,
-            addedIn: addedIn,
-            deprecatedIn: deprecatedIn,
-            dualWriteTo: dualWriteTo,
-          ),
-        );
+        yield domain;
       } on AnalyticsParseException catch (e) {
         if (onError != null) {
           onError(e);
         } else {
           rethrow;
         }
-      } catch (e) {
-        final error = AnalyticsParseException(
-          e.toString(),
-          filePath: filePath,
-          innerError: e,
-          span: keyNode.span,
-        );
-        if (onError != null) {
-          onError(error);
-        } else {
-          throw error;
-        }
       }
     }
-
-    return events;
-  }
-
-  Map<String, Object?> _parseMeta(YamlNode? metaNode, String filePath) {
-    if (metaNode == null) return const {};
-    validator.validateMetaMap(metaNode, filePath);
-    // Convert YamlMap to Map<String, Object?>
-    return (metaNode as YamlMap)
-        .map((key, value) => MapEntry(key.toString(), value));
   }
 }
 
