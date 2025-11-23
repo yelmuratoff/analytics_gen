@@ -1,9 +1,9 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:path/path.dart' as path;
 
 import '../../config/naming_strategy.dart';
-import '../../models/analytics_event.dart';
 import '../../util/logger.dart';
 import 'sql_generator.dart';
 

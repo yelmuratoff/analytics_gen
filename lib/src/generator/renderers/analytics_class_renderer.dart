@@ -1,3 +1,6 @@
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
+
 import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';

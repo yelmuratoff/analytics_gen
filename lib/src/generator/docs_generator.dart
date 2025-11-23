@@ -1,3 +1,5 @@
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';

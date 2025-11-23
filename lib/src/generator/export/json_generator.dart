@@ -1,7 +1,8 @@
 import 'dart:convert';
 
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+
 import '../../config/naming_strategy.dart';
-import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 // dart:io not required directly since file utils handle IO
 import '../../util/file_utils.dart';
@@ -42,46 +43,58 @@ final class JsonGenerator {
     return {
       'metadata': metadata.toJson(),
       'domains': domains.entries.map((entry) {
+        final domainName = entry.key;
+        final domain = entry.value;
+
         return {
-          'name': entry.key,
-          'event_count': entry.value.eventCount,
-          'parameter_count': entry.value.parameterCount,
-          'events': entry.value.events.map((event) {
-            return {
-              'name': event.name,
-              'event_name':
-                  EventNaming.resolveEventName(entry.key, event, naming),
-              'identifier':
-                  EventNaming.resolveIdentifier(entry.key, event, naming),
-              'description': event.description,
-              'deprecated': event.deprecated,
-              if (event.replacement != null) 'replacement': event.replacement,
-              if (event.addedIn != null) 'added_in': event.addedIn,
-              if (event.deprecatedIn != null)
-                'deprecated_in': event.deprecatedIn,
-              if (event.dualWriteTo != null && event.dualWriteTo!.isNotEmpty)
-                'dual_write_to': event.dualWriteTo,
-              if (event.meta.isNotEmpty) 'meta': event.meta,
-              'parameters': event.parameters.map((p) {
-                return {
-                  'name': p.name,
-                  if (p.codeName != p.name) 'code_name': p.codeName,
-                  'type': p.type,
-                  'nullable': p.isNullable,
-                  if (p.description != null) 'description': p.description,
-                  if (p.allowedValues != null && p.allowedValues!.isNotEmpty)
-                    'allowed_values': p.allowedValues,
-                  if (p.regex != null) 'regex': p.regex,
-                  if (p.minLength != null) 'min_length': p.minLength,
-                  if (p.maxLength != null) 'max_length': p.maxLength,
-                  if (p.min != null) 'min': p.min,
-                  if (p.max != null) 'max': p.max,
-                  if (p.addedIn != null) 'added_in': p.addedIn,
-                  if (p.deprecatedIn != null) 'deprecated_in': p.deprecatedIn,
-                  if (p.meta.isNotEmpty) 'meta': p.meta,
-                };
-              }).toList(),
-            };
+          'name': domainName,
+          'event_count': domain.eventCount,
+          'parameter_count': domain.parameterCount,
+          'events': domain.events.map((event) {
+            final eventMap = event.toMap();
+
+            // Add computed fields
+            eventMap['event_name'] =
+                EventNaming.resolveEventName(domainName, event, naming);
+            eventMap['identifier'] =
+                EventNaming.resolveIdentifier(domainName, event, naming);
+
+            // Ensure parameters are also maps (handled by event.toMap())
+            // We can optionally process parameters here if needed, but toMap should suffice.
+
+            // Remove fields that might be redundant or internal if necessary,
+            // but for "export" usually more data is better.
+            // The previous implementation conditionally added some fields (e.g. replacement).
+            // toMap includes them with null values if they are null.
+            // We might want to filter out nulls to keep JSON clean?
+            // The previous implementation used `if (event.replacement != null) ...`
+            // Let's filter nulls from the map to match that behavior and keep it clean.
+            eventMap.removeWhere((key, value) =>
+                value == null ||
+                (value is Iterable && value.isEmpty) ||
+                (value is Map && value.isEmpty));
+
+            // Remove internal fields that shouldn't be exported
+            eventMap.remove('source_path');
+
+            // Also filter nulls from parameters
+            if (eventMap['parameters'] is List) {
+              eventMap['parameters'] =
+                  (eventMap['parameters'] as List).map((p) {
+                if (p is Map) {
+                  final pMap = Map<String, dynamic>.from(p);
+                  pMap.removeWhere((key, value) =>
+                      value == null ||
+                      (value is Iterable && value.isEmpty) ||
+                      (value is Map && value.isEmpty));
+                  pMap.remove('source_path');
+                  return pMap;
+                }
+                return p;
+              }).toList();
+            }
+
+            return eventMap;
           }).toList(),
         };
       }).toList(),

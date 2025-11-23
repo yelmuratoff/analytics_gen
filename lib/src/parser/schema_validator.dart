@@ -1,3 +1,4 @@
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:source_span/source_span.dart';
 import 'package:yaml/yaml.dart';
 

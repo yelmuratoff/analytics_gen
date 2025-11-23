@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
-import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 

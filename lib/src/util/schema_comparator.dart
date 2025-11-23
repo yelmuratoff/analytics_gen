@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
+
 import '../models/analytics_event.dart';
 
 /// Represents a type of schema change.

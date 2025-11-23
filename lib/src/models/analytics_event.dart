@@ -1,130 +1,172 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
+import 'package:source_span/source_span.dart';
+import 'package:yaml/yaml.dart';
 
-const _listEq = ListEquality<Object>();
-const _mapEq = MapEquality<String, Object?>();
-
-/// Represents a single analytics event parameter.
-final class AnalyticsParameter {
-  /// Creates a new analytics parameter.
-  const AnalyticsParameter({
-    required this.name,
-    String? codeName,
-    required this.type,
-    required this.isNullable,
-    this.description,
-    this.allowedValues,
-    this.regex,
-    this.minLength,
-    this.maxLength,
-    this.min,
-    this.max,
-    this.meta = const {},
-    this.operations,
-    this.addedIn,
-    this.deprecatedIn,
-    this.sourceName,
-  }) : codeName = codeName ?? name;
-
-  /// Analytics key that gets sent to providers.
-  final String name;
-
-  /// The original key in the YAML file (if different from name).
-  final String? sourceName;
-
-  /// Identifier used when generating Dart API (defaults to [name]).
-  final String codeName;
-
-  /// The Dart type of the parameter.
-  final String type;
-
-  /// Whether the parameter is nullable.
-  final bool isNullable;
-
-  /// Optional description of the parameter.
-  final String? description;
-
-  /// Optional list of allowed values.
-  final List<Object>? allowedValues;
-
-  // Validation rules
-  /// Regex pattern for validation.
-  final String? regex;
-
-  /// Minimum length for string parameters.
-  final int? minLength;
-
-  /// Maximum length for string parameters.
-  final int? maxLength;
-
-  /// Minimum value for numeric parameters.
-  final num? min;
-
-  /// Maximum value for numeric parameters.
-  final num? max;
-
-  /// Custom metadata for this parameter (e.g. PII flags, ownership).
-  final Map<String, Object?> meta;
-
-  /// List of operations supported by this parameter (e.g. set, increment).
-  /// Only used for context properties.
-  final List<String>? operations;
-
-  /// Version when this parameter was added.
-  final String? addedIn;
-
-  /// Version when this parameter was deprecated.
-  final String? deprecatedIn;
-
-  @override
-  String toString() => '$name: $type${isNullable ? '?' : ''}';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is AnalyticsParameter &&
-        other.name == name &&
-        other.codeName == codeName &&
-        other.type == type &&
-        other.isNullable == isNullable &&
-        other.description == description &&
-        _listEq.equals(other.allowedValues, allowedValues) &&
-        other.regex == regex &&
-        other.minLength == minLength &&
-        other.maxLength == maxLength &&
-        other.min == min &&
-        other.max == max &&
-        _mapEq.equals(other.meta, meta) &&
-        _listEq.equals(other.operations, operations) &&
-        other.addedIn == addedIn &&
-        other.deprecatedIn == deprecatedIn &&
-        other.sourceName == sourceName;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        name,
-        codeName,
-        type,
-        isNullable,
-        description,
-        _listEq.hash(allowedValues ?? const []),
-        regex,
-        minLength,
-        maxLength,
-        min,
-        max,
-        _mapEq.hash(meta),
-        _listEq.hash(operations ?? const []),
-        addedIn,
-        deprecatedIn,
-        sourceName,
-      );
-}
-
-const _paramListEq = ListEquality<AnalyticsParameter>();
+import '../config/naming_strategy.dart';
+import '../core/exceptions.dart';
+import '../models/analytics_parameter.dart';
 
 /// Represents a single analytics event.
+@immutable
 final class AnalyticsEvent {
+  /// Parses an event from a YAML node.
+  factory AnalyticsEvent.fromYaml(
+    String eventName,
+    YamlNode valueNode, {
+    required String domainName,
+    required String filePath,
+    required NamingStrategy naming,
+    Map<String, AnalyticsParameter> sharedParameters = const {},
+    bool enforceCentrallyDefinedParameters = false,
+    bool preventEventParameterDuplicates = false,
+    bool strictEventNames = true,
+    SourceSpan? keySpan,
+  }) {
+    if (valueNode is! YamlMap) {
+      throw AnalyticsParseException(
+        'Event "$domainName.$eventName" must be a map.',
+        filePath: filePath,
+        span: valueNode.span,
+      );
+    }
+
+    final eventData = valueNode;
+
+    // Strict Event Name Validation: Check for interpolation
+    if (strictEventNames &&
+        (eventName.contains('{') || eventName.contains('}'))) {
+      throw AnalyticsParseException(
+        'Event name "$eventName" contains interpolation characters "{}" or "{}". '
+        'Dynamic event names are discouraged as they lead to high cardinality.',
+        filePath: filePath,
+        span: keySpan ?? valueNode.span,
+      );
+    }
+
+    final description =
+        eventData['description'] as String? ?? 'No description provided';
+    final customEventName = eventData['event_name'] as String?;
+
+    if (customEventName != null) {
+      final customEventNameNode = eventData.nodes['event_name'];
+      if (strictEventNames &&
+          (customEventName.contains('{') || customEventName.contains('}'))) {
+        throw AnalyticsParseException(
+          'Event name "$customEventName" contains interpolation characters "{}" or "{}". '
+          'Dynamic event names are discouraged as they lead to high cardinality.',
+          filePath: filePath,
+          span: customEventNameNode?.span,
+        );
+      }
+    }
+    final identifier = eventData['identifier'] as String?;
+    final deprecated = eventData['deprecated'] as bool? ?? false;
+    final replacement = eventData['replacement'] as String?;
+    final addedIn = eventData['added_in'] as String?;
+    final deprecatedIn = eventData['deprecated_in'] as String?;
+
+    final dualWriteToNode = eventData.nodes['dual_write_to'];
+    List<String>? dualWriteTo;
+    if (dualWriteToNode != null) {
+      if (dualWriteToNode is YamlList) {
+        dualWriteTo = dualWriteToNode.map((e) => e.toString()).toList();
+      } else {
+        throw AnalyticsParseException(
+          'Field "dual_write_to" must be a list of strings.',
+          filePath: filePath,
+          span: dualWriteToNode.span,
+        );
+      }
+    }
+
+    final metaNode = eventData.nodes['meta'];
+    Map<String, dynamic> meta = const {};
+    if (metaNode != null) {
+      if (metaNode is! YamlMap) {
+        throw AnalyticsParseException(
+          'The "meta" field must be a map.',
+          filePath: filePath,
+          span: metaNode.span,
+        );
+      }
+      meta = metaNode.map((key, value) => MapEntry(key.toString(), value));
+    }
+
+    final rawParameters = eventData.nodes['parameters'];
+    final parameters = <AnalyticsParameter>[];
+
+    if (rawParameters != null) {
+      if (rawParameters is! YamlMap) {
+        throw AnalyticsParseException(
+          'Parameters for event "$domainName.$eventName" must be a map.',
+          filePath: filePath,
+          span: rawParameters.span,
+        );
+      }
+
+      final parsedParams = AnalyticsParameter.fromYamlMap(
+        rawParameters,
+        domainName: domainName,
+        eventName: eventName,
+        filePath: filePath,
+        naming: naming,
+        sharedParameters: sharedParameters,
+        enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
+        preventEventParameterDuplicates: preventEventParameterDuplicates,
+      );
+      parameters.addAll(parsedParams);
+    }
+
+    return AnalyticsEvent(
+      name: eventName,
+      description: description,
+      identifier: identifier,
+      customEventName: customEventName,
+      parameters: parameters,
+      deprecated: deprecated,
+      replacement: replacement,
+      meta: meta,
+      sourcePath: filePath,
+      lineNumber: valueNode.span.start.line + 1,
+      addedIn: addedIn,
+      deprecatedIn: deprecatedIn,
+      dualWriteTo: dualWriteTo,
+    );
+  }
+
+  /// Creates a new analytics event from a map.
+  factory AnalyticsEvent.fromMap(Map<String, dynamic> map) {
+    T cast<T>(String k) => map[k] is T
+        ? map[k] as T
+        : throw ArgumentError.value(map[k], k, '$T ← ${map[k].runtimeType}');
+    return AnalyticsEvent(
+      name: cast<String?>('name') ?? '',
+      description: cast<String?>('description') ?? '',
+      identifier: cast<String?>('identifier'),
+      customEventName: cast<String?>('custom_event_name'),
+      parameters: List<AnalyticsParameter>.from(cast<Iterable?>('parameters')
+              ?.map((x) => AnalyticsParameter.fromMap(Map.from(x as Map))) ??
+          const <AnalyticsParameter>[]),
+      deprecated: cast<bool?>('deprecated') ?? false,
+      replacement: cast<String?>('replacement'),
+      meta: Map<String, dynamic>.from(cast<Map?>('meta') ?? const {}),
+      sourcePath: cast<String?>('source_path'),
+      lineNumber: cast<num?>('line_number')?.toInt(),
+      addedIn: cast<String?>('added_in'),
+      deprecatedIn: cast<String?>('deprecated_in'),
+      dualWriteTo: map['dual_write_to'] != null
+          ? List<String>.from(cast<Iterable>('dual_write_to'))
+          : null,
+    );
+  }
+
+  /// Creates a new analytics event from a JSON string.
+  factory AnalyticsEvent.fromJson(String source) =>
+      AnalyticsEvent.fromMap(json.decode(source) as Map<String, dynamic>);
+
   /// Creates a new analytics event.
   const AnalyticsEvent({
     required this.name,
@@ -164,7 +206,7 @@ final class AnalyticsEvent {
   final String? replacement;
 
   /// Custom metadata for this event (e.g. ownership, Jira tickets).
-  final Map<String, Object?> meta;
+  final Map<String, dynamic> meta;
 
   /// The path to the file where this event is defined.
   final String? sourcePath;
@@ -187,74 +229,97 @@ final class AnalyticsEvent {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+    final collectionEquals = const DeepCollectionEquality().equals;
+
     return other is AnalyticsEvent &&
         other.name == name &&
         other.description == description &&
         other.identifier == identifier &&
         other.customEventName == customEventName &&
+        collectionEquals(other.parameters, parameters) &&
         other.deprecated == deprecated &&
         other.replacement == replacement &&
-        _paramListEq.equals(other.parameters, parameters) &&
-        _mapEq.equals(other.meta, meta) &&
+        collectionEquals(other.meta, meta) &&
         other.sourcePath == sourcePath &&
         other.lineNumber == lineNumber &&
         other.addedIn == addedIn &&
         other.deprecatedIn == deprecatedIn &&
-        _listEq.equals(other.dualWriteTo, dualWriteTo);
+        collectionEquals(other.dualWriteTo, dualWriteTo);
   }
 
   @override
-  int get hashCode => Object.hash(
-        name,
-        description,
-        identifier,
-        customEventName,
-        deprecated,
-        replacement,
-        _paramListEq.hash(parameters),
-        _mapEq.hash(meta),
-        sourcePath,
-        lineNumber,
-        addedIn,
-        deprecatedIn,
-        _listEq.hash(dualWriteTo ?? const []),
-      );
-}
+  int get hashCode {
+    final deepHash = const DeepCollectionEquality().hash;
 
-const _eventListEq = ListEquality<AnalyticsEvent>();
-
-/// Represents an analytics domain containing multiple events.
-final class AnalyticsDomain {
-  /// Creates a new analytics domain.
-  const AnalyticsDomain({
-    required this.name,
-    required this.events,
-  });
-
-  /// The name of the domain.
-  final String name;
-
-  /// The list of events in this domain.
-  final List<AnalyticsEvent> events;
-
-  /// Returns the number of events in this domain.
-  int get eventCount => events.length;
-
-  /// Returns the total number of parameters across all events.
-  int get parameterCount =>
-      events.fold(0, (sum, event) => sum + event.parameters.length);
-
-  @override
-  String toString() => '$name ($eventCount events, $parameterCount parameters)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is AnalyticsDomain &&
-        other.name == name &&
-        _eventListEq.equals(other.events, events);
+    return Object.hashAll([
+      name,
+      description,
+      identifier,
+      customEventName,
+      deepHash(parameters),
+      deprecated,
+      replacement,
+      deepHash(meta),
+      sourcePath,
+      lineNumber,
+      addedIn,
+      deprecatedIn,
+      deepHash(dualWriteTo),
+    ]);
   }
 
-  @override
-  int get hashCode => Object.hash(name, _eventListEq.hash(events));
+  /// Creates a copy of this analytics event with the specified properties changed.
+  AnalyticsEvent copyWith({
+    String? name,
+    String? description,
+    String? identifier,
+    String? customEventName,
+    List<AnalyticsParameter>? parameters,
+    bool? deprecated,
+    String? replacement,
+    Map<String, dynamic>? meta,
+    String? sourcePath,
+    int? lineNumber,
+    String? addedIn,
+    String? deprecatedIn,
+    List<String>? dualWriteTo,
+  }) {
+    return AnalyticsEvent(
+      name: name ?? this.name,
+      description: description ?? this.description,
+      identifier: identifier ?? this.identifier,
+      customEventName: customEventName ?? this.customEventName,
+      parameters: parameters ?? this.parameters,
+      deprecated: deprecated ?? this.deprecated,
+      replacement: replacement ?? this.replacement,
+      meta: meta ?? this.meta,
+      sourcePath: sourcePath ?? this.sourcePath,
+      lineNumber: lineNumber ?? this.lineNumber,
+      addedIn: addedIn ?? this.addedIn,
+      deprecatedIn: deprecatedIn ?? this.deprecatedIn,
+      dualWriteTo: dualWriteTo ?? this.dualWriteTo,
+    );
+  }
+
+  /// Converts this analytics event to a map.
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'description': description,
+      'identifier': identifier,
+      'custom_event_name': customEventName,
+      'parameters': parameters.map((x) => x.toMap()).toList(),
+      'deprecated': deprecated,
+      'replacement': replacement,
+      'meta': meta,
+      'source_path': sourcePath,
+      'line_number': lineNumber,
+      'added_in': addedIn,
+      'deprecated_in': deprecatedIn,
+      'dual_write_to': dualWriteTo,
+    };
+  }
+
+  /// Converts this analytics event to a JSON string.
+  String toJson() => json.encode(toMap());
 }

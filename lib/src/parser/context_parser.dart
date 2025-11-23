@@ -1,9 +1,9 @@
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:yaml/yaml.dart';
 
+import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
-import '../models/analytics_event.dart';
 import 'event_loader.dart';
-import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'yaml_parser.dart';
 
@@ -11,13 +11,13 @@ import 'yaml_parser.dart';
 class ContextParser {
   /// Creates a new context parser.
   const ContextParser({
-    required this.parameterParser,
+    required this.naming,
     required this.validator,
     required this.loadYamlNode,
   });
 
-  /// Parser used to parse individual context parameters.
-  final ParameterParser parameterParser;
+  /// The naming strategy to use.
+  final NamingStrategy naming;
 
   /// Validator used to assert that the YAML structure conforms to the
   /// expected context schema.
@@ -79,11 +79,12 @@ class ContextParser {
         source.filePath,
       );
 
-      final parameters = parameterParser.parseParameters(
+      final parameters = AnalyticsParameter.fromYamlMap(
         propertiesNode as YamlMap,
         domainName: contextName,
         eventName: 'context', // Dummy
         filePath: source.filePath,
+        naming: naming,
       );
 
       contexts[contextName] = parameters;

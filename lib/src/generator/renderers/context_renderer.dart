@@ -1,4 +1,5 @@
-import '../../models/analytics_event.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
+
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
 import 'base_renderer.dart';

@@ -1,5 +1,6 @@
 import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/parser/schema_validator.dart';
 import 'package:test/test.dart';

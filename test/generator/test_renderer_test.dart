@@ -1,10 +1,52 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/renderers/test_renderer.dart';
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('TestRenderer', () {
+    test('renders test file with Dart imports by default', () {
+      final config = AnalyticsConfig(
+        outputPath: 'src/analytics/generated',
+      );
+      final renderer = TestRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [],
+        ),
+      };
+
+      final output = renderer.render(domains);
+
+      expect(output, contains("import 'package:test/test.dart';"));
+      expect(output,
+          isNot(contains("import 'package:flutter_test/flutter_test.dart';")));
+    });
+
+    test('renders test file with Flutter imports when isFlutter is true', () {
+      final config = AnalyticsConfig(
+        outputPath: 'src/analytics/generated',
+      );
+      final renderer = TestRenderer(config, isFlutter: true);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [],
+        ),
+      };
+
+      final output = renderer.render(domains);
+
+      expect(
+          output, contains("import 'package:flutter_test/flutter_test.dart';"));
+      expect(output, isNot(contains("import 'package:test/test.dart';")));
+    });
+
     test('renders test file with event construction checks', () {
       final config = AnalyticsConfig(
         outputPath: 'src/analytics/generated',

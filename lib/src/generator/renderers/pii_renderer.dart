@@ -1,5 +1,6 @@
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+
 import '../../config/analytics_config.dart';
-import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import 'base_renderer.dart';

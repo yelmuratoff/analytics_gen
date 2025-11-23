@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/csv_generator.dart';
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -78,9 +80,11 @@ void main() {
                   isNullable: false,
                   regex: '^[a-z]+\$',
                   meta: {'pii': true},
+                  addedIn: '1.0.0',
                 ),
               ],
               meta: {'owner': 'auth-team'},
+              addedIn: '1.0.0',
             ),
           ],
         ),
@@ -100,16 +104,41 @@ void main() {
           File(p.join(outputDir, 'analytics_event_parameters.csv'))
               .existsSync(),
           isTrue);
+      expect(
+          File(p.join(outputDir, 'analytics_master.csv')).existsSync(), isTrue);
+      expect(File(p.join(outputDir, 'analytics_domains.csv')).existsSync(),
+          isTrue);
+
+      final eventsCsv =
+          await File(p.join(outputDir, 'analytics_events.csv')).readAsString();
+      expect(eventsCsv, contains('1.0.0')); // AddedIn
+      expect(eventsCsv, isNot(contains('source_path')));
 
       final paramsCsv =
           await File(p.join(outputDir, 'analytics_parameters.csv'))
               .readAsString();
       expect(paramsCsv, contains('regex:^[a-z]+\$'));
       expect(paramsCsv, contains('pii=true'));
+      expect(paramsCsv, contains('1.0.0')); // AddedIn
 
       final metaCsv = await File(p.join(outputDir, 'analytics_metadata.csv'))
           .readAsString();
       expect(metaCsv, contains('owner,auth-team'));
+
+      final masterCsv =
+          await File(p.join(outputDir, 'analytics_master.csv')).readAsString();
+      expect(masterCsv, contains('domain,event_name'));
+      expect(
+          masterCsv, contains('auth,login')); // domain, event_name (resolved)
+      expect(masterCsv, contains('User login')); // description
+      expect(masterCsv, contains('method'));
+      expect(masterCsv, contains('string'));
+      expect(masterCsv, contains('false'));
+
+      final domainsCsv =
+          await File(p.join(outputDir, 'analytics_domains.csv')).readAsString();
+      expect(domainsCsv, contains('name,event_count,parameter_count'));
+      expect(domainsCsv, contains('auth,1,1'));
     });
   });
 }

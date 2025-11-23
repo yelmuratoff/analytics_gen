@@ -1,30 +1,45 @@
+import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
+
 import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
+import 'base_renderer.dart';
 import 'enum_renderer.dart';
 
 /// Renders a Dart test file to verify generated analytics events.
-class TestRenderer {
+class TestRenderer extends BaseRenderer {
   /// Creates a new test renderer.
-  const TestRenderer(this.config);
+  const TestRenderer(
+    this.config, {
+    this.isFlutter = false,
+  });
 
   /// The analytics configuration.
   final AnalyticsConfig config;
+
+  /// Whether the project is a Flutter project.
+  final bool isFlutter;
 
   /// Renders the test file content.
   String render(Map<String, AnalyticsDomain> domains) {
     final buffer = StringBuffer();
 
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln();
-    buffer.writeln("import 'package:test/test.dart';");
-    buffer.writeln("import 'package:analytics_gen/analytics_gen.dart';");
-    buffer.writeln("import '../lib/${config.outputPath}/analytics.dart';");
-    buffer
-        .writeln("import '../lib/${config.outputPath}/generated_events.dart';");
-    buffer.writeln();
+    buffer.write(renderFileHeader());
+
+    final imports = <String>[
+      if (isFlutter)
+        'package:flutter_test/flutter_test.dart'
+      else
+        'package:test/test.dart',
+      'package:analytics_gen/analytics_gen.dart',
+      '../lib/${config.outputPath}/analytics.dart',
+      '../lib/${config.outputPath}/generated_events.dart',
+    ];
+
+    buffer.write(renderImports(imports));
 
     buffer.writeln('void main() {');
     buffer.writeln("  group('Analytics Plan Tests', () {");

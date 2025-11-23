@@ -1,9 +1,9 @@
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:yaml/yaml.dart';
 
+import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
-import '../models/analytics_event.dart';
 import 'event_loader.dart';
-import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'yaml_parser.dart';
 
@@ -11,14 +11,13 @@ import 'yaml_parser.dart';
 class SharedParameterParser {
   /// Creates a new shared parameter parser.
   const SharedParameterParser({
-    required this.parameterParser,
+    required this.naming,
     required this.validator,
     required this.loadYamlNode,
   });
 
-  /// The parser responsible for parsing `parameters` YAML maps into
-  /// `AnalyticsParameter` model instances.
-  final ParameterParser parameterParser;
+  /// The naming strategy to use.
+  final NamingStrategy naming;
 
   /// The schema validator used to validate the structure and types
   /// of the shared parameters YAML before parsing.
@@ -76,11 +75,12 @@ class SharedParameterParser {
       source.filePath,
     );
 
-    final parametersList = parameterParser.parseParameters(
+    final parametersList = AnalyticsParameter.fromYamlMap(
       parametersNode,
       domainName: 'shared',
       eventName: 'shared',
       filePath: source.filePath,
+      naming: naming,
     );
 
     return {for (final p in parametersList) p.name: p};

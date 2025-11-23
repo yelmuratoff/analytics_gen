@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/export/json_generator.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -176,6 +178,11 @@ void main() {
       expect(login['deprecated_in'], equals('1.2.3'));
       expect(login['dual_write_to'],
           equals(['auth.legacy_login', 'tracking.login']));
+      expect(login.containsKey('source_path'), isFalse);
+
+      final paramsJson = login['parameters'] as List<dynamic>;
+      final method = paramsJson.first as Map<String, dynamic>;
+      expect(method.containsKey('source_path'), isFalse);
     });
 
     test('omits dual_write_to when empty list is provided', () async {
