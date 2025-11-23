@@ -13,42 +13,41 @@
       "events": [
         {
           "name": "login",
-          "event_name": "auth: login",
-          "identifier": "auth.login",
           "description": "User logs in to the application",
+          "identifier": "auth.login",
+          "parameters": [
+            {
+              "name": "method",
+              "source_name": "method",
+              "code_name": "method",
+              "type": "string",
+              "is_nullable": false,
+              "description": "Login method (email, google, apple)",
+              "meta": {
+                "pii": true
+              }
+            }
+          ],
           "deprecated": true,
           "replacement": "auth.login_v2",
           "meta": {
             "owner": "auth-team",
             "tier": "critical"
           },
-          "parameters": [
-            {
-              "name": "method",
-              "type": "string",
-              "nullable": false,
-              "description": "Login method (email, google, apple)",
-              "meta": {
-                "pii": true
-              }
-            }
-          ]
+          "line_number": 3,
+          "event_name": "auth: login"
         },
         {
           "name": "login_v2",
-          "event_name": "auth: login_v2",
-          "identifier": "auth.login_v2",
           "description": "User logs in to the application (v2)",
-          "deprecated": false,
-          "dual_write_to": [
-            "auth.login"
-          ],
+          "identifier": "auth.login_v2",
           "parameters": [
             {
               "name": "login-method",
+              "source_name": "method",
               "code_name": "login_method",
               "type": "string",
-              "nullable": false,
+              "is_nullable": false,
               "description": "Login method v2 (email, google, apple)",
               "allowed_values": [
                 "email",
@@ -58,68 +57,88 @@
             },
             {
               "name": "session_id",
+              "source_name": "session_id",
+              "code_name": "session_id",
               "type": "String",
-              "nullable": false,
+              "is_nullable": false,
               "description": "Unique identifier for the current session."
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 17,
+          "dual_write_to": [
+            "auth.login"
+          ],
+          "event_name": "auth: login_v2"
         },
         {
           "name": "logout",
-          "event_name": "auth: logout",
-          "identifier": "auth.logout",
           "description": "User logs out",
+          "identifier": "auth.logout",
           "deprecated": false,
-          "parameters": []
+          "line_number": 29,
+          "event_name": "auth: logout"
         },
         {
           "name": "phone_login",
-          "event_name": "Auth: Phone {phone_country}",
-          "identifier": "auth.phone_login",
           "description": "When user logs in via phone",
-          "deprecated": false,
+          "identifier": "auth.phone_login",
+          "custom_event_name": "Auth: Phone {phone_country}",
           "parameters": [
             {
               "name": "phone_country",
+              "source_name": "phone_country",
+              "code_name": "phone_country",
               "type": "string",
-              "nullable": false,
+              "is_nullable": false,
               "description": "ISO country code for the dialed number"
             },
             {
               "name": "tracking-token",
+              "source_name": "tracking_token",
               "code_name": "tracking_token",
               "type": "string",
-              "nullable": false,
+              "is_nullable": false,
               "description": "Legacy token kept for backend reconciliation"
             },
             {
               "name": "user_exists",
+              "source_name": "user_exists",
+              "code_name": "user_exists",
               "type": "bool",
-              "nullable": true,
+              "is_nullable": true,
               "description": "Whether the user exists or not"
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 42,
+          "event_name": "Auth: Phone {phone_country}"
         },
         {
           "name": "signup",
-          "event_name": "auth: signup",
-          "identifier": "auth.signup",
           "description": "User creates a new account",
-          "deprecated": false,
+          "identifier": "auth.signup",
           "parameters": [
             {
               "name": "method",
+              "source_name": "method",
+              "code_name": "method",
               "type": "string",
-              "nullable": false
+              "is_nullable": false
             },
             {
               "name": "referral_code",
+              "source_name": "referral_code",
+              "code_name": "referral_code",
               "type": "string",
-              "nullable": true,
+              "is_nullable": true,
               "description": "Optional referral code used during signup",
               "regex": "^[A-Z0-9]{6}$"
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 33,
+          "event_name": "auth: signup"
         }
       ]
     },
@@ -130,56 +149,68 @@
       "events": [
         {
           "name": "cancelled",
-          "event_name": "Purchase Flow: cancelled",
-          "identifier": "purchase.cancelled",
           "description": "User cancelled a purchase",
-          "deprecated": false,
+          "identifier": "purchase.cancelled",
           "parameters": [
             {
               "name": "product_id",
+              "source_name": "product_id",
+              "code_name": "product_id",
               "type": "string",
-              "nullable": false
+              "is_nullable": false
             },
             {
               "name": "reason",
+              "source_name": "reason",
+              "code_name": "reason",
               "type": "string",
-              "nullable": true,
+              "is_nullable": true,
               "description": "Reason for cancellation"
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 19,
+          "event_name": "Purchase Flow: cancelled"
         },
         {
           "name": "completed",
-          "event_name": "Purchase Flow: completed",
-          "identifier": "purchase.completed",
           "description": "User completed a purchase",
-          "deprecated": false,
+          "identifier": "purchase.completed",
           "parameters": [
             {
               "name": "currency-code",
+              "source_name": "currency",
               "code_name": "currency_code",
               "type": "string",
-              "nullable": false
+              "is_nullable": false
             },
             {
               "name": "amount_value",
+              "source_name": "price",
               "code_name": "price",
               "type": "double",
-              "nullable": false,
+              "is_nullable": false,
               "description": "Localized amount used by legacy dashboards"
             },
             {
               "name": "product_id",
+              "source_name": "product_id",
+              "code_name": "product_id",
               "type": "string",
-              "nullable": false
+              "is_nullable": false
             },
             {
               "name": "quantity",
+              "source_name": "quantity",
+              "code_name": "quantity",
               "type": "int",
-              "nullable": false,
+              "is_nullable": false,
               "description": "Number of items purchased"
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 3,
+          "event_name": "Purchase Flow: completed"
         }
       ]
     },
@@ -190,45 +221,56 @@
       "events": [
         {
           "name": "legacy_view",
-          "event_name": "Screen: Legacy",
-          "identifier": "screen.legacy_view",
           "description": "Legacy backend identifier kept for parity",
-          "deprecated": false,
+          "identifier": "screen.legacy_view",
+          "custom_event_name": "Screen: Legacy",
           "parameters": [
             {
               "name": "legacy-screen-code",
+              "source_name": "legacy_screen_code",
               "code_name": "legacy_screen_code",
               "type": "string",
-              "nullable": false,
+              "is_nullable": false,
               "description": "Three-letter code provided by data team"
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 15,
+          "event_name": "Screen: Legacy"
         },
         {
           "name": "view",
-          "event_name": "Screen: {screen_name}",
-          "identifier": "Screen: {screen_name}",
           "description": "User views a screen",
-          "deprecated": false,
+          "identifier": "Screen: {screen_name}",
+          "custom_event_name": "Screen: {screen_name}",
           "parameters": [
             {
               "name": "duration_ms",
+              "source_name": "duration_ms",
+              "code_name": "duration_ms",
               "type": "int",
-              "nullable": true,
+              "is_nullable": true,
               "description": "Time spent on previous screen in milliseconds"
             },
             {
               "name": "previous_screen",
+              "source_name": "previous_screen",
+              "code_name": "previous_screen",
               "type": "string",
-              "nullable": true,
+              "is_nullable": true,
               "description": "Name of the previous screen"
             },
             {
               "name": "screen_name",
+              "source_name": "screen_name",
+              "code_name": "screen_name",
               "type": "string",
-              "nullable": false
+              "is_nullable": false
             }
-          ]
+          ],
+          "deprecated": false,
+          "line_number": 3,
+          "event_name": "Screen: {screen_name}"
         }
       ]
     }

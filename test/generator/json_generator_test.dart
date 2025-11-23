@@ -178,6 +178,11 @@ void main() {
       expect(login['deprecated_in'], equals('1.2.3'));
       expect(login['dual_write_to'],
           equals(['auth.legacy_login', 'tracking.login']));
+      expect(login.containsKey('source_path'), isFalse);
+
+      final paramsJson = login['parameters'] as List<dynamic>;
+      final method = paramsJson.first as Map<String, dynamic>;
+      expect(method.containsKey('source_path'), isFalse);
     });
 
     test('omits dual_write_to when empty list is provided', () async {

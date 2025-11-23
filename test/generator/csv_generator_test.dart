@@ -112,6 +112,7 @@ void main() {
       final eventsCsv =
           await File(p.join(outputDir, 'analytics_events.csv')).readAsString();
       expect(eventsCsv, contains('1.0.0')); // AddedIn
+      expect(eventsCsv, isNot(contains('source_path')));
 
       final paramsCsv =
           await File(p.join(outputDir, 'analytics_parameters.csv'))
@@ -126,11 +127,17 @@ void main() {
 
       final masterCsv =
           await File(p.join(outputDir, 'analytics_master.csv')).readAsString();
-      expect(masterCsv, contains('auth,auth: login,User login'));
-      expect(masterCsv, contains('method,string,false'));
+      expect(masterCsv, contains('domain,event_name'));
+      expect(
+          masterCsv, contains('auth,login')); // domain, event_name (resolved)
+      expect(masterCsv, contains('User login')); // description
+      expect(masterCsv, contains('method'));
+      expect(masterCsv, contains('string'));
+      expect(masterCsv, contains('false'));
 
       final domainsCsv =
           await File(p.join(outputDir, 'analytics_domains.csv')).readAsString();
+      expect(domainsCsv, contains('name,event_count,parameter_count'));
       expect(domainsCsv, contains('auth,1,1'));
     });
   });
