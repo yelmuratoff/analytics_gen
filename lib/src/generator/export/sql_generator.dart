@@ -148,8 +148,9 @@ final class SqlGenerator {
             EventNaming.resolveEventName(domain.name, event, naming);
         final identifier =
             EventNaming.resolveIdentifier(domain.name, event, naming);
-        final replacement =
-            event.replacement != null ? "'${_escape(event.replacement!)}'" : 'NULL';
+        final replacement = event.replacement != null
+            ? "'${_escape(event.replacement!)}'"
+            : 'NULL';
         final addedIn =
             event.addedIn != null ? "'${_escape(event.addedIn!)}'" : 'NULL';
         final deprecatedIn = event.deprecatedIn != null
@@ -160,8 +161,9 @@ final class SqlGenerator {
             : 'NULL';
         final dualWriteTo = _jsonOrNull(event.dualWriteTo);
         final meta = _jsonOrNull(event.meta);
-        final sourcePath =
-            event.sourcePath != null ? "'${_escape(event.sourcePath!)}'" : 'NULL';
+        final sourcePath = event.sourcePath != null
+            ? "'${_escape(event.sourcePath!)}'"
+            : 'NULL';
         final lineNumber =
             event.lineNumber != null ? event.lineNumber.toString() : 'NULL';
 
@@ -177,8 +179,9 @@ final class SqlGenerator {
         // Insert parameters
         for (final param in _sortedParameters(event.parameters)) {
           final nullable = param.isNullable ? 1 : 0;
-          final desc =
-              param.description != null ? "'${_escape(param.description!)}'" : 'NULL';
+          final desc = param.description != null
+              ? "'${_escape(param.description!)}'"
+              : 'NULL';
           final allowed = _jsonOrNull(param.allowedValues);
           final regex =
               param.regex != null ? "'${_escape(param.regex!)}'" : 'NULL';

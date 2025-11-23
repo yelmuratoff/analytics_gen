@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 
-
 /// Deterministic metadata used by docs and export generators.
 ///
 /// Captures totals and a fingerprint derived from the canonical ordering of
