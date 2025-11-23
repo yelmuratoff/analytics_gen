@@ -78,9 +78,11 @@ void main() {
                   isNullable: false,
                   regex: '^[a-z]+\$',
                   meta: {'pii': true},
+                  addedIn: '1.0.0',
                 ),
               ],
               meta: {'owner': 'auth-team'},
+              addedIn: '1.0.0',
             ),
           ],
         ),
@@ -100,16 +102,34 @@ void main() {
           File(p.join(outputDir, 'analytics_event_parameters.csv'))
               .existsSync(),
           isTrue);
+      expect(
+          File(p.join(outputDir, 'analytics_master.csv')).existsSync(), isTrue);
+      expect(File(p.join(outputDir, 'analytics_domains.csv')).existsSync(),
+          isTrue);
+
+      final eventsCsv =
+          await File(p.join(outputDir, 'analytics_events.csv')).readAsString();
+      expect(eventsCsv, contains('1.0.0')); // AddedIn
 
       final paramsCsv =
           await File(p.join(outputDir, 'analytics_parameters.csv'))
               .readAsString();
       expect(paramsCsv, contains('regex:^[a-z]+\$'));
       expect(paramsCsv, contains('pii=true'));
+      expect(paramsCsv, contains('1.0.0')); // AddedIn
 
       final metaCsv = await File(p.join(outputDir, 'analytics_metadata.csv'))
           .readAsString();
       expect(metaCsv, contains('owner,auth-team'));
+
+      final masterCsv =
+          await File(p.join(outputDir, 'analytics_master.csv')).readAsString();
+      expect(masterCsv, contains('auth,auth: login,User login'));
+      expect(masterCsv, contains('method,string,false'));
+
+      final domainsCsv =
+          await File(p.join(outputDir, 'analytics_domains.csv')).readAsString();
+      expect(domainsCsv, contains('auth,1,1'));
     });
   });
 }

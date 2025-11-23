@@ -1,10 +1,10 @@
-Domain,Event Name,Description,Deprecated,Replacement,Metadata
-auth,auth: login,User logs in to the application,true,auth.login_v2,owner=auth-team; tier=critical
-auth,auth: login_v2,User logs in to the application (v2),false,,
-auth,auth: logout,User logs out,false,,
-auth,Auth: Phone {phone_country},When user logs in via phone,false,,
-auth,auth: signup,User creates a new account,false,,
-purchase,Purchase Flow: cancelled,User cancelled a purchase,false,,
-purchase,Purchase Flow: completed,User completed a purchase,false,,
-screen,Screen: Legacy,Legacy backend identifier kept for parity,false,,
-screen,Screen: {screen_name},User views a screen,false,,
+Domain,Event Name,Description,Deprecated,Replacement,Added In,Deprecated In,Source Path,Metadata
+auth,auth: login,User logs in to the application,true,auth.login_v2,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/auth.yaml,owner=auth-team; tier=critical
+auth,auth: login_v2,User logs in to the application (v2),false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/auth.yaml,
+auth,auth: logout,User logs out,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/auth.yaml,
+auth,Auth: Phone {phone_country},When user logs in via phone,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/auth.yaml,
+auth,auth: signup,User creates a new account,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/auth.yaml,
+purchase,Purchase Flow: cancelled,User cancelled a purchase,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/purchase.yaml,
+purchase,Purchase Flow: completed,User completed a purchase,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/purchase.yaml,
+screen,Screen: Legacy,Legacy backend identifier kept for parity,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/screen.yaml,
+screen,Screen: {screen_name},User views a screen,false,,,,/Users/yelamanyelmuratov/Development/analytics_gen/example/events/screen.yaml,

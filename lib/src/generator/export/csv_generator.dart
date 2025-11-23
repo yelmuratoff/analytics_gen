@@ -23,6 +23,8 @@ final class CsvGenerator {
     await _generateMetadataCsv(domains, '$outputDir/analytics_metadata.csv');
     await _generateEventParametersCsv(
         domains, '$outputDir/analytics_event_parameters.csv');
+    await _generateMasterCsv(domains, '$outputDir/analytics_master.csv');
+    await _generateDomainsCsv(domains, '$outputDir/analytics_domains.csv');
   }
 
   Future<void> _generateEventsCsv(
@@ -31,7 +33,7 @@ final class CsvGenerator {
   ) async {
     final buffer = StringBuffer();
     buffer.writeln(
-      'Domain,Event Name,Description,Deprecated,Replacement,Metadata',
+      'Domain,Event Name,Description,Deprecated,Replacement,Added In,Deprecated In,Source Path,Metadata',
     );
 
     for (final domain in domains.values) {
@@ -48,6 +50,9 @@ final class CsvGenerator {
           '${_escape(event.description)},'
           '${event.deprecated},'
           '${_escape(event.replacement ?? '')},'
+          '${_escape(event.addedIn ?? '')},'
+          '${_escape(event.deprecatedIn ?? '')},'
+          '${_escape(event.sourcePath ?? '')},'
           '${_escape(meta)}',
         );
       }
@@ -61,7 +66,7 @@ final class CsvGenerator {
   ) async {
     final buffer = StringBuffer();
     buffer.writeln(
-      'Parameter Name,Type,Nullable,Description,Allowed Values,Validation,Metadata',
+      'Parameter Name,Type,Nullable,Description,Allowed Values,Validation,Added In,Deprecated In,Metadata',
     );
 
     final uniqueParams = <String, AnalyticsParameter>{};
@@ -99,6 +104,8 @@ final class CsvGenerator {
         '${_escape(param.description ?? '')},'
         '${_escape(allowed)},'
         '${_escape(validation.join(';'))},'
+        '${_escape(param.addedIn ?? '')},'
+        '${_escape(param.deprecatedIn ?? '')},'
         '${_escape(meta)}',
       );
     }
@@ -150,6 +157,90 @@ final class CsvGenerator {
           );
         }
       }
+    }
+    await writeFileIfContentChanged(outputPath, buffer.toString());
+  }
+
+  Future<void> _generateMasterCsv(
+    Map<String, AnalyticsDomain> domains,
+    String outputPath,
+  ) async {
+    final buffer = StringBuffer();
+    buffer.writeln(
+      'Domain,Event Name,Event Description,Event Deprecated,Event Replacement,Event AddedIn,Event DeprecatedIn,'
+      'Parameter Name,Parameter Type,Parameter Nullable,Parameter Description,Parameter Allowed Values,Parameter Validation,Parameter AddedIn,Parameter DeprecatedIn',
+    );
+
+    for (final domain in domains.values) {
+      for (final event in domain.events) {
+        final eventName =
+            EventNaming.resolveEventName(domain.name, event, naming);
+
+        if (event.parameters.isEmpty) {
+          // Write event line with empty parameter fields
+          buffer.writeln(
+            '${_escape(domain.name)},'
+            '${_escape(eventName)},'
+            '${_escape(event.description)},'
+            '${event.deprecated},'
+            '${_escape(event.replacement ?? '')},'
+            '${_escape(event.addedIn ?? '')},'
+            '${_escape(event.deprecatedIn ?? '')},'
+            ',,,,,,,,',
+          );
+        } else {
+          for (final param in event.parameters) {
+            final allowed =
+                (param.allowedValues != null && param.allowedValues!.isNotEmpty)
+                    ? param.allowedValues!.join('|')
+                    : '';
+
+            final validation = <String>[];
+            if (param.regex != null) validation.add('regex:${param.regex}');
+            if (param.minLength != null)
+              validation.add('min_len:${param.minLength}');
+            if (param.maxLength != null)
+              validation.add('max_len:${param.maxLength}');
+            if (param.min != null) validation.add('min:${param.min}');
+            if (param.max != null) validation.add('max:${param.max}');
+
+            buffer.writeln(
+              '${_escape(domain.name)},'
+              '${_escape(eventName)},'
+              '${_escape(event.description)},'
+              '${event.deprecated},'
+              '${_escape(event.replacement ?? '')},'
+              '${_escape(event.addedIn ?? '')},'
+              '${_escape(event.deprecatedIn ?? '')},'
+              '${_escape(param.name)},'
+              '${_escape(param.type)},'
+              '${param.isNullable},'
+              '${_escape(param.description ?? '')},'
+              '${_escape(allowed)},'
+              '${_escape(validation.join(';'))},'
+              '${_escape(param.addedIn ?? '')},'
+              '${_escape(param.deprecatedIn ?? '')}',
+            );
+          }
+        }
+      }
+    }
+    await writeFileIfContentChanged(outputPath, buffer.toString());
+  }
+
+  Future<void> _generateDomainsCsv(
+    Map<String, AnalyticsDomain> domains,
+    String outputPath,
+  ) async {
+    final buffer = StringBuffer();
+    buffer.writeln('Domain Name,Event Count,Parameter Count');
+
+    for (final domain in domains.values) {
+      buffer.writeln(
+        '${_escape(domain.name)},'
+        '${domain.eventCount},'
+        '${domain.parameterCount}',
+      );
     }
     await writeFileIfContentChanged(outputPath, buffer.toString());
   }
