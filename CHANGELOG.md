@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 - Update analytics CSV and JSON export formats with new event metadata fields and improved structure.
 - Delete `ParameterParser` and its tests, consolidating parameter parsing logic into shared components.
 - Formalize analytics data representation with dedicated `AnalyticsParameter` and `AnalyticsDomain` models.
+- Conditionally generate Flutter or Dart test imports based on project type.
+
 ## [1.0.0]
 - Add new documentation files and configure pubspec for API reference links and dartdoc inclusion.
 

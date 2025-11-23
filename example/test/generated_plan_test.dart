@@ -1,6 +1,9 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, unused_import
+// ignore_for_file: directives_ordering, unnecessary_string_interpolations
+// coverage:ignore-file
 
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:analytics_gen/analytics_gen.dart';
 import '../lib/src/analytics/generated/analytics.dart';
 import '../lib/src/analytics/generated/generated_events.dart';

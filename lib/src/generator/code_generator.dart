@@ -17,6 +17,7 @@ import 'renderers/test_renderer.dart';
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
   /// Creates a new code generator.
+  /// Creates a new code generator.
   CodeGenerator({
     required this.config,
     required this.projectRoot,
@@ -30,7 +31,11 @@ final class CodeGenerator {
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = eventRenderer ?? EventRenderer(config),
-        _testRenderer = testRenderer ?? TestRenderer(config);
+        _testRenderer = testRenderer ??
+            TestRenderer(
+              config,
+              isFlutter: _isFlutterProject(projectRoot),
+            );
 
   /// The analytics configuration.
   final AnalyticsConfig config;
@@ -282,6 +287,24 @@ final class CodeGenerator {
       if (entity is File && !generatedFiles.contains(entity.path)) {
         await entity.delete();
       }
+    }
+  }
+
+  /// Checks if the project is a Flutter project by inspecting pubspec.yaml
+  static bool _isFlutterProject(String projectRoot) {
+    try {
+      final pubspecFile = File(path.join(projectRoot, 'pubspec.yaml'));
+      if (!pubspecFile.existsSync()) return false;
+
+      final content = pubspecFile.readAsStringSync();
+      // Simple check for flutter dependency
+      // A more robust check would parse YAML, but this is sufficient for 99% of cases
+      // and avoids adding a yaml dependency here if not already present (though it likely is).
+      return content.contains('sdk: flutter') ||
+          content.contains('flutter:') ||
+          content.contains('flutter_test:');
+    } catch (e) {
+      return false;
     }
   }
 }
