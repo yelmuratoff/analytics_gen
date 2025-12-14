@@ -17,7 +17,8 @@
 
 ## Developer Experience & Safety Improvements
 
-- [ ] **3. PII Guardrails (Auto-hashing/Masking)**
+- [x] **~~3. PII Guardrails (Auto-hashing/Masking)~~**
+  - **Discarded**: Security best practices discourage sending PII (even hashed) to analytics. We prefer to rely on data minimization policies rather than false security of reversible hashes.
   - Problem: `meta: { pii: true }` is currently just documentation. Developers can still accidentally log raw PII.
   - Solution: Enforce PII handling in generated code.
     - Option A: Generated methods require wrapped types (e.g., `HashedString email` instead of `String email`).

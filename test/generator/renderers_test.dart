@@ -528,7 +528,7 @@ void main() {
               description: 'Login',
               meta: {
                 'owner': 'auth-team',
-                'pii': false,
+                'is_secure': false,
                 'version': 2,
               },
               parameters: [],
@@ -541,7 +541,7 @@ void main() {
 
       expect(result, contains('meta: <String, Object?>{'));
       expect(result, contains("'owner': 'auth-team',"));
-      expect(result, contains("'pii': false,"));
+      expect(result, contains("'is_secure': false,"));
       expect(result, contains("'version': 2,"));
     });
 
@@ -602,7 +602,7 @@ void main() {
                   isNullable: false,
                   allowedValues: ['email', 'google', "it's special"],
                   meta: {
-                    'pii': true,
+                    'is_sensitive': true,
                     'required': true,
                     "special_key'": "value'with'quotes",
                   },
@@ -620,7 +620,7 @@ void main() {
       expect(result, contains("'google',"));
       expect(result, contains("'it\\'s special',"));
       expect(result, contains('meta: <String, Object?>{'));
-      expect(result, contains("'pii': true,"));
+      expect(result, contains("'is_sensitive': true,"));
       expect(result, contains("'required': true,"));
       expect(result, contains("'special_key\\'': 'value\\'with\\'quotes',"));
     });

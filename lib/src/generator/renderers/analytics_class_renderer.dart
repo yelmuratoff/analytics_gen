@@ -5,20 +5,16 @@ import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';
 import 'base_renderer.dart';
-import 'pii_renderer.dart';
 
 /// Renders the main Analytics class with domain mixins and capabilities.
 class AnalyticsClassRenderer extends BaseRenderer {
   /// Creates a new analytics class renderer.
   AnalyticsClassRenderer(
-    this.config, {
-    PiiRenderer? piiRenderer,
-  }) : _piiRenderer = piiRenderer ?? PiiRenderer(config);
+    this.config,
+  );
 
   /// The analytics configuration.
   final AnalyticsConfig config;
-
-  final PiiRenderer _piiRenderer;
 
   /// Renders the Analytics class code.
   String renderAnalyticsClass(
@@ -122,9 +118,6 @@ class AnalyticsClassRenderer extends BaseRenderer {
       buffer.writeln();
     }
 
-    buffer.write(_piiRenderer.renderPiiPropertiesField(domains));
-    buffer.writeln();
-
     if (planFingerprint != null) {
       buffer.writeln(
           '  /// The fingerprint of the plan used to generate this code.');
@@ -169,9 +162,6 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln('  static void reset() {');
     buffer.writeln('    _instance = null;');
     buffer.writeln('  }');
-    buffer.writeln();
-
-    buffer.write(_piiRenderer.renderSanitizeParamsMethod());
     buffer.writeln();
 
     // Overrides

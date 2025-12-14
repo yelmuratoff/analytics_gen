@@ -11,7 +11,7 @@ auth:
         type: string
         description: Login method (email, google, apple)
         meta:
-          pii: true
+          is_sensitive: true
 
   login_v2:
     description: User logs in to the application (v2)

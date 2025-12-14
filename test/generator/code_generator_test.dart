@@ -457,62 +457,6 @@ delta:
       );
     });
 
-    test('generates PII properties and sanitizeParams method', () async {
-      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
-      await eventsFile.writeAsString(
-        'auth:\n'
-        '  login:\n'
-        '    description: User logs in\n'
-        '    parameters:\n'
-        '      email:\n'
-        '        type: string\n'
-        '        meta:\n'
-        '          pii: true\n'
-        '      method: string\n',
-      );
-
-      final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
-      );
-
-      final generator = CodeGenerator(
-        config: config,
-        projectRoot: tempProject.path,
-      );
-
-      final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
-      );
-      final sources = await loader.loadEventFiles();
-      final parser = YamlParser();
-      final domains = await parser.parseEvents(sources);
-
-      await generator.generate(domains);
-
-      final analyticsFile = File(
-        p.join(tempProject.path, 'lib', config.outputPath, 'analytics.dart'),
-      );
-      final analyticsContent = await analyticsFile.readAsString();
-
-      expect(
-        analyticsContent,
-        contains('static const Map<String, Set<String>> _piiProperties = {'),
-      );
-      expect(
-        analyticsContent,
-        contains("'auth: login': {'email'},"),
-      );
-      expect(
-        analyticsContent,
-        contains('static Map<String, Object?> sanitizeParams('),
-      );
-      expect(
-        analyticsContent,
-        contains("sanitized[key] = '[REDACTED]';"),
-      );
-    });
-
     test('generates dual-write method call within same domain when possible',
         () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));

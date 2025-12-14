@@ -155,14 +155,11 @@ user_login:
   description: User logged in successfully.
   meta:
     owner: "auth-team"
-    pii: false
     tier: "critical"
   parameters:
     method:
       type: string
       description: The method used to login (email, google, apple).
-      meta:
-        pii: true # Email might be PII if logged directly
 ```
 
 This metadata is:
