@@ -17,20 +17,13 @@
 
 ## Developer Experience & Safety Improvements
 
-- [x] **~~3. PII Guardrails (Auto-hashing/Masking)~~**
-  - **Discarded**: Security best practices discourage sending PII (even hashed) to analytics. We prefer to rely on data minimization policies rather than false security of reversible hashes.
-  - Problem: `meta: { pii: true }` is currently just documentation. Developers can still accidentally log raw PII.
-  - Solution: Enforce PII handling in generated code.
-    - Option A: Generated methods require wrapped types (e.g., `HashedString email` instead of `String email`).
-    - Option B: Auto-apply mask/hash logic in the generated method body unless an `allowUnsafe` flag is passed.
-
 - [ ] **5. Generated Test Matchers**
   - Problem: Testing analytics requires brittle mocks: `verify(mock.logEvent('login', {'method': 'email'}))`.
   - Solution: Generate typed Matchers for `package:test`.
     - Usage: `expect(analytics, emitsEvent(AuthEvents.login(method: 'email')))`.
     - Enables true TDD for analytics instrumentation.
 
-- [ ] **6. "Dead Event" Audit Command**
+- [x] **6. "Dead Event" Audit Command**
   - Problem: YAML plans grow indefinitely; unused events clutter the codebase and confusion.
   - Solution: Add `dart run analytics_gen:audit` command.
     - Scans the Dart codebase using `analyzer`.

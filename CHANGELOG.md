@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - Unreleased
+- Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan. 
+
 ## [1.0.2]
 - Enhance SQL generator with additional event and parameter metadata, sorting, and utility functions for improved data representation.
 - Update analytics CSV and JSON export formats with new event metadata fields and improved structure.

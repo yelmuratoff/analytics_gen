@@ -278,6 +278,7 @@ dart run analytics_gen:generate --exports --no-code
 dart run analytics_gen:generate --validate-only
 dart run analytics_gen:generate --plan
 dart run analytics_gen:generate --watch              # incremental rebuilds on file change
+dart run analytics_gen:audit                         # scan for unused events
 ```
 
 Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop-the config still drives CI.
@@ -290,6 +291,27 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 - **Strict Event Naming**: The parser forbids string interpolation in event names (e.g. `View ${page}`) to prevent high-cardinality events from polluting your analytics data. This is now enforced by default.
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
 - Full details live in [`doc/VALIDATION.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md).
+
+## "Dead Event" Audit
+
+Over time, analytics plans grow, and events are deprecated or removed from the codebase but left in the YAML. The audit command scans your Dart code (`lib/`) for usages of the generated event methods.
+
+```bash
+dart run analytics_gen:audit
+```
+
+**Output Example:**
+```text
+[WARN] Found 2 dead events (0 usages):
+[WARN]   - auth.login_v2 (Method: logAuthLoginV2)
+[WARN]     Defined in: events/auth.yaml:17
+[WARN]   - purchase.cancelled (Method: logPurchaseCancelled)
+[WARN]     Defined in: events/purchase.yaml:19
+```
+
+Supported flags:
+- `--config`: Path to your config file (default: `analytics_gen.yaml`).
+- `--verbose`: Show detailed logs.
 
 ## Analytics Providers & Capabilities
 

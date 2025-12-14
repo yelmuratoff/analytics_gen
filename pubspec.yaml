@@ -23,6 +23,7 @@ dependencies:
   collection: ^1.19.1
   source_span: ^1.10.1
   meta: ^1.11.0
+  analyzer: any
 
 dev_dependencies:
   lints: ^6.0.0
