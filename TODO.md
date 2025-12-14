@@ -11,18 +11,13 @@
     - Map non-nullable parameters to dbt tests (`not_null`).
   - This positions `analytics_gen` as a Single Source of Truth for both mobile app and Data Warehouse schemas.
 
-- [ ] **2. Semantic Validation Formats**
-  - Problem: Currently, validating formats like email or UUID requires complex, error-prone regex.
-  - Solution: Support a `format` field in parameters to automatically generate regex and checks.
-    - Example: `format: email`, `format: uuid`.
-
-- [ ] **3. Data Catalog Integration (AsyncAPI)**
+- [ ] **2. Data Catalog Integration (AsyncAPI)**
   - Problem: While Markdown docs are good, modern data platforms (DataHub, Amundsen) benefit from machine-readable specifications.
   - Solution: Generate AsyncAPI specifications, an industry standard for event-driven architectures.
 
 ## Developer Experience & Safety Improvements
 
-- [ ] **4. PII Guardrails (Auto-hashing/Masking)**
+- [ ] **3. PII Guardrails (Auto-hashing/Masking)**
   - Problem: `meta: { pii: true }` is currently just documentation. Developers can still accidentally log raw PII.
   - Solution: Enforce PII handling in generated code.
     - Option A: Generated methods require wrapped types (e.g., `HashedString email` instead of `String email`).
