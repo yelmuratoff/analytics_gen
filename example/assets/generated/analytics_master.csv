@@ -1,5 +1,5 @@
 domain,event_name,event_added_in,event_custom_event_name,event_deprecated,event_deprecated_in,event_description,event_dual_write_to,event_identifier,event_line_number,event_meta,event_replacement,parameter_added_in,parameter_allowed_values,parameter_code_name,parameter_deprecated_in,parameter_description,parameter_is_nullable,parameter_max,parameter_max_length,parameter_meta,parameter_min,parameter_min_length,parameter_name,parameter_operations,parameter_regex,parameter_source_name,parameter_type,parameter_validation
-auth,login,,,true,,User logs in to the application,,,3,owner=auth-team; tier=critical,auth.login_v2,,,method,,"Login method (email, google, apple)",false,,,pii=true,,,method,,,method,string,
+auth,login,,,true,,User logs in to the application,,,3,owner=auth-team; tier=critical,auth.login_v2,,,method,,"Login method (email, google, apple)",false,,,is_sensitive=true,,,method,,,method,string,
 auth,login_v2,,,false,,User logs in to the application (v2),auth.login,,17,,,,email|google|apple,login_method,,"Login method v2 (email, google, apple)",false,,,,,,login-method,,,method,string,
 auth,login_v2,,,false,,User logs in to the application (v2),auth.login,,17,,,,,session_id,,Unique identifier for the current session.,false,,,,,,session_id,,,session_id,String,
 auth,logout,,,false,,User logs out,,,29,,,,,,,,,,,,,,,,,,,

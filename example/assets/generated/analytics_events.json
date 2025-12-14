@@ -24,7 +24,7 @@
               "is_nullable": false,
               "description": "Login method (email, google, apple)",
               "meta": {
-                "pii": true
+                "is_sensitive": true
               }
             }
           ],

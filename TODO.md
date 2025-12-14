@@ -18,15 +18,10 @@
   - Problem: YAML diffs in PRs are hard to read.
   - Solution: Add `dart run analytics_gen:diff --base=main` command.
 
-- [ ] **5. JSON Schema for IDE Autocomplete**
-  - Problem: Developers make syntax errors in YAML.
-  - Solution: Generate `analytics_gen.schema.json`.
-    - **High Priority**: This replaces the need for a Visual Editor.
-
-- [ ] **6. Automated Changelog (`ANALYTICS_CHANGELOG.md`)**
+- [ ] **5. Automated Changelog (`ANALYTICS_CHANGELOG.md`)**
   - Solution: Auto-append to a `ANALYTICS_CHANGELOG.md` file during generation.
 
-- [ ] **7. Type-Safe Dart Enum Mapping**
+- [ ] **6. Type-Safe Dart Enum Mapping**
   - Problem: Passing Dart enums to analytics requires `.name` everywhere.
   - Solution: Support `dart_type` in YAML parameter definition.
 
