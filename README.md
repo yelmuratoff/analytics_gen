@@ -131,6 +131,62 @@ enum AnalyticsAuthLoginMethodEnum {
 void logAuthLogin({required AnalyticsAuthLoginMethodEnum method}) { ... }
 ```
 
+## Type-Safe Dart Enums (`dart_type`)
+
+You can also use existing Dart enums (or other classes) directly by specifying `dart_type`. The generator will use this type in the method signature and serialize it using `.name`.
+
+```yaml
+feature:
+  interact:
+    parameters:
+      status:
+        dart_type: VerificationStatus # Must be available in scope
+      reason:
+        dart_type: ReasonEnum?
+```
+
+Generated code:
+```dart
+void logFeatureInteract({
+  required VerificationStatus status,
+  ReasonEnum? reason,
+}) {
+  logger.logEvent(
+    name: "feature: interact",
+    parameters: {
+      "status": status.name,
+      if (reason != null) "reason": reason?.name,
+    },
+  );
+}
+```
+
+> **Note**: By default, the generator does not know where `VerificationStatus` is defined. You must ensure it is imported.
+
+### Managing Imports
+
+You have two ways to add imports for your custom types:
+
+#### 1. Global Imports (Recommended for Barrel Files)
+Add a list of imports to your `analytics_gen.yaml`. These will be added to **every** generated event file. This is ideal if you have a single "barrel file" that exports all your analytics enums.
+
+```yaml
+analytics_gen:
+  inputs:
+    imports:
+      - 'package:my_app/analytics/analytics_types.dart'
+      - 'package:my_app/core/models/user_status.dart'
+```
+
+#### 2. Local Imports (For One-offs)
+Specify the import directly on the parameter using the `import` key. This is useful for unique types used in only one place.
+
+```yaml
+status:
+  dart_type: VerificationStatus
+  import: 'package:my_app/features/auth/verification_status.dart'
+```
+
 ## Dual-Write Migration
 
 When migrating from an old event to a new one, you can use `dual_write_to` to automatically log to both events during the transition period.

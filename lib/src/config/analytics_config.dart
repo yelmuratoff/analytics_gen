@@ -21,6 +21,7 @@ final class AnalyticsConfig {
     this.preventEventParameterDuplicates = false,
     this.naming = const NamingStrategy(),
     this.contexts = const [],
+    this.imports = const [],
   });
 
   /// Creates config from YAML map
@@ -69,6 +70,9 @@ final class AnalyticsConfig {
       naming: NamingStrategy.fromYaml(config['naming'] as Map?),
       contexts:
           (inputs['contexts'] ?? config['contexts'] as List?)?.cast<String>() ??
+              const [],
+      imports:
+          (inputs['imports'] ?? config['imports'] as List?)?.cast<String>() ??
               const [],
     );
   }
@@ -133,4 +137,8 @@ final class AnalyticsConfig {
   /// List of paths to context definition files (relative to project root).
   /// These files define stateful properties (e.g. user properties, session context).
   final List<String> contexts;
+
+  /// List of custom imports to include in generated files.
+  /// This is useful for importing external types used in `dart_type`.
+  final List<String> imports;
 }

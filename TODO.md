@@ -21,7 +21,8 @@
 - [ ] **5. Automated Changelog (`ANALYTICS_CHANGELOG.md`)**
   - Solution: Auto-append to a `ANALYTICS_CHANGELOG.md` file during generation. Add ability to change from config.
 
-- [ ] **6. Type-Safe Dart Enum Mapping**
+- [x] Type-Safe Dart Enum Mapping (`dart_type`)
+- [x] Custom Imports Support (`imports` global + `import` local)**
   - Problem: Passing Dart enums to analytics requires `.name` everywhere.
   - Solution: Support `dart_type` in YAML parameter definition.
 

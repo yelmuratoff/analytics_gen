@@ -3,7 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.0.3] - Unreleased
-- Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan. 
+- Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan.
+- Added `dart_type` parameter option to map parameters to existing Dart types (Enums/Classes).
+- Added Global `imports` configuration to `analytics_gen.yaml` for including external types.
+- Added Local `import` parameter option for granular type importing.
 
 ## [1.0.2]
 - Enhance SQL generator with additional event and parameter metadata, sorting, and utility functions for improved data representation.

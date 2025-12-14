@@ -4,6 +4,7 @@
 // coverage:ignore-file
 
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:example/models.dart';
 
 /// Generated mixin for purchase analytics events
 mixin AnalyticsPurchase on AnalyticsBase {

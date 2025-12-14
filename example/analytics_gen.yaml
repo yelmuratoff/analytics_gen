@@ -9,10 +9,14 @@ analytics_gen:
       - events/shared_user.yaml
       - events/shared_app.yaml
 
-    # Additional context files (e.g. user properties, theme context)
-    contexts:
+      # Additional context files (e.g. user properties, theme context)
+
       - events/theme_context.yaml
       - events/user_properties.yaml
+
+    # Global imports
+    imports:
+      - package:example/models.dart
 
   # Output configurations
   outputs:

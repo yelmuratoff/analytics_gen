@@ -7,8 +7,6 @@ import 'package:analytics_gen/analytics_gen.dart';
 import 'package:meta/meta.dart';
 
 import 'generated_events.dart';
-import 'contexts/theme_context.dart';
-import 'contexts/user_properties_context.dart';
 
 /// Main Analytics class.
 ///
@@ -26,35 +24,7 @@ import 'contexts/user_properties_context.dart';
 /// Analytics.initialize(YourAnalyticsService());
 /// Analytics.instance.logAuthLogin(method: "email");
 /// ```
-///
-/// ## Available Capabilities
-///
-/// This class provides context property setters via capabilities:
-///
-/// **Theme**
-/// - Key: `themeKey`
-/// - Type: `ThemeCapability`
-/// - Usage:
-/// ```dart
-/// Analytics.instance.setThemePropertyName(value);
-/// ```
-///
-/// **UserProperties**
-/// - Key: `userPropertiesKey`
-/// - Type: `UserPropertiesCapability`
-/// - Usage:
-/// ```dart
-/// Analytics.instance.setUserPropertiesPropertyName(value);
-/// ```
-///
-/// Note: Capabilities are provider-specific. Ensure your analytics
-/// provider implements the required capability interfaces.
-final class Analytics extends AnalyticsBase with
-    AnalyticsAuth,
-    AnalyticsPurchase,
-    AnalyticsScreen,
-    AnalyticsTheme,
-    AnalyticsUserProperties
+final class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPurchase, AnalyticsScreen
 {
   final IAnalytics _analytics;
   final AnalyticsCapabilityResolver _capabilities;
@@ -169,6 +139,23 @@ final class Analytics extends AnalyticsBase with
             ),
           ],
         ),
+        AnalyticsEvent(
+          name: 'verify_user',
+          description: 'User verification status change',
+          deprecated: false,
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'local_status',
+              type: 'import',
+              isNullable: false,
+            ),
+            AnalyticsParameter(
+              name: 'status',
+              type: 'dynamic',
+              isNullable: false,
+            ),
+          ],
+        ),
       ],
     ),
     AnalyticsDomain(
@@ -274,7 +261,7 @@ final class Analytics extends AnalyticsBase with
   ];
 
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '61c5a4357487b877';
+  static const String planFingerprint = '53e744d999308654';
 
   // --- Singleton Compatibility ---
 

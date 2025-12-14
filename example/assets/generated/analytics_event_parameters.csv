@@ -7,6 +7,8 @@ Auth: Phone {phone_country},tracking-token,true
 Auth: Phone {phone_country},user_exists,false
 auth: signup,method,true
 auth: signup,referral_code,false
+auth: verify_user,local_status,true
+auth: verify_user,status,true
 Purchase Flow: cancelled,product_id,true
 Purchase Flow: cancelled,reason,false
 Purchase Flow: completed,currency-code,true

@@ -27,9 +27,45 @@ class EventRenderer extends BaseRenderer {
   ) {
     final buffer = StringBuffer();
 
+    // Collect imports from parameters
+    final localImports = <String>{};
+    for (final event in domain.events) {
+      for (final param in event.parameters) {
+        if (param.dartImport != null) {
+          // Assuming the import string is a valid Dart import URI (e.g. 'package:foo/bar.dart')
+          // If it's just 'package:foo/bar.dart', renderImports handles it.
+          // If the user provided 'import "package:foo/bar.dart";', we might need stripping,
+          // but let's assume raw URI for now as per plan.
+          localImports.add("import '${param.dartImport}';");
+        }
+      }
+    }
+
     // File header
     buffer.write(renderFileHeader());
-    buffer.write(renderImports(['package:analytics_gen/analytics_gen.dart']));
+
+    // Deduplicate and write imports
+    // renderImports expects a list of URIs or full import statements?
+    // Looking at base_renderer: renderImports(List<String> imports) usually takes URIs
+    // but here we are mixing raw URIs and potential full statements.
+    // Let's check BaseRenderer.renderImports implementation via assumption or view_file if unsure.
+    // The previous code was: renderImports(['package:analytics_gen/analytics_gen.dart', ...config.imports])
+    // So it expects URIs.
+
+    // improved logic:
+    final importUris = <String>{
+      'package:analytics_gen/analytics_gen.dart',
+      ...config.imports,
+    };
+    for (final event in domain.events) {
+      for (final param in event.parameters) {
+        if (param.dartImport != null) {
+          importUris.add(param.dartImport!);
+        }
+      }
+    }
+
+    buffer.write(renderImports(importUris.toList()..sort()));
 
     // Generate Enums
     buffer.write(const EnumRenderer().renderEnums(domainName, domain));
@@ -105,9 +141,15 @@ class EventRenderer extends BaseRenderer {
         final isEnum = param.type == 'string' &&
             param.allowedValues != null &&
             param.allowedValues!.isNotEmpty;
-        final typeName = isEnum
-            ? const EnumRenderer().buildEnumName(domainName, event, param)
-            : DartTypeMapper.toDartType(param.type);
+
+        String typeName;
+        if (param.dartType != null) {
+          typeName = param.dartType!;
+        } else {
+          typeName = isEnum
+              ? const EnumRenderer().buildEnumName(domainName, event, param)
+              : DartTypeMapper.toDartType(param.type);
+        }
 
         if (param.description != null) {
           buffer.writeln(
@@ -132,7 +174,9 @@ class EventRenderer extends BaseRenderer {
             param.allowedValues!.isNotEmpty;
 
         String dartType;
-        if (isEnum) {
+        if (param.dartType != null) {
+          dartType = param.dartType!;
+        } else if (isEnum) {
           dartType =
               const EnumRenderer().buildEnumName(domainName, event, param);
         } else {
@@ -155,6 +199,9 @@ class EventRenderer extends BaseRenderer {
       buffer.writeln();
 
       for (final param in event.parameters) {
+        // Skip validation for external Dart types as valid values are enforced by type
+        if (param.dartType != null) continue;
+
         final isEnum = param.type == 'string' &&
             param.allowedValues != null &&
             param.allowedValues!.isNotEmpty;
@@ -231,9 +278,18 @@ class EventRenderer extends BaseRenderer {
             param.allowedValues != null &&
             param.allowedValues!.isNotEmpty;
 
-        final valueAccess = isEnum
-            ? (param.isNullable ? '$camelParam?.value' : '$camelParam.value')
-            : camelParam;
+        String valueAccess;
+        if (param.dartType != null) {
+          // Serialize external Dart types using .name (assumed Enum)
+          valueAccess =
+              param.isNullable ? '$camelParam?.name' : '$camelParam.name';
+        } else if (isEnum) {
+          // Serialize generated Enum wrappers using .value
+          valueAccess =
+              param.isNullable ? '$camelParam?.value' : '$camelParam.value';
+        } else {
+          valueAccess = camelParam;
+        }
 
         if (param.isNullable) {
           buffer.writeln(
@@ -377,7 +433,15 @@ class EventRenderer extends BaseRenderer {
           targetParam.allowedValues != null &&
           targetParam.allowedValues!.isNotEmpty;
 
-      if (targetParam.type == sourceParam.type) {
+      // Handle dart_type matching
+      if (sourceParam.dartType != null || targetParam.dartType != null) {
+        if (sourceParam.dartType == targetParam.dartType) {
+          args.add('$targetArgName: $sourceVarName');
+        } else {
+          // Mismatch in dart_type, cannot guarantee compatibility
+          return null;
+        }
+      } else if (targetParam.type == sourceParam.type) {
         if (sourceIsEnum && !targetIsEnum) {
           // Enum -> String
           args.add('$targetArgName: $sourceVarName.value');

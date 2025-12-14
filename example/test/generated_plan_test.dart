@@ -43,6 +43,12 @@ void main() {
           method: 'test',
         ), returnsNormally);
       });
+      test('logAuthVerifyUser constructs correctly', () {
+        expect(() => analytics.logAuthVerifyUser(
+          localStatus: null,
+          status: null,
+        ), returnsNormally);
+      });
     });
     group('purchase', () {
       test('logPurchaseCancelled constructs correctly', () {

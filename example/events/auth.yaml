@@ -54,3 +54,12 @@ auth:
         identifier: tracking_token
         param_name: tracking-token
         description: Legacy token kept for backend reconciliation
+
+  verify_user:
+    description: User verification status change
+    parameters:
+      status:
+        dart_type: VerificationStatus
+      local_status:
+        dart_type: LocalStatus
+        import: package:example/local_enums.dart

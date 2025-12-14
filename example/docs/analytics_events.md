@@ -1,25 +1,23 @@
 # Analytics Events Documentation
 
-Fingerprint: `61c5a4357487b877`
-Domains: 3 | Events: 9 | Parameters: 18
+Fingerprint: `53e744d999308654`
+Domains: 3 | Events: 10 | Parameters: 20
 
 ## Table of Contents
 
 - [auth](#auth)
 - [purchase](#purchase)
 - [screen](#screen)
-- [Theme](#theme)
-- [User Properties](#user-properties)
 
 ## Summary
 
 - **Total Domains**: 3
-- **Total Events**: 9
-- **Total Parameters**: 18
+- **Total Events**: 10
+- **Total Parameters**: 20
 
 ## auth
 
-Events: 5 | Parameters: 8
+Events: 6 | Parameters: 10
 
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
@@ -28,6 +26,7 @@ Events: 5 | Parameters: 8
 | auth: logout | User logs out | Active | - | - |
 | Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (string): ISO country code for the dialed number<br>`tracking-token` (string): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not | - |
 | auth: signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup | - |
+| auth: verify_user | User verification status change | Active | `local_status` (import)<br>`status` (dynamic) | - |
 
 ### Code Examples
 
@@ -94,27 +93,6 @@ Analytics.instance.logScreenView(
 );
 
 ```
-
-## Theme
-
-Count: 2
-
-| Property | Type | Description | Allowed Values | Metadata |
-|----------|------|-------------|----------------|----------|
-| is_dark_mode | bool | Whether the app is in dark mode | - | - |
-| primary_color | String | The primary color hex code | #FF0000, #00FF00, #0000FF | - |
-
-## User Properties
-
-Count: 5
-
-| Property | Type | Description | Allowed Values | Metadata |
-|----------|------|-------------|----------------|----------|
-| is_premium | bool | Whether the user has a premium subscription | - | - |
-| login_count | int | Total number of logins | - | - |
-| tags | List<String> | User tags | - | - |
-| user_id | String | Unique identifier for the user | - | - |
-| user_role | String | Role of the user in the system | admin, editor, viewer | - |
 
 ## Usage Examples
 

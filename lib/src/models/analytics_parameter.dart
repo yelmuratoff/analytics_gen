@@ -87,9 +87,11 @@ final class AnalyticsParameter {
       );
     }
 
+    String? dartType;
     String paramType;
     String? description;
     List<Object>? allowedValues;
+    String? dartImport;
     String? regex;
     int? minLength;
     int? maxLength;
@@ -105,6 +107,7 @@ final class AnalyticsParameter {
       description = paramValue['description'] as String?;
       addedIn = paramValue['added_in'] as String?;
       deprecatedIn = paramValue['deprecated_in'] as String?;
+      dartType = paramValue['dart_type'] as String?;
 
       final metaNode = paramValue.nodes['meta'];
       if (metaNode != null) {
@@ -117,7 +120,7 @@ final class AnalyticsParameter {
         }
         meta = metaNode.map((key, value) => MapEntry(key.toString(), value));
       }
-
+      dartImport = paramValue['import'] as String?; // Parse import
       // Validation rules
       regex = paramValue['regex'] as String?;
       minLength = paramValue['min_length'] as int?;
@@ -143,7 +146,7 @@ final class AnalyticsParameter {
       if (paramValue.containsKey('type')) {
         paramType = paramValue['type'].toString();
       } else {
-        // Fallback: Find type key (anything except 'description')
+        // Fallback: Find type key (anything except keywords)
         final typeKey = paramValue.keys
             .where(
               (k) =>
@@ -151,6 +154,7 @@ final class AnalyticsParameter {
                   k.toString() != 'allowed_values' &&
                   k.toString() != 'identifier' &&
                   k.toString() != 'param_name' &&
+                  k.toString() != 'dart_type' &&
                   k.toString() != 'meta' &&
                   k.toString() != 'regex' &&
                   k.toString() != 'min_length' &&
@@ -182,15 +186,22 @@ final class AnalyticsParameter {
     }
 
     // Check if nullable
-    final isNullable = paramType.endsWith('?');
+    var isNullable = paramType.endsWith('?');
     if (isNullable) {
       paramType = paramType.substring(0, paramType.length - 1);
+    }
+
+    if (dartType != null && dartType.endsWith('?')) {
+      isNullable = true;
+      dartType = dartType.substring(0, dartType.length - 1);
     }
 
     return AnalyticsParameter(
       name: analyticsName,
       codeName: codeIdentifier,
       type: paramType,
+      dartType: dartType,
+      dartImport: dartImport,
       isNullable: isNullable,
       description: description,
       allowedValues: allowedValues,
@@ -217,8 +228,10 @@ final class AnalyticsParameter {
       sourceName: cast<String?>('source_name'),
       codeName: cast<String?>('code_name') ?? '',
       type: cast<String?>('type') ?? '',
-      isNullable: cast<bool?>('is_nullable') ?? false,
-      description: cast<String?>('description'),
+      dartType: map['dart_type'] as String?,
+      dartImport: map['import'] as String?,
+      isNullable: map['is_nullable'] as bool? ?? false,
+      description: map['description'] as String?,
       allowedValues: map['allowed_values'] != null
           ? List<dynamic>.from(cast<Iterable>('allowed_values'))
           : null,
@@ -246,6 +259,8 @@ final class AnalyticsParameter {
     required this.name,
     this.sourceName,
     required this.type,
+    this.dartType,
+    this.dartImport,
     required this.isNullable,
     this.description,
     this.allowedValues,
@@ -271,6 +286,15 @@ final class AnalyticsParameter {
 
   /// The Dart type of the parameter.
   final String type;
+
+  /// The explicitly configured Dart enum type (or other type) for this parameter.
+  ///
+  /// If provided, the generator will use this type in the method signature
+  /// instead of the inferred type, and will serialize it using `.name`.
+  final String? dartType;
+
+  /// The custom import path for the explicit Dart type.
+  final String? dartImport;
 
   /// Whether the parameter is nullable.
   final bool isNullable;
@@ -380,7 +404,7 @@ final class AnalyticsParameter {
   }
 
   @override
-  String toString() => '$name: $type${isNullable ? '?' : ''}';
+  String toString() => '$name: ${dartType ?? type}${isNullable ? '?' : ''}';
 
   @override
   bool operator ==(Object other) {
@@ -392,6 +416,8 @@ final class AnalyticsParameter {
         other.sourceName == sourceName &&
         other.codeName == codeName &&
         other.type == type &&
+        other.dartType == dartType &&
+        other.dartImport == dartImport &&
         other.isNullable == isNullable &&
         other.description == description &&
         collectionEquals(other.allowedValues, allowedValues) &&
@@ -415,6 +441,8 @@ final class AnalyticsParameter {
       sourceName,
       codeName,
       type,
+      dartType,
+      dartImport,
       isNullable,
       description,
       deepHash(allowedValues),
@@ -436,8 +464,10 @@ final class AnalyticsParameter {
     String? sourceName,
     String? codeName,
     String? type,
-    bool? isNullable,
+    String? dartType,
+    String? dartImport,
     String? description,
+    bool? isNullable,
     List<dynamic>? allowedValues,
     String? regex,
     int? minLength,
@@ -454,6 +484,8 @@ final class AnalyticsParameter {
       sourceName: sourceName ?? this.sourceName,
       codeName: codeName ?? this.codeName,
       type: type ?? this.type,
+      dartType: dartType ?? this.dartType,
+      dartImport: dartImport ?? this.dartImport,
       isNullable: isNullable ?? this.isNullable,
       description: description ?? this.description,
       allowedValues: allowedValues ?? this.allowedValues,
@@ -476,6 +508,8 @@ final class AnalyticsParameter {
       'source_name': sourceName,
       'code_name': codeName,
       'type': type,
+      'dart_type': dartType,
+      'import': dartImport,
       'is_nullable': isNullable,
       'description': description,
       'allowed_values': allowedValues,

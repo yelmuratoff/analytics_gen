@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "fingerprint": "61c5a4357487b877",
+    "fingerprint": "53e744d999308654",
     "total_domains": 3,
-    "total_events": 9,
-    "total_parameters": 18
+    "total_events": 10,
+    "total_parameters": 20
   },
   "domains": [
     {
       "name": "auth",
-      "event_count": 5,
-      "parameter_count": 8,
+      "event_count": 6,
+      "parameter_count": 10,
       "events": [
         {
           "name": "login",
@@ -139,6 +139,33 @@
           "deprecated": false,
           "line_number": 33,
           "event_name": "auth: signup"
+        },
+        {
+          "name": "verify_user",
+          "description": "User verification status change",
+          "identifier": "auth.verify_user",
+          "parameters": [
+            {
+              "name": "local_status",
+              "source_name": "local_status",
+              "code_name": "local_status",
+              "type": "import",
+              "dart_type": "LocalStatus",
+              "import": "package:example/local_enums.dart",
+              "is_nullable": false
+            },
+            {
+              "name": "status",
+              "source_name": "status",
+              "code_name": "status",
+              "type": "dynamic",
+              "dart_type": "VerificationStatus",
+              "is_nullable": false
+            }
+          ],
+          "deprecated": false,
+          "line_number": 59,
+          "event_name": "auth: verify_user"
         }
       ]
     },
