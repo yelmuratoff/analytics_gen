@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:analytics_gen/analytics_gen.dart';
 import '../lib/src/analytics/generated/analytics.dart';
 import '../lib/src/analytics/generated/generated_events.dart';
+import 'package:analytics_gen_example/local_enums.dart';
+import 'package:analytics_gen_example/models.dart';
 
 void main() {
   group('Analytics Plan Tests', () {
@@ -45,8 +47,8 @@ void main() {
       });
       test('logAuthVerifyUser constructs correctly', () {
         expect(() => analytics.logAuthVerifyUser(
-          localStatus: null,
-          status: null,
+          localStatus: LocalStatus.values.first,
+          status: VerificationStatus.values.first,
         ), returnsNormally);
       });
     });

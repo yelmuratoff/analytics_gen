@@ -2,7 +2,7 @@
 
 ## Developer Experience & Safety Improvements
 
-- [ ] **1. Generated Test Matchers**
+- [x] **1. Generated Test Matchers**
   - Problem: Testing analytics requires brittle mocks.
   - Solution: Generate typed Matchers for `package:test`.
 

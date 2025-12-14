@@ -4,7 +4,7 @@
 // coverage:ignore-file
 
 import 'package:analytics_gen/analytics_gen.dart';
-import 'package:example/models.dart';
+import 'package:analytics_gen_example/models.dart';
 
 /// Generated mixin for screen analytics events
 mixin AnalyticsScreen on AnalyticsBase {

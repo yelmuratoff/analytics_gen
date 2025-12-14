@@ -39,6 +39,17 @@ class TestRenderer extends BaseRenderer {
       '../lib/${config.outputPath}/generated_events.dart',
     ];
 
+    // Collect imports from parameters
+    for (final domain in domains.values) {
+      for (final event in domain.events) {
+        for (final param in event.parameters) {
+          if (param.dartImport != null) {
+            imports.add(param.dartImport!);
+          }
+        }
+      }
+    }
+
     buffer.write(renderImports(imports));
 
     buffer.writeln('void main() {');
@@ -108,6 +119,11 @@ class TestRenderer extends BaseRenderer {
       final value = param.allowedValues!.first;
       if (value is String) return "'$value'";
       return value.toString();
+    }
+
+    if (param.dartType != null) {
+      // Assume Enums for custom Dart types
+      return '${param.dartType}.values.first';
     }
 
     final dartType = DartTypeMapper.toDartType(param.type);

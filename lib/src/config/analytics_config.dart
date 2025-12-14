@@ -22,6 +22,7 @@ final class AnalyticsConfig {
     this.naming = const NamingStrategy(),
     this.contexts = const [],
     this.imports = const [],
+    this.generateTestMatchers = false,
   });
 
   /// Creates config from YAML map
@@ -74,6 +75,9 @@ final class AnalyticsConfig {
       imports:
           (inputs['imports'] ?? config['imports'] as List?)?.cast<String>() ??
               const [],
+      generateTestMatchers: (targets['test_matchers'] ??
+              config['generate_test_matchers']) as bool? ??
+          false,
     );
   }
 
@@ -141,4 +145,7 @@ final class AnalyticsConfig {
   /// List of custom imports to include in generated files.
   /// This is useful for importing external types used in `dart_type`.
   final List<String> imports;
+
+  /// Whether to generate test matchers for `package:test`.
+  final bool generateTestMatchers;
 }

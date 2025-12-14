@@ -787,5 +787,50 @@ delta:
         contains("'must match regex ^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\\\$',"),
       );
     });
+    test('generates matchers file when enabled', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  login:\n'
+        '    description: User logs in\n'
+        '    parameters:\n'
+        '      method:\n'
+        '        type: string\n'
+        '        allowed_values: [email, google]\n',
+      );
+
+      final config = AnalyticsConfig(
+        eventsPath: 'events',
+        outputPath: 'src/analytics/generated',
+        generateTestMatchers: true,
+      );
+
+      final generator = CodeGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final matchersFile = File(
+        p.join(tempProject.path, 'test', 'analytics_matchers.dart'),
+      );
+      expect(matchersFile.existsSync(), isTrue);
+      final content = await matchersFile.readAsString();
+      expect(content, contains('Matcher isAuthLogin({'));
+      expect(content, contains('Object? method,'));
+
+      // Check enum handling code
+      expect(
+          content, contains('if (method is AnalyticsAuthLoginMethodEnum) {'));
+      expect(content, contains('if (actual != method.value) return false;'));
+    });
   });
 }

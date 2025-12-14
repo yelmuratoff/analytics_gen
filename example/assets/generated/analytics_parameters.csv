@@ -6,8 +6,8 @@ phone_country,string,ISO country code for the dialed number,,,phone_country,,,,f
 tracking-token,string,Legacy token kept for backend reconciliation,,,tracking_token,,,,false,,,,,,,,tracking_token,
 user_exists,bool,Whether the user exists or not,,,user_exists,,,,true,,,,,,,,user_exists,
 referral_code,string,Optional referral code used during signup,,,referral_code,,,,true,,,,,,,^[A-Z0-9]{6}$,referral_code,regex:^[A-Z0-9]{6}$
-local_status,import,,,,local_status,LocalStatus,,package:example/local_enums.dart,false,,,,,,,,local_status,
-status,dynamic,,,,status,VerificationStatus,,,false,,,,,,,,status,
+local_status,import,,,,local_status,LocalStatus,,package:analytics_gen_example/local_enums.dart,false,,,,,,,,local_status,
+status,import,,,,status,VerificationStatus,,package:analytics_gen_example/models.dart,false,,,,,,,,status,
 product_id,string,,,,product_id,,,,false,,,,,,,,product_id,
 reason,string,Reason for cancellation,,,reason,,,,true,,,,,,,,reason,
 currency-code,string,,,,currency_code,,,,false,,,,,,,,currency,

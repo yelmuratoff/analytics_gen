@@ -9,14 +9,14 @@ analytics_gen:
       - events/shared_user.yaml
       - events/shared_app.yaml
 
-      # Additional context files (e.g. user properties, theme context)
-
+    # Additional context files (e.g. user properties, theme context)
+    contexts:
       - events/theme_context.yaml
       - events/user_properties.yaml
 
     # Global imports
     imports:
-      - package:example/models.dart
+      - package:analytics_gen_example/models.dart
 
   # Output configurations
   outputs:
@@ -37,6 +37,7 @@ analytics_gen:
     sql: true
     plan: true
     tests: true
+    test_matchers: true
 
   # Validation and generation rules
   rules:

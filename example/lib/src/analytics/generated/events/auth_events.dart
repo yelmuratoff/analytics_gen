@@ -4,8 +4,8 @@
 // coverage:ignore-file
 
 import 'package:analytics_gen/analytics_gen.dart';
-import 'package:example/local_enums.dart';
-import 'package:example/models.dart';
+import 'package:analytics_gen_example/local_enums.dart';
+import 'package:analytics_gen_example/models.dart';
 
 /// Enum for login_v2 - login-method
 enum AnalyticsAuthLoginV2LoginMethodEnum {
@@ -20,7 +20,6 @@ enum AnalyticsAuthLoginV2LoginMethodEnum {
 /// Generated mixin for auth analytics events
 mixin AnalyticsAuth on AnalyticsBase {
   @Deprecated('Use logAuthLoginV2 instead.')
-
   /// User logs in to the application
   ///
   /// Parameters:
@@ -29,11 +28,11 @@ mixin AnalyticsAuth on AnalyticsBase {
     required String method,
     Map<String, Object?>? parameters,
   }) {
-    final eventParameters = parameters ??
-        <String, Object?>{
-          'description': 'User logs in to the application',
-          "method": method,
-        };
+
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User logs in to the application',
+      "method": method,
+    };
 
     logger.logEvent(
       name: "auth: login",
@@ -51,12 +50,12 @@ mixin AnalyticsAuth on AnalyticsBase {
     required String sessionId,
     Map<String, Object?>? parameters,
   }) {
-    final eventParameters = parameters ??
-        <String, Object?>{
-          'description': 'User logs in to the application (v2)',
-          "login-method": loginMethod.value,
-          "session_id": sessionId,
-        };
+
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User logs in to the application (v2)',
+      "login-method": loginMethod.value,
+      "session_id": sessionId,
+    };
 
     logger.logEvent(
       name: "auth: login_v2",
@@ -70,10 +69,9 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// User logs out
   ///
   void logAuthLogout({Map<String, Object?>? parameters}) {
-    final eventParameters = parameters ??
-        <String, Object?>{
-          'description': 'User logs out',
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User logs out',
+    };
 
     logger.logEvent(
       name: "auth: logout",
@@ -81,9 +79,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     );
   }
 
-  @Deprecated(
-      'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
-
+  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
   /// When user logs in via phone
   ///
   /// Parameters:
@@ -96,13 +92,13 @@ mixin AnalyticsAuth on AnalyticsBase {
     bool? userExists,
     Map<String, Object?>? parameters,
   }) {
-    final eventParameters = parameters ??
-        <String, Object?>{
-          'description': 'When user logs in via phone',
-          "phone_country": phoneCountry,
-          "tracking-token": trackingToken,
-          if (userExists != null) "user_exists": userExists,
-        };
+
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'When user logs in via phone',
+      "phone_country": phoneCountry,
+      "tracking-token": trackingToken,
+      if (userExists != null) "user_exists": userExists,
+    };
 
     logger.logEvent(
       name: "Auth: Phone ${phoneCountry}",
@@ -120,20 +116,19 @@ mixin AnalyticsAuth on AnalyticsBase {
     String? referralCode,
     Map<String, Object?>? parameters,
   }) {
-    if (referralCode != null &&
-        !RegExp(r'^[A-Z0-9]{6}$').hasMatch(referralCode)) {
+
+    if (referralCode != null && !RegExp(r'^[A-Z0-9]{6}$').hasMatch(referralCode)) {
       throw ArgumentError.value(
         referralCode,
         'referralCode',
         'must match regex ^[A-Z0-9]{6}\$',
       );
     }
-    final eventParameters = parameters ??
-        <String, Object?>{
-          'description': 'User creates a new account',
-          "method": method,
-          if (referralCode != null) "referral_code": referralCode,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User creates a new account',
+      "method": method,
+      if (referralCode != null) "referral_code": referralCode,
+    };
 
     logger.logEvent(
       name: "auth: signup",
@@ -151,16 +146,17 @@ mixin AnalyticsAuth on AnalyticsBase {
     required VerificationStatus status,
     Map<String, Object?>? parameters,
   }) {
-    final eventParameters = parameters ??
-        <String, Object?>{
-          'description': 'User verification status change',
-          "local_status": localStatus.name,
-          "status": status.name,
-        };
+
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User verification status change',
+      "local_status": localStatus.name,
+      "status": status.name,
+    };
 
     logger.logEvent(
       name: "auth: verify_user",
       parameters: eventParameters,
     );
   }
+
 }

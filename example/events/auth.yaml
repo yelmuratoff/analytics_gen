@@ -60,6 +60,7 @@ auth:
     parameters:
       status:
         dart_type: VerificationStatus
+        import: "package:analytics_gen_example/models.dart"
       local_status:
         dart_type: LocalStatus
-        import: package:example/local_enums.dart
+        import: "package:analytics_gen_example/local_enums.dart"

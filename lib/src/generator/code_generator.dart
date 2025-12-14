@@ -12,6 +12,7 @@ import 'generation_telemetry.dart';
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
 import 'renderers/event_renderer.dart';
+import 'renderers/matchers_renderer.dart';
 import 'renderers/test_renderer.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
@@ -27,6 +28,7 @@ final class CodeGenerator {
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
     TestRenderer? testRenderer,
+    MatchersRenderer? matchersRenderer,
   })  : _telemetry = telemetry ?? LoggingTelemetry(log),
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
@@ -35,7 +37,8 @@ final class CodeGenerator {
             TestRenderer(
               config,
               isFlutter: _isFlutterProject(projectRoot),
-            );
+            ),
+        _matchersRenderer = matchersRenderer ?? MatchersRenderer(config);
 
   /// The analytics configuration.
   final AnalyticsConfig config;
@@ -51,6 +54,7 @@ final class CodeGenerator {
   final ContextRenderer _contextRenderer;
   final EventRenderer _eventRenderer;
   final TestRenderer _testRenderer;
+  final MatchersRenderer _matchersRenderer;
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate(
@@ -148,6 +152,11 @@ final class CodeGenerator {
       await _generateTestFile(domains);
     }
 
+    // Generate matchers
+    if (config.generateTestMatchers) {
+      await _generateMatchersFile(domains);
+    }
+
     final elapsed = DateTime.now().difference(startTime);
     final filesGenerated = generatedFiles.length +
         activeContexts.length +
@@ -242,7 +251,25 @@ final class CodeGenerator {
     }
 
     await _writeFileIfContentChanged(testPath, content);
+    await _writeFileIfContentChanged(testPath, content);
     log.info('✓ Generated test file at: $testPath');
+  }
+
+  /// Generates matchers file
+  Future<void> _generateMatchersFile(
+      Map<String, AnalyticsDomain> domains) async {
+    final content = _matchersRenderer.render(domains);
+    final matchersPath =
+        path.join(projectRoot, 'test', 'analytics_matchers.dart');
+
+    // Ensure test directory exists
+    final testDir = Directory(path.dirname(matchersPath));
+    if (!testDir.existsSync()) {
+      await testDir.create(recursive: true);
+    }
+
+    await _writeFileIfContentChanged(matchersPath, content);
+    log.info('✓ Generated matchers file at: $matchersPath');
   }
 
   /// Writes a file only if its contents differ from the existing file.

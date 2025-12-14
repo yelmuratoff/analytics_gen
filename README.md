@@ -487,6 +487,33 @@ Generated artifacts inside the example mirror what your app will emit. Use it as
 - Add `dart run analytics_gen:generate --validate-only` to CI so schema errors fail fast.
 - Run `dart analyze` + `dart test` before committing-analytics code follows the same standards as the rest of your Flutter/Dart app.
 
+### Generated Test Matchers
+
+You can opt-in to generate typed `Matcher` helpers for `package:test` by enabling `test_matchers` in your configuration:
+
+```yaml
+analytics_gen:
+  targets:
+    test_matchers: true # Generates test/analytics_matchers.dart
+```
+
+This generates `is{EventName}` matchers that simplify verifying `logEvent` calls:
+
+```dart
+import 'analytics_matchers.dart';
+
+test('logs login event', () {
+  // ... trigger action ...
+  
+  verify(() => analytics.logEvent(
+    name: 'auth.login', 
+    parameters: isAuthLogin(
+      method: AuthLoginMethod.email,
+    ),
+  ));
+});
+```
+
 ## Contributing
 
 Contributions welcome! Please:
