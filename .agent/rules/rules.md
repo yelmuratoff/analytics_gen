@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Instructions for analytics_gen
 
 You are an expert Dart/Flutter engineer working on `analytics_gen`, a CLI tool that generates type-safe analytics code from YAML definitions.
