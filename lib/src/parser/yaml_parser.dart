@@ -2,7 +2,8 @@ import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:yaml/yaml.dart';
 
-import '../config/naming_strategy.dart';
+// Still needed? NamingStrategy is in ParserConfig
+import '../config/parser_config.dart';
 import '../util/logger.dart';
 import 'context_parser.dart';
 import 'domain_parser.dart';
@@ -20,19 +21,14 @@ final class YamlParser {
   /// Creates a new YAML parser.
   YamlParser({
     this.log = const NoOpLogger(),
-    NamingStrategy? naming,
-    this.strictEventNames = true,
-    this.enforceCentrallyDefinedParameters = false,
-    this.preventEventParameterDuplicates = false,
-    this.sharedParameters = const {},
+    this.config = const ParserConfig(),
     SchemaValidator? validator,
     LoadYamlNode? loadYaml,
     DomainParser? domainParser,
     ContextParser? contextParser,
     SharedParameterParser? sharedParameterParser,
     void Function(String domainKey, YamlNode? valueNode)? domainHook,
-  })  : naming = naming ?? const NamingStrategy(),
-        _loadYamlNode = loadYaml ??
+  }) : _loadYamlNode = loadYaml ??
             ((String content,
                     {dynamic sourceUrl,
                     dynamic recover,
@@ -43,55 +39,43 @@ final class YamlParser {
                     errorListener: errorListener)) {
     _validator = validator ??
         SchemaValidator(
-          this.naming,
-          strictEventNames: strictEventNames,
+          config.naming,
+          strictEventNames: config.strictEventNames,
         );
 
     _domainParser = domainParser ??
         DomainParser(
           validator: _validator,
           loadYamlNode: _loadYamlNode,
-          naming: this.naming,
+          naming: config.naming,
           log: log,
-          strictEventNames: strictEventNames,
-          enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
-          preventEventParameterDuplicates: preventEventParameterDuplicates,
-          sharedParameters: sharedParameters,
+          strictEventNames: config.strictEventNames,
+          enforceCentrallyDefinedParameters:
+              config.enforceCentrallyDefinedParameters,
+          preventEventParameterDuplicates:
+              config.preventEventParameterDuplicates,
+          sharedParameters: config.sharedParameters,
           domainHook: domainHook,
         );
     _contextParser = contextParser ??
         ContextParser(
           validator: _validator,
           loadYamlNode: _loadYamlNode,
-          naming: this.naming,
+          naming: config.naming,
         );
     _sharedParameterParser = sharedParameterParser ??
         SharedParameterParser(
           validator: _validator,
           loadYamlNode: _loadYamlNode,
-          naming: this.naming,
+          naming: config.naming,
         );
   }
 
   /// The logger to use.
   final Logger log;
 
-  /// The naming strategy to use.
-  final NamingStrategy naming;
-
-  /// Whether to enforce strict event naming (no interpolation).
-  final bool strictEventNames;
-
-  /// Whether to enforce that all parameters must be defined in the shared
-  /// parameters file.
-  final bool enforceCentrallyDefinedParameters;
-
-  /// Whether to prevent defining parameters in events that are already defined
-  /// in the shared parameters file.
-  final bool preventEventParameterDuplicates;
-
-  /// Shared parameters available to all events.
-  final Map<String, AnalyticsParameter> sharedParameters;
+  /// The parser configuration.
+  final ParserConfig config;
 
   late final SchemaValidator _validator;
   late final DomainParser _domainParser;
@@ -126,10 +110,11 @@ final class YamlParser {
       domainName: domainName,
       eventName: eventName,
       filePath: filePath,
-      naming: naming,
-      sharedParameters: sharedParameters,
-      enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
-      preventEventParameterDuplicates: preventEventParameterDuplicates,
+      naming: config.naming,
+      sharedParameters: config.sharedParameters,
+      enforceCentrallyDefinedParameters:
+          config.enforceCentrallyDefinedParameters,
+      preventEventParameterDuplicates: config.preventEventParameterDuplicates,
     );
   }
 

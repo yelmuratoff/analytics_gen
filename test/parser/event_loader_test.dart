@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'package:file/file.dart';
+import 'package:file/memory.dart';
 
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/util/logger.dart';
@@ -30,8 +31,11 @@ void main() {
     late String eventsPath;
     late TestLogger logger;
 
+    late FileSystem fs;
+
     setUp(() {
-      tempDir = Directory.systemTemp.createTempSync('event_loader_test_');
+      fs = MemoryFileSystem();
+      tempDir = fs.systemTempDirectory.createTempSync('event_loader_test_');
       eventsPath = tempDir.path;
       logger = TestLogger();
     });
@@ -44,6 +48,7 @@ void main() {
 
     test('loadContextFiles logs warning for missing context files', () async {
       final loader = EventLoader(
+        fs: fs,
         eventsPath: eventsPath,
         contextFiles: ['nonexistent_context.yaml', 'another_missing.json'],
         log: logger,
@@ -62,13 +67,14 @@ void main() {
 
     test('loadContextFiles loads existing context files', () async {
       // Create a test context file
-      final contextFile = File('${tempDir.path}/context.yaml');
+      final contextFile = fs.file('${tempDir.path}/context.yaml');
       await contextFile.writeAsString('test: content');
 
       final loader = EventLoader(
         eventsPath: eventsPath,
         contextFiles: [contextFile.path],
         log: logger,
+        fs: fs,
       );
 
       final sources = await loader.loadContextFiles();
@@ -82,13 +88,14 @@ void main() {
     test('loadContextFiles handles mix of existing and missing files',
         () async {
       // Create one existing file
-      final existingFile = File('${tempDir.path}/existing.yaml');
+      final existingFile = fs.file('${tempDir.path}/existing.yaml');
       await existingFile.writeAsString('existing: content');
 
       final loader = EventLoader(
         eventsPath: eventsPath,
         contextFiles: [existingFile.path, 'missing.yaml'],
         log: logger,
+        fs: fs,
       );
 
       final sources = await loader.loadContextFiles();
@@ -103,7 +110,7 @@ void main() {
 
     test('loadSourceFile logs warning for missing file and returns null',
         () async {
-      final loader = EventLoader(eventsPath: eventsPath, log: logger);
+      final loader = EventLoader(eventsPath: eventsPath, log: logger, fs: fs);
 
       final source = await loader.loadSourceFile('missing_file.yaml');
 
@@ -113,10 +120,10 @@ void main() {
     });
 
     test('loadSourceFile loads existing file', () async {
-      final file = File('${tempDir.path}/shared.yaml');
+      final file = fs.file('${tempDir.path}/shared.yaml');
       await file.writeAsString('shared: content');
 
-      final loader = EventLoader(eventsPath: eventsPath, log: logger);
+      final loader = EventLoader(eventsPath: eventsPath, log: logger, fs: fs);
       final source = await loader.loadSourceFile(file.path);
 
       expect(source, isNotNull);
@@ -126,7 +133,8 @@ void main() {
 
     test('loadEventFiles warns when events directory missing', () async {
       final nonExistentPath = '${tempDir.path}/does_not_exist';
-      final loader = EventLoader(eventsPath: nonExistentPath, log: logger);
+      final loader =
+          EventLoader(eventsPath: nonExistentPath, log: logger, fs: fs);
 
       final sources = await loader.loadEventFiles();
 
@@ -136,19 +144,21 @@ void main() {
     });
 
     test('loadEventFiles returns YAML files and skips non-yaml', () async {
-      final fileA = File('${tempDir.path}/b.yaml');
-      final fileB = File('${tempDir.path}/a.yaml');
-      final fileC = File('${tempDir.path}/ignore.txt');
+      final fileA = fs.file('${tempDir.path}/b.yaml');
+      final fileB = fs.file('${tempDir.path}/a.yaml');
+      final fileC = fs.file('${tempDir.path}/ignore.txt');
       await fileA.writeAsString('b: 1');
       await fileB.writeAsString('a: 2');
       await fileC.writeAsString('not yaml');
 
-      final loader = EventLoader(eventsPath: eventsPath, log: logger);
+      final loader = EventLoader(eventsPath: eventsPath, log: logger, fs: fs);
       final sources = await loader.loadEventFiles();
 
       // Should only find the two YAML files and they should be sorted by filename
       expect(
-          sources.map((s) => File(s.filePath).uri.pathSegments.last).toList(),
+          sources
+              .map((s) => fs.file(s.filePath).uri.pathSegments.last)
+              .toList(),
           equals(['a.yaml', 'b.yaml']));
       expect(logger.messages,
           contains('INFO: Found 2 YAML file(s) in $eventsPath'));
@@ -157,9 +167,9 @@ void main() {
     test(
         'loadEventFiles skips files present in contextFiles and sharedParameterFiles',
         () async {
-      final eventFile = File('${tempDir.path}/event.yaml');
-      final contextFile = File('${tempDir.path}/context.yaml');
-      final sharedFile = File('${tempDir.path}/shared.yaml');
+      final eventFile = fs.file('${tempDir.path}/event.yaml');
+      final contextFile = fs.file('${tempDir.path}/context.yaml');
+      final sharedFile = fs.file('${tempDir.path}/shared.yaml');
       await eventFile.writeAsString('name: event');
       await contextFile.writeAsString('ctx: data');
       await sharedFile.writeAsString('shared: data');
@@ -169,6 +179,7 @@ void main() {
         contextFiles: [contextFile.path],
         sharedParameterFiles: [sharedFile.path],
         log: logger,
+        fs: fs,
       );
 
       final sources = await loader.loadEventFiles();

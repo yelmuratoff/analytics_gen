@@ -24,6 +24,7 @@ dependencies:
   source_span: ^1.10.1
   meta: ^1.11.0
   analyzer: any
+  file: ^7.0.1
 
 dev_dependencies:
   lints: ^6.0.0

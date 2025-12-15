@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/naming_strategy.dart';
+import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
@@ -56,7 +57,10 @@ void main() {
       final logger = log ?? const NoOpLogger();
       final loader = EventLoader(eventsPath: p, log: logger);
       final sources = await loader.loadEventFiles();
-      final parser = YamlParser(naming: naming, log: logger);
+      final parser = YamlParser(
+        config: ParserConfig(naming: naming ?? const NamingStrategy()),
+        log: logger,
+      );
       return parser.parseEvents(sources);
     }
 

@@ -1,18 +1,19 @@
-import 'dart:io';
-
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
-import '../util/file_utils.dart';
+// import '../util/file_utils.dart'; // Unused now
 import '../util/logger.dart';
 import 'generation_metadata.dart';
+import 'output_manager.dart';
 
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
+import 'renderers/default_renderer_factory.dart';
 import 'renderers/event_renderer.dart';
 import 'renderers/matchers_renderer.dart';
+import 'renderers/renderer_factory.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -24,12 +25,14 @@ final class CodeGenerator {
     this.log = const NoOpLogger(),
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
-    EventRenderer? eventRenderer,
+    RendererFactory rendererFactory = const DefaultRendererFactory(),
     MatchersRenderer? matchersRenderer,
+    OutputManager? outputManager,
   })  : _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
-        _eventRenderer = eventRenderer ?? EventRenderer(config),
-        _matchersRenderer = matchersRenderer ?? MatchersRenderer(config);
+        _eventRenderer = rendererFactory.createEventRenderer(config),
+        _matchersRenderer = matchersRenderer ?? MatchersRenderer(config),
+        _outputManager = outputManager ?? const OutputManager();
 
   /// The analytics configuration.
   final AnalyticsConfig config;
@@ -43,7 +46,9 @@ final class CodeGenerator {
   final AnalyticsClassRenderer _classRenderer;
   final ContextRenderer _contextRenderer;
   final EventRenderer _eventRenderer;
+
   final MatchersRenderer _matchersRenderer;
+  final OutputManager _outputManager;
 
   /// Generates analytics code and writes to configured output path
   Future<void> generate(
@@ -67,7 +72,8 @@ final class CodeGenerator {
     final contextsDir = path.join(outputDir, 'contexts');
 
     // Ensure output directories exist
-    await _prepareOutputDirectories(outputDir, eventsDir, contextsDir);
+    await _outputManager.prepareOutputDirectories(
+        outputDir, eventsDir, contextsDir);
 
     // Track generated files to clean up stale ones later
     final generatedFiles = <String>{};
@@ -89,7 +95,7 @@ final class CodeGenerator {
     }
 
     // Clean up stale files
-    await _cleanStaleFiles(eventsDir, generatedFiles);
+    await _outputManager.cleanStaleFiles(eventsDir, generatedFiles);
 
     // Generate barrel file with all exports
     await _generateBarrelFile(domains, outputDir);
@@ -190,9 +196,9 @@ final class CodeGenerator {
         path.join(projectRoot, 'test', 'analytics_matchers.dart');
 
     // Ensure test directory exists
-    final testDir = Directory(path.dirname(matchersPath));
+    final testDir = _outputManager.fs.directory(path.dirname(matchersPath));
     if (!testDir.existsSync()) {
-      await testDir.create(recursive: true);
+      await _outputManager.fs.directory(testDir.path).create(recursive: true);
     }
 
     await _writeFileIfContentChanged(matchersPath, content);
@@ -200,47 +206,8 @@ final class CodeGenerator {
   }
 
   /// Writes a file only if its contents differ from the existing file.
-  ///
-  /// This avoids touching modified times and prevents unnecessary git
-  /// diffs when regenerating code with no changes.
   Future<void> _writeFileIfContentChanged(
       String filePath, String contents) async {
-    await writeFileIfContentChanged(filePath, contents);
-  }
-
-  /// Removes stale generated files so deleted domains do not linger.
-  Future<void> _prepareOutputDirectories(
-    String outputDir,
-    String eventsDir,
-    String contextsDir,
-  ) async {
-    final outputDirectory = Directory(outputDir);
-    if (!outputDirectory.existsSync()) {
-      await outputDirectory.create(recursive: true);
-    }
-
-    final eventsDirectory = Directory(eventsDir);
-    if (!eventsDirectory.existsSync()) {
-      await eventsDirectory.create(recursive: true);
-    }
-
-    final contextsDirectory = Directory(contextsDir);
-    if (!contextsDirectory.existsSync()) {
-      await contextsDirectory.create(recursive: true);
-    }
-  }
-
-  Future<void> _cleanStaleFiles(
-    String eventsDir,
-    Set<String> generatedFiles,
-  ) async {
-    final dir = Directory(eventsDir);
-    if (!dir.existsSync()) return;
-
-    await for (final entity in dir.list()) {
-      if (entity is File && !generatedFiles.contains(entity.path)) {
-        await entity.delete();
-      }
-    }
+    await _outputManager.writeFileIfContentChanged(filePath, contents);
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/cli/watch_scheduler.dart';
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
@@ -53,7 +54,7 @@ class GenerationPipeline {
     if (sharedParameterPaths.isNotEmpty) {
       final sharedParser = YamlParser(
         log: request.logger,
-        naming: config.naming,
+        config: ParserConfig(naming: config.naming),
       );
 
       for (final sharedPath in sharedParameterPaths) {
@@ -76,12 +77,14 @@ class GenerationPipeline {
     // Parse YAML files once
     final parser = YamlParser(
       log: request.logger,
-      naming: config.naming,
-      strictEventNames: config.strictEventNames,
-      enforceCentrallyDefinedParameters:
-          config.enforceCentrallyDefinedParameters,
-      preventEventParameterDuplicates: config.preventEventParameterDuplicates,
-      sharedParameters: sharedParameters,
+      config: ParserConfig(
+        naming: config.naming,
+        strictEventNames: config.strictEventNames,
+        enforceCentrallyDefinedParameters:
+            config.enforceCentrallyDefinedParameters,
+        preventEventParameterDuplicates: config.preventEventParameterDuplicates,
+        sharedParameters: sharedParameters,
+      ),
     );
     final domains = await parser.parseEvents(eventSources);
     final contexts = await parser.parseContexts(contextSources);

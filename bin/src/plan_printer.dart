@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
@@ -26,7 +27,7 @@ Future<void> validateTrackingPlan(
 
   final parser = YamlParser(
     log: logger,
-    naming: config.naming,
+    config: ParserConfig(naming: config.naming),
   );
 
   try {
@@ -67,7 +68,7 @@ Future<void> printTrackingPlan(
 
   final parser = YamlParser(
     log: logger,
-    naming: config.naming,
+    config: ParserConfig(naming: config.naming),
   );
 
   try {

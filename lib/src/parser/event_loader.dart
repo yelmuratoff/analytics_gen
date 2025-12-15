@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:analytics_gen/src/util/logger.dart';
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 
 /// Represents a source file containing analytics definitions.
 final class AnalyticsSource {
@@ -25,6 +25,7 @@ final class EventLoader {
     this.contextFiles = const [],
     this.sharedParameterFiles = const [],
     this.log = const NoOpLogger(),
+    this.fs = const LocalFileSystem(),
   });
 
   /// The path to the directory containing event files.
@@ -39,9 +40,12 @@ final class EventLoader {
   /// The logger to use.
   final Logger log;
 
+  /// The file system to use.
+  final FileSystem fs;
+
   /// Loads all YAML files from the configured events directory.
   Future<List<AnalyticsSource>> loadEventFiles() async {
-    final eventsDir = Directory(eventsPath);
+    final eventsDir = fs.directory(eventsPath);
 
     if (!eventsDir.existsSync()) {
       log.warning('Events directory not found at: $eventsPath');
@@ -88,7 +92,7 @@ final class EventLoader {
     final sources = <AnalyticsSource>[];
 
     for (final filePath in contextFiles) {
-      final file = File(filePath);
+      final file = fs.file(filePath);
       if (!file.existsSync()) {
         log.warning('Context file not found: $filePath');
         continue;
@@ -106,7 +110,7 @@ final class EventLoader {
 
   /// Loads a single source file.
   Future<AnalyticsSource?> loadSourceFile(String filePath) async {
-    final file = File(filePath);
+    final file = fs.file(filePath);
     if (!file.existsSync()) {
       log.warning('File not found: $filePath');
       return null;

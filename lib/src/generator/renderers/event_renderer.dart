@@ -13,10 +13,28 @@ import 'sub_renderers/method_signature_renderer.dart';
 /// Renders analytics event domain files.
 class EventRenderer extends BaseRenderer {
   /// Creates a new event renderer.
-  const EventRenderer(this.config);
+  EventRenderer(
+    this.config, {
+    this.enumRenderer = const EnumRenderer(),
+    this.docRenderer = const DocumentationRenderer(),
+    this.sigRenderer = const MethodSignatureRenderer(),
+    EventBodyRenderer? bodyRenderer,
+  }) : bodyRenderer = bodyRenderer ?? EventBodyRenderer(config);
 
   /// The analytics configuration.
   final AnalyticsConfig config;
+
+  /// The enum renderer.
+  final EnumRenderer enumRenderer;
+
+  /// The documentation renderer.
+  final DocumentationRenderer docRenderer;
+
+  /// The method signature renderer.
+  final MethodSignatureRenderer sigRenderer;
+
+  /// The event body renderer.
+  final EventBodyRenderer bodyRenderer;
 
   /// Renders a domain file with event methods.
   String renderDomainFile(
@@ -54,7 +72,7 @@ class EventRenderer extends BaseRenderer {
     buffer.write(renderImports(importUris.toList()..sort()));
 
     // Generate Enums
-    buffer.write(const EnumRenderer().renderEnums(domainName, domain));
+    buffer.write(enumRenderer.renderEnums(domainName, domain));
 
     // Generate mixin
     buffer.write(renderDomainMixin(domainName, domain, allDomains));
@@ -106,14 +124,13 @@ class EventRenderer extends BaseRenderer {
     }
 
     // Documentation
-    buffer.write(const DocumentationRenderer().renderEventDocs(
+    buffer.write(docRenderer.renderEventDocs(
       domainName,
       event,
       indent: 1,
     ));
 
     // Method signature
-    final sigRenderer = const MethodSignatureRenderer();
     buffer.write('  void $methodName(');
     buffer.write(sigRenderer.renderEventArguments(
       domainName,
@@ -124,7 +141,7 @@ class EventRenderer extends BaseRenderer {
     buffer.writeln();
 
     // Body
-    buffer.write(EventBodyRenderer(config).renderBody(
+    buffer.write(bodyRenderer.renderBody(
       domainName,
       event,
       allDomains,

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
@@ -177,7 +178,7 @@ class AuditRunner {
     if (sharedParameterPaths.isNotEmpty) {
       final sharedParser = YamlParser(
         log: logger,
-        naming: config.naming,
+        config: ParserConfig(naming: config.naming),
       );
       for (final sharedPath in sharedParameterPaths) {
         final sharedSource = await loader.loadSourceFile(sharedPath);
@@ -194,12 +195,14 @@ class AuditRunner {
 
     final parser = YamlParser(
       log: logger,
-      naming: config.naming,
-      strictEventNames: config.strictEventNames,
-      enforceCentrallyDefinedParameters:
-          config.enforceCentrallyDefinedParameters,
-      preventEventParameterDuplicates: config.preventEventParameterDuplicates,
-      sharedParameters: sharedParameters,
+      config: ParserConfig(
+        naming: config.naming,
+        strictEventNames: config.strictEventNames,
+        enforceCentrallyDefinedParameters:
+            config.enforceCentrallyDefinedParameters,
+        preventEventParameterDuplicates: config.preventEventParameterDuplicates,
+        sharedParameters: sharedParameters,
+      ),
     );
     return parser.parseEvents(eventSources);
   }
