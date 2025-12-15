@@ -10,6 +10,7 @@ final class NamingStrategy {
     this.eventNameTemplate = '{domain}: {event}',
     String? identifierTemplate,
     Map<String, String>? domainAliases,
+    this.convention = EventNamingConvention.snakeCase,
   })  : identifierTemplate = identifierTemplate ?? '{domain}: {event}',
         domainAliases = domainAliases ?? const {};
 
@@ -27,6 +28,14 @@ final class NamingStrategy {
       }
     }
 
+    final conventionStr = yaml['casing'] as String?;
+    final convention = switch (conventionStr) {
+      'snake_case' => EventNamingConvention.snakeCase,
+      'title_case' => EventNamingConvention.titleCase,
+      'original' => EventNamingConvention.original,
+      _ => EventNamingConvention.snakeCase,
+    };
+
     return NamingStrategy(
       enforceSnakeCaseDomains:
           yaml['enforce_snake_case_domains'] as bool? ?? true,
@@ -37,6 +46,7 @@ final class NamingStrategy {
       identifierTemplate:
           yaml['identifier_template'] as String? ?? '{domain}: {event}',
       domainAliases: aliases,
+      convention: convention,
     );
   }
   static final _snakeCaseDomain = RegExp(r'^[a-z0-9_]+$');
@@ -63,6 +73,9 @@ final class NamingStrategy {
   /// When a domain is present, `{domain_alias}` resolves to the mapped value.
   final Map<String, String> domainAliases;
 
+  /// The naming convention to apply to the generated event name.
+  final EventNamingConvention convention;
+
   /// Returns `true` when [domain] satisfies the configured validation.
   bool isValidDomain(String domain) {
     if (!enforceSnakeCaseDomains) return true;
@@ -75,12 +88,18 @@ final class NamingStrategy {
     return _snakeCaseParam.hasMatch(parameter);
   }
 
-  /// Renders the configured event-name template.
+  /// Renders the configured event-name template and applies the naming convention.
   String renderEventName({
     required String domain,
     required String event,
   }) {
-    return _renderTemplate(eventNameTemplate, domain: domain, event: event);
+    final rawName =
+        _renderTemplate(eventNameTemplate, domain: domain, event: event);
+    return switch (convention) {
+      EventNamingConvention.snakeCase => _toSnakeCase(rawName),
+      EventNamingConvention.titleCase => _toTitleCase(rawName),
+      EventNamingConvention.original => rawName,
+    };
   }
 
   /// Renders the configured identifier template.
@@ -102,4 +121,37 @@ final class NamingStrategy {
         .replaceAll('{domain_alias}', alias)
         .replaceAll('{event}', event);
   }
+
+  static String _toSnakeCase(String text) {
+    return text
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '')
+        .toLowerCase();
+  }
+
+  static String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    final words =
+        text.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), ' ').trim().split(' ');
+    // Handle split returning empty strings for consecutive delimiters if regex was different,
+    // but replacing block of non-alphanum with single space prevents that mostly.
+    return words.where((w) => w.isNotEmpty).map((word) {
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+}
+
+/// Supported naming conventions for generated analytics events.
+enum EventNamingConvention {
+  /// "Example Event" -> "example_event"
+  /// Useful for SQL/DB exports (e.g. BigQuery).
+  snakeCase,
+
+  /// "example_event" -> "Example Event"
+  /// Useful for non-technical dashboards (e.g. Mixpanel, Amplitude).
+  titleCase,
+
+  /// Preserves the original naming from the YAML/Template.
+  /// Example: "domain: event" stays "domain: event".
+  original,
 }

@@ -21,6 +21,13 @@
 - [ ] **5. Automated Changelog (`ANALYTICS_CHANGELOG.md`)**
   - Solution: Auto-append to a `ANALYTICS_CHANGELOG.md` file during generation. Add ability to change from config.
 
+- [x] **6. Configurable Event Naming Strategy**
+  - Problem: Default `domain: event` naming is an anti-pattern (hard to group/filter).
+  - Solution: Add configurable naming strategy (default: `snake_case`).
+    - Support "Engineer Friendly" (`snake_case`) for SQL/DB.
+    - Support "Business Readable" (`Title Case`) for non-tech dashboards.
+
+
 - [x] Type-Safe Dart Enum Mapping (`dart_type`)
 - [x] Custom Imports Support (`imports` global + `import` local)**
   - Problem: Passing Dart enums to analytics requires `.name` everywhere.

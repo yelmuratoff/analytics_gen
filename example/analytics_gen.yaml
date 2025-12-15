@@ -62,6 +62,8 @@ analytics_gen:
     # keys to opt-in via per-parameter `identifier`.
     enforce_snake_case_domains: true
     enforce_snake_case_parameters: true
+    # casing: snake_case # Options: snake_case (default), title_case, original
+
     # Use human-friendly aliases when auto-building event names without `event_name`.
     event_name_template: "{domain_alias}: {event}"
     identifier_template: "{domain}.{event}"

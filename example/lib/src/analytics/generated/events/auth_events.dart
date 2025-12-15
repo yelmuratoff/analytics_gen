@@ -35,7 +35,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "auth: login",
+      name: "auth_login",
       parameters: eventParameters,
     );
   }
@@ -58,7 +58,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "auth: login_v2",
+      name: "auth_login_v2",
       parameters: eventParameters,
     );
 
@@ -74,7 +74,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "auth: logout",
+      name: "auth_logout",
       parameters: eventParameters,
     );
   }
@@ -131,7 +131,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "auth: signup",
+      name: "auth_signup",
       parameters: eventParameters,
     );
   }
@@ -154,7 +154,7 @@ mixin AnalyticsAuth on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "auth: verify_user",
+      name: "auth_verify_user",
       parameters: eventParameters,
     );
   }

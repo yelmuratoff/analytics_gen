@@ -26,7 +26,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "Purchase Flow: cancelled",
+      name: "purchase_flow_cancelled",
       parameters: eventParameters,
     );
   }
@@ -55,7 +55,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
     };
 
     logger.logEvent(
-      name: "Purchase Flow: completed",
+      name: "purchase_flow_completed",
       parameters: eventParameters,
     );
   }

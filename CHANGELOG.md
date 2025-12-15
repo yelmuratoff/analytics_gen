@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Added `dart_type` parameter option to map parameters to existing Dart types (Enums/Classes).
 - Added Global `imports` configuration to `analytics_gen.yaml` for including external types.
 - Added Local `import` parameter option for granular type importing.
+- Added Configurable Event Naming Strategy (`casing`) to control generated event string format (`snake_case`, `title_case`, `original`).
+
 
 ## [1.0.2]
 - Enhance SQL generator with additional event and parameter metadata, sorting, and utility functions for improved data representation.

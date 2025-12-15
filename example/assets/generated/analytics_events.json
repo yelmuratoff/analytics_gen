@@ -35,7 +35,7 @@
             "tier": "critical"
           },
           "line_number": 3,
-          "event_name": "auth: login"
+          "event_name": "auth_login"
         },
         {
           "name": "login_v2",
@@ -69,7 +69,7 @@
           "dual_write_to": [
             "auth.login"
           ],
-          "event_name": "auth: login_v2"
+          "event_name": "auth_login_v2"
         },
         {
           "name": "logout",
@@ -77,7 +77,7 @@
           "identifier": "auth.logout",
           "deprecated": false,
           "line_number": 29,
-          "event_name": "auth: logout"
+          "event_name": "auth_logout"
         },
         {
           "name": "phone_login",
@@ -138,7 +138,7 @@
           ],
           "deprecated": false,
           "line_number": 33,
-          "event_name": "auth: signup"
+          "event_name": "auth_signup"
         },
         {
           "name": "verify_user",
@@ -166,7 +166,7 @@
           ],
           "deprecated": false,
           "line_number": 59,
-          "event_name": "auth: verify_user"
+          "event_name": "auth_verify_user"
         }
       ]
     },
@@ -198,7 +198,7 @@
           ],
           "deprecated": false,
           "line_number": 19,
-          "event_name": "Purchase Flow: cancelled"
+          "event_name": "purchase_flow_cancelled"
         },
         {
           "name": "completed",
@@ -238,7 +238,7 @@
           ],
           "deprecated": false,
           "line_number": 3,
-          "event_name": "Purchase Flow: completed"
+          "event_name": "purchase_flow_completed"
         }
       ]
     },
