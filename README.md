@@ -317,7 +317,9 @@ Contexts allow you to define global properties (like user attributes, device inf
 
 - [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
 - [Validation & Naming](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
+- [Naming & Configuration Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/NAMING.md) - recipes for "Engineer Friendly" vs "Business Readable" naming, templates, and casing.
 - [Capabilities](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
+
 - [Migration Guides](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
 - [Code Review checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
 - [Scalability & Performance](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
@@ -546,8 +548,12 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
 - **Does this lock me into one provider?**
   No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
+- **Can I change the event naming style (e.g. to "Title Case")?**
+  Yes. Use `analytics_gen.naming.casing` in `analytics_gen.yaml`. See the [Naming Guide](doc/NAMING.md) for examples.
+
 - **Is it safe to commit generated files?**
   Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md)).
+
 
 ## License
 
