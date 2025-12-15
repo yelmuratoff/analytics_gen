@@ -1,4 +1,5 @@
 import '../../util/string_utils.dart';
+import '../utils/code_buffer.dart';
 
 /// Base class for all renderers to reduce code duplication.
 ///
@@ -52,15 +53,14 @@ abstract class BaseRenderer {
   String renderDocComment(String comment, {int indent = 0}) {
     if (comment.isEmpty) return '';
 
-    final indentStr = '  ' * indent;
-    final buffer = StringBuffer();
+    final buffer = CodeBuffer(initialIndent: indent);
     final lines = comment.split('\n');
 
     for (final line in lines) {
       if (line.trim().isEmpty) {
-        buffer.writeln('$indentStr///');
+        buffer.writeln('///');
       } else {
-        buffer.writeln('$indentStr/// $line');
+        buffer.writeln('/// $line');
       }
     }
 
@@ -79,28 +79,29 @@ abstract class BaseRenderer {
     required String type,
     int indent = 0,
   }) {
-    final indentStr = '  ' * indent;
-    final buffer = StringBuffer();
+    final buffer = CodeBuffer(initialIndent: indent + 2);
 
     // Strip nullable suffix for the Set type definition
     final setType =
         type.endsWith('?') ? type.substring(0, type.length - 1) : type;
 
-    buffer.writeln(
-      '$indentStr    const $constName = <$setType>{$encodedValues};',
-    );
+    buffer.writeln('const $constName = <$setType>{$encodedValues};');
 
     final condition = isNullable
         ? 'if ($camelParam != null && !$constName.contains($camelParam)) {'
         : 'if (!$constName.contains($camelParam)) {';
 
-    buffer.writeln('$indentStr    $condition');
-    buffer.writeln('$indentStr      throw ArgumentError.value(');
-    buffer.writeln('$indentStr        $camelParam,');
-    buffer.writeln("$indentStr        '$camelParam',");
-    buffer.writeln("$indentStr        'must be one of $joinedValues',");
-    buffer.writeln('$indentStr      );');
-    buffer.writeln('$indentStr    }');
+    buffer.writeln(condition);
+    buffer.indent();
+    buffer.writeln('throw ArgumentError.value(');
+    buffer.indent();
+    buffer.writeln('$camelParam,');
+    buffer.writeln("'$camelParam',");
+    buffer.writeln("'must be one of $joinedValues',");
+    buffer.outdent();
+    buffer.writeln(');');
+    buffer.outdent();
+    buffer.writeln('}');
 
     return buffer.toString();
   }
@@ -116,22 +117,25 @@ abstract class BaseRenderer {
     num? max,
     int indent = 0,
   }) {
-    final indentStr = '  ' * indent;
-    final buffer = StringBuffer();
+    final buffer = CodeBuffer(initialIndent: indent + 2);
 
     // Regex validation
     if (regex != null) {
       final condition = isNullable
           ? 'if ($camelParam != null && !RegExp(r\'$regex\').hasMatch($camelParam)) {'
           : 'if (!RegExp(r\'$regex\').hasMatch($camelParam)) {';
-      buffer.writeln('$indentStr    $condition');
-      buffer.writeln('$indentStr      throw ArgumentError.value(');
-      buffer.writeln('$indentStr        $camelParam,');
-      buffer.writeln("$indentStr        '$camelParam',");
+      buffer.writeln(condition);
+      buffer.indent();
+      buffer.writeln('throw ArgumentError.value(');
+      buffer.indent();
+      buffer.writeln('$camelParam,');
+      buffer.writeln("'$camelParam',");
       buffer.writeln(
-          "$indentStr        'must match regex ${StringUtils.escapeSingleQuoted(regex)}',");
-      buffer.writeln('$indentStr      );');
-      buffer.writeln('$indentStr    }');
+          "'must match regex ${StringUtils.escapeSingleQuoted(regex)}',");
+      buffer.outdent();
+      buffer.writeln(');');
+      buffer.outdent();
+      buffer.writeln('}');
     }
 
     // Length validation (String)
@@ -149,18 +153,22 @@ abstract class BaseRenderer {
           ? 'if ($camelParam != null && (${lengthCheck.toString()})) {'
           : 'if (${lengthCheck.toString()}) {';
 
-      buffer.writeln('$indentStr    $condition');
-      buffer.writeln('$indentStr      throw ArgumentError.value(');
-      buffer.writeln('$indentStr        $camelParam,');
-      buffer.writeln("$indentStr        '$camelParam',");
+      buffer.writeln(condition);
+      buffer.indent();
+      buffer.writeln('throw ArgumentError.value(');
+      buffer.indent();
+      buffer.writeln('$camelParam,');
+      buffer.writeln("'$camelParam',");
       final msg = minLength != null && maxLength != null
           ? 'length must be between $minLength and $maxLength'
           : minLength != null
               ? 'length must be at least $minLength'
               : 'length must be at most $maxLength';
-      buffer.writeln("$indentStr        '$msg',");
-      buffer.writeln('$indentStr      );');
-      buffer.writeln('$indentStr    }');
+      buffer.writeln("'$msg',");
+      buffer.outdent();
+      buffer.writeln(');');
+      buffer.outdent();
+      buffer.writeln('}');
     }
 
     // Range validation (num)
@@ -174,18 +182,22 @@ abstract class BaseRenderer {
           ? 'if ($camelParam != null && (${rangeCheck.toString()})) {'
           : 'if (${rangeCheck.toString()}) {';
 
-      buffer.writeln('$indentStr    $condition');
-      buffer.writeln('$indentStr      throw ArgumentError.value(');
-      buffer.writeln('$indentStr        $camelParam,');
-      buffer.writeln("$indentStr        '$camelParam',");
+      buffer.writeln(condition);
+      buffer.indent();
+      buffer.writeln('throw ArgumentError.value(');
+      buffer.indent();
+      buffer.writeln('$camelParam,');
+      buffer.writeln("'$camelParam',");
       final msg = min != null && max != null
           ? 'must be between $min and $max'
           : min != null
               ? 'must be at least $min'
               : 'must be at most $max';
-      buffer.writeln("$indentStr        '$msg',");
-      buffer.writeln('$indentStr      );');
-      buffer.writeln('$indentStr    }');
+      buffer.writeln("'$msg',");
+      buffer.outdent();
+      buffer.writeln(');');
+      buffer.outdent();
+      buffer.writeln('}');
     }
 
     return buffer.toString();

@@ -97,95 +97,13 @@ class DomainParser {
 
     final merged = <String, _DomainSource>{};
     for (final source in sources) {
-      final YamlNode parsedNode;
       try {
-        parsedNode = loadYamlNode(source.content);
-      } catch (e) {
-        final error = AnalyticsParseException(
-          'Failed to parse YAML file: $e',
-          filePath: source.filePath,
-          innerError: e,
-        );
+        _parseAndMergeSource(source, merged);
+      } on AnalyticsParseException catch (e) {
         if (onError != null) {
-          onError(error);
+          onError(e);
         } else {
-          throw error;
-        }
-        continue;
-      }
-
-      if (parsedNode is! YamlMap) {
-        // If the file is empty or contains only comments, loadYamlNode might return a YamlScalar with null value
-        if (parsedNode is YamlScalar && parsedNode.value == null) {
-          continue;
-        }
-
-        try {
-          validator.validateRootMap(parsedNode, source.filePath);
-        } on AnalyticsParseException catch (e) {
-          if (onError != null) {
-            onError(e);
-          } else {
-            rethrow;
-          }
-          continue;
-        }
-      }
-
-      final parsedMap = parsedNode as YamlMap;
-      final sortedDomainKeys = parsedMap.nodes.keys.toList()
-        ..sort((a, b) => a.toString().compareTo(b.toString()));
-
-      for (final keyNode in sortedDomainKeys) {
-        final domainKey = keyNode.toString();
-        final valueNode = parsedMap.nodes[keyNode];
-
-        if (valueNode == null) {
-          continue;
-        }
-
-        try {
-          // Test seam
-          if (domainHook != null) {
-            domainHook!(domainKey, valueNode);
-          }
-          // Enforce snake_case, filesystem-safe domain names
-          validator.validateDomainName(domainKey, source.filePath);
-
-          if (merged.containsKey(domainKey)) {
-            throw AnalyticsParseException(
-              'Duplicate domain "$domainKey" found in multiple files. '
-              'Each domain must be defined in only one file.',
-              filePath: source.filePath,
-              span: (keyNode is YamlNode) ? keyNode.span : null,
-            );
-          }
-
-          validator.validateDomainMap(valueNode, domainKey, source.filePath);
-
-          merged[domainKey] = _DomainSource(
-            filePath: source.filePath,
-            yaml: valueNode as YamlMap,
-          );
-        } on AnalyticsParseException catch (e) {
-          if (onError != null) {
-            onError(e);
-          } else {
-            rethrow;
-          }
-        } catch (e) {
-          // Wrap other errors
-          final error = AnalyticsParseException(
-            e.toString(),
-            filePath: source.filePath,
-            innerError: e,
-            span: (keyNode is YamlNode) ? keyNode.span : null,
-          );
-          if (onError != null) {
-            onError(error);
-          } else {
-            throw error;
-          }
+          rethrow;
         }
       }
     }
@@ -218,6 +136,88 @@ class DomainParser {
           rethrow;
         }
       }
+    }
+  }
+
+  void _parseAndMergeSource(
+    AnalyticsSource source,
+    Map<String, _DomainSource> merged,
+  ) {
+    final YamlNode parsedNode;
+    try {
+      parsedNode = loadYamlNode(source.content);
+    } catch (e) {
+      throw AnalyticsParseException(
+        'Failed to parse YAML file: $e',
+        filePath: source.filePath,
+        innerError: e,
+      );
+    }
+
+    if (parsedNode is! YamlMap) {
+      // If the file is empty or contains only comments, loadYamlNode might return a YamlScalar with null value
+      if (parsedNode is YamlScalar && parsedNode.value == null) {
+        return;
+      }
+
+      validator.validateRootMap(parsedNode, source.filePath);
+      return; // Should not happen if validateRootMap succeeds as it checks for Map, but flow-wise
+    }
+
+    final sortedDomainKeys = parsedNode.nodes.keys.toList()
+      ..sort((a, b) => a.toString().compareTo(b.toString()));
+
+    for (final keyNode in sortedDomainKeys) {
+      _processDomainEntry(keyNode, parsedNode, source, merged);
+    }
+  }
+
+  void _processDomainEntry(
+    dynamic keyNode,
+    YamlMap parsedMap,
+    AnalyticsSource source,
+    Map<String, _DomainSource> merged,
+  ) {
+    final domainKey = keyNode.toString();
+    final valueNode = parsedMap.nodes[keyNode];
+
+    if (valueNode == null) {
+      return;
+    }
+
+    try {
+      // Test seam
+      if (domainHook != null) {
+        domainHook!(domainKey, valueNode);
+      }
+      // Enforce snake_case, filesystem-safe domain names
+      validator.validateDomainName(domainKey, source.filePath);
+
+      if (merged.containsKey(domainKey)) {
+        throw AnalyticsParseException(
+          'Duplicate domain "$domainKey" found in multiple files. '
+          'Each domain must be defined in only one file.',
+          filePath: source.filePath,
+          span: (keyNode is YamlNode) ? keyNode.span : null,
+        );
+      }
+
+      validator.validateDomainMap(valueNode, domainKey, source.filePath);
+
+      merged[domainKey] = _DomainSource(
+        filePath: source.filePath,
+        yaml: valueNode as YamlMap,
+      );
+    } catch (e) {
+      if (e is AnalyticsParseException) rethrow;
+
+      // Wrap other errors
+      throw AnalyticsParseException(
+        e.toString(),
+        filePath: source.filePath,
+        innerError: e,
+        span: (keyNode is YamlNode) ? keyNode.span : null,
+      );
     }
   }
 }
