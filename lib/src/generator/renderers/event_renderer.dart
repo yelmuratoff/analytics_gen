@@ -1,5 +1,4 @@
 import 'package:analytics_gen/src/models/analytics_domain.dart';
-import 'package:analytics_gen/src/models/analytics_parameter.dart';
 
 import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
@@ -18,8 +17,6 @@ class EventRenderer extends BaseRenderer {
 
   /// The analytics configuration.
   final AnalyticsConfig config;
-
-  static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
 
   /// Renders a domain file with event methods.
   String renderDomainFile(
@@ -115,13 +112,7 @@ class EventRenderer extends BaseRenderer {
       final message = _buildDeprecationMessage(event);
       buffer.writeln("  @Deprecated('$message')");
     } else {
-      final eventName =
-          EventNaming.resolveEventName(domainName, event, config.naming);
-      final interpolatedEventName = _replacePlaceholdersWithInterpolation(
-        eventName,
-        event.parameters,
-      );
-      if (interpolatedEventName.contains(r'${')) {
+      if (event.interpolatedName != null) {
         buffer.writeln(
             "  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')");
       }
@@ -171,19 +162,5 @@ class EventRenderer extends BaseRenderer {
     }
 
     return 'Use ${event.replacement} instead.';
-  }
-
-  String _replacePlaceholdersWithInterpolation(
-    String eventName,
-    List<AnalyticsParameter> parameters,
-  ) {
-    return eventName.replaceAllMapped(_placeholderRegex, (match) {
-      final key = match.group(1)!;
-      final found = parameters.where((p) => p.name == key).toList();
-      if (found.isEmpty) return match.group(0)!;
-
-      final camel = StringUtils.toCamelCase(found.first.name);
-      return '\${$camel}';
-    });
   }
 }

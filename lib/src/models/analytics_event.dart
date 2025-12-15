@@ -54,6 +54,7 @@ final class AnalyticsEvent {
     this.addedIn,
     this.deprecatedIn,
     this.dualWriteTo,
+    this.interpolatedName,
   });
 
   /// The name of the event.
@@ -95,6 +96,11 @@ final class AnalyticsEvent {
   /// List of other events to trigger when this event is logged (dual-write).
   final List<String>? dualWriteTo;
 
+  /// The name of the event with placeholders replaced by Dart string interpolation.
+  ///
+  /// Populated by the parser if the event name contains placeholders.
+  final String? interpolatedName;
+
   @override
   String toString() => '$name (${parameters.length} parameters)';
 
@@ -116,7 +122,8 @@ final class AnalyticsEvent {
         other.lineNumber == lineNumber &&
         other.addedIn == addedIn &&
         other.deprecatedIn == deprecatedIn &&
-        collectionEquals(other.dualWriteTo, dualWriteTo);
+        collectionEquals(other.dualWriteTo, dualWriteTo) &&
+        other.interpolatedName == interpolatedName;
   }
 
   @override
@@ -137,6 +144,7 @@ final class AnalyticsEvent {
       addedIn,
       deprecatedIn,
       deepHash(dualWriteTo),
+      interpolatedName,
     ]);
   }
 
@@ -155,6 +163,7 @@ final class AnalyticsEvent {
     String? addedIn,
     String? deprecatedIn,
     List<String>? dualWriteTo,
+    String? interpolatedName,
   }) {
     return AnalyticsEvent(
       name: name ?? this.name,
@@ -170,6 +179,7 @@ final class AnalyticsEvent {
       addedIn: addedIn ?? this.addedIn,
       deprecatedIn: deprecatedIn ?? this.deprecatedIn,
       dualWriteTo: dualWriteTo ?? this.dualWriteTo,
+      interpolatedName: interpolatedName ?? this.interpolatedName,
     );
   }
 

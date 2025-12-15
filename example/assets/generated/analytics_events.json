@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fingerprint": "-3362e98eb3426bac",
+    "fingerprint": "7dd6ab6fc6153e1e",
     "total_domains": 3,
     "total_events": 10,
     "total_parameters": 20
@@ -149,7 +149,7 @@
               "name": "local_status",
               "source_name": "local_status",
               "code_name": "local_status",
-              "type": "import",
+              "type": "dynamic",
               "dart_type": "LocalStatus",
               "import": "package:analytics_gen_example/local_enums.dart",
               "is_nullable": false
@@ -158,7 +158,7 @@
               "name": "status",
               "source_name": "status",
               "code_name": "status",
-              "type": "import",
+              "type": "dynamic",
               "dart_type": "VerificationStatus",
               "import": "package:analytics_gen_example/models.dart",
               "is_nullable": false

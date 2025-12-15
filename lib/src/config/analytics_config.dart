@@ -26,55 +26,74 @@ final class AnalyticsConfig {
 
   /// Creates config from YAML map
   factory AnalyticsConfig.fromYaml(Map<dynamic, dynamic> yaml) {
-    final config = yaml['analytics_gen'] as Map<dynamic, dynamic>? ?? {};
-    final inputs = config['inputs'] as Map<dynamic, dynamic>? ?? {};
-    final outputs = config['outputs'] as Map<dynamic, dynamic>? ?? {};
-    final targets = config['targets'] as Map<dynamic, dynamic>? ?? {};
-    final rules = config['rules'] as Map<dynamic, dynamic>? ?? {};
+    if (yaml.isEmpty) return const AnalyticsConfig();
+
+    T cast<T>(dynamic value, String context) {
+      if (value == null) return null as T;
+      if (value is T) return value;
+      throw FormatException(
+          'Invalid configuration for "$context": Expected $T but got ${value.runtimeType}');
+    }
+
+    Map<dynamic, dynamic> safeMap(dynamic map, String context) {
+      if (map == null) return {};
+      if (map is Map) return map;
+      throw FormatException(
+          'Invalid configuration for "$context": Expected Map but got ${map.runtimeType}');
+    }
+
+    final config = safeMap(yaml['analytics_gen'], 'analytics_gen');
+    final inputs = safeMap(config['inputs'], 'inputs');
+    final outputs = safeMap(config['outputs'], 'outputs');
+    final targets = safeMap(config['targets'], 'targets');
+    final rules = safeMap(config['rules'], 'rules');
+
+    T val<T>(Map map, String key, T defaultVal) {
+      final v = map[key];
+      if (v == null) return defaultVal;
+      return cast<T>(v, key);
+    }
+
+    List<String> list(Map map, String key, List<String> defaultVal) {
+      final v = map[key];
+      if (v == null) return defaultVal;
+      if (v is! List) {
+        throw FormatException(
+            'Invalid configuration for "$key": Expected List but got ${v.runtimeType}');
+      }
+      return v.map((e) => e.toString()).toList();
+    }
 
     return AnalyticsConfig(
-      eventsPath:
-          (inputs['events'] ?? config['events_path']) as String? ?? 'events',
-      outputPath: (outputs['dart'] ?? config['output_path']) as String? ??
-          'src/analytics/generated',
-      docsPath: (outputs['docs'] ?? config['docs_path']) as String?,
-      exportsPath: (outputs['exports'] ?? config['exports_path']) as String?,
-      sharedParameters:
-          (inputs['shared_parameters'] ?? config['shared_parameters'] as List?)
-                  ?.cast<String>() ??
-              const [],
-      generateCsv: (targets['csv'] ?? config['generate_csv']) as bool? ?? false,
-      generateJson:
-          (targets['json'] ?? config['generate_json']) as bool? ?? false,
-      generateSql: (targets['sql'] ?? config['generate_sql']) as bool? ?? false,
-      generateDocs:
-          (targets['docs'] ?? config['generate_docs']) as bool? ?? false,
-      generatePlan:
-          (targets['plan'] ?? config['generate_plan']) as bool? ?? true,
-      includeEventDescription: (rules['include_event_description'] ??
-              config['include_event_description']) as bool? ??
-          false,
-      strictEventNames: (rules['strict_event_names'] ??
-              config['strict_event_names']) as bool? ??
-          true,
-      enforceCentrallyDefinedParameters:
-          (rules['enforce_centrally_defined_parameters'] ??
-                  config['enforce_centrally_defined_parameters']) as bool? ??
-              false,
-      preventEventParameterDuplicates:
-          (rules['prevent_event_parameter_duplicates'] ??
-                  config['prevent_event_parameter_duplicates']) as bool? ??
-              false,
+      eventsPath: val(inputs, 'events', val(config, 'events_path', 'events')),
+      outputPath: val(outputs, 'dart',
+          val(config, 'output_path', 'src/analytics/generated')),
+      docsPath: val(outputs, 'docs', val(config, 'docs_path', null)),
+      exportsPath: val(outputs, 'exports', val(config, 'exports_path', null)),
+      sharedParameters: list(
+          inputs, 'shared_parameters', list(config, 'shared_parameters', [])),
+      generateCsv: val(targets, 'csv', val(config, 'generate_csv', false)),
+      generateJson: val(targets, 'json', val(config, 'generate_json', false)),
+      generateSql: val(targets, 'sql', val(config, 'generate_sql', false)),
+      generateDocs: val(targets, 'docs', val(config, 'generate_docs', false)),
+      generatePlan: val(targets, 'plan', val(config, 'generate_plan', true)),
+      includeEventDescription: val(rules, 'include_event_description',
+          val(config, 'include_event_description', false)),
+      strictEventNames: val(
+          rules, 'strict_event_names', val(config, 'strict_event_names', true)),
+      enforceCentrallyDefinedParameters: val(
+          rules,
+          'enforce_centrally_defined_parameters',
+          val(config, 'enforce_centrally_defined_parameters', false)),
+      preventEventParameterDuplicates: val(
+          rules,
+          'prevent_event_parameter_duplicates',
+          val(config, 'prevent_event_parameter_duplicates', false)),
       naming: NamingStrategy.fromYaml(config['naming'] as Map?),
-      contexts:
-          (inputs['contexts'] ?? config['contexts'] as List?)?.cast<String>() ??
-              const [],
-      imports:
-          (inputs['imports'] ?? config['imports'] as List?)?.cast<String>() ??
-              const [],
-      generateTestMatchers: (targets['test_matchers'] ??
-              config['generate_test_matchers']) as bool? ??
-          false,
+      contexts: list(inputs, 'contexts', list(config, 'contexts', [])),
+      imports: list(inputs, 'imports', list(config, 'imports', [])),
+      generateTestMatchers: val(targets, 'test_matchers',
+          val(config, 'generate_test_matchers', false)),
     );
   }
 

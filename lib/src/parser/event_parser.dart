@@ -5,6 +5,7 @@ import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
 import '../models/analytics_parameter.dart';
+import '../util/string_utils.dart';
 import 'parameter_parser.dart';
 
 /// Parses analytics events from YAML.
@@ -117,6 +118,31 @@ final class EventParser {
       parameters.addAll(parsedParams);
     }
 
+    String? interpolatedName;
+    // Resolve effective name to check for placeholders
+    final effectiveName =
+        (customEventName != null && customEventName.isNotEmpty)
+            ? customEventName
+            : naming.renderEventName(domain: domainName, event: eventName);
+
+    if (effectiveName.contains('{')) {
+      final placeholderRegex = RegExp(r'\{([^}]+)\}');
+      interpolatedName =
+          effectiveName.replaceAllMapped(placeholderRegex, (match) {
+        final key = match.group(1)!;
+        final found = parameters.where((p) => p.name == key).toList();
+        if (found.isEmpty) return match.group(0)!;
+
+        final camel = StringUtils.toCamelCase(found.first.name);
+        return '\${$camel}';
+      });
+      // If no replacements were made (e.g. invalid placeholders), keep null to avoid noise?
+      // Or if it equals effectiveName, then it's null (no interpolation happened).
+      if (interpolatedName == effectiveName) {
+        interpolatedName = null;
+      }
+    }
+
     return AnalyticsEvent(
       name: eventName,
       description: description,
@@ -131,6 +157,7 @@ final class EventParser {
       addedIn: addedIn,
       deprecatedIn: deprecatedIn,
       dualWriteTo: dualWriteTo,
+      interpolatedName: interpolatedName,
     );
   }
 }

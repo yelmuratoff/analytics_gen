@@ -14,22 +14,21 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// - `product_id`: String
   /// - `reason`: String? - Reason for cancellation
   void logPurchaseCancelled({
-    required String productId,
-    String? reason,
-    Map<String, Object?>? parameters,
-  }) {
-    final eventParameters =
-        parameters ??
-        <String, Object?>{
+      required String productId,
+      String? reason,
+      Map<String, Object?>? parameters,
+    }) {
+
+        final eventParameters = parameters ?? <String, Object?>{
           'description': 'User cancelled a purchase',
           "product_id": productId,
           if (reason != null) "reason": reason,
         };
 
-    logger.logEvent(
-      name: "purchase_flow_cancelled",
-      parameters: eventParameters,
-    );
+        logger.logEvent(
+          name: "purchase_flow_cancelled",
+          parameters: eventParameters,
+        );
   }
 
   /// User completed a purchase
@@ -40,15 +39,14 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// - `product_id`: String
   /// - `quantity`: int - Number of items purchased
   void logPurchaseCompleted({
-    required String currencyCode,
-    required double price,
-    required String productId,
-    required int quantity,
-    Map<String, Object?>? parameters,
-  }) {
-    final eventParameters =
-        parameters ??
-        <String, Object?>{
+      required String currencyCode,
+      required double price,
+      required String productId,
+      required int quantity,
+      Map<String, Object?>? parameters,
+    }) {
+
+        final eventParameters = parameters ?? <String, Object?>{
           'description': 'User completed a purchase',
           "currency-code": currencyCode,
           "amount_value": price,
@@ -56,9 +54,10 @@ mixin AnalyticsPurchase on AnalyticsBase {
           "quantity": quantity,
         };
 
-    logger.logEvent(
-      name: "purchase_flow_completed",
-      parameters: eventParameters,
-    );
+        logger.logEvent(
+          name: "purchase_flow_completed",
+          parameters: eventParameters,
+        );
   }
+
 }

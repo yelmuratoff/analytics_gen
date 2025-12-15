@@ -66,7 +66,9 @@ class MatchersRenderer extends BaseRenderer {
     }
     buffer.writeln('  return predicate((item) {');
     buffer.writeln('    if (item is! Map) return false;');
-    buffer.writeln('    final Map<String, dynamic> params = Map.from(item);');
+    if (event.parameters.isNotEmpty) {
+      buffer.writeln('    final Map<String, dynamic> params = Map.from(item);');
+    }
     buffer.writeln();
 
     // We expect the logEvent call to have 'name' and 'parameters'.

@@ -8,7 +8,7 @@ import '../config/analytics_config.dart';
 import '../util/file_utils.dart';
 import '../util/logger.dart';
 import 'generation_metadata.dart';
-import 'generation_telemetry.dart';
+
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
 import 'renderers/event_renderer.dart';
@@ -22,13 +22,11 @@ final class CodeGenerator {
     required this.config,
     required this.projectRoot,
     this.log = const NoOpLogger(),
-    GenerationTelemetry? telemetry,
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
     MatchersRenderer? matchersRenderer,
-  })  : _telemetry = telemetry ?? LoggingTelemetry(log),
-        _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
+  })  : _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = eventRenderer ?? EventRenderer(config),
         _matchersRenderer = matchersRenderer ?? MatchersRenderer(config);
@@ -42,7 +40,6 @@ final class CodeGenerator {
   /// The logger to use.
   final Logger log;
 
-  final GenerationTelemetry _telemetry;
   final AnalyticsClassRenderer _classRenderer;
   final ContextRenderer _contextRenderer;
   final EventRenderer _eventRenderer;
@@ -53,8 +50,6 @@ final class CodeGenerator {
     Map<String, AnalyticsDomain> domains, {
     Map<String, List<AnalyticsParameter>> contexts = const {},
   }) async {
-    final startTime = DateTime.now();
-
     // Filter out empty contexts to avoid generating empty files
     final activeContexts = Map<String, List<AnalyticsParameter>>.from(contexts)
       ..removeWhere((_, value) => value.isEmpty);
@@ -65,21 +60,6 @@ final class CodeGenerator {
       return;
     }
 
-    final totalEvents = domains.values.fold(0, (sum, d) => sum + d.eventCount);
-    final totalParams =
-        domains.values.fold(0, (sum, d) => sum + d.parameterCount);
-
-    final context = GenerationContext(
-      domainCount: domains.length,
-      contextCount: activeContexts.length,
-      totalEventCount: totalEvents,
-      totalParameterCount: totalParams,
-      generateDocs: true,
-      generateExports: true,
-      generateCode: true,
-    );
-
-    _telemetry.onGenerationStart(context);
     log.info('Starting analytics code generation...');
 
     final outputDir = path.join(projectRoot, 'lib', config.outputPath);
@@ -94,7 +74,6 @@ final class CodeGenerator {
 
     // Generate individual domain files with telemetry
     await Future.wait(domains.entries.map((entry) async {
-      final domainStartTime = DateTime.now();
       final filePath = await _generateDomainFile(
         entry.key,
         entry.value,
@@ -102,26 +81,11 @@ final class CodeGenerator {
         domains,
       );
       generatedFiles.add(filePath);
-
-      final domainElapsed = DateTime.now().difference(domainStartTime);
-      _telemetry.onDomainProcessed(
-        entry.key,
-        domainElapsed,
-        entry.value.eventCount,
-      );
     }));
 
     // Generate context files with telemetry
     for (final entry in activeContexts.entries) {
-      final contextStartTime = DateTime.now();
       await _generateContextFile(entry.key, entry.value, contextsDir);
-
-      final contextElapsed = DateTime.now().difference(contextStartTime);
-      _telemetry.onContextProcessed(
-        entry.key,
-        contextElapsed,
-        entry.value.length,
-      );
     }
 
     // Clean up stale files
@@ -143,12 +107,6 @@ final class CodeGenerator {
     if (config.generateTestMatchers) {
       await _generateMatchersFile(domains);
     }
-
-    final elapsed = DateTime.now().difference(startTime);
-    final filesGenerated = generatedFiles.length +
-        activeContexts.length +
-        2; // +2 for barrel and analytics
-    _telemetry.onGenerationComplete(elapsed, filesGenerated);
   }
 
   Future<String> _generateContextFile(

@@ -197,6 +197,7 @@ void main() {
         parameters: [
           AnalyticsParameter(name: 'page', type: 'string', isNullable: false),
         ],
+        interpolatedName: 'view_\${page}',
       );
       final domain = AnalyticsDomain(name: 'screen', events: [event]);
       final allDomains = {'screen': domain};

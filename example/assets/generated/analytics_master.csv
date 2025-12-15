@@ -8,8 +8,8 @@ auth,phone_login,,Auth: Phone {phone_country},false,,When user logs in via phone
 auth,phone_login,,Auth: Phone {phone_country},false,,When user logs in via phone,,auth.phone_login,42,,,,,user_exists,,,Whether the user exists or not,,true,,,,,,user_exists,,,user_exists,bool,
 auth,signup,,,false,,User creates a new account,,,33,,,,,method,,,,,false,,,,,,method,,,method,string,
 auth,signup,,,false,,User creates a new account,,,33,,,,,referral_code,,,Optional referral code used during signup,,true,,,,,,referral_code,,^[A-Z0-9]{6}$,referral_code,string,regex:^[A-Z0-9]{6}$
-auth,verify_user,,,false,,User verification status change,,,59,,,,,local_status,LocalStatus,,,package:analytics_gen_example/local_enums.dart,false,,,,,,local_status,,,local_status,import,
-auth,verify_user,,,false,,User verification status change,,,59,,,,,status,VerificationStatus,,,package:analytics_gen_example/models.dart,false,,,,,,status,,,status,import,
+auth,verify_user,,,false,,User verification status change,,,59,,,,,local_status,LocalStatus,,,package:analytics_gen_example/local_enums.dart,false,,,,,,local_status,,,local_status,dynamic,
+auth,verify_user,,,false,,User verification status change,,,59,,,,,status,VerificationStatus,,,package:analytics_gen_example/models.dart,false,,,,,,status,,,status,dynamic,
 purchase,cancelled,,,false,,User cancelled a purchase,,,19,,,,,product_id,,,,,false,,,,,,product_id,,,product_id,string,
 purchase,cancelled,,,false,,User cancelled a purchase,,,19,,,,,reason,,,Reason for cancellation,,true,,,,,,reason,,,reason,string,
 purchase,completed,,,false,,User completed a purchase,,,3,,,,,currency_code,,,,,false,,,,,,currency-code,,,currency,string,

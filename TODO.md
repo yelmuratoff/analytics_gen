@@ -1,5 +1,13 @@
 # TODO – `analytics_gen`
 
+## Code Quality & Strict Refactoring (Priority: High)
+- [x] **Remove `GenerationTelemetry`** (YAGNI/Bloat)
+  - The telemetry system provides little value for a local CLI tool and complicates the generator logic.
+- [x] **Harden `AnalyticsConfig` Parsing** (Safety)
+  - Replace unsafe `as Type` casts with robust type checking helpers to prevent runtime crashes on malformed YAML.
+- [x] **Refactor Interpolation Logic** (SRP)
+  - Move string interpolation regex logic from `EventRenderer` (View) to `EventParser` (Controller/Model) to respect Separation of Concerns.
+
 ## Developer Experience & Safety Improvements
 
 - [x] **1. Generated Test Matchers**

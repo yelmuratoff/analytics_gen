@@ -1,5 +1,5 @@
 @Tags(['flutter'])
-library analytics_gen_example_widget_test;
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';

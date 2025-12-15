@@ -47,8 +47,7 @@ class MethodSignatureRenderer {
           hasParametersParam ? 'analyticsParameters' : 'parameters';
       buffer.writeln('$indentStr  Map<String, Object?>? $parametersArgName,');
 
-      buffer
-          .write('$indentStr} WITHOUT_PAREN_OR_BODY'); // Caller handles parens?
+      buffer.write('$indentStr}');
       // Actually it's cleaner if I render inside parens.
       // But BaseRenderer had `renderMethodParameters` which did `({ ... })`.
       // Here `EventRenderer` writes `void $methodName(`.

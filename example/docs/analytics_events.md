@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Fingerprint: `-3362e98eb3426bac`
+Fingerprint: `7dd6ab6fc6153e1e`
 Domains: 3 | Events: 10 | Parameters: 20
 
 ## Table of Contents
@@ -28,7 +28,7 @@ Events: 6 | Parameters: 10
 | auth_logout | User logs out | Active | - | - |
 | Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (string): ISO country code for the dialed number<br>`tracking-token` (string): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not | - |
 | auth_signup | User creates a new account | Active | `method` (string)<br>`referral_code` (string?): Optional referral code used during signup | - |
-| auth_verify_user | User verification status change | Active | `local_status` (import)<br>`status` (import) | - |
+| auth_verify_user | User verification status change | Active | `local_status` (dynamic)<br>`status` (dynamic) | - |
 
 ### Code Examples
 

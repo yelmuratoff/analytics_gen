@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import '../lib/src/analytics/generated/generated_events.dart';
+import 'package:analytics_gen_example/src/analytics/generated/generated_events.dart';
 import 'analytics_matchers.dart';
 
 void main() {

@@ -16,8 +16,6 @@ class EventBodyRenderer {
   /// The analytics configuration.
   final AnalyticsConfig config;
 
-  static final _placeholderRegex = RegExp(r'\{([^}]+)\}');
-
   /// Renders the method body.
   String renderBody(
     String domainName,
@@ -32,12 +30,10 @@ class EventBodyRenderer {
     buffer.write(_renderValidations(domainName, event, indent: indent));
 
     // 2. Prepare event name
+    // 2. Prepare event name
     final eventName =
         EventNaming.resolveEventName(domainName, event, config.naming);
-    final interpolatedEventName = _replacePlaceholdersWithInterpolation(
-      eventName,
-      event.parameters,
-    );
+    final interpolatedEventName = event.interpolatedName ?? eventName;
 
     // 3. Prepare parameters map
     final includeDescription =
@@ -343,19 +339,5 @@ class EventBodyRenderer {
     }
 
     return EventNaming.resolveEventName(domainName, event, config.naming);
-  }
-
-  String _replacePlaceholdersWithInterpolation(
-    String eventName,
-    List<AnalyticsParameter> parameters,
-  ) {
-    return eventName.replaceAllMapped(_placeholderRegex, (match) {
-      final key = match.group(1)!;
-      final found = parameters.where((p) => p.name == key).toList();
-      if (found.isEmpty) return match.group(0)!;
-
-      final camel = StringUtils.toCamelCase(found.first.name);
-      return '\${$camel}';
-    });
   }
 }
