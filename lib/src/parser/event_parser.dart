@@ -6,6 +6,7 @@ import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
 import '../models/analytics_parameter.dart';
 import '../util/string_utils.dart';
+import '../util/yaml_keys.dart';
 import 'parameter_parser.dart';
 
 /// Parses analytics events from YAML.
@@ -45,11 +46,11 @@ final class EventParser {
     }
 
     final description =
-        eventData['description'] as String? ?? 'No description provided';
-    final customEventName = eventData['event_name'] as String?;
+        eventData[YamlKeys.description] as String? ?? 'No description provided';
+    final customEventName = eventData[YamlKeys.eventName] as String?;
 
     if (customEventName != null) {
-      final customEventNameNode = eventData.nodes['event_name'];
+      final customEventNameNode = eventData.nodes[YamlKeys.eventName];
       if (strictEventNames &&
           (customEventName.contains('{') || customEventName.contains('}'))) {
         throw AnalyticsParseException(
@@ -60,13 +61,13 @@ final class EventParser {
         );
       }
     }
-    final identifier = eventData['identifier'] as String?;
-    final deprecated = eventData['deprecated'] as bool? ?? false;
-    final replacement = eventData['replacement'] as String?;
-    final addedIn = eventData['added_in'] as String?;
-    final deprecatedIn = eventData['deprecated_in'] as String?;
+    final identifier = eventData[YamlKeys.identifier] as String?;
+    final deprecated = eventData[YamlKeys.deprecated] as bool? ?? false;
+    final replacement = eventData[YamlKeys.replacement] as String?;
+    final addedIn = eventData[YamlKeys.addedIn] as String?;
+    final deprecatedIn = eventData[YamlKeys.deprecatedIn] as String?;
 
-    final dualWriteToNode = eventData.nodes['dual_write_to'];
+    final dualWriteToNode = eventData.nodes[YamlKeys.dualWriteTo];
     List<String>? dualWriteTo;
     if (dualWriteToNode != null) {
       if (dualWriteToNode is YamlList) {
@@ -80,7 +81,7 @@ final class EventParser {
       }
     }
 
-    final metaNode = eventData.nodes['meta'];
+    final metaNode = eventData.nodes[YamlKeys.meta];
     Map<String, dynamic> meta = const {};
     if (metaNode != null) {
       if (metaNode is! YamlMap) {
@@ -93,7 +94,7 @@ final class EventParser {
       meta = metaNode.map((key, value) => MapEntry(key.toString(), value));
     }
 
-    final rawParameters = eventData.nodes['parameters'];
+    final rawParameters = eventData.nodes[YamlKeys.parameters];
     final parameters = <AnalyticsParameter>[];
 
     if (rawParameters != null) {

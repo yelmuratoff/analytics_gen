@@ -17,15 +17,15 @@ mixin AnalyticsScreen on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'Legacy backend identifier kept for parity',
-          "legacy-screen-code": legacyScreenCode,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'Legacy backend identifier kept for parity',
+      "legacy-screen-code": legacyScreenCode,
+    };
 
-        logger.logEvent(
-          name: "Screen: Legacy",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "Screen: Legacy",
+      parameters: eventParameters,
+    );
   }
 
   @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
@@ -42,17 +42,17 @@ mixin AnalyticsScreen on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'User views a screen',
-          if (durationMs != null) "duration_ms": durationMs,
-          if (previousScreen != null) "previous_screen": previousScreen,
-          "screen_name": screenName,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User views a screen',
+      if (durationMs != null) "duration_ms": durationMs,
+      if (previousScreen != null) "previous_screen": previousScreen,
+      "screen_name": screenName,
+    };
 
-        logger.logEvent(
-          name: "Screen: ${screenName}",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "Screen: ${screenName}",
+      parameters: eventParameters,
+    );
   }
 
 }

@@ -1,3 +1,4 @@
+import '../util/yaml_keys.dart';
 import 'naming_strategy.dart';
 
 /// Configuration for analytics code generation
@@ -42,11 +43,11 @@ final class AnalyticsConfig {
           'Invalid configuration for "$context": Expected Map but got ${map.runtimeType}');
     }
 
-    final config = safeMap(yaml['analytics_gen'], 'analytics_gen');
-    final inputs = safeMap(config['inputs'], 'inputs');
-    final outputs = safeMap(config['outputs'], 'outputs');
-    final targets = safeMap(config['targets'], 'targets');
-    final rules = safeMap(config['rules'], 'rules');
+    final config = safeMap(yaml[YamlKeys.analyticsGen], YamlKeys.analyticsGen);
+    final inputs = safeMap(config[YamlKeys.inputs], YamlKeys.inputs);
+    final outputs = safeMap(config[YamlKeys.outputs], YamlKeys.outputs);
+    final targets = safeMap(config[YamlKeys.targets], YamlKeys.targets);
+    final rules = safeMap(config[YamlKeys.rules], YamlKeys.rules);
 
     T val<T>(Map map, String key, T defaultVal) {
       final v = map[key];
@@ -65,35 +66,45 @@ final class AnalyticsConfig {
     }
 
     return AnalyticsConfig(
-      eventsPath: val(inputs, 'events', val(config, 'events_path', 'events')),
-      outputPath: val(outputs, 'dart',
-          val(config, 'output_path', 'src/analytics/generated')),
-      docsPath: val(outputs, 'docs', val(config, 'docs_path', null)),
-      exportsPath: val(outputs, 'exports', val(config, 'exports_path', null)),
-      sharedParameters: list(
-          inputs, 'shared_parameters', list(config, 'shared_parameters', [])),
-      generateCsv: val(targets, 'csv', val(config, 'generate_csv', false)),
-      generateJson: val(targets, 'json', val(config, 'generate_json', false)),
-      generateSql: val(targets, 'sql', val(config, 'generate_sql', false)),
-      generateDocs: val(targets, 'docs', val(config, 'generate_docs', false)),
-      generatePlan: val(targets, 'plan', val(config, 'generate_plan', true)),
-      includeEventDescription: val(rules, 'include_event_description',
-          val(config, 'include_event_description', false)),
-      strictEventNames: val(
-          rules, 'strict_event_names', val(config, 'strict_event_names', true)),
+      eventsPath: val(
+          inputs, YamlKeys.events, val(config, YamlKeys.eventsPath, 'events')),
+      outputPath: val(outputs, YamlKeys.dart,
+          val(config, YamlKeys.outputPath, 'src/analytics/generated')),
+      docsPath:
+          val(outputs, YamlKeys.docs, val(config, YamlKeys.docsPath, null)),
+      exportsPath: val(
+          outputs, YamlKeys.exports, val(config, YamlKeys.exportsPath, null)),
+      sharedParameters: list(inputs, YamlKeys.sharedParameters,
+          list(config, YamlKeys.sharedParameters, [])),
+      generateCsv:
+          val(targets, YamlKeys.csv, val(config, YamlKeys.generateCsv, false)),
+      generateJson: val(
+          targets, YamlKeys.json, val(config, YamlKeys.generateJson, false)),
+      generateSql:
+          val(targets, YamlKeys.sql, val(config, YamlKeys.generateSql, false)),
+      generateDocs: val(
+          targets, YamlKeys.docs, val(config, YamlKeys.generateDocs, false)),
+      generatePlan:
+          val(targets, YamlKeys.plan, val(config, YamlKeys.generatePlan, true)),
+      includeEventDescription: val(rules, YamlKeys.includeEventDescription,
+          val(config, YamlKeys.includeEventDescription, false)),
+      strictEventNames: val(rules, YamlKeys.strictEventNames,
+          val(config, YamlKeys.strictEventNames, true)),
       enforceCentrallyDefinedParameters: val(
           rules,
-          'enforce_centrally_defined_parameters',
-          val(config, 'enforce_centrally_defined_parameters', false)),
+          YamlKeys.enforceCentrallyDefinedParameters,
+          val(config, YamlKeys.enforceCentrallyDefinedParameters, false)),
       preventEventParameterDuplicates: val(
           rules,
-          'prevent_event_parameter_duplicates',
-          val(config, 'prevent_event_parameter_duplicates', false)),
-      naming: NamingStrategy.fromYaml(config['naming'] as Map?),
-      contexts: list(inputs, 'contexts', list(config, 'contexts', [])),
-      imports: list(inputs, 'imports', list(config, 'imports', [])),
-      generateTestMatchers: val(targets, 'test_matchers',
-          val(config, 'generate_test_matchers', false)),
+          YamlKeys.preventEventParameterDuplicates,
+          val(config, YamlKeys.preventEventParameterDuplicates, false)),
+      naming: NamingStrategy.fromYaml(config[YamlKeys.naming] as Map?),
+      contexts:
+          list(inputs, YamlKeys.contexts, list(config, YamlKeys.contexts, [])),
+      imports:
+          list(inputs, YamlKeys.imports, list(config, YamlKeys.imports, [])),
+      generateTestMatchers: val(targets, YamlKeys.testMatchers,
+          val(config, YamlKeys.generateTestMatchers, false)),
     );
   }
 

@@ -29,15 +29,15 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'User logs in to the application',
-          "method": method,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User logs in to the application',
+      "method": method,
+    };
 
-        logger.logEvent(
-          name: "auth_login",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "auth_login",
+      parameters: eventParameters,
+    );
   }
 
   /// User logs in to the application (v2)
@@ -51,19 +51,19 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'User logs in to the application (v2)',
-          "login-method": loginMethod.value,
-          "session_id": sessionId,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User logs in to the application (v2)',
+      "login-method": loginMethod.value,
+      "session_id": sessionId,
+    };
 
-        logger.logEvent(
-          name: "auth_login_v2",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "auth_login_v2",
+      parameters: eventParameters,
+    );
 
-        // Dual-write to: auth.login
-        logAuthLogin(method: loginMethod.value, parameters: parameters);
+    // Dual-write to: auth.login
+    logAuthLogin(method: loginMethod.value, parameters: parameters);
   }
 
   /// User logs out
@@ -71,14 +71,14 @@ mixin AnalyticsAuth on AnalyticsBase {
   void logAuthLogout({Map<String, Object?>? parameters}
 ) {
 
-        final eventParameters = parameters ?? const <String, Object?>{
-          'description': 'User logs out',
-        };
+    final eventParameters = parameters ?? const <String, Object?>{
+      'description': 'User logs out',
+    };
 
-        logger.logEvent(
-          name: "auth_logout",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "auth_logout",
+      parameters: eventParameters,
+    );
   }
 
   @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
@@ -95,17 +95,17 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'When user logs in via phone',
-          "phone_country": phoneCountry,
-          "tracking-token": trackingToken,
-          if (userExists != null) "user_exists": userExists,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'When user logs in via phone',
+      "phone_country": phoneCountry,
+      "tracking-token": trackingToken,
+      if (userExists != null) "user_exists": userExists,
+    };
 
-        logger.logEvent(
-          name: "Auth: Phone ${phoneCountry}",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "Auth: Phone ${phoneCountry}",
+      parameters: eventParameters,
+    );
   }
 
   /// User creates a new account
@@ -126,16 +126,17 @@ mixin AnalyticsAuth on AnalyticsBase {
             'must match regex ^[A-Z0-9]{6}\$',
           );
         }
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'User creates a new account',
-          "method": method,
-          if (referralCode != null) "referral_code": referralCode,
-        };
 
-        logger.logEvent(
-          name: "auth_signup",
-          parameters: eventParameters,
-        );
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User creates a new account',
+      "method": method,
+      if (referralCode != null) "referral_code": referralCode,
+    };
+
+    logger.logEvent(
+      name: "auth_signup",
+      parameters: eventParameters,
+    );
   }
 
   /// User verification status change
@@ -149,16 +150,16 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-        final eventParameters = parameters ?? <String, Object?>{
-          'description': 'User verification status change',
-          "local_status": localStatus.name,
-          "status": status.name,
-        };
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User verification status change',
+      "local_status": localStatus.name,
+      "status": status.name,
+    };
 
-        logger.logEvent(
-          name: "auth_verify_user",
-          parameters: eventParameters,
-        );
+    logger.logEvent(
+      name: "auth_verify_user",
+      parameters: eventParameters,
+    );
   }
 
 }
