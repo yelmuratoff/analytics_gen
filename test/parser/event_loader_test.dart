@@ -1,8 +1,7 @@
-import 'package:file/file.dart';
-import 'package:file/memory.dart';
-
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/util/logger.dart';
+import 'package:file/file.dart';
+import 'package:file/memory.dart';
 import 'package:test/test.dart';
 
 class TestLogger implements Logger {
