@@ -13,7 +13,6 @@ import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
 import 'renderers/event_renderer.dart';
 import 'renderers/matchers_renderer.dart';
-import 'renderers/test_renderer.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -27,17 +26,11 @@ final class CodeGenerator {
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
     EventRenderer? eventRenderer,
-    TestRenderer? testRenderer,
     MatchersRenderer? matchersRenderer,
   })  : _telemetry = telemetry ?? LoggingTelemetry(log),
         _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = eventRenderer ?? EventRenderer(config),
-        _testRenderer = testRenderer ??
-            TestRenderer(
-              config,
-              isFlutter: _isFlutterProject(projectRoot),
-            ),
         _matchersRenderer = matchersRenderer ?? MatchersRenderer(config);
 
   /// The analytics configuration.
@@ -53,7 +46,6 @@ final class CodeGenerator {
   final AnalyticsClassRenderer _classRenderer;
   final ContextRenderer _contextRenderer;
   final EventRenderer _eventRenderer;
-  final TestRenderer _testRenderer;
   final MatchersRenderer _matchersRenderer;
 
   /// Generates analytics code and writes to configured output path
@@ -147,11 +139,6 @@ final class CodeGenerator {
       contexts: activeContexts,
     );
 
-    // Generate test file
-    if (config.generateTests) {
-      await _generateTestFile(domains);
-    }
-
     // Generate matchers
     if (config.generateTestMatchers) {
       await _generateMatchersFile(domains);
@@ -160,9 +147,7 @@ final class CodeGenerator {
     final elapsed = DateTime.now().difference(startTime);
     final filesGenerated = generatedFiles.length +
         activeContexts.length +
-        (config.generateTests
-            ? 3
-            : 2); // +2 for barrel and analytics, +1 for test
+        2; // +2 for barrel and analytics
     _telemetry.onGenerationComplete(elapsed, filesGenerated);
   }
 
@@ -239,22 +224,6 @@ final class CodeGenerator {
     log.info('✓ Generated Analytics class at: $analyticsPath');
   }
 
-  /// Generates a test file to verify event construction
-  Future<void> _generateTestFile(Map<String, AnalyticsDomain> domains) async {
-    final content = _testRenderer.render(domains);
-    final testPath = path.join(projectRoot, 'test', 'generated_plan_test.dart');
-
-    // Ensure test directory exists
-    final testDir = Directory(path.dirname(testPath));
-    if (!testDir.existsSync()) {
-      await testDir.create(recursive: true);
-    }
-
-    await _writeFileIfContentChanged(testPath, content);
-    await _writeFileIfContentChanged(testPath, content);
-    log.info('✓ Generated test file at: $testPath');
-  }
-
   /// Generates matchers file
   Future<void> _generateMatchersFile(
       Map<String, AnalyticsDomain> domains) async {
@@ -314,24 +283,6 @@ final class CodeGenerator {
       if (entity is File && !generatedFiles.contains(entity.path)) {
         await entity.delete();
       }
-    }
-  }
-
-  /// Checks if the project is a Flutter project by inspecting pubspec.yaml
-  static bool _isFlutterProject(String projectRoot) {
-    try {
-      final pubspecFile = File(path.join(projectRoot, 'pubspec.yaml'));
-      if (!pubspecFile.existsSync()) return false;
-
-      final content = pubspecFile.readAsStringSync();
-      // Simple check for flutter dependency
-      // A more robust check would parse YAML, but this is sufficient for 99% of cases
-      // and avoids adding a yaml dependency here if not already present (though it likely is).
-      return content.contains('sdk: flutter') ||
-          content.contains('flutter:') ||
-          content.contains('flutter_test:');
-    } catch (e) {
-      return false;
     }
   }
 }

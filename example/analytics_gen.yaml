@@ -36,7 +36,6 @@ analytics_gen:
     json: true
     sql: true
     plan: true
-    tests: true
     test_matchers: true
 
   # Validation and generation rules

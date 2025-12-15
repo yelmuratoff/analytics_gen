@@ -14,7 +14,6 @@ final class AnalyticsConfig {
     this.generateSql = false,
     this.generateDocs = false,
     this.generatePlan = true,
-    this.generateTests = false,
     this.includeEventDescription = false,
     this.strictEventNames = true,
     this.enforceCentrallyDefinedParameters = false,
@@ -52,8 +51,6 @@ final class AnalyticsConfig {
           (targets['docs'] ?? config['generate_docs']) as bool? ?? false,
       generatePlan:
           (targets['plan'] ?? config['generate_plan']) as bool? ?? true,
-      generateTests:
-          (targets['tests'] ?? config['generate_tests']) as bool? ?? false,
       includeEventDescription: (rules['include_event_description'] ??
               config['include_event_description']) as bool? ??
           false,
@@ -113,9 +110,6 @@ final class AnalyticsConfig {
 
   /// Whether to include the runtime tracking plan in generated code.
   final bool generatePlan;
-
-  /// Whether to generate a test file that verifies event construction.
-  final bool generateTests;
 
   /// Whether to include the event 'description' as a parameter when logging
   /// events.
