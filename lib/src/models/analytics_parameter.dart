@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import '../util/copy_with.dart';
@@ -7,43 +5,6 @@ import '../util/copy_with.dart';
 /// Represents a single analytics event parameter.
 @immutable
 final class AnalyticsParameter {
-  /// Parses a parameter from a YAML node.
-
-  /// Creates a new analytics parameter from a map.
-  factory AnalyticsParameter.fromMap(Map<String, dynamic> map) {
-    T cast<T>(String k) => map[k] is T
-        ? map[k] as T
-        : throw ArgumentError.value(map[k], k, '$T ← ${map[k].runtimeType}');
-    return AnalyticsParameter(
-      name: cast<String?>('name') ?? '',
-      sourceName: cast<String?>('source_name'),
-      codeName: cast<String?>('code_name') ?? '',
-      type: cast<String?>('type') ?? '',
-      dartType: map['dart_type'] as String?,
-      dartImport: map['import'] as String?,
-      isNullable: map['is_nullable'] as bool? ?? false,
-      description: map['description'] as String?,
-      allowedValues: map['allowed_values'] != null
-          ? List<dynamic>.from(cast<Iterable>('allowed_values'))
-          : null,
-      regex: cast<String?>('regex'),
-      minLength: cast<num?>('min_length')?.toInt(),
-      maxLength: cast<num?>('max_length')?.toInt(),
-      min: cast<num?>('min'),
-      max: cast<num?>('max'),
-      meta: Map<String, dynamic>.from(cast<Map?>('meta') ?? const {}),
-      operations: map['operations'] != null
-          ? List<String>.from(cast<Iterable>('operations'))
-          : null,
-      addedIn: cast<String?>('added_in'),
-      deprecatedIn: cast<String?>('deprecated_in'),
-    );
-  }
-
-  /// Creates a new analytics parameter from a JSON string.
-  factory AnalyticsParameter.fromJson(String source) =>
-      AnalyticsParameter.fromMap(json.decode(source) as Map<String, dynamic>);
-
   /// Creates a new analytics parameter.
   const AnalyticsParameter({
     String? codeName,
@@ -236,31 +197,4 @@ final class AnalyticsParameter {
           : deprecatedIn as String?,
     );
   }
-
-  /// Converts this analytics parameter to a map.
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'source_name': sourceName,
-      'code_name': codeName,
-      'type': type,
-      'dart_type': dartType,
-      'import': dartImport,
-      'is_nullable': isNullable,
-      'description': description,
-      'allowed_values': allowedValues,
-      'regex': regex,
-      'min_length': minLength,
-      'max_length': maxLength,
-      'min': min,
-      'max': max,
-      'meta': meta,
-      'operations': operations,
-      'added_in': addedIn,
-      'deprecated_in': deprecatedIn,
-    };
-  }
-
-  /// Converts this analytics parameter to a JSON string.
-  String toJson() => json.encode(toMap());
 }

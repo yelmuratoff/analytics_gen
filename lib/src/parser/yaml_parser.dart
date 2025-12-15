@@ -27,6 +27,9 @@ final class YamlParser {
     this.sharedParameters = const {},
     SchemaValidator? validator,
     LoadYamlNode? loadYaml,
+    DomainParser? domainParser,
+    ContextParser? contextParser,
+    SharedParameterParser? sharedParameterParser,
     void Function(String domainKey, YamlNode? valueNode)? domainHook,
   })  : naming = naming ?? const NamingStrategy(),
         _loadYamlNode = loadYaml ??
@@ -43,28 +46,31 @@ final class YamlParser {
           this.naming,
           strictEventNames: strictEventNames,
         );
-    // _parameterParser removed
-    _domainParser = DomainParser(
-      validator: _validator,
-      loadYamlNode: _loadYamlNode,
-      naming: this.naming,
-      log: log,
-      strictEventNames: strictEventNames,
-      enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
-      preventEventParameterDuplicates: preventEventParameterDuplicates,
-      sharedParameters: sharedParameters,
-      domainHook: domainHook,
-    );
-    _contextParser = ContextParser(
-      validator: _validator,
-      loadYamlNode: _loadYamlNode,
-      naming: this.naming,
-    );
-    _sharedParameterParser = SharedParameterParser(
-      validator: _validator,
-      loadYamlNode: _loadYamlNode,
-      naming: this.naming,
-    );
+
+    _domainParser = domainParser ??
+        DomainParser(
+          validator: _validator,
+          loadYamlNode: _loadYamlNode,
+          naming: this.naming,
+          log: log,
+          strictEventNames: strictEventNames,
+          enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
+          preventEventParameterDuplicates: preventEventParameterDuplicates,
+          sharedParameters: sharedParameters,
+          domainHook: domainHook,
+        );
+    _contextParser = contextParser ??
+        ContextParser(
+          validator: _validator,
+          loadYamlNode: _loadYamlNode,
+          naming: this.naming,
+        );
+    _sharedParameterParser = sharedParameterParser ??
+        SharedParameterParser(
+          validator: _validator,
+          loadYamlNode: _loadYamlNode,
+          naming: this.naming,
+        );
   }
 
   /// The logger to use.

@@ -53,7 +53,7 @@ class EventRenderer extends BaseRenderer {
 
     // improved logic:
     final importUris = <String>{
-      'package:analytics_gen/analytics_gen.dart',
+      AnalyticsConfig.kPackageImport,
       ...config.imports,
     };
     for (final event in domain.events) {

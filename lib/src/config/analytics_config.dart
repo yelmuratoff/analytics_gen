@@ -111,6 +111,10 @@ final class AnalyticsConfig {
   /// Default configuration
   static const AnalyticsConfig defaultConfig = AnalyticsConfig();
 
+  /// The main package import uri.
+  static const String kPackageImport =
+      'package:analytics_gen/analytics_gen.dart';
+
   /// Path to directory containing YAML event files (relative to project root)
   final String eventsPath;
 

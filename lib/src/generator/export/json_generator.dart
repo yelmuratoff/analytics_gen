@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/serialization.dart';
 
 import '../../config/naming_strategy.dart';
 import '../../util/event_naming.dart';
@@ -51,7 +52,7 @@ final class JsonGenerator {
           'event_count': domain.eventCount,
           'parameter_count': domain.parameterCount,
           'events': domain.events.map((event) {
-            final eventMap = event.toMap();
+            final eventMap = AnalyticsSerialization.eventToMap(event);
 
             // Add computed fields
             eventMap['event_name'] =

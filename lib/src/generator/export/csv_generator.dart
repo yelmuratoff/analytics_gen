@@ -1,6 +1,6 @@
-// dart:io not required directly
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:analytics_gen/src/models/serialization.dart';
 
 import '../../config/naming_strategy.dart';
 import '../../util/event_naming.dart';
@@ -37,7 +37,7 @@ final class CsvGenerator {
 
     for (final domain in domains.values) {
       for (final event in domain.events) {
-        final row = event.toMap();
+        final row = AnalyticsSerialization.eventToMap(event);
         // Add computed/context fields
         row['domain'] = domain.name;
         row['event_name'] =
@@ -84,7 +84,7 @@ final class CsvGenerator {
 
     final rows = <Map<String, dynamic>>[];
     for (final param in uniqueParams.values) {
-      final row = param.toMap();
+      final row = AnalyticsSerialization.parameterToMap(param);
       row.remove('source_path'); // Internal field
 
       // Flatten complex fields
@@ -178,7 +178,7 @@ final class CsvGenerator {
 
     for (final domain in domains.values) {
       for (final event in domain.events) {
-        final eventRow = event.toMap();
+        final eventRow = AnalyticsSerialization.eventToMap(event);
         eventRow['domain'] = domain.name;
         eventRow['event_name'] =
             EventNaming.resolveEventName(domain.name, event, naming);
@@ -216,7 +216,7 @@ final class CsvGenerator {
           rows.add(finalEventRow);
         } else {
           for (final param in event.parameters) {
-            final paramRow = param.toMap();
+            final paramRow = AnalyticsSerialization.parameterToMap(param);
             paramRow.remove('source_path'); // Internal field
             final combinedRow = Map<String, dynamic>.from(finalEventRow);
 
@@ -268,7 +268,7 @@ final class CsvGenerator {
   ) async {
     final rows = <Map<String, dynamic>>[];
     for (final domain in domains.values) {
-      rows.add(domain.toMap());
+      rows.add(AnalyticsSerialization.domainToMap(domain));
     }
     // domain.toMap() has 'name' and 'events'. We want counts.
     // Domain.toMap doesn't have counts.

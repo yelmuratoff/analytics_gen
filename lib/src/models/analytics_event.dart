@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import '../models/analytics_parameter.dart';
@@ -8,38 +6,6 @@ import '../util/copy_with.dart';
 /// Represents a single analytics event.
 @immutable
 final class AnalyticsEvent {
-  /// Parses an event from a YAML node.
-
-  /// Creates a new analytics event from a map.
-  factory AnalyticsEvent.fromMap(Map<String, dynamic> map) {
-    T cast<T>(String k) => map[k] is T
-        ? map[k] as T
-        : throw ArgumentError.value(map[k], k, '$T ← ${map[k].runtimeType}');
-    return AnalyticsEvent(
-      name: cast<String?>('name') ?? '',
-      description: cast<String?>('description') ?? '',
-      identifier: cast<String?>('identifier'),
-      customEventName: cast<String?>('custom_event_name'),
-      parameters: List<AnalyticsParameter>.from(cast<Iterable?>('parameters')
-              ?.map((x) => AnalyticsParameter.fromMap(Map.from(x as Map))) ??
-          const <AnalyticsParameter>[]),
-      deprecated: cast<bool?>('deprecated') ?? false,
-      replacement: cast<String?>('replacement'),
-      meta: Map<String, dynamic>.from(cast<Map?>('meta') ?? const {}),
-      sourcePath: cast<String?>('source_path'),
-      lineNumber: cast<num?>('line_number')?.toInt(),
-      addedIn: cast<String?>('added_in'),
-      deprecatedIn: cast<String?>('deprecated_in'),
-      dualWriteTo: map['dual_write_to'] != null
-          ? List<String>.from(cast<Iterable>('dual_write_to'))
-          : null,
-    );
-  }
-
-  /// Creates a new analytics event from a JSON string.
-  factory AnalyticsEvent.fromJson(String source) =>
-      AnalyticsEvent.fromMap(json.decode(source) as Map<String, dynamic>);
-
   /// Creates a new analytics event.
   const AnalyticsEvent({
     required this.name,
@@ -209,26 +175,4 @@ final class AnalyticsEvent {
           : interpolatedName as String?,
     );
   }
-
-  /// Converts this analytics event to a map.
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'description': description,
-      'identifier': identifier,
-      'custom_event_name': customEventName,
-      'parameters': parameters.map((x) => x.toMap()).toList(),
-      'deprecated': deprecated,
-      'replacement': replacement,
-      'meta': meta,
-      'source_path': sourcePath,
-      'line_number': lineNumber,
-      'added_in': addedIn,
-      'deprecated_in': deprecatedIn,
-      'dual_write_to': dualWriteTo,
-    };
-  }
-
-  /// Converts this analytics event to a JSON string.
-  String toJson() => json.encode(toMap());
 }
