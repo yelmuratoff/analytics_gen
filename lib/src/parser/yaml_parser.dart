@@ -115,19 +115,21 @@ final class YamlParser {
 
   /// Public helper used by tests to exercise parameter parsing logic
   /// without traversing the full YAML loader pipeline.
-  static List<AnalyticsParameter> parseParametersFromYaml(
+  List<AnalyticsParameter> parseParameters(
     YamlMap parametersYaml, {
     required String domainName,
     required String eventName,
     required String filePath,
   }) {
-    // Use the static method on ParameterParser
     return ParameterParser.parseParameters(
       parametersYaml,
       domainName: domainName,
       eventName: eventName,
       filePath: filePath,
-      naming: const NamingStrategy(),
+      naming: naming,
+      sharedParameters: sharedParameters,
+      enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
+      preventEventParameterDuplicates: preventEventParameterDuplicates,
     );
   }
 

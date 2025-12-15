@@ -400,7 +400,7 @@ void main() {
       final yamlMap = YamlMap.wrap(parameters);
 
       expect(
-        () => YamlParser.parseParametersFromYaml(
+        () => YamlParser().parseParameters(
           yamlMap,
           domainName: 'auth',
           eventName: 'dup',

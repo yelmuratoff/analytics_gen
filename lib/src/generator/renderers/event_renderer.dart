@@ -27,15 +27,15 @@ class EventRenderer extends BaseRenderer {
     final buffer = StringBuffer();
 
     // Collect imports from parameters
-    final localImports = <String>{};
+    // Collect import URIs
+    final importUris = <String>{
+      AnalyticsConfig.kPackageImport,
+      ...config.imports,
+    };
     for (final event in domain.events) {
       for (final param in event.parameters) {
         if (param.dartImport != null) {
-          // Assuming the import string is a valid Dart import URI (e.g. 'package:foo/bar.dart')
-          // If it's just 'package:foo/bar.dart', renderImports handles it.
-          // If the user provided 'import "package:foo/bar.dart";', we might need stripping,
-          // but let's assume raw URI for now as per plan.
-          localImports.add("import '${param.dartImport}';");
+          importUris.add(param.dartImport!);
         }
       }
     }
@@ -50,19 +50,6 @@ class EventRenderer extends BaseRenderer {
     // Let's check BaseRenderer.renderImports implementation via assumption or view_file if unsure.
     // The previous code was: renderImports(['package:analytics_gen/analytics_gen.dart', ...config.imports])
     // So it expects URIs.
-
-    // improved logic:
-    final importUris = <String>{
-      AnalyticsConfig.kPackageImport,
-      ...config.imports,
-    };
-    for (final event in domain.events) {
-      for (final param in event.parameters) {
-        if (param.dartImport != null) {
-          importUris.add(param.dartImport!);
-        }
-      }
-    }
 
     buffer.write(renderImports(importUris.toList()..sort()));
 
