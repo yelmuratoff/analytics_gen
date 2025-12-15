@@ -30,6 +30,6 @@ void main() {
     await tester.pump();
 
     expect(controller.events.length, 1);
-    expect(controller.events.first.name, 'auth: login');
+    expect(controller.events.first.name, 'auth_login');
   });
 }
