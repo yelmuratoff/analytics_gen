@@ -13,8 +13,9 @@ void main() {
       expect(
         eventParams,
         isAuthLoginV2(
-            loginMethod: AnalyticsAuthLoginV2LoginMethodEnum.email,
-            sessionId: '123'),
+          loginMethod: AnalyticsAuthLoginV2LoginMethodEnum.email,
+          sessionId: '123',
+        ),
       );
     });
 
@@ -26,9 +27,12 @@ void main() {
 
       expect(
         eventParams,
-        isNot(isAuthLoginV2(
+        isNot(
+          isAuthLoginV2(
             loginMethod: AnalyticsAuthLoginV2LoginMethodEnum.email,
-            sessionId: '123')),
+            sessionId: '123',
+          ),
+        ),
       );
     });
 
@@ -47,28 +51,20 @@ void main() {
         'duration_ms': 100,
       };
 
-      expect(
-          params,
-          isScreenView(
-            screenName: 'Home',
-            durationMs: 100,
-          ));
+      expect(params, isScreenView(screenName: 'Home', durationMs: 100));
     });
 
     test(
-        'isScreenView ignores missing optional params in check if not specified in matcher',
-        () {
-      final params = <String, dynamic>{
-        'screen_name': 'Home',
-        // duration_ms is missing in actual
-      };
+      'isScreenView ignores missing optional params in check if not specified in matcher',
+      () {
+        final params = <String, dynamic>{
+          'screen_name': 'Home',
+          // duration_ms is missing in actual
+        };
 
-      // If we don't pass durationMs to isScreenView, it shouldn't check it (treated as "any/ignore").
-      expect(
-          params,
-          isScreenView(
-            screenName: 'Home',
-          ));
-    });
+        // If we don't pass durationMs to isScreenView, it shouldn't check it (treated as "any/ignore").
+        expect(params, isScreenView(screenName: 'Home'));
+      },
+    );
   });
 }

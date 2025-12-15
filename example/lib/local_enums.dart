@@ -1,4 +1,1 @@
-enum LocalStatus {
-  active,
-  inactive,
-}
+enum LocalStatus { active, inactive }
