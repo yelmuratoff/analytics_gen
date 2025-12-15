@@ -1,4 +1,3 @@
-
 import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:test/test.dart';
 

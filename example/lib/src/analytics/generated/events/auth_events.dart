@@ -25,19 +25,17 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// Parameters:
   /// - `method`: String - Login method (email, google, apple)
   void logAuthLogin({
-      required String method,
-      Map<String, Object?>? parameters,
-    }) {
+    required String method,
+    Map<String, Object?>? parameters,
+  }) {
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'User logs in to the application',
+          "method": method,
+        };
 
-    final eventParameters = parameters ?? <String, Object?>{
-      'description': 'User logs in to the application',
-      "method": method,
-    };
-
-    logger.logEvent(
-      name: "auth_login",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "auth_login", parameters: eventParameters);
   }
 
   /// User logs in to the application (v2)
@@ -46,21 +44,19 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// - `login-method`: AnalyticsAuthLoginV2LoginMethodEnum - Login method v2 (email, google, apple)
   /// - `session_id`: String - Unique identifier for the current session.
   void logAuthLoginV2({
-      required AnalyticsAuthLoginV2LoginMethodEnum loginMethod,
-      required String sessionId,
-      Map<String, Object?>? parameters,
-    }) {
+    required AnalyticsAuthLoginV2LoginMethodEnum loginMethod,
+    required String sessionId,
+    Map<String, Object?>? parameters,
+  }) {
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'User logs in to the application (v2)',
+          "login-method": loginMethod.value,
+          "session_id": sessionId,
+        };
 
-    final eventParameters = parameters ?? <String, Object?>{
-      'description': 'User logs in to the application (v2)',
-      "login-method": loginMethod.value,
-      "session_id": sessionId,
-    };
-
-    logger.logEvent(
-      name: "auth_login_v2",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "auth_login_v2", parameters: eventParameters);
 
     // Dual-write to: auth.login
     logAuthLogin(method: loginMethod.value, parameters: parameters);
@@ -68,20 +64,16 @@ mixin AnalyticsAuth on AnalyticsBase {
 
   /// User logs out
   ///
-  void logAuthLogout({Map<String, Object?>? parameters}
-) {
+  void logAuthLogout({Map<String, Object?>? parameters}) {
+    final eventParameters =
+        parameters ?? const <String, Object?>{'description': 'User logs out'};
 
-    final eventParameters = parameters ?? const <String, Object?>{
-      'description': 'User logs out',
-    };
-
-    logger.logEvent(
-      name: "auth_logout",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "auth_logout", parameters: eventParameters);
   }
 
-  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
+  @Deprecated(
+    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
+  )
   /// When user logs in via phone
   ///
   /// Parameters:
@@ -89,18 +81,19 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// - `tracking-token`: String - Legacy token kept for backend reconciliation
   /// - `user_exists`: bool? - Whether the user exists or not
   void logAuthPhoneLogin({
-      required String phoneCountry,
-      required String trackingToken,
-      bool? userExists,
-      Map<String, Object?>? parameters,
-    }) {
-
-    final eventParameters = parameters ?? <String, Object?>{
-      'description': 'When user logs in via phone',
-      "phone_country": phoneCountry,
-      "tracking-token": trackingToken,
-      if (userExists != null) "user_exists": userExists,
-    };
+    required String phoneCountry,
+    required String trackingToken,
+    bool? userExists,
+    Map<String, Object?>? parameters,
+  }) {
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'When user logs in via phone',
+          "phone_country": phoneCountry,
+          "tracking-token": trackingToken,
+          if (userExists != null) "user_exists": userExists,
+        };
 
     logger.logEvent(
       name: "Auth: Phone ${phoneCountry}",
@@ -114,29 +107,28 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// - `method`: String
   /// - `referral_code`: String? - Optional referral code used during signup
   void logAuthSignup({
-      required String method,
-      String? referralCode,
-      Map<String, Object?>? parameters,
-    }) {
+    required String method,
+    String? referralCode,
+    Map<String, Object?>? parameters,
+  }) {
+    if (referralCode != null &&
+        !RegExp(r'^[A-Z0-9]{6}$').hasMatch(referralCode)) {
+      throw ArgumentError.value(
+        referralCode,
+        'referralCode',
+        'must match regex ^[A-Z0-9]{6}\$',
+      );
+    }
 
-        if (referralCode != null && !RegExp(r'^[A-Z0-9]{6}$').hasMatch(referralCode)) {
-          throw ArgumentError.value(
-            referralCode,
-            'referralCode',
-            'must match regex ^[A-Z0-9]{6}\$',
-          );
-        }
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'User creates a new account',
+          "method": method,
+          if (referralCode != null) "referral_code": referralCode,
+        };
 
-    final eventParameters = parameters ?? <String, Object?>{
-      'description': 'User creates a new account',
-      "method": method,
-      if (referralCode != null) "referral_code": referralCode,
-    };
-
-    logger.logEvent(
-      name: "auth_signup",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "auth_signup", parameters: eventParameters);
   }
 
   /// User verification status change
@@ -145,21 +137,18 @@ mixin AnalyticsAuth on AnalyticsBase {
   /// - `local_status`: LocalStatus
   /// - `status`: VerificationStatus
   void logAuthVerifyUser({
-      required LocalStatus localStatus,
-      required VerificationStatus status,
-      Map<String, Object?>? parameters,
-    }) {
+    required LocalStatus localStatus,
+    required VerificationStatus status,
+    Map<String, Object?>? parameters,
+  }) {
+    final eventParameters =
+        parameters ??
+        <String, Object?>{
+          'description': 'User verification status change',
+          "local_status": localStatus.name,
+          "status": status.name,
+        };
 
-    final eventParameters = parameters ?? <String, Object?>{
-      'description': 'User verification status change',
-      "local_status": localStatus.name,
-      "status": status.name,
-    };
-
-    logger.logEvent(
-      name: "auth_verify_user",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "auth_verify_user", parameters: eventParameters);
   }
-
 }

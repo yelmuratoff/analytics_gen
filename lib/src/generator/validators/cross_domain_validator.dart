@@ -28,8 +28,7 @@ class CrossDomainValidator {
       if (parts.length != 2) return target;
       final domain = allDomains[parts[0]];
       if (domain == null) return target;
-      final eventIndex =
-          domain.events.indexWhere((e) => e.name == parts[1]);
+      final eventIndex = domain.events.indexWhere((e) => e.name == parts[1]);
       if (eventIndex == -1) return target;
       return EventNaming.resolveEventName(
           parts[0], domain.events[eventIndex], config.naming);

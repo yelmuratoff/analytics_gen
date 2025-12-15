@@ -2,17 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.3] - Unreleased
+## [1.0.3]
 - Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan.
 - Added `test_matchers` target to generate typed `package:test` matchers (e.g. `isAuthLogin`) for simpler verification.
 - Added `dart_type` parameter option to map parameters to existing Dart types (Enums/Classes).
 - Added Global `imports` configuration to `analytics_gen.yaml` for including external types.
 - Added Local `import` parameter option for granular type importing.
 - Added Configurable Event Naming Strategy (`casing`) to control generated event string format (`snake_case`, `title_case`, `original`).
-- **Refactor:** Extracted YAML parsing logic from models into `EventParser` and `ParameterParser`.
-- **Refactor:** Decomposed `EventRenderer` into `DocumentationRenderer`, `MethodSignatureRenderer`, and `EventBodyRenderer`.
-- **Optimization:** Generated code now uses `const` maps for constant event parameters (e.g. description only).
-- **Removed:** Removed auto-generated tests (`generated_plan_test.dart`) to clean up build outputs. they provided false confidence without verifying business logic. Use `test_matchers` instead.
+- Refactor: Extracted YAML parsing logic from models into `EventParser` and `ParameterParser`.
+- Refactor: Decomposed `EventRenderer` into `DocumentationRenderer`, `MethodSignatureRenderer`, and `EventBodyRenderer`.
+- Optimization: Generated code now uses `const` maps for constant event parameters (e.g. description only).
+- Removed: Removed auto-generated tests (`generated_plan_test.dart`) to clean up build outputs. they provided false confidence without verifying business logic. Use `test_matchers` instead.
 
 
 ## [1.0.2]
