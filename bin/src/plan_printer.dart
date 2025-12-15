@@ -5,11 +5,10 @@ import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/util/banner_printer.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
-
-import 'banner_printer.dart';
 
 Future<void> validateTrackingPlan(
   String projectRoot,

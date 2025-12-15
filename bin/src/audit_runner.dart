@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
@@ -22,9 +23,14 @@ import 'config_loader.dart';
 import 'usage.dart';
 
 class AuditRunner {
-  AuditRunner({ArgParser? parser}) : _parser = parser ?? createArgParser();
+  AuditRunner({
+    ArgParser? parser,
+    ConfigParser? configParser,
+  })  : _parser = parser ?? createArgParser(),
+        _configParser = configParser;
 
   final ArgParser _parser;
+  final ConfigParser? _configParser;
 
   Future<void> run(List<String> arguments) async {
     Logger? logger;
@@ -44,6 +50,7 @@ class AuditRunner {
         projectRoot,
         configPath,
         logger: logger,
+        parser: _configParser,
       );
 
       await _runAudit(projectRoot, config, logger);

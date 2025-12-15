@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
@@ -9,8 +10,10 @@ Future<AnalyticsConfig> loadAnalyticsConfig(
   String projectRoot,
   String configPath, {
   Logger? logger,
+  ConfigParser? parser,
 }) async {
   final log = logger ?? const ConsoleLogger();
+  final configParser = parser ?? const ConfigParser();
   final configFile = File(path.join(projectRoot, configPath));
   if (!configFile.existsSync()) {
     _printDefaultConfigReminder(configPath, log);
@@ -19,7 +22,7 @@ Future<AnalyticsConfig> loadAnalyticsConfig(
 
   final content = await configFile.readAsString();
   final yaml = loadYaml(content) as Map;
-  return AnalyticsConfig.fromYaml(yaml);
+  return configParser.parse(yaml);
 }
 
 void _printDefaultConfigReminder(String configPath, Logger logger) {

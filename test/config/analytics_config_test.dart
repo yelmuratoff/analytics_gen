@@ -1,10 +1,11 @@
-import 'package:analytics_gen/src/config/analytics_config.dart';
+
+import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('AnalyticsConfig.fromYaml', () {
+  group('ConfigParser.parse', () {
     test('returns defaults when analytics_gen section is missing', () {
-      final config = AnalyticsConfig.fromYaml({});
+      final config = ConfigParser().parse({});
 
       expect(config.eventsPath, 'events');
       expect(config.outputPath, 'src/analytics/generated');
@@ -46,7 +47,7 @@ void main() {
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
       expect(config.eventsPath, 'custom_events');
       expect(config.outputPath, 'custom_output');
@@ -79,7 +80,7 @@ void main() {
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
       expect(config.sharedParameters, ['shared/one.yaml', 'shared/two.yaml']);
       expect(config.contexts, ['shared/user.yaml']);
@@ -99,7 +100,7 @@ void main() {
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
       expect(config.sharedParameters, ['shared/config_level.yaml']);
       expect(config.contexts, ['shared/config_context.yaml']);
@@ -123,11 +124,11 @@ void main() {
             'contexts': [
               'shared/from_inputs_context.yaml',
             ],
-          }
+          },
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
       expect(config.sharedParameters, ['shared/from_inputs.yaml']);
       expect(config.contexts, ['shared/from_inputs_context.yaml']);

@@ -1,5 +1,6 @@
 import 'package:analytics_gen/src/util/logger.dart';
 
+/// Prints a banner with the given title.
 void printBanner(String title, {Logger? logger}) {
   final log = logger ?? const ConsoleLogger();
   const border = '╔════════════════════════════════════════════════╗';

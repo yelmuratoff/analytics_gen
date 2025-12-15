@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
@@ -11,10 +12,14 @@ import 'plan_printer.dart';
 import 'usage.dart';
 
 class AnalyticsGenRunner {
-  AnalyticsGenRunner({ArgParser? parser})
-      : _parser = parser ?? createArgParser();
+  AnalyticsGenRunner({
+    ArgParser? parser,
+    ConfigParser? configParser,
+  })  : _parser = parser ?? createArgParser(),
+        _configParser = configParser;
 
   final ArgParser _parser;
+  final ConfigParser? _configParser;
 
   Future<void> run(List<String> arguments) async {
     Logger? logger;
@@ -34,6 +39,7 @@ class AnalyticsGenRunner {
         projectRoot,
         configPath,
         logger: logger,
+        parser: _configParser,
       );
 
       final generateCode = results['code'] as bool;
