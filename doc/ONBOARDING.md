@@ -60,6 +60,16 @@ analytics_gen:
   naming:
     enforce_snake_case_domains: true
     enforce_snake_case_parameters: true
+    
+    # Optional: Imports for custom types/enums
+    # imports:
+    #   - "package:my_app/analytics_models.dart"
+
+  targets:
+    docs: true
+    json: true
+    test_matchers: true # Generate typed Matchers for unit tests
+
 ```
 
 - Use `domain_aliases` or per-parameter `identifier` overrides when legacy naming collides with snake_case rules.
