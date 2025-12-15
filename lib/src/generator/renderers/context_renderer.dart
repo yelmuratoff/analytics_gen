@@ -3,6 +3,7 @@ import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
 import 'base_renderer.dart';
+import 'sub_renderers/validation_renderer.dart';
 
 /// Renders context capability interfaces and mixins.
 class ContextRenderer extends BaseRenderer {
@@ -69,12 +70,14 @@ class ContextRenderer extends BaseRenderer {
         buffer.writeln('  void $methodName($nullableType value) {');
 
         if (prop.allowedValues != null && prop.allowedValues!.isNotEmpty) {
+          const validator = ValidationRenderer();
           final constName =
               'allowed${StringUtils.capitalizePascal(camelName)}Values';
-          final encodedValues = encodeAllowedValues(prop.allowedValues!);
-          final joinedValues = joinAllowedValues(prop.allowedValues!);
+          final encodedValues =
+              validator.encodeAllowedValues(prop.allowedValues!);
+          final joinedValues = validator.joinAllowedValues(prop.allowedValues!);
 
-          buffer.write(renderAllowedValuesCheck(
+          buffer.write(validator.renderAllowedValuesCheck(
             camelParam: 'value',
             constName: constName,
             encodedValues: encodedValues,

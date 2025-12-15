@@ -1,4 +1,5 @@
 import 'package:analytics_gen/src/generator/renderers/base_renderer.dart';
+import 'package:analytics_gen/src/generator/renderers/sub_renderers/validation_renderer.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -66,52 +67,6 @@ void main() {
       final comment = renderer.renderDocComment('Test', indent: 2);
 
       expect(comment, equals('    /// Test\n'));
-    });
-
-    test('renderAllowedValuesCheck generates validation for non-nullable', () {
-      final check = renderer.renderAllowedValuesCheck(
-        camelParam: 'method',
-        constName: 'allowedMethodValues',
-        encodedValues: "'email', 'google'",
-        joinedValues: 'email, google',
-        isNullable: false,
-        type: 'String',
-      );
-
-      expect(check, contains('const allowedMethodValues = <String>{'));
-      expect(check, contains("'email', 'google'"));
-      expect(check, contains('if (!allowedMethodValues.contains(method))'));
-      expect(check, contains('throw ArgumentError.value'));
-      expect(check, contains('must be one of email, google'));
-    });
-
-    test('renderAllowedValuesCheck generates validation for nullable', () {
-      final check = renderer.renderAllowedValuesCheck(
-        camelParam: 'method',
-        constName: 'allowedMethodValues',
-        encodedValues: "'email', 'google'",
-        joinedValues: 'email, google',
-        isNullable: true,
-        type: 'String',
-      );
-
-      expect(
-          check,
-          contains(
-              'if (method != null && !allowedMethodValues.contains(method))'));
-    });
-
-    test('encodeAllowedValues escapes and joins values', () {
-      final encoded =
-          renderer.encodeAllowedValues(['email', "test's value", 'google']);
-
-      expect(encoded, equals("'email', 'test\\'s value', 'google'"));
-    });
-
-    test('joinAllowedValues joins with comma and space', () {
-      final joined = renderer.joinAllowedValues(['email', 'google', 'apple']);
-
-      expect(joined, equals('email, google, apple'));
     });
 
     test('renderClassHeader generates mixin declaration', () {
@@ -183,9 +138,67 @@ void main() {
       expect(params, equals('()'));
     });
 
+    test('renderClassHeader generates plain class declaration', () {
+      final header = renderer.renderClassHeader(
+        className: 'TestClass',
+      );
+
+      expect(header, contains('class TestClass {'));
+    });
+  });
+
+  group('ValidationRenderer', () {
+    const validator = ValidationRenderer();
+
+    test('renderAllowedValuesCheck generates validation for non-nullable', () {
+      final check = validator.renderAllowedValuesCheck(
+        camelParam: 'method',
+        constName: 'allowedMethodValues',
+        encodedValues: "'email', 'google'",
+        joinedValues: 'email, google',
+        isNullable: false,
+        type: 'String',
+      );
+
+      expect(check, contains('const allowedMethodValues = <String>{'));
+      expect(check, contains("'email', 'google'"));
+      expect(check, contains('if (!allowedMethodValues.contains(method))'));
+      expect(check, contains('throw ArgumentError.value'));
+      expect(check, contains('must be one of email, google'));
+    });
+
+    test('renderAllowedValuesCheck generates validation for nullable', () {
+      final check = validator.renderAllowedValuesCheck(
+        camelParam: 'method',
+        constName: 'allowedMethodValues',
+        encodedValues: "'email', 'google'",
+        joinedValues: 'email, google',
+        isNullable: true,
+        type: 'String',
+      );
+
+      expect(
+          check,
+          contains(
+              'if (method != null && !allowedMethodValues.contains(method))'));
+    });
+
+    test('encodeAllowedValues escapes and joins values', () {
+      final encoded =
+          validator.encodeAllowedValues(['email', "test's value", 'google']);
+
+      expect(encoded, equals("'email', 'test\\'s value', 'google'"));
+    });
+
+    test('joinAllowedValues joins with comma and space', () {
+      final joined = validator.joinAllowedValues(['email', 'google', 'apple']);
+
+      expect(joined, equals('email, google, apple'));
+    });
+
     test('renderValidationChecks generates regex validation for non-nullable',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'email',
         isNullable: false,
         regex: r'^[^@]+@[^@]+\.[^@]+$',
@@ -198,7 +211,7 @@ void main() {
     });
 
     test('renderValidationChecks generates regex validation for nullable', () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'email',
         isNullable: true,
         regex: r'^[^@]+@[^@]+\.[^@]+$',
@@ -213,7 +226,7 @@ void main() {
     test(
         'renderValidationChecks generates length validation for non-nullable with min and max',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'name',
         isNullable: false,
         minLength: 2,
@@ -227,7 +240,7 @@ void main() {
     test(
         'renderValidationChecks generates length validation for nullable with max only',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'description',
         isNullable: true,
         maxLength: 100,
@@ -241,7 +254,7 @@ void main() {
     test(
         'renderValidationChecks generates length validation for non-nullable with min only',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'code',
         isNullable: false,
         minLength: 5,
@@ -254,7 +267,7 @@ void main() {
     test(
         'renderValidationChecks generates range validation for non-nullable with min and max',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'age',
         isNullable: false,
         min: 0,
@@ -268,7 +281,7 @@ void main() {
     test(
         'renderValidationChecks generates range validation for nullable with max only',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'score',
         isNullable: true,
         max: 100,
@@ -281,7 +294,7 @@ void main() {
     test(
         'renderValidationChecks generates range validation for non-nullable with min only',
         () {
-      final checks = renderer.renderValidationChecks(
+      final checks = validator.renderValidationChecks(
         camelParam: 'temperature',
         isNullable: false,
         min: -50,
@@ -292,17 +305,9 @@ void main() {
     });
 
     test('encodeAllowedValues handles non-string values', () {
-      final encoded = renderer.encodeAllowedValues([1, 2.5, true]);
+      final encoded = validator.encodeAllowedValues([1, 2.5, true]);
 
       expect(encoded, equals('1, 2.5, true'));
-    });
-
-    test('renderClassHeader generates plain class declaration', () {
-      final header = renderer.renderClassHeader(
-        className: 'TestClass',
-      );
-
-      expect(header, contains('class TestClass {'));
     });
   });
 }

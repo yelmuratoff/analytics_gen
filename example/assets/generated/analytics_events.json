@@ -112,6 +112,7 @@
           ],
           "deprecated": false,
           "line_number": 42,
+          "interpolated_name": "Auth: Phone ${phoneCountry}",
           "event_name": "Auth: Phone {phone_country}"
         },
         {
@@ -151,7 +152,7 @@
               "code_name": "local_status",
               "type": "dynamic",
               "dart_type": "LocalStatus",
-              "import": "package:analytics_gen_example/local_enums.dart",
+              "dart_import": "package:analytics_gen_example/local_enums.dart",
               "is_nullable": false
             },
             {
@@ -160,7 +161,7 @@
               "code_name": "status",
               "type": "dynamic",
               "dart_type": "VerificationStatus",
-              "import": "package:analytics_gen_example/models.dart",
+              "dart_import": "package:analytics_gen_example/models.dart",
               "is_nullable": false
             }
           ],
@@ -298,6 +299,7 @@
           ],
           "deprecated": false,
           "line_number": 3,
+          "interpolated_name": "Screen: ${screenName}",
           "event_name": "Screen: {screen_name}"
         }
       ]

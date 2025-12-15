@@ -1,11 +1,11 @@
-domain,event_name,name,description,added_in,custom_event_name,deprecated,deprecated_in,dual_write_to,identifier,line_number,meta,replacement
-auth,auth_login,login,User logs in to the application,,,true,,,,3,owner=auth-team; tier=critical,auth.login_v2
-auth,auth_login_v2,login_v2,User logs in to the application (v2),,,false,,auth.login,,17,,
-auth,auth_logout,logout,User logs out,,,false,,,,29,,
-auth,Auth: Phone {phone_country},phone_login,When user logs in via phone,,Auth: Phone {phone_country},false,,,auth.phone_login,42,,
-auth,auth_signup,signup,User creates a new account,,,false,,,,33,,
-auth,auth_verify_user,verify_user,User verification status change,,,false,,,,59,,
-purchase,purchase_flow_cancelled,cancelled,User cancelled a purchase,,,false,,,,19,,
-purchase,purchase_flow_completed,completed,User completed a purchase,,,false,,,,3,,
-screen,Screen: Legacy,legacy_view,Legacy backend identifier kept for parity,,Screen: Legacy,false,,,screen.legacy_view,15,,
-screen,Screen: {screen_name},view,User views a screen,,Screen: {screen_name},false,,,,3,,
+domain,event_name,name,description,added_in,custom_event_name,deprecated,deprecated_in,dual_write_to,identifier,interpolated_name,line_number,meta,replacement
+auth,auth_login,login,User logs in to the application,,,true,,,,,3,owner=auth-team; tier=critical,auth.login_v2
+auth,auth_login_v2,login_v2,User logs in to the application (v2),,,false,,auth.login,,,17,,
+auth,auth_logout,logout,User logs out,,,false,,,,,29,,
+auth,Auth: Phone {phone_country},phone_login,When user logs in via phone,,Auth: Phone {phone_country},false,,,auth.phone_login,Auth: Phone ${phoneCountry},42,,
+auth,auth_signup,signup,User creates a new account,,,false,,,,,33,,
+auth,auth_verify_user,verify_user,User verification status change,,,false,,,,,59,,
+purchase,purchase_flow_cancelled,cancelled,User cancelled a purchase,,,false,,,,,19,,
+purchase,purchase_flow_completed,completed,User completed a purchase,,,false,,,,,3,,
+screen,Screen: Legacy,legacy_view,Legacy backend identifier kept for parity,,Screen: Legacy,false,,,screen.legacy_view,,15,,
+screen,Screen: {screen_name},view,User views a screen,,Screen: {screen_name},false,,,,Screen: ${screenName},3,,

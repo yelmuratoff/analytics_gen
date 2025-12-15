@@ -23,12 +23,12 @@ dependencies:
   collection: ^1.19.1
   source_span: ^1.10.1
   meta: ^1.11.0
-  analyzer: any
+  analyzer: ^7.7.1
   file: ^7.0.1
 
 dev_dependencies:
   lints: ^6.0.0
-  test: ^1.27.0
+  test: ^1.26.2
 
 dartdoc:
   include:
