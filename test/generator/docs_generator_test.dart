@@ -307,7 +307,7 @@ void main() {
         p.join(tempProject.path, config.docsPath!),
       ).readAsString();
 
-      expect(content, contains('purchase: refund'));
+      expect(content, contains('purchase_refund'));
       expect(content, contains('Contains \\| pipe'));
       expect(content, contains('first line<br>second line'));
     });

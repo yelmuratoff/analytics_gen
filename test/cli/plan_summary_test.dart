@@ -68,7 +68,7 @@ void main() {
         isTrue,
       );
       expect(
-        lines.any((line) => line.contains('auth: login [Active]')),
+        lines.any((line) => line.contains('auth_login [Active]')),
         isTrue,
       );
       expect(

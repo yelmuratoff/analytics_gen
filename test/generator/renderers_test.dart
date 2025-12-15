@@ -1,4 +1,5 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
@@ -41,7 +42,7 @@ void main() {
       expect(result, contains('void logAuthLogin({'));
       expect(result, contains('required String method,'));
       expect(result, contains('logger.logEvent('));
-      expect(result, contains('name: "auth: login",'));
+      expect(result, contains('name: "auth_login",'));
     });
 
     test('renders deprecated event', () {
@@ -186,6 +187,7 @@ void main() {
         eventsPath: 'events',
         outputPath: 'lib/analytics',
         strictEventNames: true,
+        naming: NamingStrategy(convention: EventNamingConvention.original),
       );
       renderer = EventRenderer(config);
 
@@ -281,7 +283,7 @@ void main() {
       expect(result, contains('logAuthLogin('));
       expect(result, contains('// Dual-write to: auth.login_legacy'));
       expect(result, contains('logger.logEvent('));
-      expect(result, contains('name: "auth: login_legacy",'));
+      expect(result, contains('name: "auth_login_legacy",'));
       expect(result, isNot(contains('logAuthLoginLegacy(method:')));
     });
 

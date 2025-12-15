@@ -563,7 +563,7 @@ delta:
       );
       expect(
         authContent,
-        contains('name: "tracking: track",'),
+        contains('name: "tracking_track",'),
       );
       expect(
         authContent,
@@ -659,7 +659,7 @@ delta:
       ).readAsString();
 
       expect(authContent, contains('// Dual-write to: tracking.track'));
-      expect(authContent, contains('name: "tracking: track",'));
+      expect(authContent, contains('name: "tracking_track",'));
       expect(authContent, contains('logger.logEvent('));
     });
 
