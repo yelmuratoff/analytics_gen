@@ -9,7 +9,10 @@ All notable changes to this project will be documented in this file.
 - Added Global `imports` configuration to `analytics_gen.yaml` for including external types.
 - Added Local `import` parameter option for granular type importing.
 - Added Configurable Event Naming Strategy (`casing`) to control generated event string format (`snake_case`, `title_case`, `original`).
-- **Removed**: Auto-generated smoke tests (`tests` target, `generated_plan_test.dart`) have been removed as they provided false confidence without verifying business logic. Use `test_matchers` instead.
+- **Refactor:** Extracted YAML parsing logic from models into `EventParser` and `ParameterParser`.
+- **Refactor:** Decomposed `EventRenderer` into `DocumentationRenderer`, `MethodSignatureRenderer`, and `EventBodyRenderer`.
+- **Optimization:** Generated code now uses `const` maps for constant event parameters (e.g. description only).
+- **Removed:** Removed auto-generated tests (`generated_plan_test.dart`) to clean up build outputs. they provided false confidence without verifying business logic. Use `test_matchers` instead.
 
 
 ## [1.0.2]

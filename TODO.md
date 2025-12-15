@@ -20,6 +20,17 @@
   - Problem: Passing Dart enums to analytics requires `.name` everywhere.
   - Solution: Support `dart_type` in YAML parameter definition.
 
-## Notes
-- Tests must also keep covering the export cleanup + analytics plan metadata; broaden them once the new naming strategy and capability adapters land.
-- README updates should mention the runtime plan constant, refined watch/export behaviors, and the newly added naming/capability customization knobs.
+
+## Architecture & Refactoring (v2.0 Prep)
+
+- [x] **Refactor Models (SRP Violation)**
+  - Problem: `AnalyticsEvent` and `AnalyticsParameter` contain complex YAML parsing logic.
+  - Solution: Extract parsing into `EventParser` / `ParameterParser` or `YamlMapper`. Models should be dumb data containers.
+
+- [x] **Refactor Renderer (God Object)**
+  - Problem: `EventRenderer` handles doc gen, method signatures, validation, and body logic in one massive class.
+  - Solution: Decompose into `DocumentationRenderer`, `MethodSignatureRenderer`, `ValidationRenderer`.
+
+- [ ] **Optimize Generated Code**
+  - Problem: `Map` creation logic is redundant/allocating.
+  - Solution: Use `const` where possible, optimize map creation for high-load paths.

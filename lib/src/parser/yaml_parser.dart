@@ -7,6 +7,7 @@ import '../util/logger.dart';
 import 'context_parser.dart';
 import 'domain_parser.dart';
 import 'event_loader.dart';
+import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'shared_parameter_parser.dart';
 
@@ -114,8 +115,8 @@ final class YamlParser {
     required String eventName,
     required String filePath,
   }) {
-    // Use the static method on AnalyticsParameter
-    return AnalyticsParameter.fromYamlMap(
+    // Use the static method on ParameterParser
+    return ParameterParser.parseParameters(
       parametersYaml,
       domainName: domainName,
       eventName: eventName,

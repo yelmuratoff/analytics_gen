@@ -4,6 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
+import 'domain_model_parser.dart';
 import 'event_loader.dart';
 import 'schema_validator.dart';
 import 'yaml_parser.dart';
@@ -206,7 +207,7 @@ class DomainParser {
       final eventsYaml = source.yaml;
 
       try {
-        final domain = AnalyticsDomain.fromYaml(
+        final domain = DomainModelParser.parseDomain(
           domainName,
           eventsYaml,
           filePath: source.filePath,
