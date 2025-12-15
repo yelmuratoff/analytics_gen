@@ -14,7 +14,7 @@ purchase:
       quantity:
         type: int
         description: Number of items purchased
-        
+
   cancelled:
     description: User cancelled a purchase
     parameters:
