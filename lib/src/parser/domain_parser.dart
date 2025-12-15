@@ -4,6 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
+import '../util/logger.dart';
 import 'domain_model_parser.dart';
 import 'event_loader.dart';
 import 'schema_validator.dart';
@@ -38,11 +39,7 @@ class DomainParser {
   final NamingStrategy naming;
 
   /// Logger used by the parser to emit warnings and debugging messages.
-  // Note: Logger type is dynamic/Object here because we don't want to import Logger from util if not needed,
-  // but looking at imports, it was imported as 'Logger'.
-  // I should check imports. The original file imported '../util/logger.dart'.
-  // I need to add that import back.
-  final dynamic log;
+  final Logger log;
 
   /// Whether to enforce strict event names and disallow string interpolation
   /// inside event names to reduce cardinality.
@@ -94,12 +91,7 @@ class DomainParser {
     void Function(AnalyticsParseException)? onError,
   }) async* {
     if (sources.isEmpty) {
-      // log.warning('No YAML sources provided for parsing');
-      // I need to cast log to Logger or use dynamic call.
-      // Assuming log has warning method.
-      try {
-        (log as dynamic).warning('No YAML sources provided for parsing');
-      } catch (_) {}
+      log.warning('No YAML sources provided for parsing');
       return;
     }
 

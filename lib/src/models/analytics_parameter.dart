@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
+import '../util/copy_with.dart';
 
 /// Represents a single analytics event parameter.
 @immutable
@@ -181,45 +182,58 @@ final class AnalyticsParameter {
   }
 
   /// Creates a copy of this analytics parameter with the specified properties.
+  ///
+  /// Nullable fields use [copyWithNull] sentinel to distinguish between
+  /// "not provided" and "explicitly set to null".
   AnalyticsParameter copyWith({
     String? name,
-    String? sourceName,
+    Object? sourceName = copyWithNull,
     String? codeName,
     String? type,
-    String? dartType,
-    String? dartImport,
-    String? description,
+    Object? dartType = copyWithNull,
+    Object? dartImport = copyWithNull,
+    Object? description = copyWithNull,
     bool? isNullable,
-    List<dynamic>? allowedValues,
-    String? regex,
-    int? minLength,
-    int? maxLength,
-    num? min,
-    num? max,
+    Object? allowedValues = copyWithNull,
+    Object? regex = copyWithNull,
+    Object? minLength = copyWithNull,
+    Object? maxLength = copyWithNull,
+    Object? min = copyWithNull,
+    Object? max = copyWithNull,
     Map<String, dynamic>? meta,
-    List<String>? operations,
-    String? addedIn,
-    String? deprecatedIn,
+    Object? operations = copyWithNull,
+    Object? addedIn = copyWithNull,
+    Object? deprecatedIn = copyWithNull,
   }) {
     return AnalyticsParameter(
       name: name ?? this.name,
-      sourceName: sourceName ?? this.sourceName,
+      sourceName:
+          sourceName == copyWithNull ? this.sourceName : sourceName as String?,
       codeName: codeName ?? this.codeName,
       type: type ?? this.type,
-      dartType: dartType ?? this.dartType,
-      dartImport: dartImport ?? this.dartImport,
+      dartType: dartType == copyWithNull ? this.dartType : dartType as String?,
+      dartImport:
+          dartImport == copyWithNull ? this.dartImport : dartImport as String?,
       isNullable: isNullable ?? this.isNullable,
-      description: description ?? this.description,
-      allowedValues: allowedValues ?? this.allowedValues,
-      regex: regex ?? this.regex,
-      minLength: minLength ?? this.minLength,
-      maxLength: maxLength ?? this.maxLength,
-      min: min ?? this.min,
-      max: max ?? this.max,
+      description: description == copyWithNull
+          ? this.description
+          : description as String?,
+      allowedValues: allowedValues == copyWithNull
+          ? this.allowedValues
+          : allowedValues as List<dynamic>?,
+      regex: regex == copyWithNull ? this.regex : regex as String?,
+      minLength: minLength == copyWithNull ? this.minLength : minLength as int?,
+      maxLength: maxLength == copyWithNull ? this.maxLength : maxLength as int?,
+      min: min == copyWithNull ? this.min : min as num?,
+      max: max == copyWithNull ? this.max : max as num?,
       meta: meta ?? this.meta,
-      operations: operations ?? this.operations,
-      addedIn: addedIn ?? this.addedIn,
-      deprecatedIn: deprecatedIn ?? this.deprecatedIn,
+      operations: operations == copyWithNull
+          ? this.operations
+          : operations as List<String>?,
+      addedIn: addedIn == copyWithNull ? this.addedIn : addedIn as String?,
+      deprecatedIn: deprecatedIn == copyWithNull
+          ? this.deprecatedIn
+          : deprecatedIn as String?,
     );
   }
 

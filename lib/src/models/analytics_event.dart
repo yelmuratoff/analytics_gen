@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import '../models/analytics_parameter.dart';
+import '../util/copy_with.dart';
 
 /// Represents a single analytics event.
 @immutable
@@ -149,37 +150,63 @@ final class AnalyticsEvent {
   }
 
   /// Creates a copy of this analytics event with the specified properties changed.
+  ///
+  /// Nullable fields use [copyWithNull] sentinel to distinguish between
+  /// "not provided" and "explicitly set to null":
+  /// ```dart
+  /// // Keep current value
+  /// event.copyWith();
+  ///
+  /// // Set to new value
+  /// event.copyWith(identifier: 'new-id');
+  ///
+  /// // Explicitly clear to null
+  /// event.copyWith(identifier: null);
+  /// ```
   AnalyticsEvent copyWith({
     String? name,
     String? description,
-    String? identifier,
-    String? customEventName,
+    Object? identifier = copyWithNull,
+    Object? customEventName = copyWithNull,
     List<AnalyticsParameter>? parameters,
     bool? deprecated,
-    String? replacement,
+    Object? replacement = copyWithNull,
     Map<String, dynamic>? meta,
-    String? sourcePath,
-    int? lineNumber,
-    String? addedIn,
-    String? deprecatedIn,
-    List<String>? dualWriteTo,
-    String? interpolatedName,
+    Object? sourcePath = copyWithNull,
+    Object? lineNumber = copyWithNull,
+    Object? addedIn = copyWithNull,
+    Object? deprecatedIn = copyWithNull,
+    Object? dualWriteTo = copyWithNull,
+    Object? interpolatedName = copyWithNull,
   }) {
     return AnalyticsEvent(
       name: name ?? this.name,
       description: description ?? this.description,
-      identifier: identifier ?? this.identifier,
-      customEventName: customEventName ?? this.customEventName,
+      identifier:
+          identifier == copyWithNull ? this.identifier : identifier as String?,
+      customEventName: customEventName == copyWithNull
+          ? this.customEventName
+          : customEventName as String?,
       parameters: parameters ?? this.parameters,
       deprecated: deprecated ?? this.deprecated,
-      replacement: replacement ?? this.replacement,
+      replacement: replacement == copyWithNull
+          ? this.replacement
+          : replacement as String?,
       meta: meta ?? this.meta,
-      sourcePath: sourcePath ?? this.sourcePath,
-      lineNumber: lineNumber ?? this.lineNumber,
-      addedIn: addedIn ?? this.addedIn,
-      deprecatedIn: deprecatedIn ?? this.deprecatedIn,
-      dualWriteTo: dualWriteTo ?? this.dualWriteTo,
-      interpolatedName: interpolatedName ?? this.interpolatedName,
+      sourcePath:
+          sourcePath == copyWithNull ? this.sourcePath : sourcePath as String?,
+      lineNumber:
+          lineNumber == copyWithNull ? this.lineNumber : lineNumber as int?,
+      addedIn: addedIn == copyWithNull ? this.addedIn : addedIn as String?,
+      deprecatedIn: deprecatedIn == copyWithNull
+          ? this.deprecatedIn
+          : deprecatedIn as String?,
+      dualWriteTo: dualWriteTo == copyWithNull
+          ? this.dualWriteTo
+          : dualWriteTo as List<String>?,
+      interpolatedName: interpolatedName == copyWithNull
+          ? this.interpolatedName
+          : interpolatedName as String?,
     );
   }
 

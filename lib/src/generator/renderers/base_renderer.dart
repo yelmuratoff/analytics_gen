@@ -10,10 +10,12 @@ abstract class BaseRenderer {
 
   /// Renders a standard file header for generated files.
   ///
-  /// Includes GENERATED CODE warning and common ignore directives.
+  /// Includes GENERATED CODE warning, generator version, and common ignore directives.
+  /// The version helps developers know if regeneration is needed after package updates.
   String renderFileHeader({bool includeCoverageIgnore = true}) {
     final buffer = StringBuffer();
     buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
+
     buffer.writeln('// ignore_for_file: type=lint, unused_import');
     if (includeCoverageIgnore) {
       buffer.writeln(

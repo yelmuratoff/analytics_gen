@@ -1,7 +1,6 @@
 import '../../config/analytics_config.dart';
 import '../../models/analytics_domain.dart';
 import '../../models/analytics_event.dart';
-import '../../models/analytics_parameter.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import 'cross_domain_validation_result.dart';
@@ -29,11 +28,11 @@ class CrossDomainValidator {
       if (parts.length != 2) return target;
       final domain = allDomains[parts[0]];
       if (domain == null) return target;
-      final event = domain.events
-          .cast<AnalyticsEvent?>()
-          .firstWhere((e) => e?.name == parts[1], orElse: () => null);
-      if (event == null) return target;
-      return EventNaming.resolveEventName(parts[0], event, config.naming);
+      final eventIndex =
+          domain.events.indexWhere((e) => e.name == parts[1]);
+      if (eventIndex == -1) return target;
+      return EventNaming.resolveEventName(
+          parts[0], domain.events[eventIndex], config.naming);
     }
 
     final fallbackName = resolveFallbackName();
@@ -58,14 +57,15 @@ class CrossDomainValidator {
           fallbackEventName: fallbackName);
     }
 
-    final targetEvent = domain.events
-        .cast<AnalyticsEvent?>()
-        .firstWhere((e) => e?.name == targetEventName, orElse: () => null);
+    final targetEventIndex =
+        domain.events.indexWhere((e) => e.name == targetEventName);
 
-    if (targetEvent == null) {
+    if (targetEventIndex == -1) {
       return CrossDomainValidationResult.invalid(
           fallbackEventName: fallbackName);
     }
+
+    final targetEvent = domain.events[targetEventIndex];
 
     final methodName = EventNaming.buildLoggerMethodName(
       targetDomainName,
@@ -76,18 +76,16 @@ class CrossDomainValidator {
 
     for (final targetParam in targetEvent.parameters) {
       // Find matching parameter in current event
-      final sourceParam =
-          currentEvent.parameters.cast<AnalyticsParameter?>().firstWhere((p) {
-        if (p == null) return false;
+      final sourceParamIndex = currentEvent.parameters.indexWhere((p) {
         // Match by source name (YAML key) if available
         if (p.sourceName != null && targetParam.sourceName != null) {
           return p.sourceName == targetParam.sourceName;
         }
         // Fallback to code name
         return p.codeName == targetParam.codeName;
-      }, orElse: () => null);
+      });
 
-      if (sourceParam == null) {
+      if (sourceParamIndex == -1) {
         if (!targetParam.isNullable) {
           // Required parameter missing in source -> cannot call method safely
           return CrossDomainValidationResult.invalid(
@@ -96,6 +94,7 @@ class CrossDomainValidator {
         continue;
       }
 
+      final sourceParam = currentEvent.parameters[sourceParamIndex];
       final sourceVarName = StringUtils.toCamelCase(sourceParam.codeName);
 
       final sourceIsEnum = sourceParam.type == 'string' &&
