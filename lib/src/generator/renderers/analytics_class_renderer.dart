@@ -2,19 +2,25 @@ import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 
 import '../../config/analytics_config.dart';
-import '../../models/analytics_event.dart';
+
 import '../../util/string_utils.dart';
+import '../serializers/plan_serializer.dart';
 import 'base_renderer.dart';
 
 /// Renders the main Analytics class with domain mixins and capabilities.
 class AnalyticsClassRenderer extends BaseRenderer {
   /// Creates a new analytics class renderer.
+  /// Creates a new analytics class renderer.
   AnalyticsClassRenderer(
-    this.config,
-  );
+    this.config, {
+    this.planSerializer = const PlanSerializer(),
+  });
 
   /// The analytics configuration.
   final AnalyticsConfig config;
+
+  /// The plan serializer.
+  final PlanSerializer planSerializer;
 
   /// Renders the Analytics class code.
   String renderAnalyticsClass(
@@ -114,7 +120,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln();
 
     if (config.generatePlan) {
-      buffer.write(_generateAnalyticsPlanField(domains));
+      buffer.write(planSerializer.generatePlanField(domains));
       buffer.writeln();
     }
 
@@ -195,134 +201,5 @@ class AnalyticsClassRenderer extends BaseRenderer {
     }
 
     return ' with ${mixins.join(', ')}\n';
-  }
-
-  String _generateAnalyticsPlanField(Map<String, AnalyticsDomain> domains) {
-    final buffer = StringBuffer();
-    buffer.writeln('  /// Runtime view of the generated tracking plan.');
-    buffer.writeln(
-      '  static const List<AnalyticsDomain> plan = <AnalyticsDomain>[',
-    );
-
-    final sortedDomains = domains.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-
-    for (final entry in sortedDomains) {
-      buffer.write(_analyticsDomainPlanEntry(entry.value));
-    }
-
-    buffer.writeln('  ];');
-    return buffer.toString();
-  }
-
-  String _analyticsDomainPlanEntry(AnalyticsDomain domain) {
-    final buffer = StringBuffer();
-    buffer.writeln('    AnalyticsDomain(');
-    buffer.writeln(
-        "      name: '${StringUtils.escapeSingleQuoted(domain.name)}',");
-    buffer.writeln('      events: <AnalyticsEvent>[');
-
-    for (final event in domain.events) {
-      buffer.write(_analyticsEventPlanEntry(event));
-    }
-
-    buffer.writeln('      ],');
-    buffer.writeln('    ),');
-    return buffer.toString();
-  }
-
-  String _analyticsEventPlanEntry(AnalyticsEvent event) {
-    final buffer = StringBuffer();
-    buffer.writeln('        AnalyticsEvent(');
-    buffer.writeln(
-        "          name: '${StringUtils.escapeSingleQuoted(event.name)}',");
-    buffer.writeln(
-      "          description: '${StringUtils.escapeSingleQuoted(event.description)}',",
-    );
-    if (event.identifier != null) {
-      buffer.writeln(
-        "          identifier: '${StringUtils.escapeSingleQuoted(event.identifier!)}',",
-      );
-    }
-    if (event.customEventName != null) {
-      buffer.writeln(
-        "          customEventName: '${StringUtils.escapeSingleQuoted(event.customEventName!)}',",
-      );
-    }
-    buffer.writeln('          deprecated: ${event.deprecated},');
-    if (event.replacement != null) {
-      buffer.writeln(
-        "          replacement: '${StringUtils.escapeSingleQuoted(event.replacement!)}',",
-      );
-    }
-    if (event.meta.isNotEmpty) {
-      buffer.writeln('          meta: <String, Object?>{');
-      for (final entry in event.meta.entries) {
-        final value = entry.value;
-        final valueString = value is String
-            ? "'${StringUtils.escapeSingleQuoted(value)}'"
-            : value.toString();
-        buffer.writeln(
-          "            '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
-        );
-      }
-      buffer.writeln('          },');
-    }
-    buffer.writeln('          parameters: <AnalyticsParameter>[');
-
-    for (final param in event.parameters) {
-      buffer.write(_analyticsParameterPlanEntry(param));
-    }
-
-    buffer.writeln('          ],');
-    buffer.writeln('        ),');
-    return buffer.toString();
-  }
-
-  String _analyticsParameterPlanEntry(AnalyticsParameter param) {
-    final buffer = StringBuffer();
-    buffer.writeln('            AnalyticsParameter(');
-    buffer.writeln(
-        "              name: '${StringUtils.escapeSingleQuoted(param.name)}',");
-    if (param.codeName != param.name) {
-      buffer.writeln(
-        "              codeName: '${StringUtils.escapeSingleQuoted(param.codeName)}',",
-      );
-    }
-    buffer.writeln(
-        "              type: '${StringUtils.escapeSingleQuoted(param.type)}',");
-    buffer.writeln('              isNullable: ${param.isNullable},');
-    if (param.description != null) {
-      buffer.writeln(
-        "              description: '${StringUtils.escapeSingleQuoted(param.description!)}',",
-      );
-    }
-    if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
-      buffer.writeln('              allowedValues: <Object>[');
-      for (final value in param.allowedValues!) {
-        final valueString = value is String
-            ? "'${StringUtils.escapeSingleQuoted(value)}'"
-            : value.toString();
-        buffer.writeln(
-          '                $valueString,',
-        );
-      }
-      buffer.writeln('              ],');
-    }
-    if (param.meta.isNotEmpty) {
-      buffer.writeln('              meta: <String, Object?>{');
-      for (final entry in param.meta.entries) {
-        final value = entry.value;
-        final valueString = value is String
-            ? "'${StringUtils.escapeSingleQuoted(value)}'"
-            : value.toString();
-        buffer.writeln(
-          "                '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
-        );
-      }
-      buffer.writeln('              },');
-    }
-    buffer.writeln('            ),');
-    return buffer.toString();
   }
 }

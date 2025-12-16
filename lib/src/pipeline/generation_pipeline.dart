@@ -16,26 +16,40 @@ import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 
 import 'generation_request.dart';
+import 'pipeline_factories.dart';
 
+/// Generation pipeline for the analytics code generator.
 class GenerationPipeline {
+  /// Creates a new generation pipeline.
   GenerationPipeline({
     required this.projectRoot,
     required this.config,
     SchemaEvolutionChecker? schemaChecker,
     WatcherService? watcherService,
-    // For manual injection of current logger? No, passed in request.
-    // Logger is needed for defaults?
+    EventLoaderFactory? eventLoaderFactory,
+    YamlParserFactory? yamlParserFactory,
     Logger logger = const ConsoleLogger(),
   })  : _schemaChecker = schemaChecker ??
             SchemaEvolutionChecker(projectRoot: projectRoot, logger: logger),
         _watcherService = watcherService ??
-            WatcherService(projectRoot: projectRoot, logger: logger);
+            WatcherService(projectRoot: projectRoot, logger: logger),
+        _eventLoaderFactory =
+            eventLoaderFactory ?? const DefaultEventLoaderFactory(),
+        _yamlParserFactory =
+            yamlParserFactory ?? const DefaultYamlParserFactory();
 
+  /// The root directory of the project.
   final String projectRoot;
+
+  /// The analytics configuration.
   final AnalyticsConfig config;
+
   final SchemaEvolutionChecker _schemaChecker;
   final WatcherService _watcherService;
+  final EventLoaderFactory _eventLoaderFactory;
+  final YamlParserFactory _yamlParserFactory;
 
+  /// Runs the generation pipeline.
   Future<void> run(GenerationRequest request) async {
     printBanner('Analytics Gen - Code Generation', logger: request.logger);
 
@@ -51,7 +65,8 @@ class GenerationPipeline {
           .toList();
 
       // Load files
-      final loader = EventLoader(
+      // Load files
+      final loader = _eventLoaderFactory.create(
         eventsPath: path.join(projectRoot, config.eventsPath),
         contextFiles: config.contexts
             .map((c) => path.join(projectRoot, c))
@@ -60,7 +75,7 @@ class GenerationPipeline {
         log: request.logger,
       );
 
-      final sharedParser = YamlParser(
+      final sharedParser = _yamlParserFactory.create(
         log: request.logger,
         config: ParserConfig(naming: config.naming),
       );
@@ -72,7 +87,7 @@ class GenerationPipeline {
           sharedParameterPaths, loader, request.logger, sharedParser);
 
       // Parse YAML files
-      final parser = YamlParser(
+      final parser = _yamlParserFactory.create(
         log: request.logger,
         config: ParserConfig(
           naming: config.naming,
@@ -105,6 +120,7 @@ class GenerationPipeline {
     }
   }
 
+  /// Runs the generation pipeline in watch mode.
   Future<void> watch(GenerationRequest request) async {
     try {
       await _watcherService.watch(

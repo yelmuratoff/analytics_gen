@@ -11,7 +11,9 @@ typedef EventParams = Map<String, Object?>;
 
 // Domain: auth
 /// Matcher for auth.login
-Matcher isAuthLogin({Object? method}) {
+Matcher isAuthLogin({
+  Object? method,
+}) {
   return predicate((item) {
     if (item is! Map) return false;
     final Map<String, dynamic> params = Map.from(item);
@@ -30,7 +32,10 @@ Matcher isAuthLogin({Object? method}) {
 }
 
 /// Matcher for auth.login_v2
-Matcher isAuthLoginV2({Object? loginMethod, Object? sessionId}) {
+Matcher isAuthLoginV2({
+  Object? loginMethod,
+  Object? sessionId,
+}) {
   return predicate((item) {
     if (item is! Map) return false;
     final Map<String, dynamic> params = Map.from(item);
@@ -112,7 +117,10 @@ Matcher isAuthPhoneLogin({
 }
 
 /// Matcher for auth.signup
-Matcher isAuthSignup({Object? method, Object? referralCode}) {
+Matcher isAuthSignup({
+  Object? method,
+  Object? referralCode,
+}) {
   return predicate((item) {
     if (item is! Map) return false;
     final Map<String, dynamic> params = Map.from(item);
@@ -140,7 +148,10 @@ Matcher isAuthSignup({Object? method, Object? referralCode}) {
 }
 
 /// Matcher for auth.verify_user
-Matcher isAuthVerifyUser({Object? localStatus, Object? status}) {
+Matcher isAuthVerifyUser({
+  Object? localStatus,
+  Object? status,
+}) {
   return predicate((item) {
     if (item is! Map) return false;
     final Map<String, dynamic> params = Map.from(item);
@@ -169,7 +180,10 @@ Matcher isAuthVerifyUser({Object? localStatus, Object? status}) {
 
 // Domain: purchase
 /// Matcher for purchase.cancelled
-Matcher isPurchaseCancelled({Object? productId, Object? reason}) {
+Matcher isPurchaseCancelled({
+  Object? productId,
+  Object? reason,
+}) {
   return predicate((item) {
     if (item is! Map) return false;
     final Map<String, dynamic> params = Map.from(item);
@@ -249,7 +263,9 @@ Matcher isPurchaseCompleted({
 
 // Domain: screen
 /// Matcher for screen.legacy_view
-Matcher isScreenLegacyView({Object? legacyScreenCode}) {
+Matcher isScreenLegacyView({
+  Object? legacyScreenCode,
+}) {
   return predicate((item) {
     if (item is! Map) return false;
     final Map<String, dynamic> params = Map.from(item);
@@ -307,3 +323,4 @@ Matcher isScreenView({
     return true;
   });
 }
+

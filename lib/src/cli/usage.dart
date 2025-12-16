@@ -1,6 +1,7 @@
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
+/// Prints usage information.
 void printUsage(ArgParser parser, {Logger? logger}) {
   final log = logger ?? const ConsoleLogger();
   log.info('Analytics Gen - Code generator for type-safe analytics events');

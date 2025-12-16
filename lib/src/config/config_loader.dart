@@ -6,6 +6,7 @@ import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 
+/// Loads the analytics configuration from the given path.
 Future<AnalyticsConfig> loadAnalyticsConfig(
   String projectRoot,
   String configPath, {

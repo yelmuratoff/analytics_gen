@@ -10,6 +10,7 @@ import 'package:analytics_gen/src/util/event_naming.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 
+/// Validates the tracking plan without generating any files.
 Future<void> validateTrackingPlan(
   String projectRoot,
   AnalyticsConfig config, {
@@ -51,6 +52,7 @@ Future<void> validateTrackingPlan(
   }
 }
 
+/// Prints a summary of the tracking plan to the console.
 Future<void> printTrackingPlan(
   String projectRoot,
   AnalyticsConfig config, {

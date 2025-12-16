@@ -4,14 +4,16 @@ import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
+import '../config/config_loader.dart';
+import '../pipeline/generation_pipeline.dart';
+import '../pipeline/generation_request.dart';
+import '../pipeline/plan_printer.dart';
 import 'arguments.dart';
-import 'config_loader.dart';
-import 'generation_pipeline.dart';
-import 'generation_request.dart';
-import 'plan_printer.dart';
 import 'usage.dart';
 
+/// Runner for the analytics code generator CLI.
 class AnalyticsGenRunner {
+  /// Creates a new analytics runner.
   AnalyticsGenRunner({
     ArgParser? parser,
     ConfigParser? configParser,
@@ -21,6 +23,7 @@ class AnalyticsGenRunner {
   final ArgParser _parser;
   final ConfigParser? _configParser;
 
+  /// Runs the generator.
   Future<void> run(List<String> arguments) async {
     Logger? logger;
     try {

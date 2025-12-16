@@ -18,11 +18,13 @@ import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 
-import 'arguments.dart';
-import 'config_loader.dart';
-import 'usage.dart';
+import '../cli/arguments.dart';
+import '../cli/usage.dart';
+import '../config/config_loader.dart';
 
+/// Runner for the dead event audit tool.
 class AuditRunner {
+  /// Creates a new audit runner.
   AuditRunner({
     ArgParser? parser,
     ConfigParser? configParser,
@@ -32,6 +34,7 @@ class AuditRunner {
   final ArgParser _parser;
   final ConfigParser? _configParser;
 
+  /// Runs the audit.
   Future<void> run(List<String> arguments) async {
     Logger? logger;
     try {

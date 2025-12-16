@@ -14,17 +14,16 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// - `product_id`: String
   /// - `reason`: String? - Reason for cancellation
   void logPurchaseCancelled({
-    required String productId,
-    String? reason,
-    Map<String, Object?>? parameters,
-  }) {
-    final eventParameters =
-        parameters ??
-        <String, Object?>{
-          'description': 'User cancelled a purchase',
-          "product_id": productId,
-          if (reason != null) "reason": reason,
-        };
+      required String productId,
+      String? reason,
+      Map<String, Object?>? parameters,
+    }) {
+
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User cancelled a purchase',
+      "product_id": productId,
+      if (reason != null) "reason": reason,
+    };
 
     logger.logEvent(
       name: "purchase_flow_cancelled",
@@ -40,25 +39,25 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// - `product_id`: String
   /// - `quantity`: int - Number of items purchased
   void logPurchaseCompleted({
-    required String currencyCode,
-    required double price,
-    required String productId,
-    required int quantity,
-    Map<String, Object?>? parameters,
-  }) {
-    final eventParameters =
-        parameters ??
-        <String, Object?>{
-          'description': 'User completed a purchase',
-          "currency-code": currencyCode,
-          "amount_value": price,
-          "product_id": productId,
-          "quantity": quantity,
-        };
+      required String currencyCode,
+      required double price,
+      required String productId,
+      required int quantity,
+      Map<String, Object?>? parameters,
+    }) {
+
+    final eventParameters = parameters ?? <String, Object?>{
+      'description': 'User completed a purchase',
+      "currency-code": currencyCode,
+      "amount_value": price,
+      "product_id": productId,
+      "quantity": quantity,
+    };
 
     logger.logEvent(
       name: "purchase_flow_completed",
       parameters: eventParameters,
     );
   }
+
 }

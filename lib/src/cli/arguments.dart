@@ -1,6 +1,7 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:args/args.dart';
 
+/// Creates an argument parser for the analytics code generator CLI.
 ArgParser createArgParser() {
   return ArgParser()
     ..addFlag(
@@ -57,6 +58,7 @@ ArgParser createArgParser() {
     );
 }
 
+/// Resolves the docs flag based on the command-line arguments and config.
 bool resolveDocsFlag(ArgResults results, AnalyticsConfig config) {
   if (results.wasParsed('docs')) {
     return results['docs'] as bool;
@@ -64,6 +66,7 @@ bool resolveDocsFlag(ArgResults results, AnalyticsConfig config) {
   return config.generateDocs;
 }
 
+/// Resolves the exports flag based on the command-line arguments and config.
 bool resolveExportsFlag(ArgResults results, AnalyticsConfig config) {
   if (results.wasParsed('exports')) {
     return results['exports'] as bool;

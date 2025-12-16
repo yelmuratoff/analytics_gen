@@ -1,7 +1,7 @@
+import 'package:analytics_gen/src/cli/arguments.dart' as cli;
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:args/args.dart';
 import 'package:test/test.dart';
-import '../../bin/src/arguments.dart' as cli;
 
 void main() {
   group('generate.dart ArgParser', () {

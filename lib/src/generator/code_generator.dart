@@ -14,6 +14,7 @@ import 'renderers/default_renderer_factory.dart';
 import 'renderers/event_renderer.dart';
 import 'renderers/matchers_renderer.dart';
 import 'renderers/renderer_factory.dart';
+import 'serializers/plan_serializer.dart';
 
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
@@ -28,7 +29,12 @@ final class CodeGenerator {
     RendererFactory rendererFactory = const DefaultRendererFactory(),
     MatchersRenderer? matchersRenderer,
     OutputManager? outputManager,
-  })  : _classRenderer = classRenderer ?? AnalyticsClassRenderer(config),
+    PlanSerializer? planSerializer,
+  })  : _classRenderer = classRenderer ??
+            AnalyticsClassRenderer(
+              config,
+              planSerializer: planSerializer ?? const PlanSerializer(),
+            ),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
         _eventRenderer = rendererFactory.createEventRenderer(config),
         _matchersRenderer = matchersRenderer ?? MatchersRenderer(config),

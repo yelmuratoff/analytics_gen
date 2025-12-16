@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/pipeline/plan_printer.dart' as plan;
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
-
-import '../../bin/src/plan_printer.dart' as plan;
 
 void main() {
   group('generate.dart plan summary', () {
