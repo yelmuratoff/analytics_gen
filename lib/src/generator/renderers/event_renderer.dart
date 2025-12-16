@@ -4,6 +4,7 @@ import '../../config/analytics_config.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
+import '../utils/import_manager.dart';
 import 'base_renderer.dart';
 import 'enum_renderer.dart';
 import 'sub_renderers/documentation_renderer.dart';
@@ -45,15 +46,14 @@ class EventRenderer extends BaseRenderer {
     final buffer = StringBuffer();
 
     // Collect imports from parameters
-    // Collect import URIs
-    final importUris = <String>{
-      AnalyticsConfig.kPackageImport,
-      ...config.imports,
-    };
+    final importManager = ImportManager();
+    importManager.add(AnalyticsConfig.kPackageImport);
+    importManager.addAll(config.imports);
+
     for (final event in domain.events) {
       for (final param in event.parameters) {
         if (param.dartImport != null) {
-          importUris.add(param.dartImport!);
+          importManager.add(param.dartImport!);
         }
       }
     }
@@ -61,15 +61,8 @@ class EventRenderer extends BaseRenderer {
     // File header
     buffer.write(renderFileHeader());
 
-    // Deduplicate and write imports
-    // renderImports expects a list of URIs or full import statements?
-    // Looking at base_renderer: renderImports(List<String> imports) usually takes URIs
-    // but here we are mixing raw URIs and potential full statements.
-    // Let's check BaseRenderer.renderImports implementation via assumption or view_file if unsure.
-    // The previous code was: renderImports(['package:analytics_gen/analytics_gen.dart', ...config.imports])
-    // So it expects URIs.
-
-    buffer.write(renderImports(importUris.toList()..sort()));
+    // Write imports
+    buffer.write(renderImports(importManager.getSortedImports()));
 
     // Generate Enums
     buffer.write(enumRenderer.renderEnums(domainName, domain));

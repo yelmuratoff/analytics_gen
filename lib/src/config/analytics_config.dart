@@ -31,10 +31,14 @@ final class AnalyticsConfig {
   static const String kPackageImport =
       'package:analytics_gen/analytics_gen.dart';
 
-  /// Path to directory containing YAML event files (relative to project root)
+  /// Path to directory containing YAML event files (relative to project root).
+  ///
+  /// Defaults to `events`.
   final String eventsPath;
 
-  /// Path where generated Dart code will be written (relative to lib/)
+  /// Path where generated Dart code will be written (relative to lib/).
+  ///
+  /// Defaults to `src/analytics/generated`.
   final String outputPath;
 
   /// Path where documentation will be generated (optional)
