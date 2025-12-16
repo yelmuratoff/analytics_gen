@@ -161,8 +161,11 @@ final class BatchingAnalytics implements IAnalytics {
       }
     }();
 
+    // If we are just auto-flushing, we don't want to crash the caller (e.g. dispose)
+    // or leave an unhandled future error.
     if (!propagateErrors) {
-      return future.catchError((_) {});
+      // ignore: unawaited_futures
+      future.catchError((_) {});
     }
 
     return future;
@@ -213,6 +216,8 @@ final class BatchingAnalytics implements IAnalytics {
         if (nextIndex < batch.length) {
           final remaining = batch.getRange(nextIndex, batch.length);
           _pending.insertAll(0, remaining);
+          // Ensure we try to flush these re-queued events again
+          _needsFollowUpFlush = true;
         }
       }
       onFlushError?.call(error, stackTrace);

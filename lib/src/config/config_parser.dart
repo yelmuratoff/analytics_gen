@@ -12,7 +12,7 @@ class ConfigParser {
     if (yaml.isEmpty) return const AnalyticsConfig();
 
     T cast<T>(dynamic value, String context) {
-      if (value == null) return null as T;
+      // If T is nullable and value is null, "value is T" returns true.
       if (value is T) return value;
       throw FormatException(
           'Invalid configuration for "\\$context": Expected \$T but got \${value.runtimeType}');

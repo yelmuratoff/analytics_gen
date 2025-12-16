@@ -152,6 +152,12 @@ final class MultiProviderAnalytics
 
     onProviderFailure?.call(failure);
     onError?.call(failure.error, failure.stackTrace);
+
+    if (onProviderFailure == null && onError == null) {
+      _logger.warning(
+        'Provider failure (${failure.providerName}) for event "${failure.eventName}": ${failure.error}',
+      );
+    }
   }
 
   /// Returns the number of configured providers.

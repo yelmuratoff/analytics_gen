@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4]
+- [FIX] Fixed data loss bug in `BatchingAnalytics` where queue would stall after a failed auto-flush.
+- [FIX] Added default logging to `MultiProviderAnalytics` so provider failures are not silent by default.
+- [FIX] Fixed `ConfigParser` crash when optional fields are explicitly set to `null` in YAML.
+
 ## [1.0.3]
 - Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan.
 - Added `test_matchers` target to generate typed `package:test` matchers (e.g. `isAuthLogin`) for simpler verification.
