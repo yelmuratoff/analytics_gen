@@ -74,8 +74,15 @@ class CapabilityRegistry implements AnalyticsCapabilityResolver {
   T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {
     final capability = _capabilities[key.name];
     if (capability == null) return null;
-    // Safe cast: register<T> guarantees that _capabilities[key.name] is T
-    return capability as T;
+
+    // Defensive check: verify type matches
+    if (capability is! T) {
+      throw StateError('Capability registry corrupted: "$key" has type '
+          '${capability.runtimeType}, expected $T. '
+          'This likely means register<T>() was called with wrong type.');
+    }
+
+    return capability;
   }
 }
 

@@ -1,11 +1,8 @@
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
-import 'package:path/path.dart' as path;
 
 import '../config/analytics_config.dart';
-// import '../util/file_utils.dart'; // Unused now
 import '../util/logger.dart';
-import 'generation_metadata.dart';
 import 'output_manager.dart';
 
 import 'renderers/analytics_class_renderer.dart';
@@ -16,9 +13,17 @@ import 'renderers/matchers_renderer.dart';
 import 'renderers/renderer_factory.dart';
 import 'serializers/plan_serializer.dart';
 
+import 'tasks/clean_stale_files_task.dart';
+import 'tasks/generate_analytics_class_task.dart';
+import 'tasks/generate_barrel_file_task.dart';
+import 'tasks/generate_context_files_task.dart';
+import 'tasks/generate_domain_files_task.dart';
+import 'tasks/generate_matchers_task.dart';
+import 'tasks/generation_task.dart';
+import 'tasks/prepare_directories_task.dart';
+
 /// Generates Dart code for analytics events from YAML configuration.
 final class CodeGenerator {
-  /// Creates a new code generator.
   /// Creates a new code generator.
   CodeGenerator({
     required this.config,
@@ -71,149 +76,29 @@ final class CodeGenerator {
       return;
     }
 
-    log.info('Starting analytics code generation...');
-
-    final outputDir = path.join(projectRoot, 'lib', config.outputPath);
-    final eventsDir = path.join(outputDir, 'events');
-    final contextsDir = path.join(outputDir, 'contexts');
-
-    // Ensure output directories exist
-    await _outputManager.prepareOutputDirectories(
-        outputDir, eventsDir, contextsDir);
-
-    // Track generated files to clean up stale ones later
-    final generatedFiles = <String>{};
-
-    // Generate individual domain files with telemetry
-    await Future.wait(domains.entries.map((entry) async {
-      final filePath = await _generateDomainFile(
-        entry.key,
-        entry.value,
-        eventsDir,
-        domains,
-      );
-      generatedFiles.add(filePath);
-    }));
-
-    // Generate context files with telemetry
-    for (final entry in activeContexts.entries) {
-      await _generateContextFile(entry.key, entry.value, contextsDir);
-    }
-
-    // Clean up stale files
-    await _outputManager.cleanStaleFiles(eventsDir, generatedFiles);
-
-    // Generate barrel file with all exports
-    await _generateBarrelFile(domains, outputDir);
-
-    log.info('✓ Generated ${domains.length} domain files');
-    log.debug('  Domains: ${domains.keys.join(', ')}');
-
-    // Generate Analytics singleton class
-    await _generateAnalyticsClass(
-      domains,
+    final context = GenerationContext(
+      config: config,
+      domains: domains,
       contexts: activeContexts,
+      projectRoot: projectRoot,
+      logger: log,
+      outputManager: _outputManager,
+      eventRenderer: _eventRenderer,
+      contextRenderer: _contextRenderer,
+      classRenderer: _classRenderer,
+      matchersRenderer: _matchersRenderer,
     );
 
-    // Generate matchers
-    if (config.generateTestMatchers) {
-      await _generateMatchersFile(domains);
-    }
-  }
+    final tasks = [
+      PrepareDirectoriesTask(),
+      GenerateDomainFilesTask(),
+      GenerateContextFilesTask(),
+      CleanStaleFilesTask(),
+      GenerateBarrelFileTask(),
+      GenerateAnalyticsClassTask(),
+      if (config.generateTestMatchers) GenerateMatchersTask(),
+    ];
 
-  Future<String> _generateContextFile(
-    String contextName,
-    List<AnalyticsParameter> properties,
-    String outputDir,
-  ) async {
-    final content = _contextRenderer.renderContextFile(contextName, properties);
-
-    final fileName = '${contextName}_context.dart';
-    final filePath = path.join(outputDir, fileName);
-    await _writeFileIfContentChanged(filePath, content);
-    return filePath;
-  }
-
-  /// Generates a separate file for a single domain and returns the file path
-  Future<String> _generateDomainFile(
-    String domainName,
-    AnalyticsDomain domain,
-    String eventsDir,
-    Map<String, AnalyticsDomain> allDomains,
-  ) async {
-    final content =
-        _eventRenderer.renderDomainFile(domainName, domain, allDomains);
-
-    final fileName = '${domainName}_events.dart';
-    final filePath = path.join(eventsDir, fileName);
-    await _writeFileIfContentChanged(filePath, content);
-    return filePath;
-  }
-
-  /// Generates barrel file that exports all domain event files
-  Future<void> _generateBarrelFile(
-    Map<String, AnalyticsDomain> domains,
-    String outputDir,
-  ) async {
-    final buffer = StringBuffer();
-
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('// Barrel file - exports all domain event files');
-    buffer.writeln();
-
-    // Export all domain files
-    for (final domainName in domains.keys.toList()..sort()) {
-      buffer.writeln("export 'events/${domainName}_events.dart';");
-    }
-
-    final barrelPath = path.join(outputDir, 'generated_events.dart');
-    await _writeFileIfContentChanged(barrelPath, buffer.toString());
-  }
-
-  /// Generates Analytics singleton class with all domain mixins
-  Future<void> _generateAnalyticsClass(
-    Map<String, AnalyticsDomain> domains, {
-    Map<String, List<AnalyticsParameter>> contexts = const {},
-  }) async {
-    final metadata = GenerationMetadata.fromDomains(domains);
-    final content = _classRenderer.renderAnalyticsClass(
-      domains,
-      contexts: contexts,
-      planFingerprint: metadata.fingerprint,
-    );
-
-    // Write to file
-    final analyticsPath = path.join(
-      projectRoot,
-      'lib',
-      config.outputPath,
-      'analytics.dart',
-    );
-    await _writeFileIfContentChanged(analyticsPath, content);
-
-    log.info('✓ Generated Analytics class at: $analyticsPath');
-  }
-
-  /// Generates matchers file
-  Future<void> _generateMatchersFile(
-      Map<String, AnalyticsDomain> domains) async {
-    final content = _matchersRenderer.render(domains);
-    final matchersPath =
-        path.join(projectRoot, 'test', 'analytics_matchers.dart');
-
-    // Ensure test directory exists
-    final testDir = _outputManager.fs.directory(path.dirname(matchersPath));
-    if (!testDir.existsSync()) {
-      await _outputManager.fs.directory(testDir.path).create(recursive: true);
-    }
-
-    await _writeFileIfContentChanged(matchersPath, content);
-    log.info('✓ Generated matchers file at: $matchersPath');
-  }
-
-  /// Writes a file only if its contents differ from the existing file.
-  Future<void> _writeFileIfContentChanged(
-      String filePath, String contents) async {
-    await _outputManager.writeFileIfContentChanged(filePath, contents);
+    await TaskRunner().execute(tasks, context);
   }
 }
