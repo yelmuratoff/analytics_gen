@@ -1,5 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, unused_import
+// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package
 
 import 'package:analytics_gen/analytics_gen.dart';
 

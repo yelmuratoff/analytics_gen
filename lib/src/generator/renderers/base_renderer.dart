@@ -16,7 +16,9 @@ abstract class BaseRenderer {
     final buffer = StringBuffer();
     buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
 
-    buffer.writeln('// ignore_for_file: type=lint, unused_import');
+    buffer.writeln(
+      '// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package',
+    );
     if (includeCoverageIgnore) {
       buffer.writeln(
         '// ignore_for_file: directives_ordering, unnecessary_string_interpolations',

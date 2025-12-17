@@ -1,5 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, unused_import
+// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
 

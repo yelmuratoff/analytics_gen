@@ -14,7 +14,12 @@ void main() {
       final header = renderer.renderFileHeader();
 
       expect(header, contains('// GENERATED CODE - DO NOT MODIFY BY HAND'));
-      expect(header, contains('// ignore_for_file: type=lint, unused_import'));
+      expect(
+        header,
+        contains(
+          '// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package',
+        ),
+      );
       expect(
           header,
           contains(
