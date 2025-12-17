@@ -46,28 +46,35 @@ class NullCapabilityResolver implements AnalyticsCapabilityResolver {
 }
 
 /// Mutable registry that providers can use to register their capabilities.
+///
+/// Uses a type-safe heterogeneous container pattern: the [CapabilityKey] name
+/// serves as the lookup key, while type safety is enforced through the generic
+/// constraints on [register] and [getCapability].
 class CapabilityRegistry implements AnalyticsCapabilityResolver {
   /// Creates a new capability registry.
-  CapabilityRegistry({
-    Map<CapabilityKey<Object?>, AnalyticsCapability>? seed,
-  }) : _capabilities = Map<CapabilityKey<Object?>, AnalyticsCapability>.from(
-          seed ?? const <CapabilityKey<Object?>, AnalyticsCapability>{},
-        );
+  CapabilityRegistry();
 
-  final Map<CapabilityKey<Object?>, AnalyticsCapability> _capabilities;
+  // Type safety is guaranteed by the API: register<T> stores T under key.name,
+  // and getCapability<T> retrieves it with the same key.name. Since both methods
+  // require CapabilityKey<T>, the stored and retrieved types are guaranteed to match.
+  final Map<String, AnalyticsCapability> _capabilities = {};
 
   /// Registers a capability under the provided [key].
+  ///
+  /// Type safety guarantee: The [capability] type [T] must match the key's
+  /// generic type, ensuring that [getCapability] with the same key returns [T].
   void register<T extends AnalyticsCapability>(
     CapabilityKey<T> key,
     T capability,
   ) {
-    _capabilities[key] = capability;
+    _capabilities[key.name] = capability;
   }
 
   @override
   T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {
-    final capability = _capabilities[key];
+    final capability = _capabilities[key.name];
     if (capability == null) return null;
+    // Safe cast: register<T> guarantees that _capabilities[key.name] is T
     return capability as T;
   }
 }

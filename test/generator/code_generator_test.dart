@@ -746,10 +746,16 @@ delta:
           )
           .readAsString();
 
+      // Static cached regex field at mixin level
       expect(
         authContent,
         contains(
-            "if (!RegExp(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$').hasMatch(email)) {"),
+            "static final _emailRegex = RegExp(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$');"),
+      );
+      // Validation uses the cached field
+      expect(
+        authContent,
+        contains('if (!_emailRegex.hasMatch(email)) {'),
       );
       expect(
         authContent,

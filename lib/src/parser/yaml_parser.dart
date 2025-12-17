@@ -2,7 +2,6 @@ import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:yaml/yaml.dart';
 
-// Still needed? NamingStrategy is in ParserConfig
 import '../config/parser_config.dart';
 import '../util/logger.dart';
 import 'context_parser.dart';

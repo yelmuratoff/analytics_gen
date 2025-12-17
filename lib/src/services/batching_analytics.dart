@@ -204,8 +204,7 @@ final class BatchingAnalytics implements IAnalytics {
       }
     } catch (error, stackTrace) {
       if (nextIndex < batch.length) {
-        final failedEvent = batch[nextIndex];
-        failedEvent.retryCount++;
+        final failedEvent = batch[nextIndex].withIncrementedRetry();
 
         if (failedEvent.retryCount >= maxRetries) {
           // Drop the poison pill event by skipping it in the re-queue
@@ -220,6 +219,8 @@ final class BatchingAnalytics implements IAnalytics {
           // Backoff before retrying
           final delay = _calculateBackoff(failedEvent.retryCount);
           await Future.delayed(delay);
+          // Replace the failed event with updated retry count
+          batch[nextIndex] = failedEvent;
         }
 
         if (nextIndex < batch.length) {
@@ -238,10 +239,22 @@ final class BatchingAnalytics implements IAnalytics {
   }
 }
 
+/// Immutable queued event with retry tracking.
 final class _QueuedAnalyticsEvent {
-  _QueuedAnalyticsEvent(this.name, this.parameters);
+  const _QueuedAnalyticsEvent(
+    this.name,
+    this.parameters, {
+    this.retryCount = 0,
+  });
 
   final String name;
   final AnalyticsParams? parameters;
-  int retryCount = 0;
+  final int retryCount;
+
+  /// Returns a new instance with incremented retry count.
+  _QueuedAnalyticsEvent withIncrementedRetry() => _QueuedAnalyticsEvent(
+        name,
+        parameters,
+        retryCount: retryCount + 1,
+      );
 }

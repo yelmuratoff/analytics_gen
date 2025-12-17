@@ -23,11 +23,12 @@ class EventBodyRenderer {
     AnalyticsEvent event,
     Map<String, AnalyticsDomain> allDomains, {
     int indent = 0,
+    Map<String, String> regexPatterns = const {},
   }) {
     final buffer = CodeBuffer(initialIndent: indent);
 
     // 1. Validation Logic
-    _renderValidations(buffer, domainName, event);
+    _renderValidations(buffer, domainName, event, regexPatterns);
 
     // 2. Prepare event name
     final eventName =
@@ -124,6 +125,7 @@ class EventBodyRenderer {
     CodeBuffer buffer,
     String domainName,
     AnalyticsEvent event,
+    Map<String, String> regexPatterns,
   ) {
     final validator = const ValidationRenderer();
 
@@ -164,6 +166,11 @@ class EventBodyRenderer {
           param.min != null ||
           param.max != null) {
         final camelParam = StringUtils.toCamelCase(param.codeName);
+        // Check if regex is cached at mixin level
+        final regexFieldName = '_${camelParam}Regex';
+        final usesCachedRegex =
+            param.regex != null && regexPatterns.containsKey(regexFieldName);
+
         buffer.writeln(validator.renderValidationChecks(
           camelParam: camelParam,
           isNullable: param.isNullable,
@@ -173,6 +180,7 @@ class EventBodyRenderer {
           min: param.min,
           max: param.max,
           indent: 0,
+          cachedRegexFieldName: usesCachedRegex ? regexFieldName : null,
         ));
       }
     }

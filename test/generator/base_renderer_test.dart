@@ -209,8 +209,9 @@ void main() {
         regex: r'^[^@]+@[^@]+\.[^@]+$',
       );
 
-      expect(checks,
-          contains("if (!RegExp(r'^[^@]+@[^@]+\\.[^@]+\$').hasMatch(email))"));
+      // Without cachedRegexFieldName, creates inline local variable
+      expect(checks, contains("final _emailRegex = RegExp(r'^[^@]+@[^@]+\\.[^@]+\$');"));
+      expect(checks, contains('if (!_emailRegex.hasMatch(email))'));
       expect(checks, contains('throw ArgumentError.value'));
       expect(checks, contains('must match regex'));
     });
@@ -222,10 +223,22 @@ void main() {
         regex: r'^[^@]+@[^@]+\.[^@]+$',
       );
 
-      expect(
-          checks,
-          contains(
-              "if (email != null && !RegExp(r'^[^@]+@[^@]+\\.[^@]+\$').hasMatch(email))"));
+      // Without cachedRegexFieldName, creates inline local variable
+      expect(checks, contains("final _emailRegex = RegExp(r'^[^@]+@[^@]+\\.[^@]+\$');"));
+      expect(checks, contains('if (email != null && !_emailRegex.hasMatch(email))'));
+    });
+
+    test('renderValidationChecks uses cached regex field when provided', () {
+      final checks = validator.renderValidationChecks(
+        camelParam: 'email',
+        isNullable: false,
+        regex: r'^[^@]+@[^@]+\.[^@]+$',
+        cachedRegexFieldName: '_emailRegex',
+      );
+
+      // Uses the cached static field directly
+      expect(checks, isNot(contains('final _emailRegex')));
+      expect(checks, contains('if (!_emailRegex.hasMatch(email))'));
     });
 
     test(

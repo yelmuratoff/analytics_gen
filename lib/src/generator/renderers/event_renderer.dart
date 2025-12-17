@@ -82,11 +82,23 @@ class EventRenderer extends BaseRenderer {
     final buffer = StringBuffer();
     final className = 'Analytics${StringUtils.capitalizePascal(domainName)}';
 
+    // Collect all regex patterns from events for static caching
+    final regexPatterns = _collectRegexPatterns(domain);
+
     buffer.writeln('/// Generated mixin for $domainName analytics events');
     buffer.writeln('mixin $className on AnalyticsBase {');
 
+    // Generate static cached RegExp instances at mixin level
+    if (regexPatterns.isNotEmpty) {
+      buffer.writeln('  // Cached regex patterns for validation (compiled once)');
+      for (final entry in regexPatterns.entries) {
+        buffer.writeln("  static final ${entry.key} = RegExp(r'${entry.value}');");
+      }
+      buffer.writeln();
+    }
+
     for (final event in domain.events) {
-      buffer.write(_renderEventMethod(domainName, event, allDomains));
+      buffer.write(_renderEventMethod(domainName, event, allDomains, regexPatterns));
     }
 
     buffer.writeln('}');
@@ -94,10 +106,27 @@ class EventRenderer extends BaseRenderer {
     return buffer.toString();
   }
 
+  /// Collects all regex patterns from domain events.
+  /// Returns a map of unique field name -> pattern.
+  Map<String, String> _collectRegexPatterns(AnalyticsDomain domain) {
+    final patterns = <String, String>{};
+    for (final event in domain.events) {
+      for (final param in event.parameters) {
+        if (param.regex != null && param.dartType == null) {
+          final fieldName = '_${StringUtils.toCamelCase(param.codeName)}Regex';
+          // Use first occurrence if same param name has different patterns
+          patterns.putIfAbsent(fieldName, () => param.regex!);
+        }
+      }
+    }
+    return patterns;
+  }
+
   String _renderEventMethod(
     String domainName,
     AnalyticsEvent event,
     Map<String, AnalyticsDomain> allDomains,
+    Map<String, String> regexPatterns,
   ) {
     final buffer = StringBuffer();
     final methodName = EventNaming.buildLoggerMethodName(
@@ -139,6 +168,7 @@ class EventRenderer extends BaseRenderer {
       event,
       allDomains,
       indent: 2,
+      regexPatterns: regexPatterns,
     ));
 
     buffer.writeln('  }');

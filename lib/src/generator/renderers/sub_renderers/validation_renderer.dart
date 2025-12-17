@@ -42,6 +42,9 @@ class ValidationRenderer {
   }
 
   /// Renders validation checks for parameters (regex, length, range).
+  ///
+  /// If [cachedRegexFieldName] is provided, the regex validation will use
+  /// a static field reference instead of creating a new RegExp instance.
   String renderValidationChecks({
     required String camelParam,
     required bool isNullable,
@@ -51,15 +54,26 @@ class ValidationRenderer {
     num? min,
     num? max,
     int indent = 0,
+    String? cachedRegexFieldName,
   }) {
     final indentStr = '  ' * indent;
     final buffer = StringBuffer();
 
-    // Regex validation
+    // Regex validation - uses cached static RegExp when available
     if (regex != null) {
+      final String regexRef;
+      if (cachedRegexFieldName != null) {
+        // Use the pre-compiled static RegExp field from the mixin
+        regexRef = cachedRegexFieldName;
+      } else {
+        // Fallback: create inline (shouldn't happen if caller passes patterns)
+        final regexConstName = '_${camelParam}Regex';
+        buffer.writeln('$indentStr    final $regexConstName = RegExp(r\'$regex\');');
+        regexRef = regexConstName;
+      }
       final condition = isNullable
-          ? 'if ($camelParam != null && !RegExp(r\'$regex\').hasMatch($camelParam)) {'
-          : 'if (!RegExp(r\'$regex\').hasMatch($camelParam)) {';
+          ? 'if ($camelParam != null && !$regexRef.hasMatch($camelParam)) {'
+          : 'if (!$regexRef.hasMatch($camelParam)) {';
       buffer.writeln('$indentStr    $condition');
       buffer.writeln('$indentStr      throw ArgumentError.value(');
       buffer.writeln('$indentStr        $camelParam,');

@@ -166,8 +166,9 @@ void main() {
 
       final result = renderer.renderDomainFile('items', domain, allDomains);
 
-      // Regex
-      expect(result, contains("if (!RegExp(r'^[a-z]+\$').hasMatch(query)) {"));
+      // Regex - now uses cached static field at mixin level
+      expect(result, contains("static final _queryRegex = RegExp(r'^[a-z]+\$');"));
+      expect(result, contains('if (!_queryRegex.hasMatch(query)) {'));
       expect(result, contains('throw ArgumentError.value('));
       expect(result, contains(r"'must match regex ^[a-z]+\$',"));
 
