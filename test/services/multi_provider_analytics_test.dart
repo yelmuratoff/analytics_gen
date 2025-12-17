@@ -271,6 +271,25 @@ void main() {
         expect(service2.totalEvents, equals(1));
       });
 
+      test('logEventAsync waits for all async providers (concurrent execution)',
+          () async {
+        final slow1 =
+            _SlowAsyncProvider(delay: const Duration(milliseconds: 100));
+        final slow2 =
+            _SlowAsyncProvider(delay: const Duration(milliseconds: 50));
+        final multi = MultiProviderAnalytics([slow1, slow2]);
+
+        final stopwatch = Stopwatch()..start();
+        await multi.logEventAsync(name: 'concurrent_test');
+        stopwatch.stop();
+
+        // Should wait at least for the slowest
+        expect(stopwatch.elapsedMilliseconds, greaterThanOrEqualTo(100));
+
+        expect(slow1.eventCount, equals(1));
+        expect(slow2.eventCount, equals(1));
+      });
+
       test('respects provider filters in async path', () async {
         final asyncProvider = _AsyncLoggingProvider(service2);
 
@@ -438,6 +457,25 @@ class _FailingAsyncAnalyticsService implements IAnalytics, IAsyncAnalytics {
   }
 }
 
+/// An async provider that takes a specific amount of time to log.
+class _SlowAsyncProvider implements IAnalytics, IAsyncAnalytics {
+  _SlowAsyncProvider({required this.delay});
+  final Duration delay;
+  int eventCount = 0;
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {
+    eventCount++;
+  }
+
+  @override
+  Future<void> logEventAsync(
+      {required String name, AnalyticsParams? parameters}) async {
+    await Future<void>.delayed(delay);
+    eventCount++;
+  }
+}
+
 /// Provider that throws a [SocketException] to simulate network errors.
 class _FailingSocketAnalyticsService implements IAnalytics {
   @override
@@ -466,8 +504,7 @@ class _TestCapabilityImpl implements _TestCapability {
   final String source;
 }
 
-class _ProviderWithCapability
-    with CapabilityProviderMixin
+final class _ProviderWithCapability extends CapabilityProviderBase
     implements IAnalytics {
   _ProviderWithCapability(this.name) {
     registerCapability(_testCapabilityKey, _TestCapabilityImpl(name));

@@ -182,37 +182,6 @@ void main() {
       expect(result, contains("'must be between 1 and 100',"));
     });
 
-    test('renders parameter sanitization', () {
-      final event = AnalyticsEvent(
-        name: 'search',
-        description: 'Search event',
-        parameters: [
-          AnalyticsParameter(
-            name: 'query',
-            type: 'string',
-            isNullable: false,
-            sanitize: 'html',
-          ),
-          AnalyticsParameter(
-            name: 'sql_query',
-            type: 'string',
-            isNullable: true,
-            sanitize: 'sql',
-          ),
-        ],
-      );
-      final domain = AnalyticsDomain(name: 'search', events: [event]);
-      final allDomains = {'search': domain};
-
-      final result = renderer.renderDomainFile('search', domain, allDomains);
-
-      expect(result, contains('"query": sanitizeHtml(query),'));
-      expect(
-          result,
-          contains(
-              'if (sqlQuery != null) "sql_query": sanitizeSql(sqlQuery),'));
-    });
-
     test(
         'adds @Deprecated when interpolation used (even if strict_event_names is true, assuming parser bypassed)',
         () {

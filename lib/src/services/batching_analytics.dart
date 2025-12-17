@@ -32,11 +32,12 @@ final class BatchingAnalytics implements IAnalytics {
     this.minRetryDelay = const Duration(milliseconds: 500),
     this.maxRetryDelay = const Duration(seconds: 10),
     Duration? flushInterval,
-    this.onFlushError,
+    BatchFlushErrorHandler? onFlushError,
     this.onEventDropped,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
         assert(maxRetries >= 0, 'maxRetries must be non-negative.'),
-        _delegate = delegate {
+        _delegate = delegate,
+        onFlushError = onFlushError ?? _defaultErrorHandler {
     if (flushInterval != null) {
       _timer = Timer.periodic(flushInterval, (_) {
         if (_pending.isNotEmpty) {
@@ -44,6 +45,15 @@ final class BatchingAnalytics implements IAnalytics {
         }
       });
     }
+  }
+
+  static void _defaultErrorHandler(Object error, StackTrace stackTrace) {
+    // At minimum, log to console in production
+    // ignore: avoid_print
+    print('[BatchingAnalytics] Flush failed: $error');
+
+    // Throw in debug mode to make issues visible during development
+    assert(false, 'Batch flush failed. Configure onFlushError callback.');
   }
 
   final IAsyncAnalytics _delegate;

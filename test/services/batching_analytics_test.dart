@@ -66,6 +66,7 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 10,
+        onFlushError: (_, __) {},
       );
 
       batching.logEvent(name: 'unstable');
@@ -111,6 +112,7 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 10,
+        onFlushError: (_, __) {},
       );
 
       batching.logEvent(name: 'first');
@@ -145,6 +147,7 @@ void main() {
         delegate: delegate,
         maxBatchSize: 1,
         maxRetries: 2,
+        onFlushError: (_, __) {},
       );
 
       batching.logEvent(name: 'poison');
@@ -177,6 +180,7 @@ void main() {
         onEventDropped: (name, params, error, stack) {
           droppedEvents.add(name);
         },
+        onFlushError: (_, __) {},
       );
 
       batching.logEvent(name: 'poison');

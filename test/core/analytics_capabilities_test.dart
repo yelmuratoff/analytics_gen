@@ -59,6 +59,16 @@ void main() {
       expect(registry.getCapability(_testCapabilityKey), same(capability));
     });
 
+    test('throws StateError when registering duplicate capability key', () {
+      final registry = CapabilityRegistry();
+      registry.register(_testCapabilityKey, _TestCapability('first'));
+
+      expect(
+        () => registry.register(_testCapabilityKey, _TestCapability('second')),
+        throwsStateError,
+      );
+    });
+
     test('throws StateError when capability has wrong type', () {
       final registry = CapabilityRegistry();
       // Register a legitimate capability

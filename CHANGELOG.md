@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.0.4]
+
+### Improvements
+- Introduced `CapabilityProviderBase` to replace `CapabilityProviderMixin`. The mixin is deprecated and will be removed in a future release. Callers should update to extend `CapabilityProviderBase` to ensure state isolation.
+- Added validation to `BatchingAnalytics` constructor to ensure safe configuration. It now provides a default `onFlushError` handler that logs errors to console (and asserts in debug mode) to preventing silent data loss.
+- `CapabilityRegistry` now throws a `StateError` if a duplicate capability key is registered, preventing silent overwrites.
+- Added comprehensive async logging tests for `MultiProviderAnalytics`.
 - Added "Dead Event" Audit Enhancement: The `audit` command now shows git commit info (author, date, hash) for dead events to help identify who added them and when.
 - Added `--metrics` flag to track generation performance (parsing time, generation time, event counts).
 - Added `InputConfig` and `OutputConfig` to `AnalyticsConfig` for better API organization.

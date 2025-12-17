@@ -25,6 +25,19 @@ void main() {
       expect(resolver.getCapability(_secondCapabilityKey)?.label, 'two');
     });
   });
+
+  group('CapabilityProviderBase', () {
+    test('exposes registered capabilities via analyticsCapabilitiesFor', () {
+      final provider = _FakeBaseAnalyticsProvider();
+
+      final capability = analyticsCapabilitiesFor(provider).getCapability(
+        _fakeCapabilityKey,
+      );
+
+      expect(capability, isA<_FakeCapability>());
+      expect(capability!.label, equals('base'));
+    });
+  });
 }
 
 const _fakeCapabilityKey =
@@ -33,10 +46,23 @@ const _secondCapabilityKey =
     CapabilityKey<_FakeCapability>('test.secondCapability');
 
 final class _FakeAnalyticsProvider
-    with CapabilityProviderMixin
-    implements IAnalytics {
+    with
+        // ignore: deprecated_member_use_from_same_package
+        CapabilityProviderMixin
+    implements
+        IAnalytics {
   _FakeAnalyticsProvider() {
     registerCapability(_fakeCapabilityKey, const _FakeCapability('ready'));
+  }
+
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {}
+}
+
+final class _FakeBaseAnalyticsProvider extends CapabilityProviderBase
+    implements IAnalytics {
+  _FakeBaseAnalyticsProvider() {
+    registerCapability(_fakeCapabilityKey, const _FakeCapability('base'));
   }
 
   @override

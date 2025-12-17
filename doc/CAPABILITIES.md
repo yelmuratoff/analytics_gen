@@ -61,7 +61,7 @@ const pushTokenKey = CapabilityKey<PushTokenCapability>('push_tokens');
 
 ```dart
 class FirebaseAnalyticsService
-    with CapabilityProviderMixin
+    extends CapabilityProviderBase
     implements IAnalytics {
   final FirebaseAnalytics _firebase;
 
@@ -151,8 +151,7 @@ void markPremiumUser() {
 ## Testing Patterns
 
 ```dart
-class FakeCapabilityProvider extends MockAnalyticsService
-    with CapabilityProviderMixin {
+class FakeCapabilityProvider extends MockAnalyticsService {
   FakeCapabilityProvider() {
     registerCapability(userPropertiesKey, _FakeUserProps());
   }

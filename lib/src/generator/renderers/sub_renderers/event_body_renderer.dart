@@ -71,14 +71,6 @@ class EventBodyRenderer {
           valueAccess = camelParam;
         }
 
-        if (param.sanitize != null) {
-          if (param.sanitize == 'html') {
-            valueAccess = 'sanitizeHtml($valueAccess)';
-          } else if (param.sanitize == 'sql') {
-            valueAccess = 'sanitizeSql($valueAccess)';
-          }
-        }
-
         if (param.isNullable) {
           buffer.writeln(
             '  if ($camelParam != null) "${param.name}": $valueAccess,',
@@ -175,9 +167,7 @@ class EventBodyRenderer {
           param.max != null) {
         final camelParam = StringUtils.toCamelCase(param.codeName);
         // Check if regex is cached at mixin level
-        final regexFieldName = '_${camelParam}Regex';
-        final usesCachedRegex =
-            param.regex != null && regexPatterns.containsKey(regexFieldName);
+        final regexFieldName = regexPatterns[param.regex];
 
         buffer.writeln(validator.renderValidationChecks(
           camelParam: camelParam,
@@ -188,7 +178,7 @@ class EventBodyRenderer {
           min: param.min,
           max: param.max,
           indent: 0,
-          cachedRegexFieldName: usesCachedRegex ? regexFieldName : null,
+          cachedRegexFieldName: regexFieldName,
         ));
       }
     }

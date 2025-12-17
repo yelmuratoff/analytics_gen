@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'analytics_interface.dart';
 
 /// Marker interface implemented by provider-specific capability objects.
@@ -67,6 +68,13 @@ class CapabilityRegistry implements AnalyticsCapabilityResolver {
     CapabilityKey<T> key,
     T capability,
   ) {
+    if (_capabilities.containsKey(key.name)) {
+      final existing = _capabilities[key.name];
+      throw StateError(
+          'Capability key "${key.name}" already registered with type '
+          '${existing.runtimeType}. Attempted to register ${capability.runtimeType}. '
+          'Ensure unique capability names across your application.');
+    }
     _capabilities[key.name] = capability;
   }
 
@@ -97,7 +105,34 @@ AnalyticsCapabilityResolver analyticsCapabilitiesFor(IAnalytics analytics) {
   return _nullCapabilityResolver;
 }
 
+/// Base class that wires capability registration into provider implementations.
+///
+/// Ensures each instance has an isolated state, preventing race conditions
+/// and state sharing issues.
+abstract base class CapabilityProviderBase
+    implements AnalyticsCapabilityProvider {
+  /// Creates a new capability provider base with an isolated registry.
+  CapabilityProviderBase() : _capabilityRegistry = CapabilityRegistry();
+
+  final CapabilityRegistry _capabilityRegistry;
+
+  @override
+  AnalyticsCapabilityResolver get capabilityResolver => _capabilityRegistry;
+
+  /// Registers [capability] under the provided [key].
+  ///
+  /// Call this from your provider constructor to expose the capabilities you support.
+  @protected
+  void registerCapability<T extends AnalyticsCapability>(
+    CapabilityKey<T> key,
+    T capability,
+  ) {
+    _capabilityRegistry.register(key, capability);
+  }
+}
+
 /// Mixin that wires capability registration into provider implementations.
+@Deprecated('Use CapabilityProviderBase instead to ensure isolated state')
 mixin CapabilityProviderMixin implements AnalyticsCapabilityProvider {
   final CapabilityRegistry _capabilityRegistry = CapabilityRegistry();
 

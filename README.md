@@ -300,7 +300,7 @@ Contexts allow you to define global properties (like user attributes, device inf
    The generator creates an interface (e.g., `UserPropertiesCapability`). Your analytics provider must implement this interface and register it to handle the property updates.
 
    ```dart
-   class MyAnalyticsService with CapabilityProviderMixin implements IAnalytics {
+   class MyAnalyticsService extends CapabilityProviderBase implements IAnalytics {
      MyAnalyticsService() {
        // Register the capability implementation
        registerCapability(userPropertiesKey, _UserPropertiesImpl(this));

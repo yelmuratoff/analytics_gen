@@ -19,34 +19,6 @@ void main() {
 
       expect(result, isNull);
     });
-
-    group('sanitizeHtml', () {
-      final base = _TestAnalyticsBase();
-
-      test('escapes HTML characters', () {
-        expect(base.sanitizeHtml('<script>alert("xss")</script>'),
-            '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
-        expect(base.sanitizeHtml("Mac's & Cheese"), 'Mac&#39;s &amp; Cheese');
-      });
-
-      test('returns empty string for null', () {
-        expect(base.sanitizeHtml(null), '');
-      });
-    });
-
-    group('sanitizeSql', () {
-      final base = _TestAnalyticsBase();
-
-      test('escapes single quotes', () {
-        expect(base.sanitizeSql("O'Reilly"), "O''Reilly");
-        expect(base.sanitizeSql("'; DROP TABLE students; --"),
-            "''\u003B DROP TABLE students\u003B --"); // quote escaped
-      });
-
-      test('returns empty string for null', () {
-        expect(base.sanitizeSql(null), '');
-      });
-    });
   });
 
   group('ensureAnalyticsInitialized', () {

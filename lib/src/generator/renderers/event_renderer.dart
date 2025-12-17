@@ -92,9 +92,15 @@ class EventRenderer extends BaseRenderer {
     if (regexPatterns.isNotEmpty) {
       buffer
           .writeln('  // Cached regex patterns for validation (compiled once)');
-      for (final entry in regexPatterns.entries) {
-        buffer.writeln(
-            "  static final ${entry.key} = RegExp(r'${entry.value}');");
+      // regexPatterns is now pattern -> fieldName
+      // We want to sort by fieldName for deterministic output
+      final entries = regexPatterns.entries.toList()
+        ..sort((a, b) => a.value.compareTo(b.value));
+
+      for (final entry in entries) {
+        final pattern = entry.key;
+        final fieldName = entry.value;
+        buffer.writeln("  static final $fieldName = RegExp(r'$pattern');");
       }
       buffer.writeln();
     }
@@ -110,19 +116,30 @@ class EventRenderer extends BaseRenderer {
   }
 
   /// Collects all regex patterns from domain events.
-  /// Returns a map of unique field name -> pattern.
+  /// Returns a map of regex pattern -> unique field name.
   Map<String, String> _collectRegexPatterns(AnalyticsDomain domain) {
-    final patterns = <String, String>{};
+    final patternToField = <String, String>{};
+    final usedFieldNames = <String>{};
+
     for (final event in domain.events) {
       for (final param in event.parameters) {
         if (param.regex != null && param.dartType == null) {
-          final fieldName = '_${StringUtils.toCamelCase(param.codeName)}Regex';
-          // Use first occurrence if same param name has different patterns
-          patterns.putIfAbsent(fieldName, () => param.regex!);
+          final pattern = param.regex!;
+          if (patternToField.containsKey(pattern)) continue;
+
+          var fieldName = '_${StringUtils.toCamelCase(param.codeName)}Regex';
+          var counter = 2;
+          while (usedFieldNames.contains(fieldName)) {
+            fieldName =
+                '_${StringUtils.toCamelCase(param.codeName)}Regex$counter';
+            counter++;
+          }
+          usedFieldNames.add(fieldName);
+          patternToField[pattern] = fieldName;
         }
       }
     }
-    return patterns;
+    return patternToField;
   }
 
   String _renderEventMethod(
