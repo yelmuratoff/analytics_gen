@@ -60,15 +60,15 @@ class GenerationPipeline {
 
     try {
       // Resolve shared parameter paths
-      final sharedParameterPaths = config.sharedParameters
+      final sharedParameterPaths = config.inputs.sharedParameters
           .map((p) => path.join(projectRoot, p))
           .toList();
 
       // Load files
       // Load files
       final loader = _eventLoaderFactory.create(
-        eventsPath: path.join(projectRoot, config.eventsPath),
-        contextFiles: config.contexts
+        eventsPath: path.join(projectRoot, config.inputs.eventsPath),
+        contextFiles: config.inputs.contexts
             .map((c) => path.join(projectRoot, c))
             .toList(), // Resolve paths
         sharedParameterFiles: sharedParameterPaths,
@@ -91,11 +91,11 @@ class GenerationPipeline {
         log: request.logger,
         config: ParserConfig(
           naming: config.naming,
-          strictEventNames: config.strictEventNames,
+          strictEventNames: config.rules.strictEventNames,
           enforceCentrallyDefinedParameters:
-              config.enforceCentrallyDefinedParameters,
+              config.rules.enforceCentrallyDefinedParameters,
           preventEventParameterDuplicates:
-              config.preventEventParameterDuplicates,
+              config.rules.preventEventParameterDuplicates,
           sharedParameters: sharedParameters,
         ),
       );
@@ -132,7 +132,7 @@ class GenerationPipeline {
   Future<void> watch(GenerationRequest request) async {
     try {
       await _watcherService.watch(
-          eventsPath: config.eventsPath, onGenerate: () => run(request));
+          eventsPath: config.inputs.eventsPath, onGenerate: () => run(request));
     } catch (e) {
       request.logger.error('Watch error: $e');
       exit(1);
@@ -225,13 +225,13 @@ class GenerationPipeline {
     }
 
     // Schema evolution check
-    if (config.exportsPath != null) {
+    if (config.outputs.exportsPath != null) {
       tasks.add(
         _GeneratorTask(
           label: 'Schema evolution check',
           invoke: () => _schemaChecker.checkSchemaEvolution(
             domains,
-            config.exportsPath,
+            config.outputs.exportsPath,
           ),
         ),
       );

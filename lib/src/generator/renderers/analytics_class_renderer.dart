@@ -119,7 +119,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln('  ]);');
     buffer.writeln();
 
-    if (config.generatePlan) {
+    if (config.targets.generatePlan) {
       buffer.write(planSerializer.generatePlanField(domains));
       buffer.writeln();
     }

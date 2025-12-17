@@ -34,7 +34,9 @@ void main() {
         '      method: string\n',
       );
 
-      final config = AnalyticsConfig(eventsPath: 'events');
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+      );
 
       final lines = <String>[];
 

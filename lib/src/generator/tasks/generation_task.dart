@@ -57,7 +57,8 @@ class GenerationContext {
   final MatchersRenderer matchersRenderer;
 
   /// The directory where generated files are placed.
-  String get outputDir => path.join(projectRoot, 'lib', config.outputPath);
+  String get outputDir =>
+      path.join(projectRoot, 'lib', config.outputs.dartPath);
 
   /// The directory where event files are placed.
   String get eventsDir => path.join(outputDir, 'events');

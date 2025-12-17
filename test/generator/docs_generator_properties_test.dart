@@ -15,8 +15,8 @@ void main() {
     tempDir = Directory.systemTemp.createTempSync('analytics_gen_test_');
     projectRoot = tempDir.path;
     config = AnalyticsConfig(
-      eventsPath: 'events',
-      docsPath: 'docs/analytics.md',
+      inputs: AnalyticsInputs(eventsPath: 'events'),
+      outputs: AnalyticsOutputs(docsPath: 'docs/analytics.md'),
     );
   });
 
@@ -56,7 +56,7 @@ void main() {
       },
     );
 
-    final docsFile = File(path.join(projectRoot, config.docsPath!));
+    final docsFile = File(path.join(projectRoot, config.outputs.docsPath!));
     expect(docsFile.existsSync(), isTrue);
 
     final content = docsFile.readAsStringSync();

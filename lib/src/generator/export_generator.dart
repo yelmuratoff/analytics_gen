@@ -40,8 +40,8 @@ final class ExportGenerator {
     }
 
     // Determine output directory
-    final outputDir = config.exportsPath != null
-        ? path.join(projectRoot, config.exportsPath!)
+    final outputDir = config.outputs.exportsPath != null
+        ? path.join(projectRoot, config.outputs.exportsPath!)
         : path.join(projectRoot, 'assets', 'generated');
 
     final outputDirectory = Directory(outputDir);
@@ -50,19 +50,19 @@ final class ExportGenerator {
     }
 
     // Clean up disabled exports
-    if (!config.generateCsv) {
+    if (!config.targets.generateCsv) {
       final file = File(path.join(outputDir, 'analytics_events.csv'));
       if (file.existsSync()) await file.delete();
     }
 
-    if (!config.generateJson) {
+    if (!config.targets.generateJson) {
       final file = File(path.join(outputDir, 'analytics_events.json'));
       if (file.existsSync()) await file.delete();
       final minFile = File(path.join(outputDir, 'analytics_events.min.json'));
       if (minFile.existsSync()) await minFile.delete();
     }
 
-    if (!config.generateSql) {
+    if (!config.targets.generateSql) {
       final file = File(path.join(outputDir, 'create_database.sql'));
       if (file.existsSync()) await file.delete();
       final dbFile = File(path.join(outputDir, 'analytics_events.db'));
@@ -72,7 +72,7 @@ final class ExportGenerator {
     final tasks = <Future<void>>[];
 
     // Generate configured formats
-    if (config.generateCsv) {
+    if (config.targets.generateCsv) {
       tasks.add(() async {
         final csvGen = CsvGenerator(naming: config.naming);
         await csvGen.generate(
@@ -85,7 +85,7 @@ final class ExportGenerator {
       }());
     }
 
-    if (config.generateJson) {
+    if (config.targets.generateJson) {
       tasks.add(() async {
         final jsonGen = JsonGenerator(naming: config.naming);
         await jsonGen.generate(domains, outputDir);
@@ -98,7 +98,7 @@ final class ExportGenerator {
       }());
     }
 
-    if (config.generateSql) {
+    if (config.targets.generateSql) {
       tasks.add(() async {
         final sqlGen = SqlGenerator(naming: config.naming);
         final sqliteGen = SqliteGenerator(

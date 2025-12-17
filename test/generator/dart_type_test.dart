@@ -44,8 +44,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final logs = <String>[];
@@ -56,7 +56,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -65,7 +65,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
 
@@ -101,8 +101,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -111,7 +111,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -120,7 +120,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
       final content = await featureFile.readAsString();
@@ -144,9 +144,11 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
-        imports: ['package:my_app/models.dart'],
+        inputs: AnalyticsInputs(
+          eventsPath: 'events',
+          imports: ['package:my_app/models.dart'],
+        ),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -155,7 +157,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -164,7 +166,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
       final content = await featureFile.readAsString();
@@ -185,8 +187,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -195,7 +197,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -204,7 +206,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputPath, 'events',
+        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
       final content = await featureFile.readAsString();

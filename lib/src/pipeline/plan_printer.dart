@@ -20,7 +20,7 @@ Future<void> validateTrackingPlan(
   logger.info('');
 
   final loader = EventLoader(
-    eventsPath: path.join(projectRoot, config.eventsPath),
+    eventsPath: path.join(projectRoot, config.inputs.eventsPath),
     log: logger,
   );
   final sources = await loader.loadEventFiles();
@@ -62,7 +62,7 @@ Future<void> printTrackingPlan(
   logger.info('');
 
   final loader = EventLoader(
-    eventsPath: path.join(projectRoot, config.eventsPath),
+    eventsPath: path.join(projectRoot, config.inputs.eventsPath),
     log: logger,
   );
   final sources = await loader.loadEventFiles();

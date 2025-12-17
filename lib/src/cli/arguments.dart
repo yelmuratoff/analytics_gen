@@ -63,7 +63,7 @@ bool resolveDocsFlag(ArgResults results, AnalyticsConfig config) {
   if (results.wasParsed('docs')) {
     return results['docs'] as bool;
   }
-  return config.generateDocs;
+  return config.targets.generateDocs;
 }
 
 /// Resolves the exports flag based on the command-line arguments and config.
@@ -71,5 +71,7 @@ bool resolveExportsFlag(ArgResults results, AnalyticsConfig config) {
   if (results.wasParsed('exports')) {
     return results['exports'] as bool;
   }
-  return config.generateCsv || config.generateJson || config.generateSql;
+  return config.targets.generateCsv ||
+      config.targets.generateJson ||
+      config.targets.generateSql;
 }

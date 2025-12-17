@@ -48,92 +48,100 @@ class ConfigParser {
     }
 
     return AnalyticsConfig(
-      eventsPath: val(
-        inputs,
-        YamlKeys.events,
-        val(config, YamlKeys.eventsPath, 'events'),
+      inputs: AnalyticsInputs(
+        eventsPath: val(
+          inputs,
+          YamlKeys.events,
+          val(config, YamlKeys.eventsPath, 'events'),
+        ),
+        contexts: list(
+          inputs,
+          YamlKeys.contexts,
+          list(config, YamlKeys.contexts, []),
+        ),
+        sharedParameters: list(
+          inputs,
+          YamlKeys.sharedParameters,
+          list(config, YamlKeys.sharedParameters, []),
+        ),
+        imports: list(
+          inputs,
+          YamlKeys.imports,
+          list(config, YamlKeys.imports, []),
+        ),
       ),
-      outputPath: val(
-        outputs,
-        YamlKeys.dart,
-        val(config, YamlKeys.outputPath, 'src/analytics/generated'),
+      outputs: AnalyticsOutputs(
+        dartPath: val(
+          outputs,
+          YamlKeys.dart,
+          val(config, YamlKeys.outputPath, 'src/analytics/generated'),
+        ),
+        docsPath: val(
+          outputs,
+          YamlKeys.docs,
+          val(config, YamlKeys.docsPath, null),
+        ),
+        exportsPath: val(
+          outputs,
+          YamlKeys.exports,
+          val(config, YamlKeys.exportsPath, null),
+        ),
       ),
-      docsPath: val(
-        outputs,
-        YamlKeys.docs,
-        val(config, YamlKeys.docsPath, null),
+      targets: AnalyticsTargets(
+        generateCsv: val(
+          targets,
+          YamlKeys.csv,
+          val(config, YamlKeys.generateCsv, false),
+        ),
+        generateJson: val(
+          targets,
+          YamlKeys.json,
+          val(config, YamlKeys.generateJson, false),
+        ),
+        generateSql: val(
+          targets,
+          YamlKeys.sql,
+          val(config, YamlKeys.generateSql, false),
+        ),
+        generateDocs: val(
+          targets,
+          YamlKeys.docs,
+          val(config, YamlKeys.generateDocs, false),
+        ),
+        generatePlan: val(
+          targets,
+          YamlKeys.plan,
+          val(config, YamlKeys.generatePlan, true),
+        ),
+        generateTestMatchers: val(
+          targets,
+          YamlKeys.testMatchers,
+          val(config, YamlKeys.generateTestMatchers, false),
+        ),
       ),
-      exportsPath: val(
-        outputs,
-        YamlKeys.exports,
-        val(config, YamlKeys.exportsPath, null),
-      ),
-      sharedParameters: list(
-        inputs,
-        YamlKeys.sharedParameters,
-        list(config, YamlKeys.sharedParameters, []),
-      ),
-      generateCsv: val(
-        targets,
-        YamlKeys.csv,
-        val(config, YamlKeys.generateCsv, false),
-      ),
-      generateJson: val(
-        targets,
-        YamlKeys.json,
-        val(config, YamlKeys.generateJson, false),
-      ),
-      generateSql: val(
-        targets,
-        YamlKeys.sql,
-        val(config, YamlKeys.generateSql, false),
-      ),
-      generateDocs: val(
-        targets,
-        YamlKeys.docs,
-        val(config, YamlKeys.generateDocs, false),
-      ),
-      generatePlan: val(
-        targets,
-        YamlKeys.plan,
-        val(config, YamlKeys.generatePlan, true),
-      ),
-      includeEventDescription: val(
-        rules,
-        YamlKeys.includeEventDescription,
-        val(config, YamlKeys.includeEventDescription, false),
-      ),
-      strictEventNames: val(
-        rules,
-        YamlKeys.strictEventNames,
-        val(config, YamlKeys.strictEventNames, true),
-      ),
-      enforceCentrallyDefinedParameters: val(
-        rules,
-        YamlKeys.enforceCentrallyDefinedParameters,
-        val(config, YamlKeys.enforceCentrallyDefinedParameters, false),
-      ),
-      preventEventParameterDuplicates: val(
-        rules,
-        YamlKeys.preventEventParameterDuplicates,
-        val(config, YamlKeys.preventEventParameterDuplicates, false),
+      rules: AnalyticsRules(
+        includeEventDescription: val(
+          rules,
+          YamlKeys.includeEventDescription,
+          val(config, YamlKeys.includeEventDescription, false),
+        ),
+        strictEventNames: val(
+          rules,
+          YamlKeys.strictEventNames,
+          val(config, YamlKeys.strictEventNames, true),
+        ),
+        enforceCentrallyDefinedParameters: val(
+          rules,
+          YamlKeys.enforceCentrallyDefinedParameters,
+          val(config, YamlKeys.enforceCentrallyDefinedParameters, false),
+        ),
+        preventEventParameterDuplicates: val(
+          rules,
+          YamlKeys.preventEventParameterDuplicates,
+          val(config, YamlKeys.preventEventParameterDuplicates, false),
+        ),
       ),
       naming: NamingStrategy.fromYaml(config[YamlKeys.naming] as Map?),
-      contexts: list(
-        inputs,
-        YamlKeys.contexts,
-        list(config, YamlKeys.contexts, []),
-      ),
-      imports: list(
-        inputs,
-        YamlKeys.imports,
-        list(config, YamlKeys.imports, []),
-      ),
-      generateTestMatchers: val(
-        targets,
-        YamlKeys.testMatchers,
-        val(config, YamlKeys.generateTestMatchers, false),
-      ),
     );
   }
 }

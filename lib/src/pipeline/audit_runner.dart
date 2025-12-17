@@ -124,7 +124,7 @@ class AuditRunner {
         // Skip the generated analytics files themselves to avoid counting the definition as usage
         // Assuming generated files are in config.outputPath
         if (path.isWithin(
-            path.join(projectRoot, 'lib', config.outputPath), filePath)) {
+            path.join(projectRoot, 'lib', config.outputs.dartPath), filePath)) {
           continue;
         }
 
@@ -171,14 +171,15 @@ class AuditRunner {
     Logger logger,
   ) async {
     // Resolve shared parameter paths
-    final sharedParameterPaths =
-        config.sharedParameters.map((p) => path.join(projectRoot, p)).toList();
+    final sharedParameterPaths = config.inputs.sharedParameters
+        .map((p) => path.join(projectRoot, p))
+        .toList();
 
     // Load files
     final loader = EventLoader(
-      eventsPath: path.join(projectRoot, config.eventsPath),
+      eventsPath: path.join(projectRoot, config.inputs.eventsPath),
       contextFiles:
-          config.contexts.map((c) => path.join(projectRoot, c)).toList(),
+          config.inputs.contexts.map((c) => path.join(projectRoot, c)).toList(),
       sharedParameterFiles: sharedParameterPaths,
       log: logger,
     );
@@ -207,10 +208,11 @@ class AuditRunner {
       log: logger,
       config: ParserConfig(
         naming: config.naming,
-        strictEventNames: config.strictEventNames,
+        strictEventNames: config.rules.strictEventNames,
         enforceCentrallyDefinedParameters:
-            config.enforceCentrallyDefinedParameters,
-        preventEventParameterDuplicates: config.preventEventParameterDuplicates,
+            config.rules.enforceCentrallyDefinedParameters,
+        preventEventParameterDuplicates:
+            config.rules.preventEventParameterDuplicates,
         sharedParameters: sharedParameters,
       ),
     );

@@ -69,7 +69,7 @@ auth:
           await loadAnalyticsConfig(projectRoot, 'analytics_gen.yaml');
 
       final loader = EventLoader(
-        eventsPath: path.join(projectRoot, config.eventsPath),
+        eventsPath: path.join(projectRoot, config.inputs.eventsPath),
         fs: const LocalFileSystem(),
       );
       final eventSources = await loader.loadEventFiles();
@@ -154,7 +154,7 @@ auth:
           await loadAnalyticsConfig(projectRoot, 'analytics_gen.yaml');
 
       final loader = EventLoader(
-        eventsPath: path.join(projectRoot, config.eventsPath),
+        eventsPath: path.join(projectRoot, config.inputs.eventsPath),
         fs: const LocalFileSystem(),
       );
       final eventSources = await loader.loadEventFiles();

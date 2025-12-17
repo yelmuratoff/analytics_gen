@@ -15,8 +15,8 @@ void main() {
 
     setUp(() {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
       );
       renderer = EventRenderer(config);
     });
@@ -167,7 +167,8 @@ void main() {
       final result = renderer.renderDomainFile('items', domain, allDomains);
 
       // Regex - now uses cached static field at mixin level
-      expect(result, contains("static final _queryRegex = RegExp(r'^[a-z]+\$');"));
+      expect(
+          result, contains("static final _queryRegex = RegExp(r'^[a-z]+\$');"));
       expect(result, contains('if (!_queryRegex.hasMatch(query)) {'));
       expect(result, contains('throw ArgumentError.value('));
       expect(result, contains(r"'must match regex ^[a-z]+\$',"));
@@ -184,10 +185,10 @@ void main() {
     test(
         'adds @Deprecated when interpolation used (even if strict_event_names is true, assuming parser bypassed)',
         () {
-      config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        strictEventNames: true,
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        rules: AnalyticsRules(strictEventNames: true),
         naming: NamingStrategy(convention: EventNamingConvention.original),
       );
       renderer = EventRenderer(config);
@@ -429,8 +430,8 @@ void main() {
 
     setUp(() {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
       );
       renderer = AnalyticsClassRenderer(config);
     });
@@ -459,9 +460,9 @@ void main() {
 
     test('renders analytics plan', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -490,9 +491,9 @@ void main() {
 
     test('renders analytics plan with event identifier', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -517,9 +518,9 @@ void main() {
 
     test('renders analytics plan with event metadata', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -551,9 +552,9 @@ void main() {
 
     test('renders analytics plan with parameter codeName', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -586,9 +587,9 @@ void main() {
     test('renders analytics plan with parameter metadata and allowed values',
         () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 

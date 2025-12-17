@@ -52,8 +52,8 @@ final class DocsGenerator {
     );
 
     // Write to output file
-    final outputPath = config.docsPath != null
-        ? path.join(projectRoot, config.docsPath!)
+    final outputPath = config.outputs.docsPath != null
+        ? path.join(projectRoot, config.outputs.docsPath!)
         : path.join(projectRoot, 'analytics_docs.md');
 
     await writeFileIfContentChanged(outputPath, markdown);

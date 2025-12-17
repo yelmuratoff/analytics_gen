@@ -96,7 +96,7 @@ final class CodeGenerator {
       CleanStaleFilesTask(),
       GenerateBarrelFileTask(),
       GenerateAnalyticsClassTask(),
-      if (config.generateTestMatchers) GenerateMatchersTask(),
+      if (config.targets.generateTestMatchers) GenerateMatchersTask(),
     ];
 
     await TaskRunner().execute(tasks, context);

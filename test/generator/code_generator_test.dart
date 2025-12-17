@@ -37,8 +37,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final logs = <String>[];
@@ -51,7 +51,7 @@ void main() {
 
       // Verify EventLoader uses the same fs
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -61,7 +61,7 @@ void main() {
       await generator.generate(domains);
 
       final outputDir =
-          fs.directory(p.join(projectRoot, 'lib', config.outputPath));
+          fs.directory(p.join(projectRoot, 'lib', config.outputs.dartPath));
       final eventsDir = fs.directory(p.join(outputDir.path, 'events'));
       final analyticsFile = fs.file(p.join(outputDir.path, 'analytics.dart'));
       final authFile = fs.file(p.join(eventsDir.path, 'auth_events.dart'));
@@ -121,8 +121,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -132,14 +132,14 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser(
         config: ParserConfig(
           naming: config.naming,
-          strictEventNames: config.strictEventNames,
+          strictEventNames: config.rules.strictEventNames,
         ),
       );
       final domains = await parser.parseEvents(sources);
@@ -148,7 +148,7 @@ void main() {
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -191,9 +191,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
-        strictEventNames: false,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        rules: AnalyticsRules(strictEventNames: false),
       );
 
       final generator = CodeGenerator(
@@ -203,14 +203,14 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser(
         config: ParserConfig(
           naming: config.naming,
-          strictEventNames: config.strictEventNames,
+          strictEventNames: config.rules.strictEventNames,
         ),
       );
       final domains = await parser.parseEvents(sources);
@@ -219,7 +219,7 @@ void main() {
 
       final screenContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'screen_events.dart'),
           )
           .readAsString();
@@ -243,9 +243,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
-        includeEventDescription: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        rules: AnalyticsRules(includeEventDescription: true),
       );
 
       final generator = CodeGenerator(
@@ -255,7 +255,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -266,7 +266,7 @@ void main() {
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -289,8 +289,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -300,7 +300,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -310,7 +310,7 @@ void main() {
       await generator.generate(domains);
 
       final eventsDir = fs.directory(
-        p.join(projectRoot, 'lib', config.outputPath, 'events'),
+        p.join(projectRoot, 'lib', config.outputs.dartPath, 'events'),
       );
       final staleFile = fs.file(p.join(eventsDir.path, 'legacy_events.dart'));
 
@@ -331,8 +331,8 @@ void main() {
     test('skips generation and logs when no analytics events exist', () async {
       final logs = <String>[];
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -343,7 +343,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -353,7 +353,7 @@ void main() {
       await generator.generate(domains);
 
       final outputDir =
-          fs.directory(p.join(projectRoot, 'lib', config.outputPath));
+          fs.directory(p.join(projectRoot, 'lib', config.outputs.dartPath));
       expect(outputDir.existsSync(), isFalse);
       expect(
         logs,
@@ -379,8 +379,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
       final generator = CodeGenerator(
         config: config,
@@ -389,7 +389,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -399,7 +399,7 @@ void main() {
       await generator.generate(domains);
 
       final billingFile = fs.file(
-        p.join(projectRoot, 'lib', config.outputPath, 'events',
+        p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
             'billing_events.dart'),
       );
       final billingContent = await billingFile.readAsString();
@@ -440,8 +440,8 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
       final generator = CodeGenerator(
         config: config,
@@ -450,7 +450,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -460,7 +460,7 @@ delta:
       await generator.generate(domains);
 
       final analyticsFile = fs.file(
-        p.join(projectRoot, 'lib', config.outputPath, 'analytics.dart'),
+        p.join(projectRoot, 'lib', config.outputs.dartPath, 'analytics.dart'),
       );
       final analyticsContent = await analyticsFile.readAsString();
 
@@ -501,8 +501,8 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -512,7 +512,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -523,7 +523,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -564,8 +564,8 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -575,7 +575,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -586,7 +586,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -620,8 +620,8 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -631,7 +631,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -642,7 +642,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -674,8 +674,8 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -685,7 +685,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -696,7 +696,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -719,8 +719,8 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -730,7 +730,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();
@@ -741,7 +741,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputPath, 'events',
+            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -780,9 +780,16 @@ delta:
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'src/analytics/generated',
-        generateTestMatchers: true,
+        inputs: AnalyticsInputs(
+          eventsPath: 'events',
+          contexts: [],
+          sharedParameters: [],
+          imports: [],
+        ),
+        outputs: AnalyticsOutputs(
+          dartPath: 'lib/analytics',
+        ),
+        targets: AnalyticsTargets(generateTestMatchers: true),
       );
 
       final generator = CodeGenerator(
@@ -792,7 +799,7 @@ delta:
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(projectRoot, config.eventsPath),
+        eventsPath: p.join(projectRoot, config.inputs.eventsPath),
         fs: fs,
       );
       final sources = await loader.loadEventFiles();

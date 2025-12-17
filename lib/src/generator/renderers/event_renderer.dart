@@ -48,7 +48,7 @@ class EventRenderer extends BaseRenderer {
     // Collect imports from parameters
     final importManager = ImportManager();
     importManager.add(AnalyticsConfig.kPackageImport);
-    importManager.addAll(config.imports);
+    importManager.addAll(config.inputs.imports);
 
     for (final event in domain.events) {
       for (final param in event.parameters) {
@@ -90,15 +90,18 @@ class EventRenderer extends BaseRenderer {
 
     // Generate static cached RegExp instances at mixin level
     if (regexPatterns.isNotEmpty) {
-      buffer.writeln('  // Cached regex patterns for validation (compiled once)');
+      buffer
+          .writeln('  // Cached regex patterns for validation (compiled once)');
       for (final entry in regexPatterns.entries) {
-        buffer.writeln("  static final ${entry.key} = RegExp(r'${entry.value}');");
+        buffer.writeln(
+            "  static final ${entry.key} = RegExp(r'${entry.value}');");
       }
       buffer.writeln();
     }
 
     for (final event in domain.events) {
-      buffer.write(_renderEventMethod(domainName, event, allDomains, regexPatterns));
+      buffer.write(
+          _renderEventMethod(domainName, event, allDomains, regexPatterns));
     }
 
     buffer.writeln('}');

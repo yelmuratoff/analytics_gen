@@ -37,7 +37,7 @@ class EventBodyRenderer {
 
     // 3. Prepare parameters map
     final includeDescription =
-        config.includeEventDescription && event.description.isNotEmpty;
+        config.rules.includeEventDescription && event.description.isNotEmpty;
 
     final hasParametersParam = event.parameters
         .any((p) => StringUtils.toCamelCase(p.codeName) == 'parameters');
