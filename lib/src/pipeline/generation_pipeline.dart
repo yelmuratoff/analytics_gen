@@ -107,6 +107,14 @@ class GenerationPipeline {
         domains,
         contexts,
       );
+
+      final schemaCheckTask =
+          tasks.where((t) => t.label == 'Schema evolution check').firstOrNull;
+
+      if (schemaCheckTask != null) {
+        tasks.remove(schemaCheckTask);
+        await _invokeTask(schemaCheckTask, request.logger);
+      }
       final startTime = DateTime.now();
 
       await _runTasks(tasks, request.logger);

@@ -527,33 +527,6 @@ test('logs login event', () {
 ```
 
 
-### Generated Test Matchers
-
-You can opt-in to generate typed `Matcher` helpers for `package:test` by enabling `test_matchers` in your configuration:
-
-```yaml
-analytics_gen:
-  targets:
-    test_matchers: true # Generates test/analytics_matchers.dart
-```
-
-This generates `is{EventName}` matchers that simplify verifying `logEvent` calls:
-
-```dart
-import 'package:mocktail/mocktail.dart'; // or mockito
-import 'analytics_matchers.dart';
-
-test('logs login event', () {
-  // ... trigger action ...
-  
-  verify(() => analytics.logEvent(
-    name: 'auth.login', 
-    parameters: any(that: isAuthLogin(
-      method: AuthLoginMethod.email,
-    )),
-  ));
-});
-```
 
 ## Contributing
 

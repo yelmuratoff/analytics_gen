@@ -139,12 +139,14 @@ final class BatchingAnalytics implements IAnalytics {
     _activeFlush = future;
 
     () async {
+      var didFail = false;
       try {
         await _drainPending();
         if (!completer.isCompleted) {
           completer.complete();
         }
       } catch (error, stackTrace) {
+        didFail = true;
         if (!completer.isCompleted) {
           completer.completeError(error, stackTrace);
         }
@@ -152,6 +154,13 @@ final class BatchingAnalytics implements IAnalytics {
         if (identical(_activeFlush, future)) {
           _activeFlush = null;
         }
+        if (didFail) {
+          // A failed flush re-queues remaining events. Do not auto-retry here:
+          // - Manual `flush()` callers expect to handle the error and decide when to retry.
+          // - Auto flush errors are surfaced via `onFlushError` and should not loop silently.
+          _needsFollowUpFlush = false;
+        }
+
         if (_pending.isNotEmpty && _needsFollowUpFlush) {
           _needsFollowUpFlush = false;
           _scheduleAutoFlush();
@@ -216,8 +225,6 @@ final class BatchingAnalytics implements IAnalytics {
         if (nextIndex < batch.length) {
           final remaining = batch.getRange(nextIndex, batch.length);
           _pending.insertAll(0, remaining);
-          // Ensure we try to flush these re-queued events again
-          _needsFollowUpFlush = true;
         }
       }
       onFlushError?.call(error, stackTrace);

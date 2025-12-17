@@ -19,11 +19,11 @@ mixin AnalyticsPurchase on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User cancelled a purchase',
       "product_id": productId,
       if (reason != null) "reason": reason,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "purchase_flow_cancelled",
@@ -46,13 +46,13 @@ mixin AnalyticsPurchase on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User completed a purchase',
       "currency-code": currencyCode,
       "amount_value": price,
       "product_id": productId,
       "quantity": quantity,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "purchase_flow_completed",

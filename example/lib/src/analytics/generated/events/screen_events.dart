@@ -17,10 +17,10 @@ mixin AnalyticsScreen on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'Legacy backend identifier kept for parity',
       "legacy-screen-code": legacyScreenCode,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "Screen: Legacy",
@@ -42,12 +42,12 @@ mixin AnalyticsScreen on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User views a screen',
       if (durationMs != null) "duration_ms": durationMs,
       if (previousScreen != null) "previous_screen": previousScreen,
       "screen_name": screenName,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "Screen: ${screenName}",

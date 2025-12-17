@@ -29,10 +29,10 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User logs in to the application',
       "method": method,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "auth_login",
@@ -51,11 +51,11 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User logs in to the application (v2)',
       "login-method": loginMethod.value,
       "session_id": sessionId,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "auth_login_v2",
@@ -71,9 +71,9 @@ mixin AnalyticsAuth on AnalyticsBase {
   void logAuthLogout({Map<String, Object?>? parameters}
 ) {
 
-    final eventParameters = parameters ?? const <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User logs out',
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "auth_logout",
@@ -95,12 +95,12 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'When user logs in via phone',
       "phone_country": phoneCountry,
       "tracking-token": trackingToken,
       if (userExists != null) "user_exists": userExists,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "Auth: Phone ${phoneCountry}",
@@ -127,11 +127,11 @@ mixin AnalyticsAuth on AnalyticsBase {
           );
         }
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User creates a new account',
       "method": method,
       if (referralCode != null) "referral_code": referralCode,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "auth_signup",
@@ -150,11 +150,11 @@ mixin AnalyticsAuth on AnalyticsBase {
       Map<String, Object?>? parameters,
     }) {
 
-    final eventParameters = parameters ?? <String, Object?>{
+    final eventParameters = <String, Object?>{
       'description': 'User verification status change',
       "local_status": localStatus.name,
       "status": status.name,
-    };
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(
       name: "auth_verify_user",

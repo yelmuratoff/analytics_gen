@@ -86,8 +86,7 @@ final class MultiProviderAnalytics
         _logger.error(
           '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
           '  Error: $error\n'
-          '  Event: $name\n'
-          '  Parameters: $parameters',
+          '  Event: $name\n',
           error,
           stackTrace,
         );

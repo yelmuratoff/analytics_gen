@@ -44,9 +44,7 @@ class EventBodyRenderer {
         hasParametersParam ? 'analyticsParameters' : 'parameters';
 
     if (event.parameters.isNotEmpty || includeDescription) {
-      final isConst = event.parameters.isEmpty;
-      buffer.writeln(
-          'final eventParameters = $parametersArgName ?? ${isConst ? 'const ' : ''}<String, Object?>{');
+      buffer.writeln('final eventParameters = <String, Object?>{');
 
       if (includeDescription) {
         buffer.writeln(
@@ -80,7 +78,7 @@ class EventBodyRenderer {
           buffer.writeln('  "${param.name}": $valueAccess,');
         }
       }
-      buffer.writeln('};');
+      buffer.writeln('}..addAll($parametersArgName ?? const {});');
       buffer.writeln();
 
       buffer.writeln('logger.logEvent(');
@@ -101,7 +99,7 @@ class EventBodyRenderer {
       }
     } else {
       buffer.writeln(
-          'final eventParameters = parameters ?? const <String, Object?>{};');
+          'final eventParameters = <String, Object?>{}..addAll(parameters ?? const {});');
       buffer.writeln('logger.logEvent(');
       buffer.writeln('  name: "$interpolatedEventName",');
       buffer.writeln('  parameters: eventParameters,');
@@ -154,29 +152,8 @@ class EventBodyRenderer {
             joinedValues: joinedValues,
             isNullable: param.isNullable,
             type: dartType,
-            indent:
-                0, // CodeBuffer handles main indent, but ValidationRenderer might need to be CodeBuffer aware.
-            // Wait, ValidationRenderer returns String with indentation argument.
-            // If I pass 0, it returns non-indented string.
-            // CodeBuffer.write does NOT indent (CodeBuffer.writeln does).
-            // So if I use buffer.write, I need to be careful.
-            // Ideally ValidationRenderer should also use CodeBuffer or return raw strings.
-            // But ValidationRenderer is old.
-            // Let's assume indent: 0 gives unindented block (relative to current buffer indent).
-            // But CodeBuffer stores absolute indent.
-            // If ValidationRenderer returns multiline string, CodeBuffer.writeln/write handles it?
-            // CodeBuffer.write does NOT handle multiline indentation automatically for each line if passed as one string.
-            // But ValidationRenderer.renderAllowedValuesCheck returns a code block with '  '*indent logic.
-            // If I pass 0, it renders flat.
-            // But I want it indented by current buffer context.
-            // CodeBuffer doesn't have `writeBlock` that indents each line.
-            // I added `joinLines` to CodeBuffer.
-            // Use that if I can split.
+            indent: 0,
           ));
-          // Actually, if I pass `buffer.indent` (private) .. I can't.
-          // I didn't expose current indent level getter in CodeBuffer. I should have.
-          // But I can fix this by relying on CodeBuffer's indent.
-          // If ValidationRenderer returns lines, I should split and write them.
         }
       }
 
