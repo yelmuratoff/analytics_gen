@@ -3,9 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.0.4]
-- [FIX] Fixed data loss bug in `BatchingAnalytics` where queue would stall after a failed auto-flush.
-- [FIX] Added default logging to `MultiProviderAnalytics` so provider failures are not silent by default.
-- [FIX] Fixed `ConfigParser` crash when optional fields are explicitly set to `null` in YAML.
+- Added "Dead Event" Audit Enhancement: The `audit` command now shows git commit info (author, date, hash) for dead events to help identify who added them and when.
+- Added `--metrics` flag to track generation performance (parsing time, generation time, event counts).
+- Added `InputConfig` and `OutputConfig` to `AnalyticsConfig` for better API organization.
+- Added `doc/PERFORMANCE.md` and `doc/TROUBLESHOOTING.md`.
+- Added `doc/TESTING.md`.
+- Standardized all core interfaces to use `abstract interface class`.
+- Removed PII blocking features as they were deemed out of scope.
+- Fixed data loss bug in `BatchingAnalytics` where queue would stall after a failed auto-flush.
+- Added default logging to `MultiProviderAnalytics` so provider failures are not silent by default.
+- Fixed `ConfigParser` crash when optional fields are explicitly set to `null` in YAML.
 
 ## [1.0.3]
 - Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan.

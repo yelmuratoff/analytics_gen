@@ -58,7 +58,14 @@
 ## TL;DR Quick Start
 
 1. **Describe events** in `events/*.yaml` (one domain per file). Keep descriptions + parameter docs current.
-2. **Configure** `analytics_gen.yaml` so every machine runs the same generator settings.
+2. **Configure** `analytics_gen.yaml`. The configuration uses a structured format:
+   ```yaml
+   analytics_gen:
+     inputs:
+       events: 'events/*.yaml'
+     outputs:
+       path: 'lib/analytics'
+   ```
 3. **Generate** code/doc/exports with `dart run analytics_gen:generate --docs --exports`.
 4. **Initialize + use** the generated API:
    - **Singleton**: `Analytics.initialize(...)`, then `Analytics.instance.logEvent(...)`.
@@ -323,7 +330,24 @@ Contexts allow you to define global properties (like user attributes, device inf
 - [Migration Guides](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
 - [Code Review checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
 - [Scalability & Performance](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
+- [Performance Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/PERFORMANCE.md) - detailed optimization tips for build and runtime.
+- [Troubleshooting](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/TROUBLESHOOTING.md) - common errors and fixes.
 - [API Reference](https://pub.dev/documentation/analytics_gen/latest/) - generated Dart API docs on pub.dev.
+
+## Observability & Metrics
+
+Track the performance of your analytics generation pipeline, especially useful in CI/CD environments.
+
+```bash
+dart run analytics_gen:generate --metrics
+```
+
+Output includes:
+- **Parsing Duration**: Time spent validation and loading YAML.
+- **Generation Duration**: Time spent writing Dart/JSON/CSV files.
+- **Event Counts**: Total events processed.
+
+Use this to detect regressions in build time as your plan grows.
 
 ## CLI Commands
 

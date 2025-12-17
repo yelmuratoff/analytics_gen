@@ -8,6 +8,7 @@ class GenerationRequest {
     required this.generateDocs,
     required this.generateExports,
     required this.verbose,
+    this.enableMetrics = false,
     this.logger = const NoOpLogger(),
   });
 
@@ -22,6 +23,9 @@ class GenerationRequest {
 
   /// Whether to enable verbose logging.
   final bool verbose;
+
+  /// Whether to enable performance metrics.
+  final bool enableMetrics;
 
   /// The logger to use.
   final Logger logger;

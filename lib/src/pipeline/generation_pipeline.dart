@@ -14,6 +14,8 @@ import 'package:analytics_gen/src/services/watcher_service.dart';
 import 'package:analytics_gen/src/util/banner_printer.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
+import '../metrics/console_metrics.dart';
+import '../metrics/metrics.dart';
 
 import 'generation_request.dart';
 import 'pipeline_factories.dart';
@@ -58,13 +60,18 @@ class GenerationPipeline {
       return;
     }
 
+    final metrics = request.enableMetrics
+        ? ConsoleMetrics(request.logger)
+        : const NoOpMetrics();
+
     try {
+      final parseSw = Stopwatch()..start();
+
       // Resolve shared parameter paths
       final sharedParameterPaths = config.inputs.sharedParameters
           .map((p) => path.join(projectRoot, p))
           .toList();
 
-      // Load files
       // Load files
       final loader = _eventLoaderFactory.create(
         eventsPath: path.join(projectRoot, config.inputs.eventsPath),
@@ -102,6 +109,11 @@ class GenerationPipeline {
       final domains = await parser.parseEvents(eventSources);
       final contexts = await parser.parseContexts(contextSources);
 
+      parseSw.stop();
+      final totalEvents =
+          domains.values.fold<int>(0, (sum, d) => sum + d.events.length);
+      metrics.recordParsing(parseSw.elapsed, domains.length, totalEvents);
+
       final tasks = _buildTasks(
         request,
         domains,
@@ -117,7 +129,9 @@ class GenerationPipeline {
       }
       final startTime = DateTime.now();
 
+      final genSw = Stopwatch()..start();
       await _runTasks(tasks, request.logger);
+      metrics.recordGeneration(genSw.elapsed, 0); // 0 file count for now
       final duration = DateTime.now().difference(startTime);
       request.logger.info(
           '✓ All generation tasks completed in ${duration.inMilliseconds}ms');

@@ -51,6 +51,7 @@ class AnalyticsGenRunner {
       final watch = results['watch'] as bool;
       final planOnly = results['plan'] as bool;
       final validateOnly = results['validate-only'] as bool;
+      final enableMetrics = results['metrics'] as bool;
 
       _ensureNotCombined('plan', planOnly, 'watch', watch, logger);
       _ensureNotCombined(
@@ -80,6 +81,7 @@ class AnalyticsGenRunner {
         generateDocs: generateDocs,
         generateExports: generateExports,
         verbose: verbose,
+        enableMetrics: enableMetrics,
         logger: logger,
       );
 

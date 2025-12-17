@@ -24,7 +24,7 @@ class ContextRenderer extends BaseRenderer {
 
     buffer.writeln('/// Capability interface for $pascalName');
     buffer.writeln(
-        'abstract class ${pascalName}Capability implements AnalyticsCapability {');
+        'abstract interface class ${pascalName}Capability implements AnalyticsCapability {');
 
     // Collect all unique operations used across properties
     final operations = <String>{};

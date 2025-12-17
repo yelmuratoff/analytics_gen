@@ -4,7 +4,7 @@
 import 'package:analytics_gen/analytics_gen.dart';
 
 /// Capability interface for UserProperties
-abstract class UserPropertiesCapability implements AnalyticsCapability {
+abstract interface class UserPropertiesCapability implements AnalyticsCapability {
   void appendUserPropertiesProperty(String name, Object? value);
   void incrementUserPropertiesProperty(String name, Object? value);
   void removeUserPropertiesProperty(String name, Object? value);

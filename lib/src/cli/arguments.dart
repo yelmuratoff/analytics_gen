@@ -55,6 +55,11 @@ ArgParser createArgParser() {
       'validate-only',
       negatable: false,
       help: 'Validate YAML tracking plan only (no files written)',
+    )
+    ..addFlag(
+      'metrics',
+      negatable: false,
+      help: 'Enable performance metrics logging',
     );
 }
 

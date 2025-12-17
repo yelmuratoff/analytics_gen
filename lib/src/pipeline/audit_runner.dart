@@ -21,6 +21,7 @@ import 'package:path/path.dart' as path;
 import '../cli/arguments.dart';
 import '../cli/usage.dart';
 import '../config/config_loader.dart';
+import '../services/git_service.dart';
 
 /// Runner for the dead event audit tool.
 class AuditRunner {
@@ -152,15 +153,31 @@ class AuditRunner {
       return;
     }
 
+    final gitService = GitService(logger: logger);
+
     logger.warning('Found ${unusedEvents.length} dead events (0 usages):');
     for (final entry in unusedEvents) {
       final def = eventCalls[entry.key]!;
       logger.warning(
           '  - ${def.domainName}.${def.eventName} (Method: ${entry.key})');
+
       if (def.event.sourcePath != null) {
         final relativePath =
             path.relative(def.event.sourcePath!, from: projectRoot);
         logger.warning('    Defined in: $relativePath:${def.event.lineNumber}');
+
+        // Fetch git blame info
+        if (def.event.lineNumber != null) {
+          final blame = await gitService.getBlame(
+              def.event.sourcePath!, def.event.lineNumber!);
+          if (blame != null) {
+            final daysAgo = DateTime.now().difference(blame.date).inDays;
+            logger.warning(
+                '    Last modified: ${blame.date.toString().substring(0, 10)} ($daysAgo days ago) by ${blame.author}');
+            logger.warning(
+                '    Commit: ${blame.hash.substring(0, 8)} - ${blame.message}');
+          }
+        }
       }
     }
   }
