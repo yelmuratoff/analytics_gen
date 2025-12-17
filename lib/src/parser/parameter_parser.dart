@@ -168,12 +168,14 @@ final class ParameterParser {
     List<String>? operations;
     String? addedIn;
     String? deprecatedIn;
+    String? sanitize;
 
     if (paramValue is YamlMap) {
       // Complex parameter with 'type' and/or 'description'
       description = paramValue['description'] as String?;
       addedIn = paramValue['added_in'] as String?;
       deprecatedIn = paramValue['deprecated_in'] as String?;
+      sanitize = paramValue['sanitize'] as String?;
       dartType = paramValue['dart_type'] as String?;
 
       final metaNode = paramValue.nodes['meta'];
@@ -231,6 +233,7 @@ final class ParameterParser {
                   k.toString() != 'operations' &&
                   k.toString() != 'added_in' &&
                   k.toString() != 'deprecated_in' &&
+                  k.toString() != 'sanitize' &&
                   k.toString() != 'import',
             )
             .firstOrNull;
@@ -282,6 +285,7 @@ final class ParameterParser {
       operations: operations,
       addedIn: addedIn,
       deprecatedIn: deprecatedIn,
+      sanitize: sanitize,
       sourceName: rawName,
     );
   }

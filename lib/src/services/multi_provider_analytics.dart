@@ -19,6 +19,26 @@ typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
 /// This class is immutable. Use [addProvider] or [removeProvider]
 /// to create new instances with modified provider lists.
 ///
+/// ## Sync vs Async Logging
+///
+/// This class supports both synchronous ([logEvent]) and asynchronous
+/// ([logEventAsync]) logging.
+///
+/// ### When to use [logEvent] (Synchronous)
+/// Use this for standard app usage (e.g. UI interactions). It wraps all provider
+/// calls in microtasks to ensure the UI thread is not blocked, even if a provider
+/// performs expensive synchronous work. Errors are reported via [onError] or
+/// [onProviderFailure].
+///
+/// ### When to use [logEventAsync] (Asynchronous)
+/// Use this when you need to ensure delivery before proceeding, such as:
+/// * App shutdown or specific cleanup logic.
+/// * Background tasks where the process might be killed.
+/// * Tests where you need deterministic execution order.
+///
+/// If a provider implements [IAsyncAnalytics], this method awaits its completion.
+/// If a provider is synchronous, it is still wrapped in a microtask but awaited.
+///
 /// Example:
 /// ```dart
 /// final multiProvider = MultiProviderAnalytics([

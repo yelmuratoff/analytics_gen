@@ -162,11 +162,6 @@ class GenerationPipeline {
     final Map<String, AnalyticsParameter> sharedParameters = {};
     if (paths.isEmpty) return sharedParameters;
 
-    // final sharedParser = YamlParser(
-    //   log: logger,
-    //   config: ParserConfig(naming: config.naming),
-    // );
-
     for (final sharedPath in paths) {
       final sharedSource = await loader.loadSourceFile(sharedPath);
       if (sharedSource != null) {

@@ -82,7 +82,7 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/ye
 - **Multi-provider fan-out** - send the same event to multiple SDKs with error handling.
 - **Docs + exports** - Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
 - **Runtime plan** - `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
-- **Extensible Metadata** - attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
+- **Extensible Metadata** - attach arbitrary key-value pairs (e.g., `owner`) to events and parameters in YAML, propagated to code, docs, and exports.
 - **Enhanced CSV Export** - generates multiple CSV files (events, parameters, metadata, relationships) for deep analysis.
 - **Parameter Validation** - define validation rules (regex, length, range) in YAML and get runtime checks automatically.
 - **Generation Telemetry** - track generation performance with built-in metrics (domain processing times, total duration, file counts).
@@ -211,7 +211,7 @@ The generator will attempt to call the generated method for the target event if 
 
 ## Extensible Metadata
 
-Attach metadata to events and parameters using the `meta` key. Use metadata for ownership, PII flags, and other attributes that should travel with the plan but not the runtime code.
+Attach metadata to events and parameters using the `meta` key. Use metadata for ownership and other attributes that should travel with the plan but not the runtime code.
 
 ```yaml
 user_login:

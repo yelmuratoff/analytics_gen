@@ -25,6 +25,7 @@ final class AnalyticsParameter {
     this.operations,
     this.addedIn,
     this.deprecatedIn,
+    this.sanitize,
   }) : codeName = codeName ?? name;
 
   /// Analytics key that gets sent to providers.
@@ -72,7 +73,7 @@ final class AnalyticsParameter {
   /// Maximum value for numeric parameters.
   final num? max;
 
-  /// Custom metadata for this parameter (e.g. PII flags, ownership).
+  /// Custom metadata for this parameter (e.g. ownership).
   final Map<String, dynamic> meta;
 
   /// List of operations supported by this parameter (e.g. set, increment).
@@ -84,6 +85,9 @@ final class AnalyticsParameter {
 
   /// Version when this parameter was deprecated.
   final String? deprecatedIn;
+
+  /// The sanitization rule (e.g. 'html', 'sql').
+  final String? sanitize;
 
   /// Parses a list of parameters from a YAML map.
 
@@ -113,7 +117,8 @@ final class AnalyticsParameter {
         collectionEquals(other.meta, meta) &&
         collectionEquals(other.operations, operations) &&
         other.addedIn == addedIn &&
-        other.deprecatedIn == deprecatedIn;
+        other.deprecatedIn == deprecatedIn &&
+        other.sanitize == sanitize;
   }
 
   @override
@@ -139,6 +144,7 @@ final class AnalyticsParameter {
       deepHash(operations),
       addedIn,
       deprecatedIn,
+      sanitize,
     ]);
   }
 
@@ -165,6 +171,7 @@ final class AnalyticsParameter {
     Object? operations = copyWithNull,
     Object? addedIn = copyWithNull,
     Object? deprecatedIn = copyWithNull,
+    Object? sanitize = copyWithNull,
   }) {
     return AnalyticsParameter(
       name: name ?? this.name,
@@ -195,6 +202,7 @@ final class AnalyticsParameter {
       deprecatedIn: deprecatedIn == copyWithNull
           ? this.deprecatedIn
           : deprecatedIn as String?,
+      sanitize: sanitize == copyWithNull ? this.sanitize : sanitize as String?,
     );
   }
 }

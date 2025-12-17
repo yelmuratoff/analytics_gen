@@ -71,6 +71,14 @@ class EventBodyRenderer {
           valueAccess = camelParam;
         }
 
+        if (param.sanitize != null) {
+          if (param.sanitize == 'html') {
+            valueAccess = 'sanitizeHtml($valueAccess)';
+          } else if (param.sanitize == 'sql') {
+            valueAccess = 'sanitizeSql($valueAccess)';
+          }
+        }
+
         if (param.isNullable) {
           buffer.writeln(
             '  if ($camelParam != null) "${param.name}": $valueAccess,',

@@ -26,6 +26,24 @@ abstract class AnalyticsBase {
   T? capability<T extends AnalyticsCapability>(CapabilityKey<T> key) {
     return capabilities.getCapability(key);
   }
+
+  /// Sanitizes a value for HTML context (escapes <, >, &, ", ').
+  String sanitizeHtml(Object? value) {
+    if (value == null) return '';
+    return value
+        .toString()
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+  }
+
+  /// Sanitizes a value for SQL context (escapes single quotes).
+  String sanitizeSql(Object? value) {
+    if (value == null) return '';
+    return value.toString().replaceAll("'", "''");
+  }
 }
 
 /// Ensures analytics has been initialized before logging events.
