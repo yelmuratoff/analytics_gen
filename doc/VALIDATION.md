@@ -107,6 +107,16 @@ CI should call `--validate-only` to catch these failures without touching genera
 - Deprecated events include their replacement in generated documentation and mixin comments so you can migrate safely.
 - Custom types (e.g., `DateTime`, `Uri`) pass through unchanged. Ensure your providers can serialize them; otherwise, transform to primitives before logging (e.g., convert `DateTime` to ISO 8601 strings). Add unit tests exercising provider adapters so unsupported types fail fast instead of silently dropping data.
 
+## Privacy & Compliance (PII)
+
+Following industry best practices (including Google’s recommendations for Analytics), **Personally Identifiable Information (PII) should never be sent to your analytics providers.**
+
+- **What is PII?** Email addresses, phone numbers, precise location data, full names, or any data that can identify a specific individual.
+- **Why?** Sending PII leads to data pollution, legal risks (GDPR/CCPA), and can result in your analytics account being suspended.
+- **Best Practice**: Use hashed identifiers (like `user_id`) instead of raw data. If you need to track user identity, do it through secure backends or dedicated CRM systems, not via event parameters.
+
+Before adding a new parameter, ask: *"Could this data be used to identify a specific person?"* If the answer is yes, do not include it in your tracking plan.
+
 ## Deterministic Outputs
 
 YAML files, domains, and events are sorted before emission. Docs, JSON, SQL, and SQLite exports embed a fingerprint derived from the plan content (no timestamps). Byte-for-byte consistency keeps PR diffs reviewable, and you can safely re-run generation locally or in CI without noisy churn.
