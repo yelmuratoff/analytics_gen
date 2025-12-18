@@ -85,8 +85,6 @@ final class AnalyticsParameter {
   /// Version when this parameter was deprecated.
   final String? deprecatedIn;
 
-  /// Parses a list of parameters from a YAML map.
-
   @override
   String toString() => '$name: ${dartType ?? type}${isNullable ? '?' : ''}';
 

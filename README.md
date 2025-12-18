@@ -64,7 +64,7 @@
      inputs:
        events: 'events/*.yaml'
      outputs:
-       path: 'lib/analytics'
+       dart: 'lib/analytics'
    ```
 3. **Generate** code/doc/exports with `dart run analytics_gen:generate --docs --exports`.
 4. **Initialize + use** the generated API:

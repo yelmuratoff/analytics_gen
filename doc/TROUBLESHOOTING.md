@@ -15,7 +15,7 @@ user_profile:
 
 ### `AnalyticsParseException: Parameter "..." is defined in event "..." but requires central definition`
 **Cause**: `rules: enforce_centrally_defined_parameters: true` is enabled.
-**Fix**: Move the parameter definition to a file listed in `shared_parameter_paths` or disable the rule.
+**Fix**: Move the parameter definition to a file listed in `shared_parameters` or disable the rule.
 
 ### `Exit code 255` or `Stack Overflow`
 **Cause**: Circular dependencies in YAML imports or extremely deep nesting.

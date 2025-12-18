@@ -57,6 +57,7 @@ analytics_gen:
   targets:
     docs: true
     json: true
+    test_matchers: true # Generate typed Matchers for unit tests
   naming:
     enforce_snake_case_domains: true
     enforce_snake_case_parameters: true
@@ -64,11 +65,6 @@ analytics_gen:
     # Optional: Imports for custom types/enums
     # imports:
     #   - "package:my_app/analytics_models.dart"
-
-  targets:
-    docs: true
-    json: true
-    test_matchers: true # Generate typed Matchers for unit tests
 
 ```
 

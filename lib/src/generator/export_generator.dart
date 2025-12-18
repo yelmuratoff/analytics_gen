@@ -51,8 +51,18 @@ final class ExportGenerator {
 
     // Clean up disabled exports
     if (!config.targets.generateCsv) {
-      final file = File(path.join(outputDir, 'analytics_events.csv'));
-      if (file.existsSync()) await file.delete();
+      final csvFiles = [
+        'analytics_events.csv',
+        'analytics_parameters.csv',
+        'analytics_metadata.csv',
+        'analytics_event_parameters.csv',
+        'analytics_master.csv',
+        'analytics_domains.csv',
+      ];
+      for (final fileName in csvFiles) {
+        final file = File(path.join(outputDir, fileName));
+        if (file.existsSync()) await file.delete();
+      }
     }
 
     if (!config.targets.generateJson) {
