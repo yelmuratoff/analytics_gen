@@ -90,7 +90,6 @@ All notable changes to this project will be documented in this file.
   - Prevent duplicates with `prevent_event_parameter_duplicates`.
 - Enhanced CSV export (multiple files, better escaping).
 - Parameter validation DSL: `regex`, `min_length`, `max_length`, `min`, `max` with runtime checks.
-- PII scrubbing support (`PiiRenderer` + `Analytics.sanitizeParams`).
 - Enum generation for parameters with `allowed_values`.
 
 ### Internal Improvements

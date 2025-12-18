@@ -59,14 +59,18 @@ class ValidationRenderer {
     final indentStr = '  ' * indent;
     final buffer = StringBuffer();
 
-    // Regex validation - uses cached static RegExp
+    // Regex validation
     if (regex != null) {
+      // Prefer cached regex when available (compiled once at mixin level).
+      // Otherwise, declare a local final to keep generated code readable and
+      // avoid repeating the regex literal in the condition.
+      final regexRef = cachedRegexFieldName ?? '_${camelParam}Regex';
+
       if (cachedRegexFieldName == null) {
-        throw ArgumentError(
-          'cachedRegexFieldName is required when regex is provided (param: $camelParam)',
+        buffer.writeln(
+          "$indentStr    final $regexRef = RegExp(r'$regex');",
         );
       }
-      final regexRef = cachedRegexFieldName;
 
       final condition = isNullable
           ? 'if ($camelParam != null && !$regexRef.hasMatch($camelParam)) {'
