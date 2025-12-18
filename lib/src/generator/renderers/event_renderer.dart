@@ -100,7 +100,7 @@ class EventRenderer extends BaseRenderer {
       for (final entry in entries) {
         final pattern = entry.key;
         final fieldName = entry.value;
-        buffer.writeln("  static final $fieldName = RegExp(r'$pattern');");
+        buffer.writeln("  static final $fieldName = RegExp(r'''$pattern''');");
       }
       buffer.writeln();
     }

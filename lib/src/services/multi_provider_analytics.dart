@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
@@ -91,26 +91,30 @@ final class MultiProviderAnalytics
     for (final provider in _providers) {
       final predicate = _providerFilters[provider];
       if (predicate != null && !predicate(name, parameters)) continue;
-      try {
-        provider.logEvent(name: name, parameters: parameters);
-      } on SocketException catch (error, stackTrace) {
-        // Expected: Network failures - continue with other providers
-        _handleProviderFailure(provider, name, parameters, error, stackTrace);
-      } on FormatException catch (error, stackTrace) {
-        // Expected: Validation errors - continue with other providers
-        _handleProviderFailure(provider, name, parameters, error, stackTrace);
-      } catch (error, stackTrace) {
-        // Unexpected: Provider bugs - log and continue
-        _handleProviderFailure(provider, name, parameters, error, stackTrace);
 
-        _logger.error(
-          '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
-          '  Error: $error\n'
-          '  Event: $name\n',
-          error,
-          stackTrace,
-        );
-      }
+      scheduleMicrotask(() {
+        try {
+          provider.logEvent(name: name, parameters: parameters);
+        } catch (error, stackTrace) {
+          _handleProviderFailure(provider, name, parameters, error, stackTrace);
+
+          // Only log unexpected errors (not network/format issues which are handled in _handleProviderFailure)
+          final errorStr = error.toString();
+          final isExpected = errorStr.contains('SocketException') ||
+              errorStr.contains('FormatException') ||
+              errorStr.contains('NetworkError');
+
+          if (!isExpected) {
+            _logger.error(
+              '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
+              '  Error: $error\n'
+              '  Event: $name\n',
+              error,
+              stackTrace,
+            );
+          }
+        }
+      });
     }
   }
 

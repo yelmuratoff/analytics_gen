@@ -127,9 +127,11 @@ final class EventParser {
             : naming.renderEventName(domain: domainName, event: eventName);
 
     if (effectiveName.contains('{')) {
-      final placeholderRegex = RegExp(r'\{([^}]+)\}');
-      interpolatedName =
-          effectiveName.replaceAllMapped(placeholderRegex, (match) {
+      final escapedEffectiveName =
+          StringUtils.escapeDoubleQuoted(effectiveName);
+
+      interpolatedName = escapedEffectiveName
+          .replaceAllMapped(RegExp(r'\{([^}]+)\}'), (match) {
         final key = match.group(1)!;
         final found = parameters.where((p) => p.name == key).toList();
         if (found.isEmpty) return match.group(0)!;
@@ -138,8 +140,7 @@ final class EventParser {
         return '\${$camel}';
       });
       // If no replacements were made (e.g. invalid placeholders), keep null to avoid noise?
-      // Or if it equals effectiveName, then it's null (no interpolation happened).
-      if (interpolatedName == effectiveName) {
+      if (interpolatedName == escapedEffectiveName) {
         interpolatedName = null;
       }
     }

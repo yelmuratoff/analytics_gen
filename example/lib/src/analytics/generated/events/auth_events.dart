@@ -20,7 +20,7 @@ enum AnalyticsAuthLoginV2LoginMethodEnum {
 /// Generated mixin for auth analytics events
 mixin AnalyticsAuth on AnalyticsBase {
   // Cached regex patterns for validation (compiled once)
-  static final _referralCodeRegex = RegExp(r'^[A-Z0-9]{6}$');
+  static final _referralCodeRegex = RegExp(r'''^[A-Z0-9]{6}$''');
 
   @Deprecated('Use logAuthLoginV2 instead.')
   /// User logs in to the application

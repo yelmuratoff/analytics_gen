@@ -62,7 +62,7 @@
    ```yaml
    analytics_gen:
      inputs:
-       events: 'events/*.yaml'
+       events: 'events'
      outputs:
        dart: 'lib/analytics'
    ```

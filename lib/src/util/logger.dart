@@ -1,5 +1,6 @@
-import 'dart:io' as io;
 import 'package:meta/meta.dart';
+
+import 'platform/platform.dart' as platform;
 
 /// Log levels for the logger.
 enum LogLevel {
@@ -87,7 +88,7 @@ class ConsoleLogger implements Logger {
 
   void _print(String level, String message) {
     final p = prefix.isNotEmpty ? prefix : '';
-    final supportsAnsi = io.stdout.supportsAnsiEscapes;
+    final supportsAnsi = platform.supportsAnsiEscapes;
 
     if (!supportsAnsi) {
       if (level == 'INFO') {

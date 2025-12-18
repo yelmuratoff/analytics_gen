@@ -36,7 +36,7 @@ class DocumentationRenderer {
     final buffer = StringBuffer();
     final indentStr = '  ' * indent;
 
-    buffer.writeln('$indentStr/// ${event.description}');
+    buffer.write(renderDocComment(event.description, indent: indent));
     buffer.writeln('$indentStr///');
 
     if (event.parameters.isNotEmpty) {

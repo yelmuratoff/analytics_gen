@@ -33,7 +33,8 @@ class EventBodyRenderer {
     // 2. Prepare event name
     final eventName =
         EventNaming.resolveEventName(domainName, event, config.naming);
-    final interpolatedEventName = event.interpolatedName ?? eventName;
+    final interpolatedEventName =
+        event.interpolatedName ?? StringUtils.escapeDoubleQuoted(eventName);
 
     // 3. Prepare parameters map
     final includeDescription =
