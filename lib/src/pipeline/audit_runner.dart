@@ -110,6 +110,8 @@ class AuditRunner {
 
     logger.info('Scanning codebase including: $libPath');
 
+    final generatedDir = path.join(projectRoot, config.outputs.dartPath);
+
     final collection = AnalysisContextCollection(
       includedPaths: [libPath],
       resourceProvider: PhysicalResourceProvider.INSTANCE,
@@ -124,8 +126,7 @@ class AuditRunner {
       for (final filePath in context.contextRoot.analyzedFiles()) {
         // Skip the generated analytics files themselves to avoid counting the definition as usage
         // Assuming generated files are in config.outputPath
-        if (path.isWithin(
-            path.join(projectRoot, 'lib', config.outputs.dartPath), filePath)) {
+        if (path.isWithin(generatedDir, filePath)) {
           continue;
         }
 
