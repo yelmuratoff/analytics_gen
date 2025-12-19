@@ -19,21 +19,6 @@ final class AnalyticsSource {
 
 /// Handles discovery and loading of analytics definition files.
 final class EventLoader {
-  /// The path to the directory containing event files.
-  final String eventsPath;
-
-  /// The list of normalized context files to load.
-  final Set<String> _contextFiles;
-
-  /// The list of normalized shared parameter files to ignore.
-  final Set<String> _sharedParameterFiles;
-
-  /// The logger to use.
-  final Logger log;
-
-  /// The file system to use.
-  final FileSystem fs;
-
   /// Creates a new event loader.
   EventLoader({
     required this.eventsPath,
@@ -49,6 +34,21 @@ final class EventLoader {
             .toSet(),
         _sharedParameterFiles =
             sharedParameterFiles.map((p) => p.replaceAll('\\', '/')).toSet();
+
+  /// The path to the directory containing event files.
+  final String eventsPath;
+
+  /// The list of normalized context files to load.
+  final Set<String> _contextFiles;
+
+  /// The list of normalized shared parameter files to ignore.
+  final Set<String> _sharedParameterFiles;
+
+  /// The logger to use.
+  final Logger log;
+
+  /// The file system to use.
+  final FileSystem fs;
 
   /// The list of context files to load.
   List<String> get contextFiles => _contextFiles.toList();
