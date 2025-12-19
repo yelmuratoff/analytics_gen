@@ -16,7 +16,7 @@ void main() {
     projectRoot = tempDir.path;
     config = AnalyticsConfig(
       inputs: AnalyticsInputs(eventsPath: 'events'),
-      outputs: AnalyticsOutputs(dartPath: 'src/analytics'),
+      outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics'),
     );
   });
 
@@ -43,7 +43,7 @@ void main() {
 
     await generator.generate({}, contexts: {'user_properties': userProperties});
 
-    final outputDir = path.join(projectRoot, 'lib', config.outputs.dartPath);
+    final outputDir = path.join(projectRoot, config.outputs.dartPath);
     final userPropsFile =
         File(path.join(outputDir, 'contexts', 'user_properties_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
@@ -75,7 +75,7 @@ void main() {
 
     await generator.generate({}, contexts: {'user_properties': []});
 
-    final outputDir = path.join(projectRoot, 'lib', config.outputs.dartPath);
+    final outputDir = path.join(projectRoot, config.outputs.dartPath);
     final userPropsFile =
         File(path.join(outputDir, 'contexts', 'user_properties_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
@@ -102,7 +102,7 @@ void main() {
 
     await generator.generate({}, contexts: {'global_context': globalContext});
 
-    final outputDir = path.join(projectRoot, 'lib', config.outputs.dartPath);
+    final outputDir = path.join(projectRoot, config.outputs.dartPath);
     final contextFile =
         File(path.join(outputDir, 'contexts', 'global_context_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));
@@ -155,7 +155,7 @@ void main() {
       },
     );
 
-    final outputDir = path.join(projectRoot, 'lib', config.outputs.dartPath);
+    final outputDir = path.join(projectRoot, config.outputs.dartPath);
     final userPropsFile =
         File(path.join(outputDir, 'contexts', 'user_properties_context.dart'));
     final contextFile =
@@ -194,7 +194,7 @@ void main() {
 
     await generator.generate({}, contexts: contexts);
 
-    final outputDir = path.join(projectRoot, 'lib', config.outputs.dartPath);
+    final outputDir = path.join(projectRoot, config.outputs.dartPath);
     final contextFile =
         File(path.join(outputDir, 'contexts', 'device_context.dart'));
     final analyticsFile = File(path.join(outputDir, 'analytics.dart'));

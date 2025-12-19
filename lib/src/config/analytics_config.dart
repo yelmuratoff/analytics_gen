@@ -27,12 +27,12 @@ class AnalyticsInputs {
 class AnalyticsOutputs {
   /// Creates a new outputs configuration.
   const AnalyticsOutputs({
-    this.dartPath = 'src/analytics/generated',
+    this.dartPath = 'lib/src/analytics/generated',
     this.docsPath,
     this.exportsPath,
   });
 
-  /// Path where generated Dart code will be written (relative to lib/).
+  /// Path where generated Dart code will be written (relative to project root).
   final String dartPath;
 
   /// Path where documentation will be generated (optional).

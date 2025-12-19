@@ -74,7 +74,7 @@ class ConfigParser {
         dartPath: val(
           outputs,
           YamlKeys.dart,
-          val(config, YamlKeys.outputPath, 'src/analytics/generated'),
+          val(config, YamlKeys.outputPath, 'lib/src/analytics/generated'),
         ),
         docsPath: val(
           outputs,

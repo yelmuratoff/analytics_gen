@@ -7,7 +7,7 @@ void main() {
       final config = ConfigParser().parse({});
 
       expect(config.inputs.eventsPath, 'events');
-      expect(config.outputs.dartPath, 'src/analytics/generated');
+      expect(config.outputs.dartPath, 'lib/src/analytics/generated');
       expect(config.outputs.docsPath, isNull);
       expect(config.outputs.exportsPath, isNull);
       expect(config.targets.generateCsv, isFalse);

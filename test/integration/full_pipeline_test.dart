@@ -46,7 +46,7 @@ analytics_gen:
   inputs:
     events: 'events'
   outputs:
-    dart: 'analytics'
+    dart: 'lib/analytics'
   naming:
     strategy: snake_case
     template: '{domain}_{event}'
@@ -89,7 +89,7 @@ auth:
 
       // 4. Verify generated file exists
       final generatedFile = File(path.join(
-          projectRoot, 'lib', 'analytics', 'events', 'auth_events.dart'));
+          projectRoot, config.outputs.dartPath, 'events', 'auth_events.dart'));
       expect(generatedFile.existsSync(), isTrue,
           reason: 'Generated event file should exist');
 
@@ -122,7 +122,7 @@ dependencies:
       // Analyze the generated files
       final analyzeResult = await Process.run('dart', [
         'analyze',
-        path.join(projectRoot, 'lib', 'analytics'),
+        path.join(projectRoot, config.outputs.dartPath),
       ]);
 
       expect(analyzeResult.exitCode, 0,

@@ -22,12 +22,15 @@ void main() {
       );
     });
 
-    test('forwards events to all providers', () {
+    test('forwards events to all providers', () async {
       // Arrange & Act
       multiProvider.logEvent(
         name: 'test_event',
         parameters: {'key': 'value'},
       );
+
+      // Wait for microtasks
+      await Future<void>.delayed(Duration.zero);
 
       // Assert
       expect(service1.totalEvents, equals(1));
@@ -40,7 +43,7 @@ void main() {
       expect(multiProvider.providerCount, equals(2));
     });
 
-    test('addProvider returns new instance with added provider', () {
+    test('addProvider returns new instance with added provider', () async {
       // Arrange
       final service3 = MockAnalyticsService();
 
@@ -52,13 +55,16 @@ void main() {
       expect(updated.providerCount, equals(3));
 
       updated.logEvent(name: 'test');
+      await Future<void>.delayed(Duration.zero);
+
       expect(service3.totalEvents, equals(1));
       expect(
           service1.totalEvents, equals(1)); // Both original providers get event
       expect(service2.totalEvents, equals(1));
     });
 
-    test('withoutProvider returns new instance without specified provider', () {
+    test('withoutProvider returns new instance without specified provider',
+        () async {
       // Act - functional update
       final updated = multiProvider.removeProvider(service1);
 
@@ -67,11 +73,13 @@ void main() {
       expect(updated.providerCount, equals(1));
 
       updated.logEvent(name: 'test');
+      await Future<void>.delayed(Duration.zero);
+
       expect(service1.totalEvents, equals(0)); // Not in updated instance
       expect(service2.totalEvents, equals(1));
     });
 
-    test('continues with other providers if one fails', () {
+    test('continues with other providers if one fails', () async {
       // Arrange
       final failingProvider = _FailingAnalyticsService();
       final multiWithFailure = MultiProviderAnalytics([
@@ -80,45 +88,47 @@ void main() {
       ], onError: (error, _) => errors.add(error));
 
       // Act & Assert - should not throw
-      expect(
-        () => multiWithFailure.logEvent(name: 'test'),
-        returnsNormally,
-      );
+      multiWithFailure.logEvent(name: 'test');
+      await Future<void>.delayed(Duration.zero);
 
       // Service1 should still receive the event
       expect(service1.totalEvents, equals(1));
       expect(errors, isNotEmpty);
     });
 
-    test('continues with other providers when SocketException is thrown', () {
+    test('continues with other providers when SocketException is thrown',
+        () async {
       final socketFailing = _FailingSocketAnalyticsService();
       final multiWithSocketFailure = MultiProviderAnalytics([
         socketFailing,
         service1,
       ], onError: (error, _) => errors.add(error));
 
-      expect(
-          () => multiWithSocketFailure.logEvent(name: 'test'), returnsNormally);
+      multiWithSocketFailure.logEvent(name: 'test');
+      await Future<void>.delayed(Duration.zero);
+
       expect(service1.totalEvents, equals(1));
       expect(errors, isNotEmpty);
       expect(errors.first, isA<SocketException>());
     });
 
-    test('continues with other providers when FormatException is thrown', () {
+    test('continues with other providers when FormatException is thrown',
+        () async {
       final formatFailing = _FailingFormatAnalyticsService();
       final multiWithFormatFailure = MultiProviderAnalytics([
         formatFailing,
         service1,
       ], onError: (error, _) => errors.add(error));
 
-      expect(
-          () => multiWithFormatFailure.logEvent(name: 'test'), returnsNormally);
+      multiWithFormatFailure.logEvent(name: 'test');
+      await Future<void>.delayed(Duration.zero);
+
       expect(service1.totalEvents, equals(1));
       expect(errors, isNotEmpty);
       expect(errors.first, isA<FormatException>());
     });
 
-    test('reports failure details for logging/metrics hooks', () {
+    test('reports failure details for logging/metrics hooks', () async {
       // Arrange
       final failingProvider = _FailingAnalyticsService();
       final failures = <MultiProviderAnalyticsFailure>[];
@@ -133,6 +143,7 @@ void main() {
         name: 'important_event',
         parameters: {'source': 'test'},
       );
+      await Future<void>.delayed(Duration.zero);
 
       // Assert
       expect(failures, hasLength(1));
@@ -157,7 +168,7 @@ void main() {
       );
     });
 
-    test('respects provider filters', () {
+    test('respects provider filters', () async {
       // Arrange
       final service3 = MockAnalyticsService();
 
@@ -175,6 +186,7 @@ void main() {
       // Act
       filteredMulti.logEvent(name: 'allowed_event');
       filteredMulti.logEvent(name: 'denied_event');
+      await Future<void>.delayed(Duration.zero);
 
       // Assert
       expect(service1.totalEvents, equals(1)); // only allowed_event
@@ -184,7 +196,7 @@ void main() {
 
     test(
         'removeProviderByType removes all providers of given type and providerFilters',
-        () {
+        () async {
       // Arrange
       final otherProvider = _RecordingOtherAnalyticsService();
 
@@ -209,6 +221,8 @@ void main() {
 
       // Logging an event should only reach the remaining provider
       reduced.logEvent(name: 'allowed');
+      await Future<void>.delayed(Duration.zero);
+
       expect(service1.totalEvents, equals(0)); // removed
       expect(service2.totalEvents, equals(0)); // removed
       expect(otherProvider.recordedEvents.map((e) => e['name']),
@@ -238,7 +252,7 @@ void main() {
       // Logger is internal; behavior should be preserved indirectly via hooks.
     });
 
-    test('addProvider preserves providerFilter passed in', () {
+    test('addProvider preserves providerFilter passed in', () async {
       final service3 = MockAnalyticsService();
 
       final updated = multiProvider.addProvider(
@@ -251,9 +265,11 @@ void main() {
       expect(updated.providerCount, equals(3));
 
       updated.logEvent(name: 'allowed');
+      await Future<void>.delayed(Duration.zero);
       expect(service3.totalEvents, equals(1));
 
       updated.logEvent(name: 'denied');
+      await Future<void>.delayed(Duration.zero);
       expect(service3.totalEvents, equals(1));
     });
 

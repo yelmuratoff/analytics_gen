@@ -38,7 +38,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final logs = <String>[];
@@ -61,7 +61,7 @@ void main() {
       await generator.generate(domains);
 
       final outputDir =
-          fs.directory(p.join(projectRoot, 'lib', config.outputs.dartPath));
+          fs.directory(p.join(projectRoot, config.outputs.dartPath));
       final eventsDir = fs.directory(p.join(outputDir.path, 'events'));
       final analyticsFile = fs.file(p.join(outputDir.path, 'analytics.dart'));
       final authFile = fs.file(p.join(eventsDir.path, 'auth_events.dart'));
@@ -122,7 +122,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -148,7 +148,7 @@ void main() {
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -192,7 +192,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
         rules: AnalyticsRules(strictEventNames: false),
       );
 
@@ -219,7 +219,7 @@ void main() {
 
       final screenContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'screen_events.dart'),
           )
           .readAsString();
@@ -244,7 +244,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
         rules: AnalyticsRules(includeEventDescription: true),
       );
 
@@ -266,7 +266,7 @@ void main() {
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -290,7 +290,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -310,7 +310,7 @@ void main() {
       await generator.generate(domains);
 
       final eventsDir = fs.directory(
-        p.join(projectRoot, 'lib', config.outputs.dartPath, 'events'),
+        p.join(projectRoot, config.outputs.dartPath, 'events'),
       );
       final staleFile = fs.file(p.join(eventsDir.path, 'legacy_events.dart'));
 
@@ -332,7 +332,7 @@ void main() {
       final logs = <String>[];
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -353,7 +353,7 @@ void main() {
       await generator.generate(domains);
 
       final outputDir =
-          fs.directory(p.join(projectRoot, 'lib', config.outputs.dartPath));
+          fs.directory(p.join(projectRoot, config.outputs.dartPath));
       expect(outputDir.existsSync(), isFalse);
       expect(
         logs,
@@ -380,7 +380,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
       final generator = CodeGenerator(
         config: config,
@@ -399,7 +399,7 @@ void main() {
       await generator.generate(domains);
 
       final billingFile = fs.file(
-        p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+        p.join(projectRoot, config.outputs.dartPath, 'events',
             'billing_events.dart'),
       );
       final billingContent = await billingFile.readAsString();
@@ -441,7 +441,7 @@ delta:
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
       final generator = CodeGenerator(
         config: config,
@@ -460,7 +460,7 @@ delta:
       await generator.generate(domains);
 
       final analyticsFile = fs.file(
-        p.join(projectRoot, 'lib', config.outputs.dartPath, 'analytics.dart'),
+        p.join(projectRoot, config.outputs.dartPath, 'analytics.dart'),
       );
       final analyticsContent = await analyticsFile.readAsString();
 
@@ -502,7 +502,7 @@ delta:
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -523,7 +523,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -565,7 +565,7 @@ delta:
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -586,7 +586,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -621,7 +621,7 @@ delta:
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -642,7 +642,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -675,7 +675,7 @@ delta:
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -696,7 +696,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -720,7 +720,7 @@ delta:
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -741,7 +741,7 @@ delta:
 
       final authContent = await fs
           .file(
-            p.join(projectRoot, 'lib', config.outputs.dartPath, 'events',
+            p.join(projectRoot, config.outputs.dartPath, 'events',
                 'auth_events.dart'),
           )
           .readAsString();
@@ -750,7 +750,7 @@ delta:
       expect(
         authContent,
         contains(
-            "static final _emailRegex = RegExp(r'^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$');"),
+            "static final _emailRegex = RegExp(r'''^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\$''');"),
       );
       // Validation uses the cached field
       expect(

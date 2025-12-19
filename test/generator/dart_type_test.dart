@@ -45,7 +45,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final logs = <String>[];
@@ -65,7 +65,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
+        p.join(tempProject.path, config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
 
@@ -102,7 +102,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -120,7 +120,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
+        p.join(tempProject.path, config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
       final content = await featureFile.readAsString();
@@ -148,7 +148,7 @@ void main() {
           eventsPath: 'events',
           imports: ['package:my_app/models.dart'],
         ),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -166,7 +166,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
+        p.join(tempProject.path, config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
       final content = await featureFile.readAsString();
@@ -188,7 +188,7 @@ void main() {
 
       final config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
-        outputs: AnalyticsOutputs(dartPath: 'src/analytics/generated'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/src/analytics/generated'),
       );
 
       final generator = CodeGenerator(
@@ -206,7 +206,7 @@ void main() {
       await generator.generate(domains);
 
       final featureFile = File(
-        p.join(tempProject.path, 'lib', config.outputs.dartPath, 'events',
+        p.join(tempProject.path, config.outputs.dartPath, 'events',
             'feature_events.dart'),
       );
       final content = await featureFile.readAsString();

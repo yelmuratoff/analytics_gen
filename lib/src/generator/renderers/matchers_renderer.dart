@@ -23,8 +23,7 @@ class MatchersRenderer extends BaseRenderer {
     final imports = <String>[
       'package:test/test.dart',
       // We need to import the generated events to access Enums if needed
-      // But we are in test/ folder, so we import from lib/
-      '../lib/${config.outputs.dartPath}/generated_events.dart',
+      '../${config.outputs.dartPath}/generated_events.dart',
     ];
 
     buffer.write(renderImports(imports));
