@@ -38,3 +38,6 @@ coverage/
 .idea/
 .vscode/
 *.swp
+
+# AI Related Files
+.agent/prompts/
