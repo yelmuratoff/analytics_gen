@@ -57,13 +57,10 @@ final class Analytics extends AnalyticsBase
         AnalyticsTheme,
         AnalyticsUserProperties {
   final IAnalytics _analytics;
-  final AnalyticsCapabilityResolver _capabilities;
+  final AnalyticsCapabilityResolver? _capabilities;
 
   /// Constructor for Dependency Injection.
-  const Analytics(
-    this._analytics, [
-    this._capabilities = const NullCapabilityResolver(),
-  ]);
+  const Analytics(this._analytics, [this._capabilities]);
 
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
@@ -322,5 +319,6 @@ final class Analytics extends AnalyticsBase
   IAnalytics get logger => _analytics;
 
   @override
-  AnalyticsCapabilityResolver get capabilities => _capabilities;
+  AnalyticsCapabilityResolver get capabilities =>
+      _capabilities ?? super.capabilities;
 }

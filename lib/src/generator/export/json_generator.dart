@@ -6,16 +6,22 @@ import 'package:analytics_gen/src/models/serialization.dart';
 import '../../config/naming_strategy.dart';
 import '../../util/event_naming.dart';
 // dart:io not required directly since file utils handle IO
-import '../../util/file_utils.dart';
 import '../generation_metadata.dart';
+import '../output_manager.dart';
 
 /// Generates JSON export of analytics events (pretty and minified).
 final class JsonGenerator {
   /// Creates a new JSON generator.
-  JsonGenerator({required this.naming});
+  JsonGenerator({
+    required this.naming,
+    this.outputManager = const OutputManager(),
+  });
 
   /// The naming strategy to use.
   final NamingStrategy naming;
+
+  /// The output manager to use.
+  final OutputManager outputManager;
 
   /// Generates both pretty and minified JSON files
   Future<void> generate(
@@ -27,12 +33,12 @@ final class JsonGenerator {
 
     // Pretty JSON
     final prettyJson = const JsonEncoder.withIndent('  ').convert(data);
-    await writeFileIfContentChanged(
+    await outputManager.writeFileIfContentChanged(
         '$outputDir/analytics_events.json', prettyJson);
 
     // Minified JSON
     final minifiedJson = jsonEncode(data);
-    await writeFileIfContentChanged(
+    await outputManager.writeFileIfContentChanged(
         '$outputDir/analytics_events.min.json', minifiedJson);
   }
 

@@ -4,15 +4,21 @@ import 'package:analytics_gen/src/models/serialization.dart';
 
 import '../../config/naming_strategy.dart';
 import '../../util/event_naming.dart';
-import '../../util/file_utils.dart';
+import '../output_manager.dart';
 
 /// Generates Excel-compatible CSV export of analytics events.
 final class CsvGenerator {
   /// Creates a new CSV generator.
-  CsvGenerator({required this.naming});
+  CsvGenerator({
+    required this.naming,
+    this.outputManager = const OutputManager(),
+  });
 
   /// The naming strategy to use.
   final NamingStrategy naming;
+
+  /// The output manager to use.
+  final OutputManager outputManager;
 
   /// Generates CSV files from analytics domains
   Future<void> generate(
@@ -144,7 +150,8 @@ final class CsvGenerator {
         }
       }
     }
-    await writeFileIfContentChanged(outputPath, buffer.toString());
+    await outputManager.writeFileIfContentChanged(
+        outputPath, buffer.toString());
   }
 
   Future<void> _generateEventParametersCsv(
@@ -167,7 +174,8 @@ final class CsvGenerator {
         }
       }
     }
-    await writeFileIfContentChanged(outputPath, buffer.toString());
+    await outputManager.writeFileIfContentChanged(
+        outputPath, buffer.toString());
   }
 
   Future<void> _generateMasterCsv(
@@ -288,7 +296,7 @@ final class CsvGenerator {
   Future<void> _writeCsv(
       String outputPath, List<Map<String, dynamic>> rows) async {
     if (rows.isEmpty) {
-      await writeFileIfContentChanged(outputPath, '');
+      await outputManager.writeFileIfContentChanged(outputPath, '');
       return;
     }
 
@@ -322,7 +330,8 @@ final class CsvGenerator {
       buffer.writeln(line);
     }
 
-    await writeFileIfContentChanged(outputPath, buffer.toString());
+    await outputManager.writeFileIfContentChanged(
+        outputPath, buffer.toString());
   }
 
   int _headerScore(String header) {

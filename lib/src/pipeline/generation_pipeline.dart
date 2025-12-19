@@ -4,6 +4,7 @@ import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
+import 'package:analytics_gen/src/generator/output_manager.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:analytics_gen/src/pipeline/tracking_plan_loader.dart';
@@ -151,6 +152,7 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: rootLogger.scoped('Documentation generation'),
+            outputManager: const OutputManager(),
           ).generate(
             domains,
             contexts: contexts,
@@ -167,6 +169,7 @@ class GenerationPipeline {
             config: config,
             projectRoot: projectRoot,
             log: rootLogger.scoped('Export generation'),
+            outputManager: const OutputManager(),
           ).generate(domains),
         ),
       );

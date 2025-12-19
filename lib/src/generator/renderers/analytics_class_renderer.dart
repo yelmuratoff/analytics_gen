@@ -107,14 +107,14 @@ class AnalyticsClassRenderer extends BaseRenderer {
 
     // Fields
     buffer.writeln('  final IAnalytics _analytics;');
-    buffer.writeln('  final AnalyticsCapabilityResolver _capabilities;');
+    buffer.writeln('  final AnalyticsCapabilityResolver? _capabilities;');
     buffer.writeln();
 
     // Constructor
     buffer.writeln('  /// Constructor for Dependency Injection.');
     buffer.writeln('  const Analytics(');
     buffer.writeln('    this._analytics, [');
-    buffer.writeln('    this._capabilities = const NullCapabilityResolver(),');
+    buffer.writeln('    this._capabilities,');
     buffer.writeln('  ]);');
     buffer.writeln();
 
@@ -177,7 +177,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
-        '  AnalyticsCapabilityResolver get capabilities => _capabilities;');
+        '  AnalyticsCapabilityResolver get capabilities => _capabilities ?? super.capabilities;');
     buffer.writeln('}');
     buffer.writeln();
 

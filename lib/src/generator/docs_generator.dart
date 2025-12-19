@@ -5,11 +5,11 @@ import 'package:path/path.dart' as path;
 import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
-import '../util/file_utils.dart';
 import '../util/logger.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
 import 'generation_metadata.dart';
+import 'output_manager.dart';
 import 'renderers/enum_renderer.dart';
 
 /// Generates Markdown documentation for analytics events.
@@ -19,6 +19,7 @@ final class DocsGenerator {
     required this.config,
     required this.projectRoot,
     this.log = const NoOpLogger(),
+    this.outputManager = const OutputManager(),
   });
 
   /// The analytics configuration.
@@ -29,6 +30,9 @@ final class DocsGenerator {
 
   /// The logger to use.
   final Logger log;
+
+  /// The output manager to use.
+  final OutputManager outputManager;
 
   /// Generates analytics documentation and writes to configured path
   Future<void> generate(
@@ -58,7 +62,7 @@ final class DocsGenerator {
         ? path.join(projectRoot, config.outputs.docsPath!)
         : path.join(projectRoot, 'analytics_docs.md');
 
-    await writeFileIfContentChanged(outputPath, markdown);
+    await outputManager.writeFileIfContentChanged(outputPath, markdown);
 
     log.info('✓ Generated analytics documentation at: $outputPath');
 

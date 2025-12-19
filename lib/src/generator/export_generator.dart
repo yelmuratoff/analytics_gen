@@ -9,6 +9,7 @@ import 'export/csv_generator.dart';
 import 'export/json_generator.dart';
 import 'export/sql_generator.dart';
 import 'export/sqlite_generator.dart';
+import 'output_manager.dart';
 
 /// Orchestrates export generation for analytics events.
 ///
@@ -19,6 +20,7 @@ final class ExportGenerator {
     required this.config,
     required this.projectRoot,
     this.log = const NoOpLogger(),
+    this.outputManager = const OutputManager(),
   });
 
   /// The analytics configuration.
@@ -29,6 +31,9 @@ final class ExportGenerator {
 
   /// The logger to use.
   final Logger log;
+
+  /// The output manager to use.
+  final OutputManager outputManager;
 
   /// Generates all configured export files
   Future<void> generate(Map<String, AnalyticsDomain> domains) async {
@@ -84,7 +89,10 @@ final class ExportGenerator {
     // Generate configured formats
     if (config.targets.generateCsv) {
       tasks.add(() async {
-        final csvGen = CsvGenerator(naming: config.naming);
+        final csvGen = CsvGenerator(
+          naming: config.naming,
+          outputManager: outputManager,
+        );
         await csvGen.generate(
           domains,
           outputDir,
@@ -97,7 +105,10 @@ final class ExportGenerator {
 
     if (config.targets.generateJson) {
       tasks.add(() async {
-        final jsonGen = JsonGenerator(naming: config.naming);
+        final jsonGen = JsonGenerator(
+          naming: config.naming,
+          outputManager: outputManager,
+        );
         await jsonGen.generate(domains, outputDir);
         log.info(
           '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
@@ -110,7 +121,10 @@ final class ExportGenerator {
 
     if (config.targets.generateSql) {
       tasks.add(() async {
-        final sqlGen = SqlGenerator(naming: config.naming);
+        final sqlGen = SqlGenerator(
+          naming: config.naming,
+          outputManager: outputManager,
+        );
         final sqliteGen = SqliteGenerator(
           log: log,
           naming: config.naming,

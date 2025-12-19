@@ -19,6 +19,7 @@ class GenerateContextFilesTask implements GenerationTask {
       final filePath = path.join(context.contextsDir, fileName);
 
       await context.outputManager.writeFileIfContentChanged(filePath, content);
+      context.generatedFiles.add(filePath);
     }
   }
 }

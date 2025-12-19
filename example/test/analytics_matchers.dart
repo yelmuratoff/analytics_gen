@@ -151,7 +151,14 @@ Matcher isAuthVerifyUser({Object? localStatus, Object? status}) {
       if (localStatus is Matcher) {
         if (!localStatus.matches(actual, {})) return false;
       } else {
-        if (actual != localStatus) return false;
+        // External type serialized as .name
+        try {
+          final dynamic dyn = localStatus;
+          if (actual != dyn.name) return false;
+        } catch (_) {
+          // Fallback if .name doesn't exist or match
+          if (actual != localStatus) return false;
+        }
       }
     }
     if (status != null) {
@@ -160,7 +167,14 @@ Matcher isAuthVerifyUser({Object? localStatus, Object? status}) {
       if (status is Matcher) {
         if (!status.matches(actual, {})) return false;
       } else {
-        if (actual != status) return false;
+        // External type serialized as .name
+        try {
+          final dynamic dyn = status;
+          if (actual != dyn.name) return false;
+        } catch (_) {
+          // Fallback if .name doesn't exist or match
+          if (actual != status) return false;
+        }
       }
     }
     return true;

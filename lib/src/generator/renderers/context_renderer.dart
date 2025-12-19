@@ -69,8 +69,8 @@ class ContextRenderer extends BaseRenderer {
         }
         buffer.writeln('  void $methodName($nullableType value) {');
 
+        const validator = ValidationRenderer();
         if (prop.allowedValues != null && prop.allowedValues!.isNotEmpty) {
-          const validator = ValidationRenderer();
           final constName =
               'allowed${StringUtils.capitalizePascal(camelName)}Values';
           final encodedValues =
@@ -86,6 +86,16 @@ class ContextRenderer extends BaseRenderer {
             type: dartType,
           ));
         }
+
+        buffer.write(validator.renderValidationChecks(
+          camelParam: 'value',
+          isNullable: prop.isNullable,
+          regex: prop.regex,
+          minLength: prop.minLength,
+          maxLength: prop.maxLength,
+          min: prop.min,
+          max: prop.max,
+        ));
 
         buffer.writeln(
             "    capability(${camelContextName}Key)?.$interfaceMethodName('${prop.name}', value);");

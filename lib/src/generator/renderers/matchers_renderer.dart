@@ -121,20 +121,14 @@ class MatchersRenderer extends BaseRenderer {
         buffer.writeln('        } else {');
         buffer.writeln('          if (actual != $camelParam) return false;');
         buffer.writeln('        }');
-      } else if (param.dartType != null && param.isNullable) {
+      } else if (param.dartType != null) {
         // External types (e.g. Enums) serialized as .name
-        // If it's an enum, we might need similar handling, but we don't know for sure if it's an enum.
         // `EventRenderer` uses `.name` for external types if nullable/not-nullable.
         // Assumption: External types in `dart_type` are usually Enums if they are simple.
         // But they could be anything.
         // If `logEvent` serialization used `.name`, actual is String.
         // If the user passed the object, we need to compare `actual` (String) with `expected.name`.
         // This is tricky without knowing if it is an enum.
-        // `EventRenderer` line 285: `param.isNullable ? '$camelParam?.name' : '$camelParam.name'`
-        // So yes, generated code calls `.name`.
-        // So actual is String. Expected is the Object.
-        // We should try to access .name on expected if it exists? Or expect user to pass String?
-        // To be safe and typed, user passes Enum.
         buffer.writeln('        // External type serialized as .name');
         buffer.writeln('        try {');
         buffer.writeln('           final dynamic dyn = $camelParam;');
