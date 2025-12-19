@@ -1,5 +1,5 @@
 -- Analytics Events Database Schema
--- Fingerprint: 7dd6ab6fc6153e1e (domains=3, events=10, parameters=20)
+-- Fingerprint: -38de3d7f6b7d2668 (domains=3, events=10, parameters=20)
 
 -- Create domains table
 CREATE TABLE IF NOT EXISTS domains (

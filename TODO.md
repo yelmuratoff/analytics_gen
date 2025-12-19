@@ -1,113 +1,25 @@
-# TODO: Technical Debt and Improvements
+# TODO: Technical Debt and Improvements (Completed)
 
 ## Critical Fixes (P0/P1)
 
-- [x] **CI Recovery**: Fix `dart analyze --fatal-infos` failure. Exclude `example/` from analysis in `analysis_options.yaml`.
-- [x] **Documentation Sync**: Bring README, ONBOARDING, and TROUBLESHOOTING in sync with reality:
-    - [x] `README.md`: Fix `inputs.events` (globs not supported) and `outputs.path` (should be `outputs.dart`).
-    - [x] `ONBOARDING.md`: Remove duplicate `targets:` block (checked: none found).
-    - [x] `TROUBLESHOOTING.md`: Fix `shared_parameter_paths` → `shared_parameters` (checked: already fixed).
-- [x] **Code Generation Vulnerabilities**:
-    - [x] **String Escaping**: Escape `"` and `$` in `event_name` during generation.
-    - [x] **Regex Escaping**: Handle `'` in regex patterns used in `RegExp(r'''...''')` literals.
-    - [x] **Multiline Descriptions**: Split `description` by `\n` in `DocumentationRenderer`.
-- [x] **Schema Evolution**: Fix JSON key mismatch: `'nullable'` → `'is_nullable'` in `schema_comparator.dart:284`.
-- [x] **Web Protection**: Guard `dart:io` usages in `ConsoleLogger` and `MultiProviderAnalytics`.
-- [ ] **CLI Validation Parity (P0)**: Make `--validate-only` and `--plan` match the real generation pipeline behavior.
-    - **Problem**:
-        - `validateTrackingPlan` and `printTrackingPlan` currently parse only event files and only pass `ParserConfig(naming: config.naming)` (`lib/src/pipeline/plan_printer.dart:28`, `lib/src/pipeline/plan_printer.dart:70`).
-        - They do **not** load/apply:
-            - `inputs.shared_parameters` (so `rules.enforce_centrally_defined_parameters` can silently be ignored).
-            - `inputs.contexts` (so context YAML can be broken while CI “validate-only” still passes).
-            - `rules.enforce_centrally_defined_parameters`, `rules.prevent_event_parameter_duplicates`, `rules.strict_event_names` (so CI can pass while generation fails, or vice versa).
-        - This creates CI false positives/false negatives and destroys trust in “validate-only”.
-    - **Why it matters**:
-        - Teams will gate merges on `--validate-only`; if it’s not equivalent to generation parsing, you will ship broken plans or block valid changes.
-        - Analytics plans are compliance-sensitive; “validation must mean validation” or people will bypass it.
-    - **Best solution (Staff-level)**:
-        - Extract a shared plan-loading/parsing component used by both:
-            - `GenerationPipeline.run()` (source of truth)
-            - `validateTrackingPlan` / `printTrackingPlan`
-        - The shared component should:
-            - Load event sources + context sources + shared parameter sources.
-            - Parse shared parameters first, then parse events and contexts with full `ParserConfig` constructed from `AnalyticsConfig.rules` + `AnalyticsConfig.naming`.
-            - Keep testability by taking `EventLoaderFactory` / `YamlParserFactory` (same seams as `GenerationPipeline`).
-        - Update docs to explicitly say `--validate-only` validates the entire configured plan (events + contexts + shared rules).
-    - **Acceptance criteria**:
-        - `--validate-only` fails on the same inputs that would make generation fail.
-        - `--plan` output reflects the same parsed structure as generation (including contexts when configured).
-        - Add tests covering rule parity (central params, duplicates, strict event names) and context parsing parity.
-- [ ] **Fingerprint Correctness (P0)**: Fix `GenerationMetadata.fingerprint` so it changes on any plan change that affects generated artifacts.
-    - **Problem** (`lib/src/generator/generation_metadata.dart:59`):
-        - The canonical signature omits many fields that change generated code/docs/exports (e.g. `identifier`, `meta`, `dual_write_to`, validation rules like `regex/min/max`, `dart_type` / `import`, context `operations`, version fields, etc.).
-        - Result: you can change the plan in a meaningful way and still get the *same* fingerprint → misleading diffs, broken “deterministic” guarantees, unreliable caching/QA.
-    - **Why it matters**:
-        - Fingerprints are used as a correctness signal (review gating, “did the plan change?”, deterministic output verification).
-        - If the fingerprint is lossy, it stops being a signal and becomes decoration.
-    - **Best solution (Staff-level)**:
-        - Define the contract explicitly:
-            - **Recommended**: fingerprint = hash(config-influencing-output + normalized plan), excluding only volatile info (`sourcePath`, `lineNumber`).
-        - Include in canonical signature (sorted/stable):
-            - Event: `name`, `description`, `identifier`, `customEventName`, `deprecated`, `replacement`, `addedIn`, `deprecatedIn`, `dualWriteTo` (sorted), `meta` (sorted key/value).
-            - Parameter: `name`, `sourceName`, `codeName`, `type`, `dartType`, `dartImport`, `isNullable`, `description`, `allowedValues` (normalized), `regex`, `minLength`, `maxLength`, `min`, `max`, `operations` (sorted), `addedIn`, `deprecatedIn`, `meta` (sorted).
-            - Config knobs that change outputs: `naming` fields (templates, casing, aliases), and rule flags like `include_event_description`.
-        - Add targeted unit tests that assert fingerprint changes when each category changes, and remains stable under reordering.
-    - **Acceptance criteria**:
-        - Fingerprint changes when you change *any* field that changes generated code/docs/exports.
-        - Fingerprint is stable for purely re-ordered YAML files/domains/events/params.
-- [ ] **Cross-Platform File Filtering (P1)**: Fix `EventLoader` context/shared file exclusion to be path-normalization-safe.
-    - **Problem** (`lib/src/parser/event_loader.dart:72`):
-        - The loader normalizes only the discovered file path (`file.path.replaceAll('\\\\', '/')`) but compares it against `contextFiles` / `sharedParameterFiles` without normalizing those values.
-        - On Windows (or mixed separators), context/shared YAML can be mistakenly treated as event domain YAML → flaky parse failures.
-    - **Why it matters**:
-        - Cross-platform CI (Windows runners) becomes unreliable.
-        - “Works on my machine” bugs in build tooling are expensive and confidence-killing.
-    - **Best solution (Staff-level)**:
-        - Normalize both sides consistently (prefer `package:path` normalization + absolute paths).
-        - Precompute normalized sets for context/shared files in the loader constructor and compare on normalized full paths (avoid `endsWith` when possible).
-    - **Acceptance criteria**:
-        - Add a unit test simulating Windows-style separators verifying context/shared files are reliably skipped.
+- [x] **CI Recovery**: Fix `dart analyze --fatal-infos` failure.
+- [x] **Documentation Sync**: Bring README, ONBOARDING, and TROUBLESHOOTING in sync with reality.
+- [x] **Code Generation Vulnerabilities**: String/Regex escaping and multiline descriptions.
+- [x] **Schema Evolution**: Fix JSON key mismatch: `'nullable'` → `'is_nullable'`.
+- [x] **Web Protection**: Guard `dart:io` usages.
+- [x] **CLI Validation Parity (P0)**: Unified parsing via `TrackingPlanLoader` for identical behavior between generation and validation.
+- [x] **Fingerprint Correctness (P0)**: Fingerprints now cover all meaningful plan changes and config settings.
+- [x] **Cross-Platform File Filtering (P1)**: Standardized absolute path normalization in `EventLoader`.
 
 ## Technical Debt & Refactoring (P2)
 
-- [x] **MultiProviderAnalytics**: Fix discrepancy between doc ("wraps in microtasks") and implementation (direct calls in sync `logEvent`).
-- [x] **Export Cleanup**: Extend stale file cleanup to cover all 6 generated CSV files in `export_generator.dart`.
-- [x] **Orphaned Doc Comment**: Remove `/// Parses a list of parameters from a YAML map.` in `analytics_parameter.dart:88`.
-- [ ] **Renderer Cleanup (P2)**: Remove “thinking-out-loud” comments + duplication in `MethodSignatureRenderer`.
-    - **Problem** (`lib/src/generator/renderers/sub_renderers/method_signature_renderer.dart:51`):
-        - `renderEventArguments` contains refactoring commentary and partial duplication with `renderParameters`.
-        - This is a generator hot path; unclear intent increases the chance of signature drift bugs.
-    - **Why it matters**:
-        - Generator code is the “compiler” for your analytics plan. It must be boring, deterministic, and easy to modify safely.
-    - **Best solution (Staff-level)**:
-        - Pick a single public API (`renderEventArguments` *or* `renderParameters`).
-        - Make the other delegate or remove it.
-        - Delete editorial comments; rely on tests + clear naming.
-    - **Acceptance criteria**:
-        - No behavior change in generated signatures (covered by existing renderer/codegen tests).
-- [ ] **Docs Parity: dependencies vs dev_dependencies (P2)**: Fix onboarding guidance so consumers don’t misconfigure runtime deps.
-    - **Problem**:
-        - `doc/ONBOARDING.md:8` suggests `analytics_gen` under `dev_dependencies`.
-        - Generated code imports `package:analytics_gen/analytics_gen.dart` at runtime (e.g. `AnalyticsBase`, capabilities), which should be a **runtime dependency** for packages.
-    - **Why it matters**:
-        - For packages (not just apps), importing something that is only a dev dependency is incorrect and breaks downstream.
-        - Even in apps, it’s easy to accumulate subtle build/CI/publishing issues.
-    - **Best solution (Staff-level)**:
-        - Update docs to recommend adding `analytics_gen` under `dependencies`.
-        - If you want “dev-only generator” semantics long-term, consider splitting into `analytics_gen` (runtime) + `analytics_gen_cli` (generator) in a future major version, but don’t force this now.
-- [ ] **Docs Hygiene (P2)**: Fix broken references and stale snippets.
-    - **Problem**:
-        - `doc/SCALABILITY.md:16` references `tool/gen_synthetic_plan.dart` which does not exist.
-        - `lib/src/config/config_loader.dart` prints a legacy config template in `_printDefaultConfigReminder(...)` that doesn’t match current structured `inputs/outputs/targets` docs.
-    - **Why it matters**:
-        - Onboarding friction and “paper cuts” reduce adoption; docs are part of the product for a generator.
-    - **Best solution (Staff-level)**:
-        - Either add the missing tool or remove the reference.
-        - Update the printed template to the current schema (and keep legacy parsing support separately documented).
-- [ ] **Repo Hygiene (P2)**: Remove `.DS_Store` files from git and ignore them.
-    - **Problem**: `.DS_Store` is tracked (`.DS_Store`, `example/assets/.DS_Store`).
-    - **Why it matters**: noise in diffs, looks unprofessional, causes unnecessary churn.
-    - **Best solution**: delete from repo + add `.DS_Store` to `.gitignore`.
+- [x] **MultiProviderAnalytics**: Fixed discrepancy between doc and implementation.
+- [x] **Export Cleanup**: Extended stale file cleanup in `export_generator.dart`.
+- [x] **Orphaned Doc Comment**: Removed in `analytics_parameter.dart`.
+- [x] **Renderer Cleanup (P2)**: Consolidated `MethodSignatureRenderer` and removed duplication.
+- [x] **Docs Parity (P2)**: Updated onboarding to recommend `dependencies` for mandatory runtime usage.
+- [x] **Docs Hygiene (P2)**: Fixed broken references in `SCALABILITY.md` and updated config templates.
+- [x] **Repo Hygiene (P2)**: Removed `.DS_Store` and updated `.gitignore`.
 
 ## Features / Improvements
 

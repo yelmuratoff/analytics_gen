@@ -1,14 +1,11 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
-import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/generator/generation_metadata.dart';
-import 'package:analytics_gen/src/parser/event_loader.dart';
-import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/pipeline/tracking_plan_loader.dart';
 import 'package:analytics_gen/src/util/banner_printer.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
 import 'package:analytics_gen/src/util/logger.dart';
-import 'package:path/path.dart' as path;
 
 /// Validates the tracking plan without generating any files.
 Future<void> validateTrackingPlan(
@@ -19,32 +16,22 @@ Future<void> validateTrackingPlan(
   printBanner('Analytics Gen - Validation Only', logger: logger);
   logger.info('');
 
-  final loader = EventLoader(
-    eventsPath: path.join(projectRoot, config.inputs.eventsPath),
-    log: logger,
-  );
-  final sources = await loader.loadEventFiles();
-
-  final parser = YamlParser(
-    log: logger,
-    config: ParserConfig(naming: config.naming),
+  final loader = TrackingPlanLoader(
+    projectRoot: projectRoot,
+    config: config,
   );
 
   try {
-    final domains = await parser.parseEvents(sources);
+    final plan = await loader.load(logger);
+    final domains = plan.domains;
 
     if (domains.isEmpty) {
       logger.info('No analytics events found.');
     } else {
-      final totalEvents =
-          domains.values.fold(0, (sum, d) => sum + d.eventCount);
-      final totalParams =
-          domains.values.fold(0, (sum, d) => sum + d.parameterCount);
-
       logger.info('✓ Validation successful.');
       logger.info('  Domains: ${domains.length}');
-      logger.info('  Events: $totalEvents');
-      logger.info('  Parameters: $totalParams');
+      logger.info('  Events: ${plan.totalEvents}');
+      logger.info('  Parameters: ${plan.totalParameters}');
     }
   } catch (e, stack) {
     logger.error('✗ Validation failed: $e', null, stack);
@@ -61,19 +48,14 @@ Future<void> printTrackingPlan(
   printBanner('Analytics Gen - Tracking Plan Overview', logger: logger);
   logger.info('');
 
-  final loader = EventLoader(
-    eventsPath: path.join(projectRoot, config.inputs.eventsPath),
-    log: logger,
-  );
-  final sources = await loader.loadEventFiles();
-
-  final parser = YamlParser(
-    log: logger,
-    config: ParserConfig(naming: config.naming),
+  final loader = TrackingPlanLoader(
+    projectRoot: projectRoot,
+    config: config,
   );
 
   try {
-    final domains = await parser.parseEvents(sources);
+    final plan = await loader.load(logger);
+    final domains = plan.domains;
 
     if (domains.isEmpty) {
       logger.info('No analytics events are defined yet.');

@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Fingerprint: `7dd6ab6fc6153e1e`
+Fingerprint: `-38de3d7f6b7d2668`
 Domains: 3 | Events: 10 | Parameters: 20
 
 ## Table of Contents

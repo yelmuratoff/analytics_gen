@@ -1,19 +1,16 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
-import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
-import 'package:analytics_gen/src/parser/event_loader.dart';
-import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/pipeline/tracking_plan_loader.dart';
 import 'package:analytics_gen/src/services/schema_evolution_checker.dart';
 import 'package:analytics_gen/src/services/watcher_service.dart';
 import 'package:analytics_gen/src/util/banner_printer.dart';
 import 'package:analytics_gen/src/util/logger.dart';
-import 'package:path/path.dart' as path;
 import '../metrics/console_metrics.dart';
 import '../metrics/metrics.dart';
 
@@ -67,47 +64,16 @@ class GenerationPipeline {
     try {
       final parseSw = Stopwatch()..start();
 
-      // Resolve shared parameter paths
-      final sharedParameterPaths = config.inputs.sharedParameters
-          .map((p) => path.join(projectRoot, p))
-          .toList();
-
-      // Load files
-      final loader = _eventLoaderFactory.create(
-        eventsPath: path.join(projectRoot, config.inputs.eventsPath),
-        contextFiles: config.inputs.contexts
-            .map((c) => path.join(projectRoot, c))
-            .toList(), // Resolve paths
-        sharedParameterFiles: sharedParameterPaths,
-        log: request.logger,
+      final loader = TrackingPlanLoader(
+        projectRoot: projectRoot,
+        config: config,
+        eventLoaderFactory: _eventLoaderFactory,
+        yamlParserFactory: _yamlParserFactory,
       );
 
-      final sharedParser = _yamlParserFactory.create(
-        log: request.logger,
-        config: ParserConfig(naming: config.naming),
-      );
-
-      final eventSources = await loader.loadEventFiles();
-      final contextSources = await loader.loadContextFiles();
-
-      final sharedParameters = await _loadSharedParameters(
-          sharedParameterPaths, loader, request.logger, sharedParser);
-
-      // Parse YAML files
-      final parser = _yamlParserFactory.create(
-        log: request.logger,
-        config: ParserConfig(
-          naming: config.naming,
-          strictEventNames: config.rules.strictEventNames,
-          enforceCentrallyDefinedParameters:
-              config.rules.enforceCentrallyDefinedParameters,
-          preventEventParameterDuplicates:
-              config.rules.preventEventParameterDuplicates,
-          sharedParameters: sharedParameters,
-        ),
-      );
-      final domains = await parser.parseEvents(eventSources);
-      final contexts = await parser.parseContexts(contextSources);
+      final plan = await loader.load(request.logger);
+      final domains = plan.domains;
+      final contexts = plan.contexts;
 
       parseSw.stop();
       final totalEvents =
@@ -151,33 +117,6 @@ class GenerationPipeline {
       request.logger.error('Watch error: $e');
       exit(1);
     }
-  }
-
-  Future<Map<String, AnalyticsParameter>> _loadSharedParameters(
-    List<String> paths,
-    EventLoader loader,
-    Logger logger,
-    YamlParser parser,
-  ) async {
-    final Map<String, AnalyticsParameter> sharedParameters = {};
-    if (paths.isEmpty) return sharedParameters;
-
-    for (final sharedPath in paths) {
-      final sharedSource = await loader.loadSourceFile(sharedPath);
-      if (sharedSource != null) {
-        try {
-          final params = parser.parseSharedParameters(sharedSource);
-          sharedParameters.addAll(params);
-          logger.info(
-              'Loaded ${params.length} shared parameters from ${path.relative(sharedPath, from: projectRoot)}');
-        } catch (e) {
-          logger.error('Failed to parse shared parameters: $e');
-          // Re-throw to be caught by main run loop if needed, or exit
-          throw Exception('Failed to load shared parameters');
-        }
-      }
-    }
-    return sharedParameters;
   }
 
   List<_GeneratorTask> _buildTasks(

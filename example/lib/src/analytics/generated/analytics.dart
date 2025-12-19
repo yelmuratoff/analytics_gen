@@ -281,7 +281,7 @@ final class Analytics extends AnalyticsBase
   ];
 
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '7dd6ab6fc6153e1e';
+  static const String planFingerprint = '-38de3d7f6b7d2668';
 
   // --- Singleton Compatibility ---
 

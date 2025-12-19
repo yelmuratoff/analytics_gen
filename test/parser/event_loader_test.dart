@@ -188,5 +188,34 @@ void main() {
       expect(logger.messages,
           contains('INFO: Found 3 YAML file(s) in $eventsPath'));
     });
+
+    test(
+        'loadEventFiles handles Windows-style backslashes in context/shared paths',
+        () async {
+      final eventFile = fs.file('${tempDir.path}/event.yaml');
+      final contextFile = fs.file('${tempDir.path}/context.yaml');
+      final sharedFile = fs.file('${tempDir.path}/shared.yaml');
+      await eventFile.writeAsString('name: event');
+      await contextFile.writeAsString('ctx: data');
+      await sharedFile.writeAsString('shared: data');
+
+      // Simulate Windows paths with backslashes
+      final windowsContextPath = contextFile.path.replaceAll('/', '\\');
+      final windowsSharedPath = sharedFile.path.replaceAll('/', '\\');
+
+      final loader = EventLoader(
+        eventsPath: eventsPath,
+        contextFiles: [windowsContextPath],
+        sharedParameterFiles: [windowsSharedPath],
+        log: logger,
+        fs: fs,
+      );
+
+      final sources = await loader.loadEventFiles();
+
+      // Should still skip them because of normalization
+      expect(sources, hasLength(1));
+      expect(sources.first.filePath, eventFile.path);
+    });
   });
 }

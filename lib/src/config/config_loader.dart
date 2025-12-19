@@ -32,14 +32,15 @@ void _printDefaultConfigReminder(String configPath, Logger logger) {
   logger.info('Tip: Create an analytics_gen.yaml file to customize paths:');
   logger.info('');
   logger.info('analytics_gen:');
-  logger.info('  events_path: events');
-  logger.info('  output_path: src/analytics/generated');
-  logger.info('  docs_path: docs/analytics_events.md');
-  logger.info('  exports_path: assets/generated');
-  logger.info('  generate_docs: true');
-  logger.info('  generate_csv: true');
-  logger.info('  generate_json: true');
-  logger.info('  generate_sql: true');
-  logger.info('  generate_plan: true');
+  logger.info('  inputs:');
+  logger.info('    events: events');
+  logger.info('  outputs:');
+  logger.info('    dart: lib/src/analytics/generated');
+  logger.info('    docs: docs/analytics_events.md');
+  logger.info('    exports: assets/generated');
+  logger.info('  targets:');
+  logger.info('    docs: true');
+  logger.info('    json: true');
+  logger.info('    test_matchers: true');
   logger.info('');
 }

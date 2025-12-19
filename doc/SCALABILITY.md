@@ -13,7 +13,7 @@ Tests were performed on a standard developer machine (Apple M1 Pro 10-core, 16GB
 | **2,000**    | 200     | ~3.3s           | 202             |
 | **10,000**   | 1,000   | ~14.3s          | 1,002           |
 
-> **Note**: CI runners may be slower due to shared resources. To reproduce these results, run `dart tool/benchmark.dart` (if available) or generate a synthetic plan with `tool/gen_synthetic_plan.dart`.
+> **Note**: CI runners may be slower due to shared resources. Benchmark results are for comparison only.
 
 ### Key Takeaways
 

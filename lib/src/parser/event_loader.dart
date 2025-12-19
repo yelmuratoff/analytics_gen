@@ -19,29 +19,42 @@ final class AnalyticsSource {
 
 /// Handles discovery and loading of analytics definition files.
 final class EventLoader {
-  /// Creates a new event loader.
-  EventLoader({
-    required this.eventsPath,
-    this.contextFiles = const [],
-    this.sharedParameterFiles = const [],
-    this.log = const NoOpLogger(),
-    this.fs = const LocalFileSystem(),
-  });
-
   /// The path to the directory containing event files.
   final String eventsPath;
 
-  /// The list of context files to load.
-  final List<String> contextFiles;
+  /// The list of normalized context files to load.
+  final Set<String> _contextFiles;
 
-  /// The list of shared parameter files to ignore.
-  final List<String> sharedParameterFiles;
+  /// The list of normalized shared parameter files to ignore.
+  final Set<String> _sharedParameterFiles;
 
   /// The logger to use.
   final Logger log;
 
   /// The file system to use.
   final FileSystem fs;
+
+  /// Creates a new event loader.
+  EventLoader({
+    required this.eventsPath,
+    List<String> contextFiles = const [],
+    List<String> sharedParameterFiles = const [],
+    this.log = const NoOpLogger(),
+    this.fs = const LocalFileSystem(),
+  })  : _contextFiles = contextFiles
+            .map((p) => p.replaceAll('\\', '/'))
+            .map((p) => p.endsWith('.yaml') || p.endsWith('.yml')
+                ? p
+                : p) // Keep extension
+            .toSet(),
+        _sharedParameterFiles =
+            sharedParameterFiles.map((p) => p.replaceAll('\\', '/')).toSet();
+
+  /// The list of context files to load.
+  List<String> get contextFiles => _contextFiles.toList();
+
+  /// The list of shared parameter files to ignore.
+  List<String> get sharedParameterFiles => _sharedParameterFiles.toList();
 
   /// Loads all YAML files from the configured events directory.
   Future<List<AnalyticsSource>> loadEventFiles() async {
@@ -70,10 +83,12 @@ final class EventLoader {
       // Skip context files if they happen to be in the events directory
       // We normalize paths to ensure consistent comparison
       final normalizedPath = file.path.replaceAll('\\', '/');
-      if (contextFiles.any((c) => normalizedPath.endsWith(c))) {
+      if (_contextFiles
+          .any((c) => normalizedPath == c || normalizedPath.endsWith('/$c'))) {
         return null;
       }
-      if (sharedParameterFiles.any((c) => normalizedPath.endsWith(c))) {
+      if (_sharedParameterFiles
+          .any((c) => normalizedPath == c || normalizedPath.endsWith('/$c'))) {
         return null;
       }
 
