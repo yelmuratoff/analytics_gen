@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.4]
+## [1.0.4] - Unreleased
 
 ### Improvements
 - Introduced `CapabilityProviderBase` to replace `CapabilityProviderMixin`. The mixin is deprecated and will be removed in a future release. Callers should update to extend `CapabilityProviderBase` to ensure state isolation.
