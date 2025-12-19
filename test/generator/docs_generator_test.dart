@@ -236,7 +236,8 @@ void main() {
       );
     });
 
-    test('renders dart_type parameters with their explicit Dart type', () async {
+    test('renders dart_type parameters with their explicit Dart type',
+        () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(
         'auth:\n'

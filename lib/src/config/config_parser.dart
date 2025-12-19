@@ -15,14 +15,16 @@ class ConfigParser {
       // If T is nullable and value is null, "value is T" returns true.
       if (value is T) return value;
       throw FormatException(
-          'Invalid configuration for "\\$context": Expected \$T but got \${value.runtimeType}');
+        'Invalid configuration for "$context": expected $T but got ${value.runtimeType}',
+      );
     }
 
     Map<dynamic, dynamic> safeMap(dynamic map, String context) {
       if (map == null) return {};
       if (map is Map) return map;
       throw FormatException(
-          'Invalid configuration for "\\$context": Expected Map but got \${map.runtimeType}');
+        'Invalid configuration for "$context": expected Map but got ${map.runtimeType}',
+      );
     }
 
     final config = safeMap(yaml[YamlKeys.analyticsGen], YamlKeys.analyticsGen);
@@ -42,7 +44,8 @@ class ConfigParser {
       if (v == null) return defaultVal;
       if (v is! List) {
         throw FormatException(
-            'Invalid configuration for "\\$key": Expected List but got \${v.runtimeType}');
+          'Invalid configuration for "$key": expected List but got ${v.runtimeType}',
+        );
       }
       return v.map((e) => e.toString()).toList();
     }

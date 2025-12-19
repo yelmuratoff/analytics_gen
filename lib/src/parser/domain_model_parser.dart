@@ -77,7 +77,7 @@ final class DomainModelParser {
 
     return AnalyticsDomain(
       name: domainName,
-      events: events,
+      events: List.unmodifiable(events),
     );
   }
 }

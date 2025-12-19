@@ -133,5 +133,76 @@ void main() {
       expect(config.inputs.sharedParameters, ['shared/from_inputs.yaml']);
       expect(config.inputs.contexts, ['shared/from_inputs_context.yaml']);
     });
+
+    test('throws FormatException with readable message for invalid map fields',
+        () {
+      final yaml = {
+        'analytics_gen': {
+          'inputs': 123, // should be a map
+        },
+      };
+
+      expect(
+        () => ConfigParser().parse(yaml),
+        throwsA(
+          isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf([
+                contains('Invalid configuration for "inputs"'),
+                contains('expected Map'),
+                contains('int'),
+              ])),
+        ),
+      );
+    });
+
+    test('throws FormatException with readable message for invalid bool fields',
+        () {
+      final yaml = {
+        'analytics_gen': {
+          'generate_csv': 'true', // should be a bool
+        },
+      };
+
+      expect(
+        () => ConfigParser().parse(yaml),
+        throwsA(
+          isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf([
+                contains('Invalid configuration for "generate_csv"'),
+                contains('expected bool'),
+                contains('String'),
+              ])),
+        ),
+      );
+    });
+
+    test('throws FormatException with readable message for invalid list fields',
+        () {
+      final yaml = {
+        'analytics_gen': {
+          'inputs': {
+            'contexts': 'not-a-list',
+          },
+        },
+      };
+
+      expect(
+        () => ConfigParser().parse(yaml),
+        throwsA(
+          isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf([
+                contains('Invalid configuration for "contexts"'),
+                contains('expected List'),
+                contains('String'),
+              ])),
+        ),
+      );
+    });
   });
 }

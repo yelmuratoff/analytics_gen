@@ -131,6 +131,94 @@ void main() {
       expect(param.allowedValues, equals(['email', 'google', 'apple']));
     });
 
+    test('throws when allowed_values is an empty list', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      method:\n'
+            '        type: string\n'
+            '        allowed_values: []\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('must be a non-empty list'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when allowed_values types do not match parameter type',
+        () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      attempts:\n'
+            '        type: int\n'
+            '        allowed_values: [1, "two"]\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('must be a list of integers'),
+          ),
+        ),
+      );
+    });
+
+    test('normalizes numeric allowed_values for double parameters', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      ratio:\n'
+            '        type: double\n'
+            '        allowed_values: [1, 2.5]\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+      final param = domains['auth']!.events.first.parameters.first;
+      expect(param.allowedValues, equals([1.0, 2.5]));
+    });
+
+    test('throws when allowed_values is used together with dart_type',
+        () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      status:\n'
+            '        type: string\n'
+            '        dart_type: VerificationStatus\n'
+            '        allowed_values: [a, b]\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('cannot define both "dart_type" and "allowed_values"'),
+          ),
+        ),
+      );
+    });
+
     test('applies param_name override for analytics key', () async {
       final files = {
         'auth.yaml': 'auth:\n'
@@ -171,6 +259,65 @@ void main() {
 
       final param = event.parameters.first;
       expect(param.meta, equals({'is_pii': true}));
+    });
+
+    test('normalizes nested meta values into JSON-encodable structures',
+        () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: User logs in\n'
+            '    meta:\n'
+            '      tags: [alpha, beta]\n'
+            '      flags:\n'
+            '        canary: true\n'
+            '        weight: 1\n'
+            '    parameters:\n'
+            '      email:\n'
+            '        type: string\n'
+            '        meta:\n'
+            '          flags:\n'
+            '            canary: false\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+      final event = domains['auth']!.events.first;
+
+      expect(event.meta['tags'], equals(['alpha', 'beta']));
+      expect(event.meta['flags'], isA<Map>());
+      final flags = event.meta['flags'] as Map;
+      expect(flags['canary'], isTrue);
+      expect(flags['weight'], equals(1));
+
+      final param = event.parameters.first;
+      expect(param.meta['flags'], isA<Map>());
+      final paramFlags = param.meta['flags'] as Map;
+      expect(paramFlags['canary'], isFalse);
+    });
+
+    test('throws when nested meta map contains non-string keys', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: User logs in\n'
+            '    parameters:\n'
+            '      email:\n'
+            '        type: string\n'
+            '        meta:\n'
+            '          nested:\n'
+            '            123: abc\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.first.message,
+            'message',
+            contains('must use non-empty string keys'),
+          ),
+        ),
+      );
     });
 
     test('throws when meta is not a map', () async {

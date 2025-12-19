@@ -551,6 +551,49 @@ void main() {
       expect(result, contains("'version': 2,"));
     });
 
+    test('renders analytics plan with nested meta structures', () {
+      config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              meta: {
+                'tags': ['alpha', 'beta'],
+                'flags': {
+                  'canary': true,
+                },
+              },
+              parameters: [
+                AnalyticsParameter(
+                  name: 'attempts',
+                  type: 'int',
+                  isNullable: false,
+                  meta: {
+                    'limits': {'min': 1},
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(result, contains("'tags': <Object?>['alpha', 'beta'],"));
+      expect(result, contains("'flags': <String, Object?>{'canary': true},"));
+      expect(result, contains("'limits': <String, Object?>{'min': 1},"));
+    });
+
     test('renders analytics plan with parameter codeName', () {
       config = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),

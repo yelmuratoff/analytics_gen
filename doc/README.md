@@ -11,6 +11,7 @@ Welcome to the documentation for the **analytics_gen** package. This folder cont
 - [Migration Guides](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/MIGRATION_GUIDES.md) – Steps to migrate existing analytics implementations.
 - [Code Review Checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) – Checklist for reviewing generated code and docs.
 - [Scalability & Performance](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCALABILITY.md) – Performance considerations for large plans.
+- [Testing Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/TESTING.md) – Testing patterns for generated analytics APIs and providers.
 
 You can view the full API reference on pub.dev at:
 

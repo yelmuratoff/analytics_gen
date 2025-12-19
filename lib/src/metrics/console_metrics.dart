@@ -3,7 +3,6 @@ import 'metrics.dart';
 
 /// Metrics recorder that outputs to the console via [Logger].
 class ConsoleMetrics implements Metrics {
-
   /// Creates a new console metrics recorder.
   const ConsoleMetrics(this._logger);
   final Logger _logger;

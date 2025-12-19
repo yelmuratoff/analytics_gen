@@ -14,11 +14,10 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// - `product_id`: String
   /// - `reason`: String? - Reason for cancellation
   void logPurchaseCancelled({
-      required String productId,
-      String? reason,
-      Map<String, Object?>? parameters,
-    }) {
-
+    required String productId,
+    String? reason,
+    Map<String, Object?>? parameters,
+  }) {
     final eventParameters = <String, Object?>{
       'description': 'User cancelled a purchase',
       "product_id": productId,
@@ -39,13 +38,12 @@ mixin AnalyticsPurchase on AnalyticsBase {
   /// - `product_id`: String
   /// - `quantity`: int - Number of items purchased
   void logPurchaseCompleted({
-      required String currencyCode,
-      required double price,
-      required String productId,
-      required int quantity,
-      Map<String, Object?>? parameters,
-    }) {
-
+    required String currencyCode,
+    required double price,
+    required String productId,
+    required int quantity,
+    Map<String, Object?>? parameters,
+  }) {
     final eventParameters = <String, Object?>{
       'description': 'User completed a purchase',
       "currency-code": currencyCode,
@@ -59,5 +57,4 @@ mixin AnalyticsPurchase on AnalyticsBase {
       parameters: eventParameters,
     );
   }
-
 }

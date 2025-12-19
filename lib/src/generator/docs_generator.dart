@@ -266,7 +266,8 @@ final class DocsGenerator {
 
     for (final prop in properties) {
       final name = prop.name;
-      final type = '${DartTypeMapper.toDartType(prop.type)}${prop.isNullable ? '?' : ''}';
+      final type =
+          '${DartTypeMapper.toDartType(prop.type)}${prop.isNullable ? '?' : ''}';
       final desc = prop.description ?? '-';
       final allowed =
           (prop.allowedValues != null && prop.allowedValues!.isNotEmpty)
@@ -312,7 +313,8 @@ final class DocsGenerator {
     }
 
     if (_isGeneratedEnumParameter(param)) {
-      final enumName = const EnumRenderer().buildEnumName(domainName, event, param);
+      final enumName =
+          const EnumRenderer().buildEnumName(domainName, event, param);
       return '$enumName${param.isNullable ? '?' : ''}';
     }
 
@@ -338,7 +340,8 @@ final class DocsGenerator {
     if (_isGeneratedEnumParameter(param)) {
       final allowedValues = param.allowedValues;
       if (allowedValues != null && allowedValues.isNotEmpty) {
-        final enumName = const EnumRenderer().buildEnumName(domainName, event, param);
+        final enumName =
+            const EnumRenderer().buildEnumName(domainName, event, param);
         final firstValue = allowedValues.first.toString();
         final enumValue = const EnumRenderer().toEnumIdentifier(firstValue);
         return '$enumName.$enumValue';

@@ -1,10 +1,12 @@
 import 'package:collection/collection.dart';
+import 'package:source_span/source_span.dart';
 import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_parameter.dart';
 import '../util/string_utils.dart';
+import 'json_value_normalizer.dart';
 
 /// Parses analytics parameters from YAML.
 final class ParameterParser {
@@ -75,7 +77,7 @@ final class ParameterParser {
       parameters.add(param);
     }
 
-    return parameters;
+    return List.unmodifiable(parameters);
   }
 
   /// Parses a single parameter from a YAML node.
@@ -158,6 +160,7 @@ final class ParameterParser {
     String paramType;
     String? description;
     List<Object>? allowedValues;
+    SourceSpan? allowedValuesSpan;
     String? dartImport;
     String? regex;
     int? minLength;
@@ -185,7 +188,12 @@ final class ParameterParser {
             span: metaNode.span,
           );
         }
-        meta = metaNode.map((key, value) => MapEntry(key.toString(), value));
+        meta = const JsonValueNormalizer().normalizeJsonMap(
+          metaNode,
+          filePath: filePath,
+          context: 'meta for parameter "$domainName.$eventName.$rawName"',
+          span: metaNode.span,
+        );
       }
       dartImport = paramValue['import'] as String?; // Parse import
       // Validation rules
@@ -246,6 +254,14 @@ final class ParameterParser {
             span: rawAllowed.span,
           );
         }
+        if (rawAllowed.value.isEmpty) {
+          throw AnalyticsParseException(
+            'allowed_values for parameter "$rawName" must be a non-empty list.',
+            filePath: filePath,
+            span: rawAllowed.span,
+          );
+        }
+        allowedValuesSpan = rawAllowed.span;
         allowedValues = List<Object>.from(rawAllowed.value);
       }
     } else {
@@ -264,6 +280,85 @@ final class ParameterParser {
       dartType = dartType.substring(0, dartType.length - 1);
     }
 
+    if (allowedValues != null) {
+      if (dartType != null) {
+        throw AnalyticsParseException(
+          'Parameter "$rawName" in $domainName.$eventName cannot define both '
+          '"dart_type" and "allowed_values". Choose one.',
+          filePath: filePath,
+          span: allowedValuesSpan ?? valueNode.span,
+        );
+      }
+
+      final normalizedType = paramType.trim().toLowerCase();
+
+      switch (normalizedType) {
+        case 'string':
+          if (allowedValues.any((v) => v is! String)) {
+            throw AnalyticsParseException(
+              'allowed_values for parameter "$rawName" must be a list of strings '
+              'because its type is "string".',
+              filePath: filePath,
+              span: allowedValuesSpan ?? valueNode.span,
+            );
+          }
+          break;
+        case 'bool':
+          if (allowedValues.any((v) => v is! bool)) {
+            throw AnalyticsParseException(
+              'allowed_values for parameter "$rawName" must be a list of booleans '
+              'because its type is "bool".',
+              filePath: filePath,
+              span: allowedValuesSpan ?? valueNode.span,
+            );
+          }
+          break;
+        case 'int':
+          if (allowedValues.any((v) => v is! int)) {
+            throw AnalyticsParseException(
+              'allowed_values for parameter "$rawName" must be a list of integers '
+              'because its type is "int".',
+              filePath: filePath,
+              span: allowedValuesSpan ?? valueNode.span,
+            );
+          }
+          break;
+        case 'double' || 'float':
+          if (allowedValues.any((v) => v is! num)) {
+            throw AnalyticsParseException(
+              'allowed_values for parameter "$rawName" must be a list of numbers '
+              'because its type is "$normalizedType".',
+              filePath: filePath,
+              span: allowedValuesSpan ?? valueNode.span,
+            );
+          }
+          // Normalize numeric literals to doubles so the generated const Set<double>
+          // remains type-correct (e.g. `1` -> `1.0`).
+          allowedValues = allowedValues
+              .map<Object>((v) => (v as num).toDouble())
+              .toList(growable: false);
+          break;
+        case 'num' || 'number':
+          if (allowedValues.any((v) => v is! num)) {
+            throw AnalyticsParseException(
+              'allowed_values for parameter "$rawName" must be a list of numbers '
+              'because its type is "$normalizedType".',
+              filePath: filePath,
+              span: allowedValuesSpan ?? valueNode.span,
+            );
+          }
+          break;
+        default:
+          throw AnalyticsParseException(
+            'allowed_values is only supported for scalar parameter types '
+            '(string, bool, int, double, num). '
+            'Parameter "$rawName" has unsupported type "$paramType".',
+            filePath: filePath,
+            span: allowedValuesSpan ?? valueNode.span,
+          );
+      }
+    }
+
     return AnalyticsParameter(
       name: analyticsName,
       codeName: codeIdentifier,
@@ -272,14 +367,17 @@ final class ParameterParser {
       dartImport: dartImport,
       isNullable: isNullable,
       description: description,
-      allowedValues: allowedValues,
+      allowedValues: allowedValues == null
+          ? null
+          : List<Object>.unmodifiable(allowedValues),
       regex: regex,
       minLength: minLength,
       maxLength: maxLength,
       min: min,
       max: max,
       meta: meta,
-      operations: operations,
+      operations:
+          operations == null ? null : List<String>.unmodifiable(operations),
       addedIn: addedIn,
       deprecatedIn: deprecatedIn,
       sourceName: rawName,

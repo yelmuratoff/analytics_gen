@@ -10,7 +10,6 @@ import 'base_renderer.dart';
 /// Renders the main Analytics class with domain mixins and capabilities.
 class AnalyticsClassRenderer extends BaseRenderer {
   /// Creates a new analytics class renderer.
-  /// Creates a new analytics class renderer.
   AnalyticsClassRenderer(
     this.config, {
     this.planSerializer = const PlanSerializer(),

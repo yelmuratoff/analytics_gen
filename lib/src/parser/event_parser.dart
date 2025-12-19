@@ -7,6 +7,7 @@ import '../models/analytics_event.dart';
 import '../models/analytics_parameter.dart';
 import '../util/string_utils.dart';
 import '../util/yaml_keys.dart';
+import 'json_value_normalizer.dart';
 import 'parameter_parser.dart';
 
 /// Parses analytics events from YAML.
@@ -38,7 +39,7 @@ final class EventParser {
     if (strictEventNames &&
         (eventName.contains('{') || eventName.contains('}'))) {
       throw AnalyticsParseException(
-        'Event name "$eventName" contains interpolation characters "{}" or "{}". '
+        'Event name "$eventName" contains interpolation characters "{" or "}". '
         'Dynamic event names are discouraged as they lead to high cardinality.',
         filePath: filePath,
         span: keySpan ?? valueNode.span,
@@ -54,7 +55,7 @@ final class EventParser {
       if (strictEventNames &&
           (customEventName.contains('{') || customEventName.contains('}'))) {
         throw AnalyticsParseException(
-          'Event name "$customEventName" contains interpolation characters "{}" or "{}". '
+          'Event name "$customEventName" contains interpolation characters "{" or "}". '
           'Dynamic event names are discouraged as they lead to high cardinality.',
           filePath: filePath,
           span: customEventNameNode?.span,
@@ -71,7 +72,8 @@ final class EventParser {
     List<String>? dualWriteTo;
     if (dualWriteToNode != null) {
       if (dualWriteToNode is YamlList) {
-        dualWriteTo = dualWriteToNode.map((e) => e.toString()).toList();
+        dualWriteTo =
+            List<String>.unmodifiable(dualWriteToNode.map((e) => e.toString()));
       } else {
         throw AnalyticsParseException(
           'Field "dual_write_to" must be a list of strings.',
@@ -82,7 +84,7 @@ final class EventParser {
     }
 
     final metaNode = eventData.nodes[YamlKeys.meta];
-    Map<String, dynamic> meta = const {};
+    Map<String, Object?> meta = const {};
     if (metaNode != null) {
       if (metaNode is! YamlMap) {
         throw AnalyticsParseException(
@@ -91,7 +93,12 @@ final class EventParser {
           span: metaNode.span,
         );
       }
-      meta = metaNode.map((key, value) => MapEntry(key.toString(), value));
+      meta = const JsonValueNormalizer().normalizeJsonMap(
+        metaNode,
+        filePath: filePath,
+        context: 'meta for event "$domainName.$eventName"',
+        span: metaNode.span,
+      );
     }
 
     final rawParameters = eventData.nodes[YamlKeys.parameters];
@@ -150,7 +157,7 @@ final class EventParser {
       description: description,
       identifier: identifier,
       customEventName: customEventName,
-      parameters: parameters,
+      parameters: List.unmodifiable(parameters),
       deprecated: deprecated,
       replacement: replacement,
       meta: meta,

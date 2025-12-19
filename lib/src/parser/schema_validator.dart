@@ -39,7 +39,7 @@ final class SchemaValidator {
     if (strictEventNames &&
         (eventName.contains('{') || eventName.contains('}'))) {
       throw AnalyticsParseException(
-        'Event name "$eventName" contains interpolation characters "{}" or "{}". '
+        'Event name "$eventName" contains interpolation characters "{" or "}". '
         'Dynamic event names are discouraged as they lead to high cardinality.',
         filePath: filePath,
         span: span,

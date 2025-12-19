@@ -18,20 +18,30 @@ user_profile:
 **Fix**: Move the parameter definition to a file listed in `shared_parameters` or disable the rule.
 
 ### `Exit code 255` or `Stack Overflow`
-**Cause**: Circular dependencies in YAML imports or extremely deep nesting.
-**Fix**: Check `rules: prevent_event_parameter_duplicates`. Simplify YAML structure.
+**Cause**: Extremely deep YAML nesting, malformed YAML, or very large single files.
+**Fix**: Split domains into multiple files and keep structures shallow (domains → events → parameters). Re-run with `--verbose` to capture the failing file/line.
 
 ## Generated Code Issues
 
 ### `The method 'log...' isn't defined for the type 'Analytics'`
 **Cause**:
 1. You haven't run the generator: `dart run analytics_gen:generate`
-2. You haven't mixed in the generated domain mixin to your `Analytics` class.
+2. You're importing the wrong `Analytics` type (the package exports runtime helpers, not your app's generated `Analytics` class).
+3. You generated to a different output directory than you are importing.
 **Fix**:
-Update your `Analytics` class:
-```dart
-class Analytics extends AnalyticsBase with AnalyticsAuth, AnalyticsPayment { ... }
+1. Run generation and ensure it writes code (`--no-code` disables code output):
+```bash
+dart run analytics_gen:generate --docs --exports
 ```
+2. Import the generated file from your project output (example path):
+```dart
+import 'package:your_app/src/analytics/generated/analytics.dart';
+```
+3. Verify `analytics_gen.outputs.dart` in `analytics_gen.yaml` matches your import.
+
+### `Analytics.initialize(...) must be called before logging events`
+**Cause**: You are using the singleton API without initialization.
+**Fix**: Call `Analytics.initialize(yourProvider)` once during bootstrap (and `Analytics.reset()` in tests).
 
 ### `Syntax Error: Expected to find ')'`
 **Cause**: Rarely, complex regex strings or unescaped quotes in descriptions can break generation.

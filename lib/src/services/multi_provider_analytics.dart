@@ -97,22 +97,6 @@ final class MultiProviderAnalytics
           provider.logEvent(name: name, parameters: parameters);
         } catch (error, stackTrace) {
           _handleProviderFailure(provider, name, parameters, error, stackTrace);
-
-          // Only log unexpected errors (not network/format issues which are handled in _handleProviderFailure)
-          final errorStr = error.toString();
-          final isExpected = errorStr.contains('SocketException') ||
-              errorStr.contains('FormatException') ||
-              errorStr.contains('NetworkError');
-
-          if (!isExpected) {
-            _logger.error(
-              '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
-              '  Error: $error\n'
-              '  Event: $name\n',
-              error,
-              stackTrace,
-            );
-          }
         }
       });
     }

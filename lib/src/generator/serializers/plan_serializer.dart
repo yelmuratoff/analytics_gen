@@ -69,11 +69,10 @@ class PlanSerializer {
     }
     if (event.meta.isNotEmpty) {
       buffer.writeln('          meta: <String, Object?>{');
-      for (final entry in event.meta.entries) {
-        final value = entry.value;
-        final valueString = value is String
-            ? "'${StringUtils.escapeSingleQuoted(value)}'"
-            : value.toString();
+      final entries = event.meta.entries.toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
+      for (final entry in entries) {
+        final valueString = _dartLiteral(entry.value);
         buffer.writeln(
           "            '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
         );
@@ -112,9 +111,7 @@ class PlanSerializer {
     if (param.allowedValues != null && param.allowedValues!.isNotEmpty) {
       buffer.writeln('              allowedValues: <Object>[');
       for (final value in param.allowedValues!) {
-        final valueString = value is String
-            ? "'${StringUtils.escapeSingleQuoted(value)}'"
-            : value.toString();
+        final valueString = _dartLiteral(value);
         buffer.writeln(
           '                $valueString,',
         );
@@ -123,11 +120,10 @@ class PlanSerializer {
     }
     if (param.meta.isNotEmpty) {
       buffer.writeln('              meta: <String, Object?>{');
-      for (final entry in param.meta.entries) {
-        final value = entry.value;
-        final valueString = value is String
-            ? "'${StringUtils.escapeSingleQuoted(value)}'"
-            : value.toString();
+      final entries = param.meta.entries.toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
+      for (final entry in entries) {
+        final valueString = _dartLiteral(entry.value);
         buffer.writeln(
           "                '${StringUtils.escapeSingleQuoted(entry.key)}': $valueString,",
         );
@@ -136,5 +132,54 @@ class PlanSerializer {
     }
     buffer.writeln('            ),');
     return buffer.toString();
+  }
+
+  String _dartLiteral(Object? value) {
+    if (value == null) return 'null';
+    if (value is bool) return value ? 'true' : 'false';
+    if (value is num) return value.toString();
+    if (value is String) {
+      return "'${StringUtils.escapeSingleQuoted(value)}'";
+    }
+
+    if (value is Iterable) {
+      final buffer = StringBuffer('<Object?>[');
+      var first = true;
+      for (final v in value) {
+        if (!first) buffer.write(', ');
+        first = false;
+        buffer.write(_dartLiteral(v));
+      }
+      buffer.write(']');
+      return buffer.toString();
+    }
+
+    if (value is Map) {
+      final entries = value.entries.toList()
+        ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
+      final buffer = StringBuffer('<String, Object?>{');
+      var first = true;
+      for (final entry in entries) {
+        if (entry.key is! String) {
+          throw StateError(
+            'Plan meta value contains a non-string key (${entry.key.runtimeType}). '
+            'This should have been rejected during YAML parsing.',
+          );
+        }
+        if (!first) buffer.write(', ');
+        first = false;
+        final key = entry.key as String;
+        buffer.write(
+          "'${StringUtils.escapeSingleQuoted(key)}': ${_dartLiteral(entry.value)}",
+        );
+      }
+      buffer.write('}');
+      return buffer.toString();
+    }
+
+    throw StateError(
+      'Unsupported value type in generated plan: ${value.runtimeType}. '
+      'This should have been rejected during YAML parsing.',
+    );
   }
 }

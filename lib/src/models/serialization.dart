@@ -115,7 +115,7 @@ final class AnalyticsSerialization {
       isNullable: cast<bool?>('is_nullable') ?? false,
       description: cast<String?>('description'),
       allowedValues: map['allowed_values'] != null
-          ? List<String>.from(cast<Iterable>('allowed_values'))
+          ? List<Object>.from(cast<Iterable>('allowed_values'))
           : null,
       regex: cast<String?>('regex'),
       minLength: cast<num?>('min_length')?.toInt(),
