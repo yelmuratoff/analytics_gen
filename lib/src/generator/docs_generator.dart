@@ -8,7 +8,9 @@ import '../util/event_naming.dart';
 import '../util/file_utils.dart';
 import '../util/logger.dart';
 import '../util/string_utils.dart';
+import '../util/type_mapper.dart';
 import 'generation_metadata.dart';
+import 'renderers/enum_renderer.dart';
 
 /// Generates Markdown documentation for analytics events.
 final class DocsGenerator {
@@ -186,7 +188,7 @@ final class DocsGenerator {
           ? '-'
           : event.parameters.map((p) {
               final typeStr =
-                  '`${p.name}` (${p.type}${p.isNullable ? '?' : ''})';
+                  '`${p.name}` (${_formatParameterType(domainName, event, p)})';
               final desc = p.description != null ? ': ${p.description}' : '';
               final allowed =
                   (p.allowedValues != null && p.allowedValues!.isNotEmpty)
@@ -233,7 +235,7 @@ final class DocsGenerator {
         buffer.writeln('Analytics.instance.$methodName(');
         for (final param in event.parameters) {
           final camelParam = _toCamelCase(param.codeName);
-          final example = _getExampleValue(param.type, param.isNullable);
+          final example = _getExampleValue(domainName, event, param);
           buffer.writeln('  $camelParam: $example,');
         }
         buffer.writeln(');');
@@ -264,7 +266,7 @@ final class DocsGenerator {
 
     for (final prop in properties) {
       final name = prop.name;
-      final type = '${prop.type}${prop.isNullable ? '?' : ''}';
+      final type = '${DartTypeMapper.toDartType(prop.type)}${prop.isNullable ? '?' : ''}';
       final desc = prop.description ?? '-';
       final allowed =
           (prop.allowedValues != null && prop.allowedValues!.isNotEmpty)
@@ -293,19 +295,70 @@ final class DocsGenerator {
     return StringUtils.toCamelCase(text);
   }
 
+  bool _isGeneratedEnumParameter(AnalyticsParameter param) {
+    return param.dartType == null &&
+        param.type == 'string' &&
+        (param.allowedValues != null && param.allowedValues!.isNotEmpty);
+  }
+
+  String _formatParameterType(
+    String domainName,
+    AnalyticsEvent event,
+    AnalyticsParameter param,
+  ) {
+    final explicitType = param.dartType;
+    if (explicitType != null && explicitType.trim().isNotEmpty) {
+      return '${explicitType.trim()}${param.isNullable ? '?' : ''}';
+    }
+
+    if (_isGeneratedEnumParameter(param)) {
+      final enumName = const EnumRenderer().buildEnumName(domainName, event, param);
+      return '$enumName${param.isNullable ? '?' : ''}';
+    }
+
+    final dartType = DartTypeMapper.toDartType(param.type);
+    return '$dartType${param.isNullable ? '?' : ''}';
+  }
+
   /// Gets an example value for documentation
-  String _getExampleValue(String type, bool isNullable) {
-    if (isNullable) {
+  String _getExampleValue(
+    String domainName,
+    AnalyticsEvent event,
+    AnalyticsParameter param,
+  ) {
+    if (param.isNullable) {
       return 'null';
     }
 
-    return switch (type.toLowerCase()) {
+    final explicitType = param.dartType;
+    if (explicitType != null && explicitType.trim().isNotEmpty) {
+      return '${explicitType.trim()}.values.first';
+    }
+
+    if (_isGeneratedEnumParameter(param)) {
+      final allowedValues = param.allowedValues;
+      if (allowedValues != null && allowedValues.isNotEmpty) {
+        final enumName = const EnumRenderer().buildEnumName(domainName, event, param);
+        final firstValue = allowedValues.first.toString();
+        final enumValue = const EnumRenderer().toEnumIdentifier(firstValue);
+        return '$enumName.$enumValue';
+      }
+    }
+
+    final rawType = param.type.trim();
+    final normalizedType = rawType.toLowerCase();
+
+    return switch (normalizedType) {
       'int' => '123',
       'bool' => 'true',
       'double' || 'float' => '1.5',
       'string' => "'example'",
+      'datetime' || 'date' => 'DateTime.fromMillisecondsSinceEpoch(0)',
+      'uri' => "Uri.parse('https://example.com')",
       'map' => "{'key': 'value'}",
+      _ when normalizedType.startsWith('map<') => "{'key': 'value'}",
       'list' => "['item1', 'item2']",
+      _ when normalizedType.startsWith('list<') => "['item1', 'item2']",
       _ => 'value',
     };
   }

@@ -223,6 +223,10 @@ void main() {
 
       final content = await docsFile.readAsString();
       expect(content, contains('(allowed: email, manual)'));
+      expect(
+        content,
+        contains('typeOption: AnalyticsBillingPurchaseTypeOptionEnum.email'),
+      );
       expect(content, contains("{'key': 'value'}"));
       expect(content, contains("['item1', 'item2']"));
       expect(content, contains('Analytics.instance.logBillingPurchase('));
@@ -230,6 +234,46 @@ void main() {
         logs.join('\n'),
         contains('✓ Generated analytics documentation at:'),
       );
+    });
+
+    test('renders dart_type parameters with their explicit Dart type', () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  verify_user:\n'
+        '    description: User verification status change\n'
+        '    parameters:\n'
+        '      status:\n'
+        '        dart_type: VerificationStatus\n'
+        '        import: package:example/models.dart\n',
+      );
+
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final content = await File(
+        p.join(tempProject.path, config.outputs.docsPath!),
+      ).readAsString();
+
+      expect(content, contains('`status` (VerificationStatus)'));
+      expect(content, contains('status: VerificationStatus.values.first'));
     });
 
     test('falls back to default analytics_docs.md when docsPath omitted',
