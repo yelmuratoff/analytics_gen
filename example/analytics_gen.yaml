@@ -21,7 +21,7 @@ analytics_gen:
   # Output configurations
   outputs:
     # Path where generated Dart code will be written (relative to lib/)
-    dart: src/analytics/generated
+    dart: lib/src/analytics/generated
 
     # Path for documentation (optional)
     docs: docs/analytics_events.md
