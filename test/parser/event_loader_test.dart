@@ -217,5 +217,135 @@ void main() {
       expect(sources, hasLength(1));
       expect(sources.first.filePath, eventFile.path);
     });
+
+    group('glob pattern support', () {
+      test('loads files matching recursive glob pattern (**/*.yaml)', () async {
+        // Create nested directory structure
+        final nestedDir = fs.directory('${tempDir.path}/domain');
+        await nestedDir.create(recursive: true);
+        final deepDir = fs.directory('${tempDir.path}/domain/sub');
+        await deepDir.create(recursive: true);
+
+        // Note: **/*.yaml matches subdirectories only, not root files
+        final domainFile = fs.file('${tempDir.path}/domain/auth.yaml');
+        final deepFile = fs.file('${tempDir.path}/domain/sub/deep.yaml');
+        await domainFile.writeAsString('auth: 2');
+        await deepFile.writeAsString('deep: 3');
+
+        final loader = EventLoader(
+          eventsPath: '${tempDir.path}/**/*.yaml',
+          log: logger,
+          fs: fs,
+        );
+
+        final sources = await loader.loadEventFiles();
+
+        // Should find YAML files in subdirectories
+        expect(sources, hasLength(2));
+        final paths = sources.map((s) => s.filePath).toList();
+        expect(paths.any((p) => p.endsWith('auth.yaml')), isTrue);
+        expect(paths.any((p) => p.endsWith('deep.yaml')), isTrue);
+      });
+
+      test('loads files matching single-level glob pattern (*.yaml)', () async {
+        // Create nested directory structure
+        final nestedDir = fs.directory('${tempDir.path}/domain');
+        await nestedDir.create(recursive: true);
+
+        final topFile = fs.file('${tempDir.path}/top.yaml');
+        final nestedFile = fs.file('${tempDir.path}/domain/nested.yaml');
+        await topFile.writeAsString('top: 1');
+        await nestedFile.writeAsString('nested: 2');
+
+        final loader = EventLoader(
+          eventsPath: '${tempDir.path}/*.yaml',
+          log: logger,
+          fs: fs,
+        );
+
+        final sources = await loader.loadEventFiles();
+
+        // Should only find top-level file
+        expect(sources, hasLength(1));
+        expect(sources.first.filePath, topFile.path);
+      });
+
+      test('excludes context and shared files when using glob', () async {
+        final eventFile = fs.file('${tempDir.path}/event.yaml');
+        final contextFile = fs.file('${tempDir.path}/context.yaml');
+        final sharedFile = fs.file('${tempDir.path}/shared.yaml');
+        await eventFile.writeAsString('name: event');
+        await contextFile.writeAsString('ctx: data');
+        await sharedFile.writeAsString('shared: data');
+
+        final loader = EventLoader(
+          eventsPath: '${tempDir.path}/*.yaml',
+          contextFiles: [contextFile.path],
+          sharedParameterFiles: [sharedFile.path],
+          log: logger,
+          fs: fs,
+        );
+
+        final sources = await loader.loadEventFiles();
+
+        expect(sources, hasLength(1));
+        expect(sources.first.filePath, eventFile.path);
+      });
+
+      test('warns when glob pattern matches no files', () async {
+        final loader = EventLoader(
+          eventsPath: '${tempDir.path}/nonexistent/**/*.yaml',
+          log: logger,
+          fs: fs,
+        );
+
+        final sources = await loader.loadEventFiles();
+
+        expect(sources, isEmpty);
+        expect(
+          logger.messages.any((m) => m.contains('WARNING')),
+          isTrue,
+        );
+      });
+
+      test('sorts files from glob pattern alphabetically', () async {
+        final fileC = fs.file('${tempDir.path}/c.yaml');
+        final fileA = fs.file('${tempDir.path}/a.yaml');
+        final fileB = fs.file('${tempDir.path}/b.yaml');
+        await fileC.writeAsString('c: 3');
+        await fileA.writeAsString('a: 1');
+        await fileB.writeAsString('b: 2');
+
+        final loader = EventLoader(
+          eventsPath: '${tempDir.path}/*.yaml',
+          log: logger,
+          fs: fs,
+        );
+
+        final sources = await loader.loadEventFiles();
+
+        expect(sources, hasLength(3));
+        expect(sources[0].filePath, fileA.path);
+        expect(sources[1].filePath, fileB.path);
+        expect(sources[2].filePath, fileC.path);
+      });
+
+      test('handles .yml extension with glob', () async {
+        final ymlFile = fs.file('${tempDir.path}/events.yml');
+        final yamlFile = fs.file('${tempDir.path}/events.yaml');
+        await ymlFile.writeAsString('yml: 1');
+        await yamlFile.writeAsString('yaml: 2');
+
+        final loader = EventLoader(
+          eventsPath: '${tempDir.path}/*',
+          log: logger,
+          fs: fs,
+        );
+
+        final sources = await loader.loadEventFiles();
+
+        expect(sources, hasLength(2));
+      });
+    });
   });
 }

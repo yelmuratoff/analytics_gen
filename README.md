@@ -62,7 +62,8 @@
    ```yaml
    analytics_gen:
      inputs:
-       events: 'events'
+       events: 'events'               # Directory path (scans top-level)
+       # events: 'events/**/*.yaml'   # Or use glob patterns for recursive scanning
      outputs:
        dart: 'lib/src/analytics/generated'
    ```
@@ -78,6 +79,7 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/ye
 
 - **Type-safe analytics** - compile-time event + parameter checking, optional allowed-value guards.
 - **Domain-per-file generation** - readable diffs, mixins scoped to a single domain.
+- **Glob pattern support** - use `events/**/*.yaml` for recursive scanning or organize events in subdirectories.
 - **Deterministic outputs** - sorted parsing with fingerprints to keep reviewers sane.
 - **Multi-provider fan-out** - send the same event to multiple SDKs with error handling.
 - **Docs + exports** - Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.

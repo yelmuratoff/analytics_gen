@@ -1,6 +1,8 @@
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
+import 'package:glob/glob.dart';
+import 'package:glob/list_local_fs.dart';
 
 /// Represents a source file containing analytics definitions.
 final class AnalyticsSource {
@@ -18,6 +20,11 @@ final class AnalyticsSource {
 }
 
 /// Handles discovery and loading of analytics definition files.
+///
+/// Supports glob patterns for [eventsPath]:
+/// - `events` - scans the `events` directory (non-recursive)
+/// - `events/**/*.yaml` - recursively finds all YAML files
+/// - `events/*.yaml` - finds YAML files in the top-level directory only
 final class EventLoader {
   /// Creates a new event loader.
   EventLoader({
@@ -26,22 +33,24 @@ final class EventLoader {
     List<String> sharedParameterFiles = const [],
     this.log = const NoOpLogger(),
     this.fs = const LocalFileSystem(),
-  })  : _contextFiles = contextFiles
-            .map((p) => p.replaceAll('\\', '/'))
-            .map((p) => p.endsWith('.yaml') || p.endsWith('.yml')
-                ? p
-                : p) // Keep extension
-            .toSet(),
-        _sharedParameterFiles =
-            sharedParameterFiles.map((p) => p.replaceAll('\\', '/')).toSet();
+  })  : _isGlob = _containsGlobChars(eventsPath),
+        _contextFiles = {
+          for (final path in contextFiles) path.replaceAll('\\', '/'),
+        },
+        _sharedParameterFiles = {
+          for (final path in sharedParameterFiles) path.replaceAll('\\', '/'),
+        };
 
-  /// The path to the directory containing event files.
+  /// The path or glob pattern to find event files.
   final String eventsPath;
 
-  /// The list of normalized context files to load.
+  /// Cached glob detection result.
+  final bool _isGlob;
+
+  /// Normalized context file paths for O(1) lookup.
   final Set<String> _contextFiles;
 
-  /// The list of normalized shared parameter files to ignore.
+  /// Normalized shared parameter file paths for O(1) lookup.
   final Set<String> _sharedParameterFiles;
 
   /// The logger to use.
@@ -56,71 +65,173 @@ final class EventLoader {
   /// The list of shared parameter files to ignore.
   List<String> get sharedParameterFiles => _sharedParameterFiles.toList();
 
-  /// Loads all YAML files from the configured events directory.
+  /// Returns true if [path] contains glob pattern characters.
+  static bool _containsGlobChars(String path) {
+    const chars = [0x2A, 0x3F, 0x5B, 0x7B]; // *, ?, [, {
+    for (var i = 0; i < path.length; i++) {
+      if (chars.contains(path.codeUnitAt(i))) return true;
+    }
+    return false;
+  }
+
+  /// Checks if a file should be excluded (context or shared parameter file).
+  bool _shouldExclude(String normalizedPath) {
+    // O(1) direct lookup
+    if (_contextFiles.contains(normalizedPath) ||
+        _sharedParameterFiles.contains(normalizedPath)) {
+      return true;
+    }
+    // O(n) suffix check for relative paths
+    for (final c in _contextFiles) {
+      if (normalizedPath.endsWith('/$c')) return true;
+    }
+    for (final c in _sharedParameterFiles) {
+      if (normalizedPath.endsWith('/$c')) return true;
+    }
+    return false;
+  }
+
+  /// Returns true if file has YAML extension.
+  static bool _isYamlFile(String path) =>
+      path.endsWith('.yaml') || path.endsWith('.yml');
+
+  /// Loads all YAML files matching the configured [eventsPath].
   Future<List<AnalyticsSource>> loadEventFiles() async {
+    return _isGlob ? _loadEventFilesWithGlob() : _loadEventFilesFromDirectory();
+  }
+
+  /// Loads event files using glob pattern matching.
+  Future<List<AnalyticsSource>> _loadEventFilesWithGlob() async {
+    List<File> yamlFiles;
+
+    if (fs is LocalFileSystem) {
+      yamlFiles = Glob(eventsPath)
+          .listSync()
+          .whereType<File>()
+          .where((f) => _isYamlFile(f.path))
+          .toList();
+    } else {
+      yamlFiles = await _listFilesMatchingPattern();
+    }
+
+    if (yamlFiles.isEmpty) {
+      log.warning('No YAML files found matching pattern: $eventsPath');
+      return const [];
+    }
+
+    yamlFiles.sort((a, b) => a.path.compareTo(b.path));
+
+    log.info('Found ${yamlFiles.length} YAML file(s) matching $eventsPath');
+    return _loadSourcesFromFiles(yamlFiles);
+  }
+
+  /// Loads event files from a directory (original behavior).
+  Future<List<AnalyticsSource>> _loadEventFilesFromDirectory() async {
     final eventsDir = fs.directory(eventsPath);
 
     if (!eventsDir.existsSync()) {
       log.warning('Events directory not found at: $eventsPath');
-      return [];
+      return const [];
     }
 
     final yamlFiles = eventsDir
         .listSync()
         .whereType<File>()
-        .where((f) => f.path.endsWith('.yaml') || f.path.endsWith('.yml'))
+        .where((f) => _isYamlFile(f.path))
         .toList()
       ..sort((a, b) => a.path.compareTo(b.path));
 
     if (yamlFiles.isEmpty) {
       log.warning('No YAML files found in: $eventsPath');
-      return [];
+      return const [];
     }
 
     log.info('Found ${yamlFiles.length} YAML file(s) in $eventsPath');
-
-    final futures = yamlFiles.map((file) async {
-      // Skip context files if they happen to be in the events directory
-      // We normalize paths to ensure consistent comparison
-      final normalizedPath = file.path.replaceAll('\\', '/');
-      if (_contextFiles
-          .any((c) => normalizedPath == c || normalizedPath.endsWith('/$c'))) {
-        return null;
-      }
-      if (_sharedParameterFiles
-          .any((c) => normalizedPath == c || normalizedPath.endsWith('/$c'))) {
-        return null;
-      }
-
-      final content = await file.readAsString();
-      return AnalyticsSource(
-        filePath: file.path,
-        content: content,
-      );
-    });
-
-    return (await Future.wait(futures)).whereType<AnalyticsSource>().toList();
+    return _loadSourcesFromFiles(yamlFiles);
   }
 
-  /// Loads all configured context files.
-  Future<List<AnalyticsSource>> loadContextFiles() async {
-    final sources = <AnalyticsSource>[];
+  /// Loads sources from files in parallel, excluding context/shared files.
+  Future<List<AnalyticsSource>> _loadSourcesFromFiles(List<File> files) async {
+    final results = await Future.wait(
+      files.map((file) async {
+        final normalizedPath = file.path.replaceAll('\\', '/');
+        if (_shouldExclude(normalizedPath)) return null;
+        return AnalyticsSource(
+          filePath: file.path,
+          content: await file.readAsString(),
+        );
+      }),
+    );
+    return results.whereType<AnalyticsSource>().toList();
+  }
 
-    for (final filePath in contextFiles) {
-      final file = fs.file(filePath);
-      if (!file.existsSync()) {
-        log.warning('Context file not found: $filePath');
-        continue;
-      }
+  /// Lists files matching the glob pattern (for non-LocalFileSystem).
+  Future<List<File>> _listFilesMatchingPattern() async {
+    final normalizedPattern = eventsPath.replaceAll('\\', '/');
+    final patternParts = normalizedPattern.split('/');
+    final baseParts = <String>[];
 
-      final content = await file.readAsString();
-      sources.add(AnalyticsSource(
-        filePath: filePath,
-        content: content,
-      ));
+    for (final part in patternParts) {
+      if (_containsGlobChars(part)) break;
+      baseParts.add(part);
     }
 
-    return sources;
+    if (baseParts.isEmpty) {
+      log.warning('Glob pattern must have a base directory: $eventsPath');
+      return const [];
+    }
+
+    final basePath = baseParts.join('/');
+    final dir = fs.directory(basePath);
+    if (!dir.existsSync()) {
+      log.warning('Base directory not found: $basePath');
+      return const [];
+    }
+
+    // Always collect recursively to ensure all potential matches are found
+    final isRecursive = normalizedPattern.contains('**');
+    final allFiles = <File>[];
+    _collectFiles(dir, allFiles, recursive: isRecursive);
+
+    final glob = Glob(normalizedPattern);
+    return allFiles.where((file) {
+      final filePath = file.path.replaceAll('\\', '/');
+      if (!_isYamlFile(filePath)) return false;
+      // Try matching both with and without leading slash
+      return glob.matches(filePath) ||
+          (filePath.startsWith('/') && glob.matches(filePath.substring(1)));
+    }).toList();
+  }
+
+  /// Collects files from a directory synchronously.
+  void _collectFiles(Directory dir, List<File> results,
+      {required bool recursive}) {
+    for (final entity in dir.listSync()) {
+      switch (entity) {
+        case File():
+          results.add(entity);
+        case Directory() when recursive:
+          _collectFiles(entity, results, recursive: true);
+      }
+    }
+  }
+
+  /// Loads all configured context files in parallel.
+  Future<List<AnalyticsSource>> loadContextFiles() async {
+    final results = await Future.wait(
+      _contextFiles.map((filePath) async {
+        final file = fs.file(filePath);
+        if (!file.existsSync()) {
+          log.warning('Context file not found: $filePath');
+          return null;
+        }
+        return AnalyticsSource(
+          filePath: filePath,
+          content: await file.readAsString(),
+        );
+      }),
+    );
+    return results.whereType<AnalyticsSource>().toList();
   }
 
   /// Loads a single source file.
@@ -130,11 +241,9 @@ final class EventLoader {
       log.warning('File not found: $filePath');
       return null;
     }
-
-    final content = await file.readAsString();
     return AnalyticsSource(
       filePath: filePath,
-      content: content,
+      content: await file.readAsString(),
     );
   }
 }

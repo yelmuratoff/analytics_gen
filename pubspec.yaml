@@ -25,6 +25,7 @@ dependencies:
   meta: ^1.11.0
   analyzer: ^7.7.1
   file: ^7.0.1
+  glob: ^2.1.2
 
 dev_dependencies:
   lints: ^6.0.0
