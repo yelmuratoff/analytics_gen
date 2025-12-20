@@ -1,5 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, unused_import
+// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
 
@@ -57,13 +57,10 @@ final class Analytics extends AnalyticsBase
         AnalyticsTheme,
         AnalyticsUserProperties {
   final IAnalytics _analytics;
-  final AnalyticsCapabilityResolver _capabilities;
+  final AnalyticsCapabilityResolver? _capabilities;
 
   /// Constructor for Dependency Injection.
-  const Analytics(
-    this._analytics, [
-    this._capabilities = const NullCapabilityResolver(),
-  ]);
+  const Analytics(this._analytics, [this._capabilities]);
 
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
@@ -82,7 +79,7 @@ final class Analytics extends AnalyticsBase
               type: 'string',
               isNullable: false,
               description: 'Login method (email, google, apple)',
-              meta: <String, Object?>{'pii': true},
+              meta: <String, Object?>{'is_sensitive': true},
             ),
           ],
         ),
@@ -156,6 +153,23 @@ final class Analytics extends AnalyticsBase
               type: 'string',
               isNullable: true,
               description: 'Optional referral code used during signup',
+            ),
+          ],
+        ),
+        AnalyticsEvent(
+          name: 'verify_user',
+          description: 'User verification status change',
+          deprecated: false,
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'local_status',
+              type: 'dynamic',
+              isNullable: false,
+            ),
+            AnalyticsParameter(
+              name: 'status',
+              type: 'dynamic',
+              isNullable: false,
             ),
           ],
         ),
@@ -263,12 +277,8 @@ final class Analytics extends AnalyticsBase
     ),
   ];
 
-  static const Map<String, Set<String>> _piiProperties = {
-    'auth: login': {'method'},
-  };
-
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '61c5a4357487b877';
+  static const String planFingerprint = '-38de3d7f6b7d2668';
 
   // --- Singleton Compatibility ---
 
@@ -303,37 +313,12 @@ final class Analytics extends AnalyticsBase
     _instance = null;
   }
 
-  /// Returns a copy of [parameters] with PII values redacted.
-  ///
-  /// PII properties are defined in YAML with `meta: { pii: true }`.
-  /// This method is useful for logging to console or non-secure backends.
-  static Map<String, Object?> sanitizeParams(
-    String eventName,
-    Map<String, Object?>? parameters,
-  ) {
-    if (parameters == null || parameters.isEmpty) {
-      return const {};
-    }
-
-    final piiKeys = _piiProperties[eventName];
-    if (piiKeys == null) {
-      return Map.of(parameters);
-    }
-
-    final sanitized = Map.of(parameters);
-    for (final key in piiKeys) {
-      if (sanitized.containsKey(key)) {
-        sanitized[key] = '[REDACTED]';
-      }
-    }
-    return sanitized;
-  }
-
   // --- Implementation ---
 
   @override
   IAnalytics get logger => _analytics;
 
   @override
-  AnalyticsCapabilityResolver get capabilities => _capabilities;
+  AnalyticsCapabilityResolver get capabilities =>
+      _capabilities ?? super.capabilities;
 }

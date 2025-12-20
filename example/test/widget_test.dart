@@ -1,5 +1,5 @@
 @Tags(['flutter'])
-library analytics_gen_example_widget_test;
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +30,6 @@ void main() {
     await tester.pump();
 
     expect(controller.events.length, 1);
-    expect(controller.events.first.name, 'auth: login');
+    expect(controller.events.first.name, 'auth_login');
   });
 }

@@ -1,172 +1,11 @@
-import 'dart:convert';
-
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
-import 'package:source_span/source_span.dart';
-import 'package:yaml/yaml.dart';
-
-import '../config/naming_strategy.dart';
-import '../core/exceptions.dart';
 import '../models/analytics_parameter.dart';
+import '../util/copy_with.dart';
 
 /// Represents a single analytics event.
 @immutable
 final class AnalyticsEvent {
-  /// Parses an event from a YAML node.
-  factory AnalyticsEvent.fromYaml(
-    String eventName,
-    YamlNode valueNode, {
-    required String domainName,
-    required String filePath,
-    required NamingStrategy naming,
-    Map<String, AnalyticsParameter> sharedParameters = const {},
-    bool enforceCentrallyDefinedParameters = false,
-    bool preventEventParameterDuplicates = false,
-    bool strictEventNames = true,
-    SourceSpan? keySpan,
-  }) {
-    if (valueNode is! YamlMap) {
-      throw AnalyticsParseException(
-        'Event "$domainName.$eventName" must be a map.',
-        filePath: filePath,
-        span: valueNode.span,
-      );
-    }
-
-    final eventData = valueNode;
-
-    // Strict Event Name Validation: Check for interpolation
-    if (strictEventNames &&
-        (eventName.contains('{') || eventName.contains('}'))) {
-      throw AnalyticsParseException(
-        'Event name "$eventName" contains interpolation characters "{}" or "{}". '
-        'Dynamic event names are discouraged as they lead to high cardinality.',
-        filePath: filePath,
-        span: keySpan ?? valueNode.span,
-      );
-    }
-
-    final description =
-        eventData['description'] as String? ?? 'No description provided';
-    final customEventName = eventData['event_name'] as String?;
-
-    if (customEventName != null) {
-      final customEventNameNode = eventData.nodes['event_name'];
-      if (strictEventNames &&
-          (customEventName.contains('{') || customEventName.contains('}'))) {
-        throw AnalyticsParseException(
-          'Event name "$customEventName" contains interpolation characters "{}" or "{}". '
-          'Dynamic event names are discouraged as they lead to high cardinality.',
-          filePath: filePath,
-          span: customEventNameNode?.span,
-        );
-      }
-    }
-    final identifier = eventData['identifier'] as String?;
-    final deprecated = eventData['deprecated'] as bool? ?? false;
-    final replacement = eventData['replacement'] as String?;
-    final addedIn = eventData['added_in'] as String?;
-    final deprecatedIn = eventData['deprecated_in'] as String?;
-
-    final dualWriteToNode = eventData.nodes['dual_write_to'];
-    List<String>? dualWriteTo;
-    if (dualWriteToNode != null) {
-      if (dualWriteToNode is YamlList) {
-        dualWriteTo = dualWriteToNode.map((e) => e.toString()).toList();
-      } else {
-        throw AnalyticsParseException(
-          'Field "dual_write_to" must be a list of strings.',
-          filePath: filePath,
-          span: dualWriteToNode.span,
-        );
-      }
-    }
-
-    final metaNode = eventData.nodes['meta'];
-    Map<String, dynamic> meta = const {};
-    if (metaNode != null) {
-      if (metaNode is! YamlMap) {
-        throw AnalyticsParseException(
-          'The "meta" field must be a map.',
-          filePath: filePath,
-          span: metaNode.span,
-        );
-      }
-      meta = metaNode.map((key, value) => MapEntry(key.toString(), value));
-    }
-
-    final rawParameters = eventData.nodes['parameters'];
-    final parameters = <AnalyticsParameter>[];
-
-    if (rawParameters != null) {
-      if (rawParameters is! YamlMap) {
-        throw AnalyticsParseException(
-          'Parameters for event "$domainName.$eventName" must be a map.',
-          filePath: filePath,
-          span: rawParameters.span,
-        );
-      }
-
-      final parsedParams = AnalyticsParameter.fromYamlMap(
-        rawParameters,
-        domainName: domainName,
-        eventName: eventName,
-        filePath: filePath,
-        naming: naming,
-        sharedParameters: sharedParameters,
-        enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
-        preventEventParameterDuplicates: preventEventParameterDuplicates,
-      );
-      parameters.addAll(parsedParams);
-    }
-
-    return AnalyticsEvent(
-      name: eventName,
-      description: description,
-      identifier: identifier,
-      customEventName: customEventName,
-      parameters: parameters,
-      deprecated: deprecated,
-      replacement: replacement,
-      meta: meta,
-      sourcePath: filePath,
-      lineNumber: valueNode.span.start.line + 1,
-      addedIn: addedIn,
-      deprecatedIn: deprecatedIn,
-      dualWriteTo: dualWriteTo,
-    );
-  }
-
-  /// Creates a new analytics event from a map.
-  factory AnalyticsEvent.fromMap(Map<String, dynamic> map) {
-    T cast<T>(String k) => map[k] is T
-        ? map[k] as T
-        : throw ArgumentError.value(map[k], k, '$T ← ${map[k].runtimeType}');
-    return AnalyticsEvent(
-      name: cast<String?>('name') ?? '',
-      description: cast<String?>('description') ?? '',
-      identifier: cast<String?>('identifier'),
-      customEventName: cast<String?>('custom_event_name'),
-      parameters: List<AnalyticsParameter>.from(cast<Iterable?>('parameters')
-              ?.map((x) => AnalyticsParameter.fromMap(Map.from(x as Map))) ??
-          const <AnalyticsParameter>[]),
-      deprecated: cast<bool?>('deprecated') ?? false,
-      replacement: cast<String?>('replacement'),
-      meta: Map<String, dynamic>.from(cast<Map?>('meta') ?? const {}),
-      sourcePath: cast<String?>('source_path'),
-      lineNumber: cast<num?>('line_number')?.toInt(),
-      addedIn: cast<String?>('added_in'),
-      deprecatedIn: cast<String?>('deprecated_in'),
-      dualWriteTo: map['dual_write_to'] != null
-          ? List<String>.from(cast<Iterable>('dual_write_to'))
-          : null,
-    );
-  }
-
-  /// Creates a new analytics event from a JSON string.
-  factory AnalyticsEvent.fromJson(String source) =>
-      AnalyticsEvent.fromMap(json.decode(source) as Map<String, dynamic>);
-
   /// Creates a new analytics event.
   const AnalyticsEvent({
     required this.name,
@@ -182,6 +21,7 @@ final class AnalyticsEvent {
     this.addedIn,
     this.deprecatedIn,
     this.dualWriteTo,
+    this.interpolatedName,
   });
 
   /// The name of the event.
@@ -223,6 +63,11 @@ final class AnalyticsEvent {
   /// List of other events to trigger when this event is logged (dual-write).
   final List<String>? dualWriteTo;
 
+  /// The name of the event with placeholders replaced by Dart string interpolation.
+  ///
+  /// Populated by the parser if the event name contains placeholders.
+  final String? interpolatedName;
+
   @override
   String toString() => '$name (${parameters.length} parameters)';
 
@@ -244,7 +89,8 @@ final class AnalyticsEvent {
         other.lineNumber == lineNumber &&
         other.addedIn == addedIn &&
         other.deprecatedIn == deprecatedIn &&
-        collectionEquals(other.dualWriteTo, dualWriteTo);
+        collectionEquals(other.dualWriteTo, dualWriteTo) &&
+        other.interpolatedName == interpolatedName;
   }
 
   @override
@@ -265,61 +111,68 @@ final class AnalyticsEvent {
       addedIn,
       deprecatedIn,
       deepHash(dualWriteTo),
+      interpolatedName,
     ]);
   }
 
   /// Creates a copy of this analytics event with the specified properties changed.
+  ///
+  /// Nullable fields use [copyWithNull] sentinel to distinguish between
+  /// "not provided" and "explicitly set to null":
+  /// ```dart
+  /// // Keep current value
+  /// event.copyWith();
+  ///
+  /// // Set to new value
+  /// event.copyWith(identifier: 'new-id');
+  ///
+  /// // Explicitly clear to null
+  /// event.copyWith(identifier: null);
+  /// ```
   AnalyticsEvent copyWith({
     String? name,
     String? description,
-    String? identifier,
-    String? customEventName,
+    Object? identifier = copyWithNull,
+    Object? customEventName = copyWithNull,
     List<AnalyticsParameter>? parameters,
     bool? deprecated,
-    String? replacement,
+    Object? replacement = copyWithNull,
     Map<String, dynamic>? meta,
-    String? sourcePath,
-    int? lineNumber,
-    String? addedIn,
-    String? deprecatedIn,
-    List<String>? dualWriteTo,
+    Object? sourcePath = copyWithNull,
+    Object? lineNumber = copyWithNull,
+    Object? addedIn = copyWithNull,
+    Object? deprecatedIn = copyWithNull,
+    Object? dualWriteTo = copyWithNull,
+    Object? interpolatedName = copyWithNull,
   }) {
     return AnalyticsEvent(
       name: name ?? this.name,
       description: description ?? this.description,
-      identifier: identifier ?? this.identifier,
-      customEventName: customEventName ?? this.customEventName,
+      identifier:
+          identifier == copyWithNull ? this.identifier : identifier as String?,
+      customEventName: customEventName == copyWithNull
+          ? this.customEventName
+          : customEventName as String?,
       parameters: parameters ?? this.parameters,
       deprecated: deprecated ?? this.deprecated,
-      replacement: replacement ?? this.replacement,
+      replacement: replacement == copyWithNull
+          ? this.replacement
+          : replacement as String?,
       meta: meta ?? this.meta,
-      sourcePath: sourcePath ?? this.sourcePath,
-      lineNumber: lineNumber ?? this.lineNumber,
-      addedIn: addedIn ?? this.addedIn,
-      deprecatedIn: deprecatedIn ?? this.deprecatedIn,
-      dualWriteTo: dualWriteTo ?? this.dualWriteTo,
+      sourcePath:
+          sourcePath == copyWithNull ? this.sourcePath : sourcePath as String?,
+      lineNumber:
+          lineNumber == copyWithNull ? this.lineNumber : lineNumber as int?,
+      addedIn: addedIn == copyWithNull ? this.addedIn : addedIn as String?,
+      deprecatedIn: deprecatedIn == copyWithNull
+          ? this.deprecatedIn
+          : deprecatedIn as String?,
+      dualWriteTo: dualWriteTo == copyWithNull
+          ? this.dualWriteTo
+          : dualWriteTo as List<String>?,
+      interpolatedName: interpolatedName == copyWithNull
+          ? this.interpolatedName
+          : interpolatedName as String?,
     );
   }
-
-  /// Converts this analytics event to a map.
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'description': description,
-      'identifier': identifier,
-      'custom_event_name': customEventName,
-      'parameters': parameters.map((x) => x.toMap()).toList(),
-      'deprecated': deprecated,
-      'replacement': replacement,
-      'meta': meta,
-      'source_path': sourcePath,
-      'line_number': lineNumber,
-      'added_in': addedIn,
-      'deprecated_in': deprecatedIn,
-      'dual_write_to': dualWriteTo,
-    };
-  }
-
-  /// Converts this analytics event to a JSON string.
-  String toJson() => json.encode(toMap());
 }

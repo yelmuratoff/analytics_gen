@@ -32,11 +32,12 @@ final class BatchingAnalytics implements IAnalytics {
     this.minRetryDelay = const Duration(milliseconds: 500),
     this.maxRetryDelay = const Duration(seconds: 10),
     Duration? flushInterval,
-    this.onFlushError,
+    BatchFlushErrorHandler? onFlushError,
     this.onEventDropped,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
         assert(maxRetries >= 0, 'maxRetries must be non-negative.'),
-        _delegate = delegate {
+        _delegate = delegate,
+        onFlushError = onFlushError ?? _defaultErrorHandler {
     if (flushInterval != null) {
       _timer = Timer.periodic(flushInterval, (_) {
         if (_pending.isNotEmpty) {
@@ -44,6 +45,15 @@ final class BatchingAnalytics implements IAnalytics {
         }
       });
     }
+  }
+
+  static void _defaultErrorHandler(Object error, StackTrace stackTrace) {
+    // At minimum, log to console in production
+    // ignore: avoid_print
+    print('[BatchingAnalytics] Flush failed: $error');
+
+    // Throw in debug mode to make issues visible during development
+    assert(false, 'Batch flush failed. Configure onFlushError callback.');
   }
 
   final IAsyncAnalytics _delegate;
@@ -139,12 +149,14 @@ final class BatchingAnalytics implements IAnalytics {
     _activeFlush = future;
 
     () async {
+      var didFail = false;
       try {
         await _drainPending();
         if (!completer.isCompleted) {
           completer.complete();
         }
       } catch (error, stackTrace) {
+        didFail = true;
         if (!completer.isCompleted) {
           completer.completeError(error, stackTrace);
         }
@@ -152,6 +164,13 @@ final class BatchingAnalytics implements IAnalytics {
         if (identical(_activeFlush, future)) {
           _activeFlush = null;
         }
+        if (didFail) {
+          // A failed flush re-queues remaining events. Do not auto-retry here:
+          // - Manual `flush()` callers expect to handle the error and decide when to retry.
+          // - Auto flush errors are surfaced via `onFlushError` and should not loop silently.
+          _needsFollowUpFlush = false;
+        }
+
         if (_pending.isNotEmpty && _needsFollowUpFlush) {
           _needsFollowUpFlush = false;
           _scheduleAutoFlush();
@@ -161,8 +180,11 @@ final class BatchingAnalytics implements IAnalytics {
       }
     }();
 
+    // If we are just auto-flushing, we don't want to crash the caller (e.g. dispose)
+    // or leave an unhandled future error.
     if (!propagateErrors) {
-      return future.catchError((_) {});
+      // ignore: unawaited_futures
+      future.catchError((_) {});
     }
 
     return future;
@@ -192,8 +214,7 @@ final class BatchingAnalytics implements IAnalytics {
       }
     } catch (error, stackTrace) {
       if (nextIndex < batch.length) {
-        final failedEvent = batch[nextIndex];
-        failedEvent.retryCount++;
+        final failedEvent = batch[nextIndex].withIncrementedRetry();
 
         if (failedEvent.retryCount >= maxRetries) {
           // Drop the poison pill event by skipping it in the re-queue
@@ -208,6 +229,8 @@ final class BatchingAnalytics implements IAnalytics {
           // Backoff before retrying
           final delay = _calculateBackoff(failedEvent.retryCount);
           await Future.delayed(delay);
+          // Replace the failed event with updated retry count
+          batch[nextIndex] = failedEvent;
         }
 
         if (nextIndex < batch.length) {
@@ -226,10 +249,22 @@ final class BatchingAnalytics implements IAnalytics {
   }
 }
 
+/// Immutable queued event with retry tracking.
 final class _QueuedAnalyticsEvent {
-  _QueuedAnalyticsEvent(this.name, this.parameters);
+  const _QueuedAnalyticsEvent(
+    this.name,
+    this.parameters, {
+    this.retryCount = 0,
+  });
 
   final String name;
   final AnalyticsParams? parameters;
-  int retryCount = 0;
+  final int retryCount;
+
+  /// Returns a new instance with incremented retry count.
+  _QueuedAnalyticsEvent withIncrementedRetry() => _QueuedAnalyticsEvent(
+        name,
+        parameters,
+        retryCount: retryCount + 1,
+      );
 }

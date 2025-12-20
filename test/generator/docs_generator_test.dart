@@ -37,9 +37,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final logs = <String>[];
@@ -50,7 +50,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -59,7 +59,7 @@ void main() {
       await generator.generate(domains);
 
       final docsFile = File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       );
 
       expect(docsFile.existsSync(), isTrue);
@@ -113,9 +113,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -124,7 +124,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -133,7 +133,7 @@ void main() {
       await generator.generate(domains);
 
       final content = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       final authIndex = content.indexOf('## auth');
@@ -150,7 +150,7 @@ void main() {
     test('skips documentation generation when no events exist', () async {
       final logs = <String>[];
       final config = AnalyticsConfig(
-        eventsPath: 'events',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
       );
       final generator = DocsGenerator(
         config: config,
@@ -159,7 +159,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -197,9 +197,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/custom_documentation.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/custom_documentation.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
       final logs = <String>[];
 
@@ -210,7 +210,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -218,11 +218,15 @@ void main() {
 
       await generator.generate(domains);
 
-      final docsFile = File(p.join(tempProject.path, config.docsPath!));
+      final docsFile = File(p.join(tempProject.path, config.outputs.docsPath!));
       expect(docsFile.existsSync(), isTrue);
 
       final content = await docsFile.readAsString();
       expect(content, contains('(allowed: email, manual)'));
+      expect(
+        content,
+        contains('typeOption: AnalyticsBillingPurchaseTypeOptionEnum.email'),
+      );
       expect(content, contains("{'key': 'value'}"));
       expect(content, contains("['item1', 'item2']"));
       expect(content, contains('Analytics.instance.logBillingPurchase('));
@@ -230,6 +234,47 @@ void main() {
         logs.join('\n'),
         contains('✓ Generated analytics documentation at:'),
       );
+    });
+
+    test('renders dart_type parameters with their explicit Dart type',
+        () async {
+      final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
+      await eventsFile.writeAsString(
+        'auth:\n'
+        '  verify_user:\n'
+        '    description: User verification status change\n'
+        '    parameters:\n'
+        '      status:\n'
+        '        dart_type: VerificationStatus\n'
+        '        import: package:example/models.dart\n',
+      );
+
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
+      );
+
+      final generator = DocsGenerator(
+        config: config,
+        projectRoot: tempProject.path,
+      );
+
+      final loader = EventLoader(
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
+      );
+      final sources = await loader.loadEventFiles();
+      final parser = YamlParser();
+      final domains = await parser.parseEvents(sources);
+
+      await generator.generate(domains);
+
+      final content = await File(
+        p.join(tempProject.path, config.outputs.docsPath!),
+      ).readAsString();
+
+      expect(content, contains('`status` (VerificationStatus)'));
+      expect(content, contains('status: VerificationStatus.values.first'));
     });
 
     test('falls back to default analytics_docs.md when docsPath omitted',
@@ -243,8 +288,8 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -253,7 +298,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -284,9 +329,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -295,7 +340,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -304,10 +349,10 @@ void main() {
       await generator.generate(domains);
 
       final content = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
-      expect(content, contains('purchase: refund'));
+      expect(content, contains('purchase_refund'));
       expect(content, contains('Contains \\| pipe'));
       expect(content, contains('first line<br>second line'));
     });
@@ -325,9 +370,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -336,7 +381,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -345,7 +390,7 @@ void main() {
       await generator.generate(domains);
 
       final content = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       expect(content, contains('**Deprecated** -> `auth.login_v2`'));
@@ -363,9 +408,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -374,7 +419,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -382,14 +427,14 @@ void main() {
 
       await generator.generate(domains);
       final firstRun = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       await Future<void>.delayed(const Duration(milliseconds: 5));
 
       await generator.generate(domains);
       final secondRun = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       expect(secondRun, equals(firstRun));
@@ -414,9 +459,9 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -425,7 +470,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -434,7 +479,7 @@ void main() {
       await generator.generate(domains);
 
       final content = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       // Check parameter metadata in table
@@ -464,10 +509,12 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
-        contexts: ['events/user_properties.yaml'],
+        inputs: AnalyticsInputs(
+          eventsPath: 'events',
+          contexts: ['events/user_properties.yaml'],
+        ),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -476,9 +523,10 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
-        contextFiles:
-            config.contexts.map((c) => p.join(tempProject.path, c)).toList(),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
+        contextFiles: config.inputs.contexts
+            .map((c) => p.join(tempProject.path, c))
+            .toList(),
       );
       final sources = await loader.loadEventFiles();
       final contextSources = await loader.loadContextFiles();
@@ -489,7 +537,7 @@ void main() {
       await generator.generate(domains, contexts: contexts);
 
       final content = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       // Check context title generation (tests _getContextTitle)
@@ -529,14 +577,16 @@ void main() {
       );
 
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        docsPath: 'docs/analytics_events.md',
-        generateDocs: true,
-        contexts: [
-          'events/user_properties.yaml',
-          'events/global_context.yaml',
-          'events/custom_props.yaml',
-        ],
+        inputs: AnalyticsInputs(
+          eventsPath: 'events',
+          contexts: [
+            'events/user_properties.yaml',
+            'events/global_context.yaml',
+            'events/custom_props.yaml',
+          ],
+        ),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
       );
 
       final generator = DocsGenerator(
@@ -545,9 +595,10 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: p.join(tempProject.path, config.eventsPath),
-        contextFiles:
-            config.contexts.map((c) => p.join(tempProject.path, c)).toList(),
+        eventsPath: p.join(tempProject.path, config.inputs.eventsPath),
+        contextFiles: config.inputs.contexts
+            .map((c) => p.join(tempProject.path, c))
+            .toList(),
       );
       final sources = await loader.loadEventFiles();
       final contextSources = await loader.loadContextFiles();
@@ -558,7 +609,7 @@ void main() {
       await generator.generate(domains, contexts: contexts);
 
       final content = await File(
-        p.join(tempProject.path, config.docsPath!),
+        p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
       // Known contexts get special titles

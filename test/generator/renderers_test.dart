@@ -1,4 +1,5 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/naming_strategy.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
@@ -14,8 +15,8 @@ void main() {
 
     setUp(() {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
       );
       renderer = EventRenderer(config);
     });
@@ -41,7 +42,7 @@ void main() {
       expect(result, contains('void logAuthLogin({'));
       expect(result, contains('required String method,'));
       expect(result, contains('logger.logEvent('));
-      expect(result, contains('name: "auth: login",'));
+      expect(result, contains('name: "auth_login",'));
     });
 
     test('renders deprecated event', () {
@@ -165,8 +166,10 @@ void main() {
 
       final result = renderer.renderDomainFile('items', domain, allDomains);
 
-      // Regex
-      expect(result, contains("if (!RegExp(r'^[a-z]+\$').hasMatch(query)) {"));
+      // Regex - now uses cached static field at mixin level
+      expect(result,
+          contains("static final _queryRegex = RegExp(r'''^[a-z]+\$''');"));
+      expect(result, contains('if (!_queryRegex.hasMatch(query)) {'));
       expect(result, contains('throw ArgumentError.value('));
       expect(result, contains(r"'must match regex ^[a-z]+\$',"));
 
@@ -182,10 +185,11 @@ void main() {
     test(
         'adds @Deprecated when interpolation used (even if strict_event_names is true, assuming parser bypassed)',
         () {
-      config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        strictEventNames: true,
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        rules: AnalyticsRules(strictEventNames: true),
+        naming: NamingStrategy(convention: EventNamingConvention.original),
       );
       renderer = EventRenderer(config);
 
@@ -195,6 +199,7 @@ void main() {
         parameters: [
           AnalyticsParameter(name: 'page', type: 'string', isNullable: false),
         ],
+        interpolatedName: 'view_\${page}',
       );
       final domain = AnalyticsDomain(name: 'screen', events: [event]);
       final allDomains = {'screen': domain};
@@ -281,7 +286,7 @@ void main() {
       expect(result, contains('logAuthLogin('));
       expect(result, contains('// Dual-write to: auth.login_legacy'));
       expect(result, contains('logger.logEvent('));
-      expect(result, contains('name: "auth: login_legacy",'));
+      expect(result, contains('name: "auth_login_legacy",'));
       expect(result, isNot(contains('logAuthLoginLegacy(method:')));
     });
 
@@ -390,7 +395,7 @@ void main() {
       expect(
           result,
           contains(
-              'abstract class UserContextCapability implements AnalyticsCapability'));
+              'abstract interface class UserContextCapability implements AnalyticsCapability'));
       expect(result, contains('mixin AnalyticsUserContext on AnalyticsBase'));
       expect(result, contains('void setUserContextUserId(String value)'));
       expect(
@@ -410,7 +415,8 @@ void main() {
 
       final result = renderer.renderContextFile('user_properties', properties);
 
-      expect(result, contains('abstract class UserPropertiesCapability'));
+      expect(result,
+          contains('abstract interface class UserPropertiesCapability'));
       expect(
           result,
           contains(
@@ -425,8 +431,8 @@ void main() {
 
     setUp(() {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
       );
       renderer = AnalyticsClassRenderer(config);
     });
@@ -455,9 +461,9 @@ void main() {
 
     test('renders analytics plan', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -486,9 +492,9 @@ void main() {
 
     test('renders analytics plan with event identifier', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -513,9 +519,9 @@ void main() {
 
     test('renders analytics plan with event metadata', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -528,7 +534,7 @@ void main() {
               description: 'Login',
               meta: {
                 'owner': 'auth-team',
-                'pii': false,
+                'is_secure': false,
                 'version': 2,
               },
               parameters: [],
@@ -541,15 +547,58 @@ void main() {
 
       expect(result, contains('meta: <String, Object?>{'));
       expect(result, contains("'owner': 'auth-team',"));
-      expect(result, contains("'pii': false,"));
+      expect(result, contains("'is_secure': false,"));
       expect(result, contains("'version': 2,"));
+    });
+
+    test('renders analytics plan with nested meta structures', () {
+      config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
+      );
+      renderer = AnalyticsClassRenderer(config);
+
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'Login',
+              meta: {
+                'tags': ['alpha', 'beta'],
+                'flags': {
+                  'canary': true,
+                },
+              },
+              parameters: [
+                AnalyticsParameter(
+                  name: 'attempts',
+                  type: 'int',
+                  isNullable: false,
+                  meta: {
+                    'limits': {'min': 1},
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(result, contains("'tags': <Object?>['alpha', 'beta'],"));
+      expect(result, contains("'flags': <String, Object?>{'canary': true},"));
+      expect(result, contains("'limits': <String, Object?>{'min': 1},"));
     });
 
     test('renders analytics plan with parameter codeName', () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -582,9 +631,9 @@ void main() {
     test('renders analytics plan with parameter metadata and allowed values',
         () {
       config = AnalyticsConfig(
-        eventsPath: 'events',
-        outputPath: 'lib/analytics',
-        generatePlan: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        targets: AnalyticsTargets(generatePlan: true),
       );
       renderer = AnalyticsClassRenderer(config);
 
@@ -602,7 +651,7 @@ void main() {
                   isNullable: false,
                   allowedValues: ['email', 'google', "it's special"],
                   meta: {
-                    'pii': true,
+                    'is_sensitive': true,
                     'required': true,
                     "special_key'": "value'with'quotes",
                   },
@@ -620,7 +669,7 @@ void main() {
       expect(result, contains("'google',"));
       expect(result, contains("'it\\'s special',"));
       expect(result, contains('meta: <String, Object?>{'));
-      expect(result, contains("'pii': true,"));
+      expect(result, contains("'is_sensitive': true,"));
       expect(result, contains("'required': true,"));
       expect(result, contains("'special_key\\'': 'value\\'with\\'quotes',"));
     });

@@ -4,6 +4,7 @@ import 'package:yaml/yaml.dart';
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import 'event_loader.dart';
+import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'yaml_parser.dart';
 
@@ -79,7 +80,7 @@ class ContextParser {
         source.filePath,
       );
 
-      final parameters = AnalyticsParameter.fromYamlMap(
+      final parameters = ParameterParser.parseParameters(
         propertiesNode as YamlMap,
         domainName: contextName,
         eventName: 'context', // Dummy

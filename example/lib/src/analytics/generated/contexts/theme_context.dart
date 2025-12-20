@@ -1,10 +1,10 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, unused_import
+// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package
 
 import 'package:analytics_gen/analytics_gen.dart';
 
 /// Capability interface for Theme
-abstract class ThemeCapability implements AnalyticsCapability {
+abstract interface class ThemeCapability implements AnalyticsCapability {
   void setThemeProperty(String name, Object? value);
 }
 

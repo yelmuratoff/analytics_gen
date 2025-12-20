@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "fingerprint": "61c5a4357487b877",
+    "fingerprint": "-38de3d7f6b7d2668",
     "total_domains": 3,
-    "total_events": 9,
-    "total_parameters": 18
+    "total_events": 10,
+    "total_parameters": 20
   },
   "domains": [
     {
       "name": "auth",
-      "event_count": 5,
-      "parameter_count": 8,
+      "event_count": 6,
+      "parameter_count": 10,
       "events": [
         {
           "name": "login",
@@ -24,7 +24,7 @@
               "is_nullable": false,
               "description": "Login method (email, google, apple)",
               "meta": {
-                "pii": true
+                "is_sensitive": true
               }
             }
           ],
@@ -35,7 +35,7 @@
             "tier": "critical"
           },
           "line_number": 3,
-          "event_name": "auth: login"
+          "event_name": "auth_login"
         },
         {
           "name": "login_v2",
@@ -69,7 +69,7 @@
           "dual_write_to": [
             "auth.login"
           ],
-          "event_name": "auth: login_v2"
+          "event_name": "auth_login_v2"
         },
         {
           "name": "logout",
@@ -77,7 +77,7 @@
           "identifier": "auth.logout",
           "deprecated": false,
           "line_number": 29,
-          "event_name": "auth: logout"
+          "event_name": "auth_logout"
         },
         {
           "name": "phone_login",
@@ -112,6 +112,7 @@
           ],
           "deprecated": false,
           "line_number": 42,
+          "interpolated_name": "Auth: Phone ${phoneCountry}",
           "event_name": "Auth: Phone {phone_country}"
         },
         {
@@ -138,7 +139,35 @@
           ],
           "deprecated": false,
           "line_number": 33,
-          "event_name": "auth: signup"
+          "event_name": "auth_signup"
+        },
+        {
+          "name": "verify_user",
+          "description": "User verification status change",
+          "identifier": "auth.verify_user",
+          "parameters": [
+            {
+              "name": "local_status",
+              "source_name": "local_status",
+              "code_name": "local_status",
+              "type": "dynamic",
+              "dart_type": "LocalStatus",
+              "dart_import": "package:analytics_gen_example/local_enums.dart",
+              "is_nullable": false
+            },
+            {
+              "name": "status",
+              "source_name": "status",
+              "code_name": "status",
+              "type": "dynamic",
+              "dart_type": "VerificationStatus",
+              "dart_import": "package:analytics_gen_example/models.dart",
+              "is_nullable": false
+            }
+          ],
+          "deprecated": false,
+          "line_number": 59,
+          "event_name": "auth_verify_user"
         }
       ]
     },
@@ -170,7 +199,7 @@
           ],
           "deprecated": false,
           "line_number": 19,
-          "event_name": "Purchase Flow: cancelled"
+          "event_name": "purchase_flow_cancelled"
         },
         {
           "name": "completed",
@@ -210,7 +239,7 @@
           ],
           "deprecated": false,
           "line_number": 3,
-          "event_name": "Purchase Flow: completed"
+          "event_name": "purchase_flow_completed"
         }
       ]
     },
@@ -270,6 +299,7 @@
           ],
           "deprecated": false,
           "line_number": 3,
+          "interpolated_name": "Screen: ${screenName}",
           "event_name": "Screen: {screen_name}"
         }
       ]

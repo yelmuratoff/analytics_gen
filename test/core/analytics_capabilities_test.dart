@@ -6,6 +6,8 @@ final class _TestCapability implements AnalyticsCapability {
   final String value;
 }
 
+final class _OtherCapability implements AnalyticsCapability {}
+
 const _testCapabilityKey = CapabilityKey<_TestCapability>('test_capability');
 
 void main() {
@@ -55,6 +57,36 @@ void main() {
       registry.register(_testCapabilityKey, capability);
 
       expect(registry.getCapability(_testCapabilityKey), same(capability));
+    });
+
+    test('throws StateError when registering duplicate capability key', () {
+      final registry = CapabilityRegistry();
+      registry.register(_testCapabilityKey, _TestCapability('first'));
+
+      expect(
+        () => registry.register(_testCapabilityKey, _TestCapability('second')),
+        throwsStateError,
+      );
+    });
+
+    test('throws StateError when capability has wrong type', () {
+      final registry = CapabilityRegistry();
+      // Register a legitimate capability
+      final capability = _TestCapability('valid');
+      registry.register(_testCapabilityKey, capability);
+
+      // Create a key with the SAME name but DIFFERENT type
+      // explicit cast to avoid 'const' if necessary or just a new key
+      const collisionKey = CapabilityKey<_OtherCapability>('test_capability');
+
+      // Attempt to retrieve using the collision key.
+      // The registry has 'test_capability' -> _TestCapability
+      // We ask for 'test_capability' -> _OtherCapability
+      // The runtime check "capability is! T" (is! _OtherCapability) should pass -> Throw StateError
+      expect(
+        () => registry.getCapability(collisionKey),
+        throwsStateError,
+      );
     });
 
     test('returns null when capability missing', () {

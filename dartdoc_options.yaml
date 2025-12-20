@@ -21,14 +21,30 @@ dartdoc:
     code_review:
       markdown: doc/CODE_REVIEW.md
       displayName: Code Review
+    naming:
+      markdown: doc/NAMING.md
+      displayName: Naming & Configuration
+    performance:
+      markdown: doc/PERFORMANCE.md
+      displayName: Performance Guide
+    troubleshooting:
+      markdown: doc/TROUBLESHOOTING.md
+      displayName: Troubleshooting
+    api_reference:
+      markdown: doc/api_reference.md
+      displayName: API Reference
   categoryOrder:
     - overview
     - onboarding
     - validation
+    - naming
     - capabilities
+    - performance
     - migration
     - scalability
     - code_review
+    - troubleshooting
+    - api_reference
   showUndocumentedCategories: true
   linkToSource:
     root: "."

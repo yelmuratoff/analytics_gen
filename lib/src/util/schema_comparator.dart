@@ -281,7 +281,7 @@ class SchemaComparator {
             name: paramMap['name'] as String,
             codeName: paramMap['code_name'] as String?,
             type: paramMap['type'] as String,
-            isNullable: paramMap['nullable'] as bool? ?? false,
+            isNullable: paramMap['is_nullable'] as bool? ?? false,
             description: paramMap['description'] as String?,
             allowedValues:
                 (paramMap['allowed_values'] as List?)?.cast<Object>(),

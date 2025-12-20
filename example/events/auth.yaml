@@ -11,7 +11,7 @@ auth:
         type: string
         description: Login method (email, google, apple)
         meta:
-          pii: true
+          is_sensitive: true
 
   login_v2:
     description: User logs in to the application (v2)
@@ -54,3 +54,13 @@ auth:
         identifier: tracking_token
         param_name: tracking-token
         description: Legacy token kept for backend reconciliation
+
+  verify_user:
+    description: User verification status change
+    parameters:
+      status:
+        dart_type: VerificationStatus
+        import: "package:analytics_gen_example/models.dart"
+      local_status:
+        dart_type: LocalStatus
+        import: "package:analytics_gen_example/local_enums.dart"

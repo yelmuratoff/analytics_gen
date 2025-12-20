@@ -15,14 +15,9 @@ include: package:lints/recommended.yaml
 
 # Uncomment the following section to specify additional rules.
 
-# linter:
-#   rules:
-#     - camel_case_types
-
-# analyzer:
-#   exclude:
-#     - path/to/excluded/files/**
-
+analyzer:
+  errors:
+    deprecated_member_use_from_same_package: ignore
 # For more information about the core and recommended set of lints, see
 # https://dart.dev/go/core-lints
 

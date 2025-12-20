@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'analytics_interface.dart';
 
 /// Marker interface implemented by provider-specific capability objects.
@@ -46,29 +47,50 @@ class NullCapabilityResolver implements AnalyticsCapabilityResolver {
 }
 
 /// Mutable registry that providers can use to register their capabilities.
+///
+/// Uses a type-safe heterogeneous container pattern: the [CapabilityKey] name
+/// serves as the lookup key, while type safety is enforced through the generic
+/// constraints on [register] and [getCapability].
 class CapabilityRegistry implements AnalyticsCapabilityResolver {
   /// Creates a new capability registry.
-  CapabilityRegistry({
-    Map<CapabilityKey<Object?>, AnalyticsCapability>? seed,
-  }) : _capabilities = Map<CapabilityKey<Object?>, AnalyticsCapability>.from(
-          seed ?? const <CapabilityKey<Object?>, AnalyticsCapability>{},
-        );
+  CapabilityRegistry();
 
-  final Map<CapabilityKey<Object?>, AnalyticsCapability> _capabilities;
+  // Type safety is guaranteed by the API: register<T> stores T under key.name,
+  // and getCapability<T> retrieves it with the same key.name. Since both methods
+  // require CapabilityKey<T>, the stored and retrieved types are guaranteed to match.
+  final Map<String, AnalyticsCapability> _capabilities = {};
 
   /// Registers a capability under the provided [key].
+  ///
+  /// Type safety guarantee: The [capability] type [T] must match the key's
+  /// generic type, ensuring that [getCapability] with the same key returns [T].
   void register<T extends AnalyticsCapability>(
     CapabilityKey<T> key,
     T capability,
   ) {
-    _capabilities[key] = capability;
+    if (_capabilities.containsKey(key.name)) {
+      final existing = _capabilities[key.name];
+      throw StateError(
+          'Capability key "${key.name}" already registered with type '
+          '${existing.runtimeType}. Attempted to register ${capability.runtimeType}. '
+          'Ensure unique capability names across your application.');
+    }
+    _capabilities[key.name] = capability;
   }
 
   @override
   T? getCapability<T extends AnalyticsCapability>(CapabilityKey<T> key) {
-    final capability = _capabilities[key];
+    final capability = _capabilities[key.name];
     if (capability == null) return null;
-    return capability as T;
+
+    // Defensive check: verify type matches
+    if (capability is! T) {
+      throw StateError('Capability registry corrupted: "$key" has type '
+          '${capability.runtimeType}, expected $T. '
+          'This likely means register<T>() was called with wrong type.');
+    }
+
+    return capability;
   }
 }
 
@@ -83,7 +105,34 @@ AnalyticsCapabilityResolver analyticsCapabilitiesFor(IAnalytics analytics) {
   return _nullCapabilityResolver;
 }
 
+/// Base class that wires capability registration into provider implementations.
+///
+/// Ensures each instance has an isolated state, preventing race conditions
+/// and state sharing issues.
+abstract base class CapabilityProviderBase
+    implements AnalyticsCapabilityProvider {
+  /// Creates a new capability provider base with an isolated registry.
+  CapabilityProviderBase() : _capabilityRegistry = CapabilityRegistry();
+
+  final CapabilityRegistry _capabilityRegistry;
+
+  @override
+  AnalyticsCapabilityResolver get capabilityResolver => _capabilityRegistry;
+
+  /// Registers [capability] under the provided [key].
+  ///
+  /// Call this from your provider constructor to expose the capabilities you support.
+  @protected
+  void registerCapability<T extends AnalyticsCapability>(
+    CapabilityKey<T> key,
+    T capability,
+  ) {
+    _capabilityRegistry.register(key, capability);
+  }
+}
+
 /// Mixin that wires capability registration into provider implementations.
+@Deprecated('Use CapabilityProviderBase instead to ensure isolated state')
 mixin CapabilityProviderMixin implements AnalyticsCapabilityProvider {
   final CapabilityRegistry _capabilityRegistry = CapabilityRegistry();
 

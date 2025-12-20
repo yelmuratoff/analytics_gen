@@ -1,25 +1,25 @@
-import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('AnalyticsConfig.fromYaml', () {
+  group('ConfigParser.parse', () {
     test('returns defaults when analytics_gen section is missing', () {
-      final config = AnalyticsConfig.fromYaml({});
+      final config = ConfigParser().parse({});
 
-      expect(config.eventsPath, 'events');
-      expect(config.outputPath, 'src/analytics/generated');
-      expect(config.docsPath, isNull);
-      expect(config.exportsPath, isNull);
-      expect(config.generateCsv, isFalse);
-      expect(config.generateJson, isFalse);
-      expect(config.generateSql, isFalse);
-      expect(config.generateDocs, isFalse);
-      expect(config.generatePlan, isTrue);
+      expect(config.inputs.eventsPath, 'events');
+      expect(config.outputs.dartPath, 'lib/src/analytics/generated');
+      expect(config.outputs.docsPath, isNull);
+      expect(config.outputs.exportsPath, isNull);
+      expect(config.targets.generateCsv, isFalse);
+      expect(config.targets.generateJson, isFalse);
+      expect(config.targets.generateSql, isFalse);
+      expect(config.targets.generateDocs, isFalse);
+      expect(config.targets.generatePlan, isTrue);
       expect(config.naming.enforceSnakeCaseDomains, isTrue);
       expect(config.naming.enforceSnakeCaseParameters, isTrue);
       expect(config.naming.eventNameTemplate, '{domain}: {event}');
-      expect(config.sharedParameters, isEmpty);
-      expect(config.contexts, isEmpty);
+      expect(config.inputs.sharedParameters, isEmpty);
+      expect(config.inputs.contexts, isEmpty);
     });
 
     test('applies overrides when analytics_gen section exists', () {
@@ -46,17 +46,17 @@ void main() {
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
-      expect(config.eventsPath, 'custom_events');
-      expect(config.outputPath, 'custom_output');
-      expect(config.docsPath, 'doc/output');
-      expect(config.exportsPath, 'export/output');
-      expect(config.generateCsv, isTrue);
-      expect(config.generateJson, isTrue);
-      expect(config.generateSql, isTrue);
-      expect(config.generateDocs, isTrue);
-      expect(config.generatePlan, isFalse);
+      expect(config.inputs.eventsPath, 'custom_events');
+      expect(config.outputs.dartPath, 'custom_output');
+      expect(config.outputs.docsPath, 'doc/output');
+      expect(config.outputs.exportsPath, 'export/output');
+      expect(config.targets.generateCsv, isTrue);
+      expect(config.targets.generateJson, isTrue);
+      expect(config.targets.generateSql, isTrue);
+      expect(config.targets.generateDocs, isTrue);
+      expect(config.targets.generatePlan, isFalse);
       expect(config.naming.enforceSnakeCaseDomains, isFalse);
       expect(config.naming.enforceSnakeCaseParameters, isFalse);
       expect(config.naming.eventNameTemplate, '{domain_alias}.{event}');
@@ -79,10 +79,11 @@ void main() {
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
-      expect(config.sharedParameters, ['shared/one.yaml', 'shared/two.yaml']);
-      expect(config.contexts, ['shared/user.yaml']);
+      expect(config.inputs.sharedParameters,
+          ['shared/one.yaml', 'shared/two.yaml']);
+      expect(config.inputs.contexts, ['shared/user.yaml']);
     });
 
     test(
@@ -99,10 +100,10 @@ void main() {
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
-      expect(config.sharedParameters, ['shared/config_level.yaml']);
-      expect(config.contexts, ['shared/config_context.yaml']);
+      expect(config.inputs.sharedParameters, ['shared/config_level.yaml']);
+      expect(config.inputs.contexts, ['shared/config_context.yaml']);
     });
 
     test(
@@ -123,14 +124,85 @@ void main() {
             'contexts': [
               'shared/from_inputs_context.yaml',
             ],
-          }
+          },
         },
       };
 
-      final config = AnalyticsConfig.fromYaml(yaml);
+      final config = ConfigParser().parse(yaml);
 
-      expect(config.sharedParameters, ['shared/from_inputs.yaml']);
-      expect(config.contexts, ['shared/from_inputs_context.yaml']);
+      expect(config.inputs.sharedParameters, ['shared/from_inputs.yaml']);
+      expect(config.inputs.contexts, ['shared/from_inputs_context.yaml']);
+    });
+
+    test('throws FormatException with readable message for invalid map fields',
+        () {
+      final yaml = {
+        'analytics_gen': {
+          'inputs': 123, // should be a map
+        },
+      };
+
+      expect(
+        () => ConfigParser().parse(yaml),
+        throwsA(
+          isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf([
+                contains('Invalid configuration for "inputs"'),
+                contains('expected Map'),
+                contains('int'),
+              ])),
+        ),
+      );
+    });
+
+    test('throws FormatException with readable message for invalid bool fields',
+        () {
+      final yaml = {
+        'analytics_gen': {
+          'generate_csv': 'true', // should be a bool
+        },
+      };
+
+      expect(
+        () => ConfigParser().parse(yaml),
+        throwsA(
+          isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf([
+                contains('Invalid configuration for "generate_csv"'),
+                contains('expected bool'),
+                contains('String'),
+              ])),
+        ),
+      );
+    });
+
+    test('throws FormatException with readable message for invalid list fields',
+        () {
+      final yaml = {
+        'analytics_gen': {
+          'inputs': {
+            'contexts': 'not-a-list',
+          },
+        },
+      };
+
+      expect(
+        () => ConfigParser().parse(yaml),
+        throwsA(
+          isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf([
+                contains('Invalid configuration for "contexts"'),
+                contains('expected List'),
+                contains('String'),
+              ])),
+        ),
+      );
     });
   });
 }

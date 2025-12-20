@@ -41,8 +41,8 @@ Instrumentation changes are compliance-sensitive: a typo in the tracking plan ca
 
 ## Security & Compliance
 
-- No secrets, tokens, or PII logged/committed in docs or code.
 - Provider capability implementations avoid leaking raw user data into logs.
+- Events and parameters do not contain PII (Personally Identifiable Information) such as emails, names, or phone numbers.
 - Exports destined for stakeholders omit sensitive columns unless explicitly intended.
 
 ## When to Ask for Clarification

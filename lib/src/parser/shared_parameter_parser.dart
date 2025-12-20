@@ -4,6 +4,7 @@ import 'package:yaml/yaml.dart';
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import 'event_loader.dart';
+import 'parameter_parser.dart';
 import 'schema_validator.dart';
 import 'yaml_parser.dart';
 
@@ -75,7 +76,7 @@ class SharedParameterParser {
       source.filePath,
     );
 
-    final parametersList = AnalyticsParameter.fromYamlMap(
+    final parametersList = ParameterParser.parseParameters(
       parametersNode,
       domainName: 'shared',
       eventName: 'shared',

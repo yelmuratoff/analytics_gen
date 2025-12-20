@@ -36,10 +36,9 @@ void main() {
       );
 
       final firstConfig = AnalyticsConfig(
-        eventsPath: 'events',
-        exportsPath: 'generated',
-        generateCsv: true,
-        generateJson: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(exportsPath: 'generated'),
+        targets: AnalyticsTargets(generateCsv: true, generateJson: true),
       );
       final firstGenerator = ExportGenerator(
         config: firstConfig,
@@ -47,7 +46,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: path.join(tempDir.path, firstConfig.eventsPath),
+        eventsPath: path.join(tempDir.path, firstConfig.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -63,10 +62,9 @@ void main() {
       expect(jsonFile.existsSync(), isTrue);
 
       final secondConfig = AnalyticsConfig(
-        eventsPath: 'events',
-        exportsPath: 'generated',
-        generateCsv: true,
-        generateJson: false,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(exportsPath: 'generated'),
+        targets: AnalyticsTargets(generateCsv: true, generateJson: false),
       );
       final secondGenerator = ExportGenerator(
         config: secondConfig,
@@ -85,8 +83,8 @@ void main() {
 
       final logs = <String>[];
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        generateCsv: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        targets: AnalyticsTargets(generateCsv: true),
       );
       final generator = ExportGenerator(
         config: config,
@@ -95,7 +93,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: path.join(tempDir.path, config.eventsPath),
+        eventsPath: path.join(tempDir.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -127,10 +125,12 @@ void main() {
 
       final logs = <String>[];
       final config = AnalyticsConfig(
-        eventsPath: 'events',
-        generateCsv: true,
-        generateJson: true,
-        generateSql: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        targets: AnalyticsTargets(
+          generateCsv: true,
+          generateJson: true,
+          generateSql: true,
+        ),
       );
       final generator = ExportGenerator(
         config: config,
@@ -139,7 +139,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: path.join(tempDir.path, config.eventsPath),
+        eventsPath: path.join(tempDir.path, config.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -191,9 +191,9 @@ void main() {
 
       // First, generate CSV to create the file
       final firstConfig = AnalyticsConfig(
-        eventsPath: 'events',
-        exportsPath: 'exports',
-        generateCsv: true,
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(exportsPath: 'exports'),
+        targets: AnalyticsTargets(generateCsv: true),
       );
       final firstGenerator = ExportGenerator(
         config: firstConfig,
@@ -201,7 +201,7 @@ void main() {
       );
 
       final loader = EventLoader(
-        eventsPath: path.join(tempDir.path, firstConfig.eventsPath),
+        eventsPath: path.join(tempDir.path, firstConfig.inputs.eventsPath),
       );
       final sources = await loader.loadEventFiles();
       final parser = YamlParser();
@@ -215,10 +215,12 @@ void main() {
 
       // Now disable CSV generation and verify file is cleaned up
       final secondConfig = AnalyticsConfig(
-        eventsPath: 'events',
-        exportsPath: 'exports',
-        generateCsv: false, // Disabled
-        generateJson: true, // Keep JSON to ensure generation still runs
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(exportsPath: 'exports'),
+        targets: AnalyticsTargets(
+          generateCsv: false, // Disabled
+          generateJson: true, // Keep JSON to ensure generation still runs
+        ),
       );
       final secondGenerator = ExportGenerator(
         config: secondConfig,

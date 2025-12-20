@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/pipeline/plan_printer.dart' as plan;
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
-
-import '../../bin/src/plan_printer.dart' as plan;
 
 void main() {
   group('generate.dart plan summary', () {
@@ -35,7 +34,9 @@ void main() {
         '      method: string\n',
       );
 
-      final config = AnalyticsConfig(eventsPath: 'events');
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+      );
 
       final lines = <String>[];
 
@@ -68,7 +69,7 @@ void main() {
         isTrue,
       );
       expect(
-        lines.any((line) => line.contains('auth: login [Active]')),
+        lines.any((line) => line.contains('auth_login [Active]')),
         isTrue,
       );
       expect(

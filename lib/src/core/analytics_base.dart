@@ -18,9 +18,9 @@ abstract class AnalyticsBase {
   /// Exposes provider-specific capabilities (user properties, timed events, etc.).
   ///
   /// Subclasses can override this getter to wire custom resolvers. By default
-  /// it returns an empty resolver.
+  /// it dynamically resolves capabilities from the [logger].
   AnalyticsCapabilityResolver get capabilities =>
-      const NullCapabilityResolver();
+      analyticsCapabilitiesFor(logger);
 
   /// Convenience helper for retrieving a typed capability.
   T? capability<T extends AnalyticsCapability>(CapabilityKey<T> key) {

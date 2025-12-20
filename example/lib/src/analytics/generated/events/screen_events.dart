@@ -1,9 +1,10 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, unused_import
+// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package
 // ignore_for_file: directives_ordering, unnecessary_string_interpolations
 // coverage:ignore-file
 
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:analytics_gen_example/models.dart';
 
 /// Generated mixin for screen analytics events
 mixin AnalyticsScreen on AnalyticsBase {
@@ -15,12 +16,10 @@ mixin AnalyticsScreen on AnalyticsBase {
     required String legacyScreenCode,
     Map<String, Object?>? parameters,
   }) {
-    final eventParameters =
-        parameters ??
-        <String, Object?>{
-          'description': 'Legacy backend identifier kept for parity',
-          "legacy-screen-code": legacyScreenCode,
-        };
+    final eventParameters = <String, Object?>{
+      'description': 'Legacy backend identifier kept for parity',
+      "legacy-screen-code": legacyScreenCode,
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(name: "Screen: Legacy", parameters: eventParameters);
   }
@@ -40,14 +39,12 @@ mixin AnalyticsScreen on AnalyticsBase {
     required String screenName,
     Map<String, Object?>? parameters,
   }) {
-    final eventParameters =
-        parameters ??
-        <String, Object?>{
-          'description': 'User views a screen',
-          if (durationMs != null) "duration_ms": durationMs,
-          if (previousScreen != null) "previous_screen": previousScreen,
-          "screen_name": screenName,
-        };
+    final eventParameters = <String, Object?>{
+      'description': 'User views a screen',
+      if (durationMs != null) "duration_ms": durationMs,
+      if (previousScreen != null) "previous_screen": previousScreen,
+      "screen_name": screenName,
+    }..addAll(parameters ?? const {});
 
     logger.logEvent(name: "Screen: ${screenName}", parameters: eventParameters);
   }

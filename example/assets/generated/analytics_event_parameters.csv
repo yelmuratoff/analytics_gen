@@ -1,18 +1,20 @@
 Event Name,Parameter Name,Required
-auth: login,method,true
-auth: login_v2,login-method,true
-auth: login_v2,session_id,true
+auth_login,method,true
+auth_login_v2,login-method,true
+auth_login_v2,session_id,true
 Auth: Phone {phone_country},phone_country,true
 Auth: Phone {phone_country},tracking-token,true
 Auth: Phone {phone_country},user_exists,false
-auth: signup,method,true
-auth: signup,referral_code,false
-Purchase Flow: cancelled,product_id,true
-Purchase Flow: cancelled,reason,false
-Purchase Flow: completed,currency-code,true
-Purchase Flow: completed,amount_value,true
-Purchase Flow: completed,product_id,true
-Purchase Flow: completed,quantity,true
+auth_signup,method,true
+auth_signup,referral_code,false
+auth_verify_user,local_status,true
+auth_verify_user,status,true
+purchase_flow_cancelled,product_id,true
+purchase_flow_cancelled,reason,false
+purchase_flow_completed,currency-code,true
+purchase_flow_completed,amount_value,true
+purchase_flow_completed,product_id,true
+purchase_flow_completed,quantity,true
 Screen: Legacy,legacy-screen-code,true
 Screen: {screen_name},duration_ms,false
 Screen: {screen_name},previous_screen,false

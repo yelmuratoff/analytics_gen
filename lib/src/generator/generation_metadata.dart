@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:analytics_gen/src/models/analytics_domain.dart';
+import 'package:analytics_gen/src/models/serialization.dart';
 
 /// Deterministic metadata used by docs and export generators.
 ///
@@ -58,43 +59,32 @@ final class GenerationMetadata {
 
 String _buildCanonicalSignature(Map<String, AnalyticsDomain> domains) {
   final buffer = StringBuffer();
-  final sortedDomains = domains.entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final sortedDomains = domains.keys.toList()..sort();
 
-  for (final entry in sortedDomains) {
-    final domain = entry.value;
-    buffer.writeln(domain.name);
-
-    final sortedEvents = domain.events.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    for (final event in sortedEvents) {
-      buffer
-        ..writeln(event.name)
-        ..writeln(event.description)
-        ..writeln(event.customEventName ?? '')
-        ..writeln(event.deprecated ? '1' : '0')
-        ..writeln(event.replacement ?? '');
-
-      final sortedParams = event.parameters.toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
-
-      for (final param in sortedParams) {
-        buffer
-          ..writeln(param.name)
-          ..writeln(param.type)
-          ..writeln(param.isNullable ? '1' : '0')
-          ..writeln(param.description ?? '')
-          ..writeln(param.allowedValues?.join('|') ?? '');
-      }
-
-      buffer.writeln('--event--');
-    }
-
-    buffer.writeln('--domain--');
+  for (final name in sortedDomains) {
+    final domain = domains[name]!;
+    final map = AnalyticsSerialization.domainToMap(domain);
+    final sanitized = _sanitizeForFingerprint(map);
+    buffer.writeln(json.encode(sanitized));
   }
 
   return buffer.toString();
+}
+
+/// Recursively sorts keys and removes volatile fields for fingerprinting.
+Object? _sanitizeForFingerprint(Object? value) {
+  if (value is Map) {
+    final sortedKeys = value.keys.map((k) => k.toString()).toList()..sort();
+    final result = <String, dynamic>{};
+    for (final key in sortedKeys) {
+      if (key == 'source_path' || key == 'line_number') continue;
+      result[key] = _sanitizeForFingerprint(value[key]);
+    }
+    return result;
+  } else if (value is Iterable) {
+    return value.map(_sanitizeForFingerprint).toList();
+  }
+  return value;
 }
 
 String _fingerprintFor(String canonical) {

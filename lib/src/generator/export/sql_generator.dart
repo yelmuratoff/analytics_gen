@@ -6,16 +6,22 @@ import 'package:analytics_gen/src/models/analytics_parameter.dart';
 
 import '../../config/naming_strategy.dart';
 import '../../util/event_naming.dart';
-import '../../util/file_utils.dart';
 import '../generation_metadata.dart';
+import '../output_manager.dart';
 
 /// Generates SQL schema and data inserts for analytics events.
 final class SqlGenerator {
   /// Creates a new SQL generator.
-  SqlGenerator({required this.naming});
+  SqlGenerator({
+    required this.naming,
+    this.outputManager = const OutputManager(),
+  });
 
   /// The naming strategy to use.
   final NamingStrategy naming;
+
+  /// The output manager to use.
+  final OutputManager outputManager;
 
   /// Generates SQL file with schema and data
   Future<void> generate(
@@ -33,7 +39,8 @@ final class SqlGenerator {
     _writeData(buffer, sortedDomains);
     _writeViews(buffer);
 
-    await writeFileIfContentChanged(outputPath, buffer.toString());
+    await outputManager.writeFileIfContentChanged(
+        outputPath, buffer.toString());
   }
 
   void _writeHeader(StringBuffer buffer, GenerationMetadata metadata) {

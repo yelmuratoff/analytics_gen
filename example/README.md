@@ -28,7 +28,7 @@ example/
 cd example
 flutter pub get
 # Ensure the analytics outputs are fresh
-flutter pub run analytics_gen:generate --docs --exports
+dart run analytics_gen:generate --docs --exports
 ```
 
 > The generator runs fine under `flutter pub run` because the example depends on the local `analytics_gen` package via a path dependency.

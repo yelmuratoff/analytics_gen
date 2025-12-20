@@ -5,7 +5,7 @@ This guide is the fast path for engineers joining a project that uses `analytics
 ## Prerequisites
 
 - Dart SDK 3.3+ with `dart` on your PATH.
-- `analytics_gen` listed under `dev_dependencies` in `pubspec.yaml`.
+- `analytics_gen` listed under `dependencies` in `pubspec.yaml` (it is required at runtime for base classes and adapters).
 - Access to the repository so you can read `events/*.yaml` and `analytics_gen.yaml`.
 
 ### Optional: Kick the tires with the example app
@@ -57,9 +57,15 @@ analytics_gen:
   targets:
     docs: true
     json: true
+    test_matchers: true # Generate typed Matchers for unit tests
   naming:
     enforce_snake_case_domains: true
     enforce_snake_case_parameters: true
+    
+    # Optional: Imports for custom types/enums
+    # imports:
+    #   - "package:my_app/analytics_models.dart"
+
 ```
 
 - Use `domain_aliases` or per-parameter `identifier` overrides when legacy naming collides with snake_case rules.

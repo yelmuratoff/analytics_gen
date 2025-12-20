@@ -1,57 +1,58 @@
-# GitHub Copilot Instructions for analytics_gen
+# Role & Workflow Instructions
 
-You are an expert Dart/Flutter engineer working on `analytics_gen`, a CLI tool that generates type-safe analytics code from YAML definitions.
+You are an expert Dart/Flutter engineer and Senior Analyst working on `analytics_gen`.
+Your goal is to maintain high architectural standards (SOLID, KISS, DRY, DDD) while following a strict development workflow.
 
-## Project Overview
-- **Goal**: Generate type-safe Dart APIs, documentation, and exports from YAML tracking plans.
-- **Core Architecture**:
-  - **Pipeline**: `EventLoader` (IO) -> `YamlParser` (Model) -> `CodeGenerator` / `DocsGenerator` (Output).
-  - **Runtime**: Generated code uses `Analytics` singleton, `IAnalytics` interface, and `CapabilityProviderMixin`.
-  - **State**: Stateless generation pipeline; `Analytics` singleton manages runtime state.
+## 1. Interaction Workflow (MANDATORY)
+Before writing code, follow this loop:
+1.  **Plan**: Analyze the request. Outline steps in a scratchpad.
+2.  **Tasks**: Create/Update `TODO.md` with the plan.
+3.  **Implement**: Write code following the "Coding Conventions" below.
+4.  **Verify**: Ensure strict type safety and **write/run tests** (Unit or Integration).
+5.  **Finalize**: Update `TODO.md` (check off items), `CHANGELOG.md`, and `README.md` if generic logic changed.
 
-## Architectural Patterns
-- **Domain-Driven Design**:
-  - `src/models`: Immutable data models (`AnalyticsEvent`, `AnalyticsParameter`) representing the parsed plan.
-  - `src/parser`: Pure parsing logic, separated from IO.
-  - `src/generator`: Renderers for different outputs (Dart, Markdown, CSV).
-- **Code Generation**:
-  - Use `StringBuffer` for efficient string concatenation.
-  - Prefer `mixin` for domain-specific logic (e.g., `AnalyticsAuth` on `AnalyticsBase`).
-  - Ensure deterministic output (sort keys, stable ordering).
-- **Runtime Library**:
-  - `IAnalytics`: The core interface for providers.
-  - `CapabilityProviderMixin`: For extending functionality (e.g., user properties) without polluting the base interface.
-  - `AsyncAnalyticsAdapter` / `BatchingAnalytics`: Wrappers for async/batching behavior.
+---
 
-## Development Workflow
-- **Running the Generator**:
-  - `dart run analytics_gen:generate` (default)
-  - `dart run analytics_gen:generate --watch` (dev mode)
-  - `dart run analytics_gen:generate --validate-only` (CI check)
-- **Testing**:
-  - **Integration Tests**: Create temporary directories, write YAML, run generator, assert on file existence and content (see `test/generator/code_generator_test.dart`).
-  - **Unit Tests**: Test parsers and models in isolation.
-  - **Run Tests**: `dart test`
-- **Linting**:
-  - Follow `analysis_options.yaml`.
-  - Key rules: `prefer_single_quotes`, `sort_constructors_first`, `public_member_api_docs`.
+## 2. Project Context (`analytics_gen`)
 
-## Coding Conventions
-- **Dart**:
-  - Use `final` for all variables and fields unless mutability is strictly required.
-  - Use `const` constructors for immutable data classes.
-  - Prefer `sealed` classes for finite state hierarchies, use new coding patterns, like pattern matching where applicable.
-  - Use `Future<void>` for async commands, never `void`.
-- **YAML Parsing**:
-  - Handle missing keys gracefully with defaults.
-  - Validate types strictly (`int`, `string`, `bool`).
-  - Support `meta` fields for extensibility.
-- **Error Handling**:
-  - Throw specific exceptions (e.g., `AnalyticsGenerationException`) with helpful messages.
-  - Catch errors at the top level (`AnalyticsGenRunner`) and exit with status 1.
+### Overview
+A CLI tool that generates type-safe analytics code from YAML.
+- **Pipeline**: `EventLoader` (IO) -> `YamlParser` (Model) -> `CodeGenerator` / `DocsGenerator`.
+- **State**: The generation pipeline is stateless. Runtime state is managed by `Analytics` singleton.
 
-## Key Files
-- `bin/generate.dart`: CLI entry point.
-- `lib/src/config/analytics_config.dart`: Configuration model (`analytics_gen.yaml`).
-- `lib/src/models/analytics_event.dart`: Core model for an event.
-- `test/test_utils.dart`: Utilities for creating temp projects and loggers.
+### Architectural Patterns (DDD)
+- **Models**: Immutable data in `src/models` (`AnalyticsEvent`, `AnalyticsParameter`).
+- **Parsing**: Pure logic in `src/parser`.
+- **Generation**: Use `StringBuffer`. Ensure deterministic output (stable sort keys).
+- **Runtime**:
+  - `IAnalytics`: Core interface.
+  - `CapabilityProviderMixin`: Extensions (e.g., user props).
+  - `AsyncAnalyticsAdapter`: Wrappers.
+
+### Key Files map
+- Entry: `bin/generate.dart`
+- Config: `lib/src/config/analytics_config.dart`
+- Core Model: `lib/src/models/analytics_event.dart`
+- Test Utils: `test/test_utils.dart`
+
+---
+
+## 3. Coding Standards & Constraints
+
+### Dart / Flutter
+- **Mutability**: Use `final` by default. Use `const` for constructors.
+- **Modern Dart**: Prefer `sealed` classes for finite states. Use pattern matching.
+- **Async**: Always `Future<void>`, never `void`.
+
+### Error Handling
+- Throw specific `AnalyticsGenerationException`.
+- Catch only at top-level `AnalyticsGenRunner` (exit code 1).
+
+### Testing Strategy
+- **Integration**: Create temp dirs, generate code, assert file content (`test/generator/code_generator_test.dart`).
+- **Unit**: Test parsers in isolation.
+- **Command**: `dart test`.
+
+### CLI Commands
+- Run: `dart run analytics_gen:generate`
+- Watch: `dart run analytics_gen:generate --watch`

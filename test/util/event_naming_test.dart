@@ -30,7 +30,7 @@ void main() {
 
       expect(
         EventNaming.resolveEventName('auth', event, naming),
-        equals('auth: logout'),
+        equals('auth_logout'),
       );
     });
 

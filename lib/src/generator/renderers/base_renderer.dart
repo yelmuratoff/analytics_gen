@@ -1,4 +1,4 @@
-import '../../util/string_utils.dart';
+import '../utils/code_buffer.dart';
 
 /// Base class for all renderers to reduce code duplication.
 ///
@@ -10,11 +10,15 @@ abstract class BaseRenderer {
 
   /// Renders a standard file header for generated files.
   ///
-  /// Includes GENERATED CODE warning and common ignore directives.
+  /// Includes GENERATED CODE warning, generator version, and common ignore directives.
+  /// The version helps developers know if regeneration is needed after package updates.
   String renderFileHeader({bool includeCoverageIgnore = true}) {
     final buffer = StringBuffer();
     buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('// ignore_for_file: type=lint, unused_import');
+
+    buffer.writeln(
+      '// ignore_for_file: type=lint, unused_import, deprecated_member_use_from_same_package',
+    );
     if (includeCoverageIgnore) {
       buffer.writeln(
         '// ignore_for_file: directives_ordering, unnecessary_string_interpolations',
@@ -50,160 +54,18 @@ abstract class BaseRenderer {
   String renderDocComment(String comment, {int indent = 0}) {
     if (comment.isEmpty) return '';
 
-    final indentStr = '  ' * indent;
-    final buffer = StringBuffer();
+    final buffer = CodeBuffer(initialIndent: indent);
     final lines = comment.split('\n');
 
     for (final line in lines) {
       if (line.trim().isEmpty) {
-        buffer.writeln('$indentStr///');
+        buffer.writeln('///');
       } else {
-        buffer.writeln('$indentStr/// $line');
+        buffer.writeln('/// $line');
       }
     }
 
     return buffer.toString();
-  }
-
-  /// Renders an allowed values validation check.
-  ///
-  /// Generates runtime validation code for parameters with allowed_values.
-  String renderAllowedValuesCheck({
-    required String camelParam,
-    required String constName,
-    required String encodedValues,
-    required String joinedValues,
-    required bool isNullable,
-    required String type,
-    int indent = 0,
-  }) {
-    final indentStr = '  ' * indent;
-    final buffer = StringBuffer();
-
-    // Strip nullable suffix for the Set type definition
-    final setType =
-        type.endsWith('?') ? type.substring(0, type.length - 1) : type;
-
-    buffer.writeln(
-      '$indentStr    const $constName = <$setType>{$encodedValues};',
-    );
-
-    final condition = isNullable
-        ? 'if ($camelParam != null && !$constName.contains($camelParam)) {'
-        : 'if (!$constName.contains($camelParam)) {';
-
-    buffer.writeln('$indentStr    $condition');
-    buffer.writeln('$indentStr      throw ArgumentError.value(');
-    buffer.writeln('$indentStr        $camelParam,');
-    buffer.writeln("$indentStr        '$camelParam',");
-    buffer.writeln("$indentStr        'must be one of $joinedValues',");
-    buffer.writeln('$indentStr      );');
-    buffer.writeln('$indentStr    }');
-
-    return buffer.toString();
-  }
-
-  /// Renders validation checks for parameters (regex, length, range).
-  String renderValidationChecks({
-    required String camelParam,
-    required bool isNullable,
-    String? regex,
-    int? minLength,
-    int? maxLength,
-    num? min,
-    num? max,
-    int indent = 0,
-  }) {
-    final indentStr = '  ' * indent;
-    final buffer = StringBuffer();
-
-    // Regex validation
-    if (regex != null) {
-      final condition = isNullable
-          ? 'if ($camelParam != null && !RegExp(r\'$regex\').hasMatch($camelParam)) {'
-          : 'if (!RegExp(r\'$regex\').hasMatch($camelParam)) {';
-      buffer.writeln('$indentStr    $condition');
-      buffer.writeln('$indentStr      throw ArgumentError.value(');
-      buffer.writeln('$indentStr        $camelParam,');
-      buffer.writeln("$indentStr        '$camelParam',");
-      buffer.writeln(
-          "$indentStr        'must match regex ${StringUtils.escapeSingleQuoted(regex)}',");
-      buffer.writeln('$indentStr      );');
-      buffer.writeln('$indentStr    }');
-    }
-
-    // Length validation (String)
-    if (minLength != null || maxLength != null) {
-      final lengthCheck = StringBuffer();
-      if (minLength != null) {
-        lengthCheck.write('$camelParam.length < $minLength');
-      }
-      if (minLength != null && maxLength != null) lengthCheck.write(' || ');
-      if (maxLength != null) {
-        lengthCheck.write('$camelParam.length > $maxLength');
-      }
-
-      final condition = isNullable
-          ? 'if ($camelParam != null && (${lengthCheck.toString()})) {'
-          : 'if (${lengthCheck.toString()}) {';
-
-      buffer.writeln('$indentStr    $condition');
-      buffer.writeln('$indentStr      throw ArgumentError.value(');
-      buffer.writeln('$indentStr        $camelParam,');
-      buffer.writeln("$indentStr        '$camelParam',");
-      final msg = minLength != null && maxLength != null
-          ? 'length must be between $minLength and $maxLength'
-          : minLength != null
-              ? 'length must be at least $minLength'
-              : 'length must be at most $maxLength';
-      buffer.writeln("$indentStr        '$msg',");
-      buffer.writeln('$indentStr      );');
-      buffer.writeln('$indentStr    }');
-    }
-
-    // Range validation (num)
-    if (min != null || max != null) {
-      final rangeCheck = StringBuffer();
-      if (min != null) rangeCheck.write('$camelParam < $min');
-      if (min != null && max != null) rangeCheck.write(' || ');
-      if (max != null) rangeCheck.write('$camelParam > $max');
-
-      final condition = isNullable
-          ? 'if ($camelParam != null && (${rangeCheck.toString()})) {'
-          : 'if (${rangeCheck.toString()}) {';
-
-      buffer.writeln('$indentStr    $condition');
-      buffer.writeln('$indentStr      throw ArgumentError.value(');
-      buffer.writeln('$indentStr        $camelParam,');
-      buffer.writeln("$indentStr        '$camelParam',");
-      final msg = min != null && max != null
-          ? 'must be between $min and $max'
-          : min != null
-              ? 'must be at least $min'
-              : 'must be at most $max';
-      buffer.writeln("$indentStr        '$msg',");
-      buffer.writeln('$indentStr      );');
-      buffer.writeln('$indentStr    }');
-    }
-
-    return buffer.toString();
-  }
-
-  /// Escapes and encodes a list of allowed values for code generation.
-  ///
-  /// Returns a comma-separated string of escaped values ready for code.
-  String encodeAllowedValues(List<dynamic> values) {
-    return values.map((value) {
-      if (value is String) {
-        return "'${StringUtils.escapeSingleQuoted(value)}'";
-      }
-      return value.toString();
-    }).join(', ');
-  }
-
-  /// Joins allowed values for error messages.
-  String joinAllowedValues(List<dynamic> values) {
-    return values.join(', ');
   }
 
   /// Renders a class or mixin declaration header.

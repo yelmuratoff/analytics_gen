@@ -3,6 +3,7 @@ import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import '../../util/string_utils.dart';
 import '../../util/type_mapper.dart';
 import 'base_renderer.dart';
+import 'sub_renderers/validation_renderer.dart';
 
 /// Renders context capability interfaces and mixins.
 class ContextRenderer extends BaseRenderer {
@@ -23,7 +24,7 @@ class ContextRenderer extends BaseRenderer {
 
     buffer.writeln('/// Capability interface for $pascalName');
     buffer.writeln(
-        'abstract class ${pascalName}Capability implements AnalyticsCapability {');
+        'abstract interface class ${pascalName}Capability implements AnalyticsCapability {');
 
     // Collect all unique operations used across properties
     final operations = <String>{};
@@ -68,13 +69,15 @@ class ContextRenderer extends BaseRenderer {
         }
         buffer.writeln('  void $methodName($nullableType value) {');
 
+        const validator = ValidationRenderer();
         if (prop.allowedValues != null && prop.allowedValues!.isNotEmpty) {
           final constName =
               'allowed${StringUtils.capitalizePascal(camelName)}Values';
-          final encodedValues = encodeAllowedValues(prop.allowedValues!);
-          final joinedValues = joinAllowedValues(prop.allowedValues!);
+          final encodedValues =
+              validator.encodeAllowedValues(prop.allowedValues!);
+          final joinedValues = validator.joinAllowedValues(prop.allowedValues!);
 
-          buffer.write(renderAllowedValuesCheck(
+          buffer.write(validator.renderAllowedValuesCheck(
             camelParam: 'value',
             constName: constName,
             encodedValues: encodedValues,
@@ -83,6 +86,16 @@ class ContextRenderer extends BaseRenderer {
             type: dartType,
           ));
         }
+
+        buffer.write(validator.renderValidationChecks(
+          camelParam: 'value',
+          isNullable: prop.isNullable,
+          regex: prop.regex,
+          minLength: prop.minLength,
+          maxLength: prop.maxLength,
+          min: prop.min,
+          max: prop.max,
+        ));
 
         buffer.writeln(
             "    capability(${camelContextName}Key)?.$interfaceMethodName('${prop.name}', value);");

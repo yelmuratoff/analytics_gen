@@ -1,3 +1,4 @@
+import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
@@ -54,7 +55,8 @@ events:
 ''',
       );
 
-      final eventParser = YamlParser(sharedParameters: shared);
+      final eventParser =
+          YamlParser(config: ParserConfig(sharedParameters: shared));
       final domains = await eventParser.parseEvents([eventSource]);
 
       final event = domains['events']!.events.first;
@@ -91,8 +93,10 @@ events:
       );
 
       final eventParser = YamlParser(
-        sharedParameters: shared,
-        enforceCentrallyDefinedParameters: true,
+        config: ParserConfig(
+          sharedParameters: shared,
+          enforceCentrallyDefinedParameters: true,
+        ),
       );
 
       expect(
@@ -131,8 +135,10 @@ events:
       );
 
       final eventParser = YamlParser(
-        sharedParameters: shared,
-        preventEventParameterDuplicates: true,
+        config: ParserConfig(
+          sharedParameters: shared,
+          preventEventParameterDuplicates: true,
+        ),
       );
 
       expect(

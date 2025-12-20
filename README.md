@@ -58,7 +58,15 @@
 ## TL;DR Quick Start
 
 1. **Describe events** in `events/*.yaml` (one domain per file). Keep descriptions + parameter docs current.
-2. **Configure** `analytics_gen.yaml` so every machine runs the same generator settings.
+2. **Configure** `analytics_gen.yaml`. The configuration uses a structured format:
+   ```yaml
+   analytics_gen:
+     inputs:
+       events: 'events'               # Directory path (scans top-level)
+       # events: 'events/**/*.yaml'   # Or use glob patterns for recursive scanning
+     outputs:
+       dart: 'lib/src/analytics/generated'
+   ```
 3. **Generate** code/doc/exports with `dart run analytics_gen:generate --docs --exports`.
 4. **Initialize + use** the generated API:
    - **Singleton**: `Analytics.initialize(...)`, then `Analytics.instance.logEvent(...)`.
@@ -71,11 +79,12 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/ye
 
 - **Type-safe analytics** - compile-time event + parameter checking, optional allowed-value guards.
 - **Domain-per-file generation** - readable diffs, mixins scoped to a single domain.
+- **Glob pattern support** - use `events/**/*.yaml` for recursive scanning or organize events in subdirectories.
 - **Deterministic outputs** - sorted parsing with fingerprints to keep reviewers sane.
 - **Multi-provider fan-out** - send the same event to multiple SDKs with error handling.
 - **Docs + exports** - Markdown, CSV, JSON, SQL, SQLite artifacts for stakeholders.
 - **Runtime plan** - `Analytics.plan` exposes the parsed plan at runtime for debugging or feature toggles.
-- **Extensible Metadata** - attach arbitrary key-value pairs (e.g., `owner`, `pii`) to events and parameters in YAML, propagated to code, docs, and exports.
+- **Extensible Metadata** - attach arbitrary key-value pairs (e.g., `owner`) to events and parameters in YAML, propagated to code, docs, and exports.
 - **Enhanced CSV Export** - generates multiple CSV files (events, parameters, metadata, relationships) for deep analysis.
 - **Parameter Validation** - define validation rules (regex, length, range) in YAML and get runtime checks automatically.
 - **Generation Telemetry** - track generation performance with built-in metrics (domain processing times, total duration, file counts).
@@ -131,6 +140,62 @@ enum AnalyticsAuthLoginMethodEnum {
 void logAuthLogin({required AnalyticsAuthLoginMethodEnum method}) { ... }
 ```
 
+## Type-Safe Dart Enums (`dart_type`)
+
+You can also use existing Dart enums (or other classes) directly by specifying `dart_type`. The generator will use this type in the method signature and serialize it using `.name`.
+
+```yaml
+feature:
+  interact:
+    parameters:
+      status:
+        dart_type: VerificationStatus # Must be available in scope
+      reason:
+        dart_type: ReasonEnum?
+```
+
+Generated code:
+```dart
+void logFeatureInteract({
+  required VerificationStatus status,
+  ReasonEnum? reason,
+}) {
+  logger.logEvent(
+    name: "feature: interact",
+    parameters: {
+      "status": status.name,
+      if (reason != null) "reason": reason?.name,
+    },
+  );
+}
+```
+
+> **Note**: By default, the generator does not know where `VerificationStatus` is defined. You must ensure it is imported.
+
+### Managing Imports
+
+You have two ways to add imports for your custom types:
+
+#### 1. Global Imports (Recommended for Barrel Files)
+Add a list of imports to your `analytics_gen.yaml`. These will be added to **every** generated event file. This is ideal if you have a single "barrel file" that exports all your analytics enums.
+
+```yaml
+analytics_gen:
+  inputs:
+    imports:
+      - 'package:my_app/analytics/analytics_types.dart'
+      - 'package:my_app/core/models/user_status.dart'
+```
+
+#### 2. Local Imports (For One-offs)
+Specify the import directly on the parameter using the `import` key. This is useful for unique types used in only one place.
+
+```yaml
+status:
+  dart_type: VerificationStatus
+  import: 'package:my_app/features/auth/verification_status.dart'
+```
+
 ## Dual-Write Migration
 
 When migrating from an old event to a new one, you can use `dual_write_to` to automatically log to both events during the transition period.
@@ -148,21 +213,18 @@ The generator will attempt to call the generated method for the target event if 
 
 ## Extensible Metadata
 
-Attach metadata to events and parameters using the `meta` key. Use metadata for ownership, PII flags, and other attributes that should travel with the plan but not the runtime code.
+Attach metadata to events and parameters using the `meta` key. Use metadata for ownership and other attributes that should travel with the plan but not the runtime code.
 
 ```yaml
 user_login:
   description: User logged in successfully.
   meta:
     owner: "auth-team"
-    pii: false
     tier: "critical"
   parameters:
     method:
       type: string
       description: The method used to login (email, google, apple).
-      meta:
-        pii: true # Email might be PII if logged directly
 ```
 
 This metadata is:
@@ -240,7 +302,7 @@ Contexts allow you to define global properties (like user attributes, device inf
    The generator creates an interface (e.g., `UserPropertiesCapability`). Your analytics provider must implement this interface and register it to handle the property updates.
 
    ```dart
-   class MyAnalyticsService with CapabilityProviderMixin implements IAnalytics {
+   class MyAnalyticsService extends CapabilityProviderBase implements IAnalytics {
      MyAnalyticsService() {
        // Register the capability implementation
        registerCapability(userPropertiesKey, _UserPropertiesImpl(this));
@@ -264,11 +326,30 @@ Contexts allow you to define global properties (like user attributes, device inf
 
 - [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
 - [Validation & Naming](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
+- [Naming & Configuration Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/NAMING.md) - recipes for "Engineer Friendly" vs "Business Readable" naming, templates, and casing.
 - [Capabilities](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
+
 - [Migration Guides](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
 - [Code Review checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
 - [Scalability & Performance](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
+- [Performance Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/PERFORMANCE.md) - detailed optimization tips for build and runtime.
+- [Troubleshooting](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/TROUBLESHOOTING.md) - common errors and fixes.
 - [API Reference](https://pub.dev/documentation/analytics_gen/latest/) - generated Dart API docs on pub.dev.
+
+## Observability & Metrics
+
+Track the performance of your analytics generation pipeline, especially useful in CI/CD environments.
+
+```bash
+dart run analytics_gen:generate --metrics
+```
+
+Output includes:
+- **Parsing Duration**: Time spent validation and loading YAML.
+- **Generation Duration**: Time spent writing Dart/JSON/CSV files.
+- **Event Counts**: Total events processed.
+
+Use this to detect regressions in build time as your plan grows.
 
 ## CLI Commands
 
@@ -281,6 +362,7 @@ dart run analytics_gen:generate --exports --no-code
 dart run analytics_gen:generate --validate-only
 dart run analytics_gen:generate --plan
 dart run analytics_gen:generate --watch              # incremental rebuilds on file change
+dart run analytics_gen:audit                         # scan for unused events
 ```
 
 Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop-the config still drives CI.
@@ -290,9 +372,40 @@ Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--
 - Run `dart run analytics_gen:generate --validate-only` in CI to block invalid YAML before files are written.
 - **CI Guardrails**: Add a step in your CI pipeline to run generation and check for uncommitted changes (`git diff --exit-code`). This ensures that the generated code, docs, and exports are always in sync with the YAML definitions.
 - Naming strategy (`analytics_gen.naming`) enforces consistent identifiers-override per-field when legacy plans demand it.
+- **Configurable Event Casing**: You can control the format of the generated event string (the value sent to analytics providers) using the `casing` option in `analytics_gen.yaml`.
+  - `snake_case` (default): `order: completed` -> `order_completed` (Engineer Friendly, great for SQL).
+  - `title_case`: `order: completed` -> `Order Completed` (Business Readable, great for Amplitude/Mixpanel).
+  - `original`: Preserves the raw template output (e.g. `order: completed`).
+  ```yaml
+  analytics_gen:
+    naming:
+      casing: snake_case # or title_case, original
+  ```
 - **Strict Event Naming**: The parser forbids string interpolation in event names (e.g. `View ${page}`) to prevent high-cardinality events from polluting your analytics data. This is now enforced by default.
+
 - Docs/JSON/SQL outputs embed a fingerprint derived from the plan; unexpected diffs mean someone skipped regeneration.
 - Full details live in [`doc/VALIDATION.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md).
+
+## "Dead Event" Audit
+
+Over time, analytics plans grow, and events are deprecated or removed from the codebase but left in the YAML. The audit command scans your Dart code (`lib/`) for usages of the generated event methods.
+
+```bash
+dart run analytics_gen:audit
+```
+
+**Output Example:**
+```text
+[WARN] Found 2 dead events (0 usages):
+[WARN]   - auth.login_v2 (Method: logAuthLoginV2)
+[WARN]     Defined in: events/auth.yaml:17
+[WARN]   - purchase.cancelled (Method: logPurchaseCancelled)
+[WARN]     Defined in: events/purchase.yaml:19
+```
+
+Supported flags:
+- `--config`: Path to your config file (default: `analytics_gen.yaml`).
+- `--verbose`: Show detailed logs.
 
 ## Analytics Providers & Capabilities
 
@@ -303,7 +416,7 @@ The generated mixins call `logger.logEvent(...)`. You are in control of the unde
 
 - Implement `IAnalytics` for a single SDK.
 - Use `MultiProviderAnalytics` to fan out events while isolating provider failures.
-- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) for a junior-friendly walkthrough.
+- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (extend `CapabilityProviderBase` to wire a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) for a junior-friendly walkthrough.
 
 Mock + async adapters (`MockAnalyticsService`, `AsyncAnalyticsAdapter`) are included for tests and await-heavy flows.
 
@@ -412,6 +525,35 @@ Generated artifacts inside the example mirror what your app will emit. Use it as
 - Add `dart run analytics_gen:generate --validate-only` to CI so schema errors fail fast.
 - Run `dart analyze` + `dart test` before committing-analytics code follows the same standards as the rest of your Flutter/Dart app.
 
+### Generated Test Matchers
+
+You can opt-in to generate typed `Matcher` helpers for `package:test` by enabling `test_matchers` in your configuration:
+
+```yaml
+analytics_gen:
+  targets:
+    test_matchers: true # Generates test/analytics_matchers.dart
+```
+
+This generates `is{EventName}` matchers that simplify verifying `logEvent` calls:
+
+```dart
+import 'analytics_matchers.dart';
+
+test('logs login event', () {
+  // ... trigger action ...
+  
+  verify(() => analytics.logEvent(
+    name: 'auth.login', 
+    parameters: isAuthLogin(
+      method: AuthLoginMethod.email,
+    ),
+  ));
+});
+```
+
+
+
 ## Contributing
 
 Contributions welcome! Please:
@@ -434,8 +576,12 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
 - **Does this lock me into one provider?**
   No. Implement or combine multiple providers. Capabilities expose provider-specific features without bloating the global interface.
 
+- **Can I change the event naming style (e.g. to "Title Case")?**
+  Yes. Use `analytics_gen.naming.casing` in `analytics_gen.yaml`. See the [Naming Guide](doc/NAMING.md) for examples.
+
 - **Is it safe to commit generated files?**
   Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md)).
+
 
 ## License
 

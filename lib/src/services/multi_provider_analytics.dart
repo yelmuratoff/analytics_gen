@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import '../core/analytics_capabilities.dart';
 import '../core/analytics_interface.dart';
@@ -18,6 +18,26 @@ typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
 ///
 /// This class is immutable. Use [addProvider] or [removeProvider]
 /// to create new instances with modified provider lists.
+///
+/// ## Sync vs Async Logging
+///
+/// This class supports both synchronous ([logEvent]) and asynchronous
+/// ([logEventAsync]) logging.
+///
+/// ### When to use [logEvent] (Synchronous)
+/// Use this for standard app usage (e.g. UI interactions). It wraps all provider
+/// calls in microtasks to ensure the UI thread is not blocked, even if a provider
+/// performs expensive synchronous work. Errors are reported via [onError] or
+/// [onProviderFailure].
+///
+/// ### When to use [logEventAsync] (Asynchronous)
+/// Use this when you need to ensure delivery before proceeding, such as:
+/// * App shutdown or specific cleanup logic.
+/// * Background tasks where the process might be killed.
+/// * Tests where you need deterministic execution order.
+///
+/// If a provider implements [IAsyncAnalytics], this method awaits its completion.
+/// If a provider is synchronous, it is still wrapped in a microtask but awaited.
 ///
 /// Example:
 /// ```dart
@@ -71,27 +91,14 @@ final class MultiProviderAnalytics
     for (final provider in _providers) {
       final predicate = _providerFilters[provider];
       if (predicate != null && !predicate(name, parameters)) continue;
-      try {
-        provider.logEvent(name: name, parameters: parameters);
-      } on SocketException catch (error, stackTrace) {
-        // Expected: Network failures - continue with other providers
-        _handleProviderFailure(provider, name, parameters, error, stackTrace);
-      } on FormatException catch (error, stackTrace) {
-        // Expected: Validation errors - continue with other providers
-        _handleProviderFailure(provider, name, parameters, error, stackTrace);
-      } catch (error, stackTrace) {
-        // Unexpected: Provider bugs - log and continue
-        _handleProviderFailure(provider, name, parameters, error, stackTrace);
 
-        _logger.error(
-          '[Analytics] Unexpected error in ${provider.runtimeType}.logEvent:\n'
-          '  Error: $error\n'
-          '  Event: $name\n'
-          '  Parameters: $parameters',
-          error,
-          stackTrace,
-        );
-      }
+      scheduleMicrotask(() {
+        try {
+          provider.logEvent(name: name, parameters: parameters);
+        } catch (error, stackTrace) {
+          _handleProviderFailure(provider, name, parameters, error, stackTrace);
+        }
+      });
     }
   }
 
@@ -152,6 +159,12 @@ final class MultiProviderAnalytics
 
     onProviderFailure?.call(failure);
     onError?.call(failure.error, failure.stackTrace);
+
+    if (onProviderFailure == null && onError == null) {
+      _logger.warning(
+        'Provider failure (${failure.providerName}) for event "${failure.eventName}": ${failure.error}',
+      );
+    }
   }
 
   /// Returns the number of configured providers.

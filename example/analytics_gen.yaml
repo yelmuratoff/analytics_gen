@@ -14,10 +14,14 @@ analytics_gen:
       - events/theme_context.yaml
       - events/user_properties.yaml
 
+    # Global imports
+    imports:
+      - package:analytics_gen_example/models.dart
+
   # Output configurations
   outputs:
     # Path where generated Dart code will be written (relative to lib/)
-    dart: src/analytics/generated
+    dart: lib/src/analytics/generated
 
     # Path for documentation (optional)
     docs: docs/analytics_events.md
@@ -32,7 +36,7 @@ analytics_gen:
     json: true
     sql: true
     plan: true
-    tests: true
+    test_matchers: true
 
   # Validation and generation rules
   rules:
@@ -57,6 +61,8 @@ analytics_gen:
     # keys to opt-in via per-parameter `identifier`.
     enforce_snake_case_domains: true
     enforce_snake_case_parameters: true
+    # casing: snake_case # Options: snake_case (default), title_case, original
+
     # Use human-friendly aliases when auto-building event names without `event_name`.
     event_name_template: "{domain_alias}: {event}"
     identifier_template: "{domain}.{event}"

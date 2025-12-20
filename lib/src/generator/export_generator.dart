@@ -9,6 +9,7 @@ import 'export/csv_generator.dart';
 import 'export/json_generator.dart';
 import 'export/sql_generator.dart';
 import 'export/sqlite_generator.dart';
+import 'output_manager.dart';
 
 /// Orchestrates export generation for analytics events.
 ///
@@ -19,6 +20,7 @@ final class ExportGenerator {
     required this.config,
     required this.projectRoot,
     this.log = const NoOpLogger(),
+    this.outputManager = const OutputManager(),
   });
 
   /// The analytics configuration.
@@ -30,6 +32,9 @@ final class ExportGenerator {
   /// The logger to use.
   final Logger log;
 
+  /// The output manager to use.
+  final OutputManager outputManager;
+
   /// Generates all configured export files
   Future<void> generate(Map<String, AnalyticsDomain> domains) async {
     log.info('Starting analytics export generation...');
@@ -40,8 +45,8 @@ final class ExportGenerator {
     }
 
     // Determine output directory
-    final outputDir = config.exportsPath != null
-        ? path.join(projectRoot, config.exportsPath!)
+    final outputDir = config.outputs.exportsPath != null
+        ? path.join(projectRoot, config.outputs.exportsPath!)
         : path.join(projectRoot, 'assets', 'generated');
 
     final outputDirectory = Directory(outputDir);
@@ -50,19 +55,29 @@ final class ExportGenerator {
     }
 
     // Clean up disabled exports
-    if (!config.generateCsv) {
-      final file = File(path.join(outputDir, 'analytics_events.csv'));
-      if (file.existsSync()) await file.delete();
+    if (!config.targets.generateCsv) {
+      final csvFiles = [
+        'analytics_events.csv',
+        'analytics_parameters.csv',
+        'analytics_metadata.csv',
+        'analytics_event_parameters.csv',
+        'analytics_master.csv',
+        'analytics_domains.csv',
+      ];
+      for (final fileName in csvFiles) {
+        final file = File(path.join(outputDir, fileName));
+        if (file.existsSync()) await file.delete();
+      }
     }
 
-    if (!config.generateJson) {
+    if (!config.targets.generateJson) {
       final file = File(path.join(outputDir, 'analytics_events.json'));
       if (file.existsSync()) await file.delete();
       final minFile = File(path.join(outputDir, 'analytics_events.min.json'));
       if (minFile.existsSync()) await minFile.delete();
     }
 
-    if (!config.generateSql) {
+    if (!config.targets.generateSql) {
       final file = File(path.join(outputDir, 'create_database.sql'));
       if (file.existsSync()) await file.delete();
       final dbFile = File(path.join(outputDir, 'analytics_events.db'));
@@ -72,9 +87,12 @@ final class ExportGenerator {
     final tasks = <Future<void>>[];
 
     // Generate configured formats
-    if (config.generateCsv) {
+    if (config.targets.generateCsv) {
       tasks.add(() async {
-        final csvGen = CsvGenerator(naming: config.naming);
+        final csvGen = CsvGenerator(
+          naming: config.naming,
+          outputManager: outputManager,
+        );
         await csvGen.generate(
           domains,
           outputDir,
@@ -85,9 +103,12 @@ final class ExportGenerator {
       }());
     }
 
-    if (config.generateJson) {
+    if (config.targets.generateJson) {
       tasks.add(() async {
-        final jsonGen = JsonGenerator(naming: config.naming);
+        final jsonGen = JsonGenerator(
+          naming: config.naming,
+          outputManager: outputManager,
+        );
         await jsonGen.generate(domains, outputDir);
         log.info(
           '✓ Generated JSON at: ${path.join(outputDir, 'analytics_events.json')}',
@@ -98,9 +119,12 @@ final class ExportGenerator {
       }());
     }
 
-    if (config.generateSql) {
+    if (config.targets.generateSql) {
       tasks.add(() async {
-        final sqlGen = SqlGenerator(naming: config.naming);
+        final sqlGen = SqlGenerator(
+          naming: config.naming,
+          outputManager: outputManager,
+        );
         final sqliteGen = SqliteGenerator(
           log: log,
           naming: config.naming,
