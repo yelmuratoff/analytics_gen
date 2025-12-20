@@ -19,12 +19,12 @@ All notable changes to this project will be documented in this file.
 - Fixed data loss bug in `BatchingAnalytics` where queue would stall after a failed auto-flush.
 - Added default logging to `MultiProviderAnalytics` so provider failures are not silent by default.
 - Fixed `ConfigParser` crash when optional fields are explicitly set to `null` in YAML.
-- **Improved Fingerprint Sensitivity**: Fingerprints now cover all event/parameter fields (constraints, metadata, versioning) and config-influencing output.
-- **CLI Validation Parity**: Unified `TrackingPlanLoader` ensures `--validate-only` and `--plan` match the generation pipeline exactly.
-- **Cross-Platform Robustness**: Normalized path handling in `EventLoader` for reliable Windows/macOS/Linux parsing.
-- **Repository Hygiene**: Removed `.DS_Store` and updated `.gitignore`.
-- **Minor Cleanup**: Consolidated `MethodSignatureRenderer` and updated documentation for clarity.
-- **Glob Pattern Support**: `EventLoader` now supports glob patterns for `eventsPath` (e.g., `events/**/*.yaml` for recursive scanning). Backward compatible with simple directory paths.
+- Improved Fingerprint Sensitivity: Fingerprints now cover all event/parameter fields (constraints, metadata, versioning) and config-influencing output.
+- CLI Validation Parity: Unified `TrackingPlanLoader` ensures `--validate-only` and `--plan` match the generation pipeline exactly.
+- Cross-Platform Robustness: Normalized path handling in `EventLoader` for reliable Windows/macOS/Linux parsing.
+- Repository Hygiene: Removed `.DS_Store` and updated `.gitignore`.
+- Minor Cleanup: Consolidated `MethodSignatureRenderer` and updated documentation for clarity.
+- Glob Pattern Support: `EventLoader` now supports glob patterns for `eventsPath` (e.g., `events/**/*.yaml` for recursive scanning). Backward compatible with simple directory paths.
 
 ## [1.0.3]
 - Added "Dead Event" Audit Command (`dart run analytics_gen:audit`) to detect and report generated event methods that are unused in the Dart codebase, helping maintain a clean tracking plan.

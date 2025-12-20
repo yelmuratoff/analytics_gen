@@ -416,7 +416,7 @@ The generated mixins call `logger.logEvent(...)`. You are in control of the unde
 
 - Implement `IAnalytics` for a single SDK.
 - Use `MultiProviderAnalytics` to fan out events while isolating provider failures.
-- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (the new `CapabilityProviderMixin` wires a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) for a junior-friendly walkthrough.
+- Need provider-specific hooks (user properties, timed events, etc.)? Register typed capabilities via `CapabilityKey<T>` (extend `CapabilityProviderBase` to wire a registry automatically). Consumers request them when needed, keeping the base interface small. See [`doc/CAPABILITIES.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) for a junior-friendly walkthrough.
 
 Mock + async adapters (`MockAnalyticsService`, `AsyncAnalyticsAdapter`) are included for tests and await-heavy flows.
 
