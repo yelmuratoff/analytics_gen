@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.5] - Unreleased
+## [1.0.5]
 - Added `templates/analytics_gen.yaml` as a reference for all configuration options.
 - Added `templates/events.yaml` demonstrating event and parameter definitions.
 - Update README to enhance clarity and structure of `analytics_gen` documentation.

@@ -27,9 +27,15 @@ dartdoc:
     performance:
       markdown: doc/PERFORMANCE.md
       displayName: Performance Guide
+    testing:
+      markdown: doc/TESTING.md
+      displayName: Testing
     troubleshooting:
       markdown: doc/TROUBLESHOOTING.md
       displayName: Troubleshooting
+    prompt_guide:
+      markdown: doc/PROMPT_GUIDE.md
+      displayName: Prompt Guide
     api_reference:
       markdown: doc/api_reference.md
       displayName: API Reference
@@ -40,10 +46,12 @@ dartdoc:
     - naming
     - capabilities
     - performance
+    - testing
     - migration
     - scalability
     - code_review
     - troubleshooting
+    - prompt_guide
     - api_reference
   showUndocumentedCategories: true
   linkToSource:
