@@ -267,7 +267,8 @@ class SchemaComparator {
     final domainsList = json['domains'] as List<dynamic>? ?? [];
     for (final d in domainsList) {
       // Use shared serialization logic to parse the domain
-      final domain = AnalyticsSerialization.domainFromMap(d as Map<String, dynamic>);
+      final domain =
+          AnalyticsSerialization.domainFromMap(d as Map<String, dynamic>);
       domains[domain.name] = domain;
     }
 
