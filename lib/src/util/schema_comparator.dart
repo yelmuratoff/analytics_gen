@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:analytics_gen/src/models/serialization.dart';
 
 import '../models/analytics_event.dart';
 
@@ -265,57 +266,9 @@ class SchemaComparator {
 
     final domainsList = json['domains'] as List<dynamic>? ?? [];
     for (final d in domainsList) {
-      final domainMap = d as Map<String, dynamic>;
-      final domainName = domainMap['name'] as String;
-      final eventsList = domainMap['events'] as List<dynamic>? ?? [];
-
-      final events = <AnalyticsEvent>[];
-      for (final e in eventsList) {
-        final eventMap = e as Map<String, dynamic>;
-        final paramsList = eventMap['parameters'] as List<dynamic>? ?? [];
-
-        final parameters = <AnalyticsParameter>[];
-        for (final p in paramsList) {
-          final paramMap = p as Map<String, dynamic>;
-          parameters.add(AnalyticsParameter(
-            name: paramMap['name'] as String,
-            codeName: paramMap['code_name'] as String?,
-            type: paramMap['type'] as String,
-            isNullable: paramMap['is_nullable'] as bool? ?? false,
-            description: paramMap['description'] as String?,
-            allowedValues:
-                (paramMap['allowed_values'] as List?)?.cast<Object>(),
-            regex: paramMap['regex'] as String?,
-            minLength: paramMap['min_length'] as int?,
-            maxLength: paramMap['max_length'] as int?,
-            min: paramMap['min'] as num?,
-            max: paramMap['max'] as num?,
-            addedIn: paramMap['added_in'] as String?,
-            deprecatedIn: paramMap['deprecated_in'] as String?,
-            meta:
-                (paramMap['meta'] as Map?)?.cast<String, Object?>() ?? const {},
-          ));
-        }
-
-        events.add(AnalyticsEvent(
-          name: eventMap['name'] as String,
-          description: eventMap['description'] as String? ?? '',
-          identifier: eventMap['identifier'] as String?,
-          customEventName: eventMap['event_name'] as String?,
-          deprecated: eventMap['deprecated'] as bool? ?? false,
-          replacement: eventMap['replacement'] as String?,
-          addedIn: eventMap['added_in'] as String?,
-          deprecatedIn: eventMap['deprecated_in'] as String?,
-          dualWriteTo: (eventMap['dual_write_to'] as List?)?.cast<String>(),
-          meta: (eventMap['meta'] as Map?)?.cast<String, Object?>() ?? const {},
-          parameters: parameters,
-        ));
-      }
-
-      domains[domainName] = AnalyticsDomain(
-        name: domainName,
-        events: events,
-      );
+      // Use shared serialization logic to parse the domain
+      final domain = AnalyticsSerialization.domainFromMap(d as Map<String, dynamic>);
+      domains[domain.name] = domain;
     }
 
     return domains;
