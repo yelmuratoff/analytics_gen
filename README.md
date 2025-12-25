@@ -34,13 +34,20 @@
   </p>
 </div>
 
+**Stop guessing event names. Start treating analytics as code.**
+
+`analytics_gen` generates type-safe Dart code from your analytics YAML files. It ensures your tracking plan, implementation, and documentation are always in sync.
+
+- 🛡️ **Type-Safe**: No more typos in event names or parameters.
+- 📄 **Self-Documenting**: Your YAML is the single source of truth.
+- 🔌 **Provider Agnostic**: Works with Firebase, Amplitude, Mixpanel, or any custom provider.
+
 ## Table of Contents
 
-- [Overview](#overview)
-- [TL;DR Quick Start](#tldr-quick-start)
+- [Quick Start](#quick-start)
+- [CLI Commands](#cli-commands)
 - [Key Features](#key-features)
 - [Documentation Hub](#documentation-hub)
-- [CLI Commands](#cli-commands)
 - [Validation & Quality](#validation--quality)
 - [Analytics Providers & Capabilities](#analytics-providers--capabilities)
 - [Synchronous Logging & Async Providers](#synchronous-logging--async-providers)
@@ -51,11 +58,7 @@
 - [FAQ](#faq)
 - [License](#license)
 
-## Overview
-
-`analytics_gen` keeps your tracking plan, generated code, docs, and analytics providers in sync. Describe events once in YAML and the tool emits a type-safe Dart API, deterministic documentation, and optional exports (CSV/JSON/SQL/SQLite). The runtime `Analytics` singleton delegates to any provider(s) you register, so instrumentation stays consistent across platforms and teams.
-
-## TL;DR Quick Start
+## Quick Start
 
 1. **Describe events** in `events/*.yaml` (one domain per file). Keep descriptions + parameter docs current.
 2. **Configure** `analytics_gen.yaml`. The configuration uses a structured format:
@@ -74,6 +77,22 @@
 5. **Review diffs** for generated Dart, docs, and exports during PRs-treat them as production code.
 
 Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md).
+
+## CLI Commands
+
+```bash
+dart run analytics_gen:generate              # code only (default)
+dart run analytics_gen:generate --docs       # code + docs
+dart run analytics_gen:generate --docs --exports
+dart run analytics_gen:generate --docs --no-code
+dart run analytics_gen:generate --exports --no-code
+dart run analytics_gen:generate --validate-only
+dart run analytics_gen:generate --plan
+dart run analytics_gen:generate --watch              # incremental rebuilds on file change
+dart run analytics_gen:audit                         # scan for unused events
+```
+
+Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop-the config still drives CI.
 
 ## Key Features
 
@@ -335,23 +354,7 @@ Contexts allow you to define global properties (like user attributes, device inf
 - [Performance Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/PERFORMANCE.md) - detailed optimization tips for build and runtime.
 - [Troubleshooting](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/TROUBLESHOOTING.md) - common errors and fixes.
 - [API Reference](https://pub.dev/documentation/analytics_gen/latest/) - generated Dart API docs on pub.dev.
-
-## Observability & Metrics
-
-Track the performance of your analytics generation pipeline, especially useful in CI/CD environments.
-
-```bash
-dart run analytics_gen:generate --metrics
-```
-
-Output includes:
-- **Parsing Duration**: Time spent validation and loading YAML.
-- **Generation Duration**: Time spent writing Dart/JSON/CSV files.
-- **Event Counts**: Total events processed.
-
-Use this to detect regressions in build time as your plan grows.
-
-## CLI Commands
+CLI Commands
 
 ```bash
 dart run analytics_gen:generate              # code only (default)
