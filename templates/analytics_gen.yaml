@@ -1,0 +1,139 @@
+# analytics_gen.yaml
+#
+# This is a template configuration file for the analytics_gen package.
+# It documents all available configuration options.
+
+analytics_gen:
+  # ---------------------------------------------------------------------------
+  # Input Configurations
+  # ---------------------------------------------------------------------------
+  inputs:
+    # Path to the directory containing YAML event definition files.
+    # Relative to the project root.
+    # Default: 'events'
+    events: events
+
+    # List of paths to shared parameter definition files.
+    # These files define parameters that can be reused across multiple events.
+    # Paths are relative to the project root.
+    # Default: []
+    shared_parameters:
+      - events/shared/user_params.yaml
+      - events/shared/app_params.yaml
+
+    # List of paths to context definition files.
+    # Contexts are groups of parameters that are tracked together (e.g. user properties).
+    # Paths are relative to the project root.
+    # Default: []
+    contexts:
+      - events/contexts/user_properties.yaml
+      - events/contexts/theme_context.yaml
+
+    # Global imports to be included in the generated Dart files.
+    # Useful for custom types used in parameters.
+    # Default: []
+    imports:
+      - package:my_app/models/analytics_enums.dart
+      - package:my_app/models/user_id.dart
+
+  # ---------------------------------------------------------------------------
+  # Output Configurations
+  # ---------------------------------------------------------------------------
+  outputs:
+    # Path where the generated Dart code will be written.
+    # Relative to the project root.
+    # Default: 'lib/src/analytics/generated'
+    dart: lib/src/analytics/generated
+
+    # Path where documentation (Markdown) will be generated.
+    # If omitted, documentation is not generated unless explicitly enabled in 'targets'.
+    # Default: null
+    docs: docs/analytics_events.md
+
+    # Path where export files (CSV, JSON, SQL) will be generated.
+    # If omitted, exports are not generated unless explicitly enabled in 'targets'.
+    # Default: null
+    exports: assets/analytics
+
+  # ---------------------------------------------------------------------------
+  # Generation Targets
+  # Control which artifacts are generated.
+  # ---------------------------------------------------------------------------
+  targets:
+    # Generate CSV export of all events and parameters.
+    # Default: false
+    csv: true
+
+    # Generate JSON export of all events and parameters.
+    # Default: false
+    json: true
+
+    # Generate SQL script to create tables for events.
+    # Default: false
+    sql: true
+
+    # Generate Markdown documentation.
+    # Default: false
+    docs: true
+
+    # Include the runtime tracking plan in the generated code.
+    # This allows accessing event metadata at runtime.
+    # Default: true
+    plan: true
+
+    # Generate test matchers for use with package:test.
+    # Default: false
+    test_matchers: true
+
+  # ---------------------------------------------------------------------------
+  # Validation and Generation Rules
+  # ---------------------------------------------------------------------------
+  rules:
+    # Include the event description as a parameter in the generated log method.
+    # Useful for debugging or generic loggers.
+    # Default: false
+    include_event_description: true
+
+    # Treat string interpolation in event names (e.g. "view_{screen}") as an error.
+    # Recommended to prevent high cardinality of event names.
+    # Default: true
+    strict_event_names: true
+
+    # Enforce that ALL parameters must be defined in 'shared_parameters' files.
+    # Useful for strict governance of analytics taxonomy.
+    # Default: false
+    enforce_centrally_defined_parameters: false
+
+    # Prevent defining parameters in events that share a name with a global parameter
+    # but are defined locally.
+    # Default: false
+    prevent_event_parameter_duplicates: false
+
+  # ---------------------------------------------------------------------------
+  # Naming Strategy
+  # Control how names are formatted in the generated code and exports.
+  # ---------------------------------------------------------------------------
+  naming:
+    # Enforce snake_case for event domain names (filenames).
+    # Default: true
+    enforce_snake_case_domains: true
+
+    # Enforce snake_case for parameter names.
+    # Default: true
+    enforce_snake_case_parameters: true
+
+    # Template for formatting the event name in exports/docs.
+    # Available placeholders: {domain}, {event}, {domain_alias}
+    # Default: "{domain_alias}: {event}"
+    event_name_template: "{domain_alias}: {event}"
+
+    # Template for formatting the unique identifier for events.
+    # Default: "{domain}.{event}"
+    identifier_template: "{domain}.{event}"
+
+    # Human-friendly aliases for domains (filenames).
+    # Used in documentation and event_name_template.
+    domain_aliases:
+      auth: "Authentication"
+      onboarding: "User Onboarding"
+      purchase: "Purchase Flow"

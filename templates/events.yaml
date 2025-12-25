@@ -1,0 +1,127 @@
+# events_template.yaml
+#
+# This template demonstrates how to define analytics events, shared parameters, and contexts.
+# Rename this file (e.g., to 'auth.yaml' or 'purchase.yaml') and place it in your configured
+# events directory (default: 'events/').
+
+# -----------------------------------------------------------------------------
+# Event Definitions
+# Keys at the root level represent event names.
+# -----------------------------------------------------------------------------
+
+# Example 1: A simple event with basic parameters
+user_login:
+  description: Triggered when a user successfully logs in.
+  parameters:
+    method:
+      type: string
+      description: The method used to login (e.g. email, google, apple).
+      allowed_values: [email, google, apple, facebook] # Enforces enum generation
+    success:
+      type: bool
+      description: Whether the login was successful.
+
+# Example 2: An event with advanced parameter configuration
+purchase_completed:
+  description: Triggered when a purchase transaction is completed.
+  # Optional: unique identifier (overrides default naming strategy)
+  identifier: purchase.complete
+  # Optional: metadata for custom tooling or documentation
+  meta:
+    jira_ticket: PROJ-123
+    owner: billing-team
+  parameters:
+    transaction_id:
+      type: string
+      description: Unique ID of the transaction.
+      # Validation rules
+      min_length: 10
+      max_length: 50
+      regex: "^TXN-[0-9]+"
+
+    amount:
+      type: double
+      description: The total amount paid.
+      min: 0.0
+      # Custom parameter name sent to analytics backend (if different from key)
+      param_name: total_revenue
+
+    currency:
+      # Use a custom Dart type
+      type: string
+      dart_type: CurrencyCode
+      # Optional: Import the type specifically for this parameter
+      # If not provided here, it must be in the global 'imports' list in analytics_gen.yaml
+      import: package:my_app/models/currency.dart
+      description: The 3-letter currency code.
+
+    items_count:
+      type: int
+      description: Number of items in the cart.
+      min: 1
+
+    coupon_code:
+      type: string? # Nullable type
+      description: Optional coupon code applied.
+
+# Example 3: Deprecated event
+legacy_event:
+  description: This event is no longer used.
+  deprecated: true
+  replacement: purchase_completed # Suggests what to use instead
+
+# -----------------------------------------------------------------------------
+# Parameter Properties Reference
+# -----------------------------------------------------------------------------
+#
+# type: (Required) Data type. Common values: string, int, double, bool, list, map.
+#       Append '?' for nullable (e.g., string?).
+#
+# description: (Optional) Human-readable description for docs and code comments.
+#
+# dart_type: (Optional) Overrides the inferred Dart type.
+#            Useful for enums or value classes.
+#
+# import: (Optional) The Dart library to import for 'dart_type'.
+#
+# param_name: (Optional) The actual key sent to the analytics service.
+#             Defaults to the parameter key in YAML.
+#
+# allowed_values: (Optional) List of valid values. Generates an Enum in Dart.
+#
+# min/max: (Optional) Range constraints for numeric types.
+#
+# min_length/max_length: (Optional) Length constraints for string types.
+#
+# regex: (Optional) Regular expression pattern for string validation.
+#
+# meta: (Optional) Custom key-value pairs for metadata.
+#
+# added_in: (Optional) Version string when this parameter was added.
+#
+# deprecated_in: (Optional) Version string when this parameter was deprecated.
+
+# -----------------------------------------------------------------------------
+# Context Definitions (for 'contexts' files)
+# -----------------------------------------------------------------------------
+# Contexts are defined similarly to events but represent state tracked across many events.
+# Place these in files referenced by 'contexts' in analytics_gen.yaml.
+
+# user_properties:
+#   description: Properties associated with the user profile.
+#   parameters:
+#     lifetime_value:
+#       type: double
+#       operations: [set, increment] # Supported operations for this property
+
+# -----------------------------------------------------------------------------
+# Shared Parameters (for 'shared_parameters' files)
+# -----------------------------------------------------------------------------
+# Shared parameters allow you to define a parameter once and reuse it.
+# Place these in files referenced by 'shared_parameters' in analytics_gen.yaml.
+
+# screen_view:
+#   parameters:
+#     screen_name:
+#       type: string
+#       description: The name of the screen being viewed.

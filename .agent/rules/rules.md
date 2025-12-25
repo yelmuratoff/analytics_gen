@@ -13,7 +13,7 @@ Before writing code, follow this loop:
 2.  **Tasks**: Create/Update `TODO.md` with the plan.
 3.  **Implement**: Write code following the "Coding Conventions" below.
 4.  **Verify**: Ensure strict type safety and **write/run tests** (Unit or Integration).
-5.  **Finalize**: Update `TODO.md` (check off items), `CHANGELOG.md`, and `README.md` if generic logic changed.
+5.  **Finalize**: Update `TODO.md` (check off items), `CHANGELOG.md`, `README.md`, and **verify `templates/` consistency**, treating them as critical artifacts alongside tests and CI.
 
 ---
 
