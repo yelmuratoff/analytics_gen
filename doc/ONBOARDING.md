@@ -2,6 +2,24 @@
 
 This guide is the fast path for engineers joining a project that uses `analytics_gen`. Follow these steps to ensure consistent generation and reproducible outputs—define your plan once, run the generator with the same flags as everyone else, and treat the generated code as part of your review surface.
 
+## Workflow Overview
+
+```mermaid
+graph TD
+    A[events/*.yaml] -->|Parse & Validate| B(Parser)
+    B --> C{Validation Pass?}
+    C -->|No| D[Error]
+    C -->|Yes| E(Generator)
+    E --> F[lib/.../generated.dart]
+    E --> G[docs/analytics_events.md]
+    E --> H[assets/generated/*]
+    
+    style A fill:#e1f5fe,stroke:#333,stroke-width:1px
+    style F fill:#e8f5e9,stroke:#333,stroke-width:1px
+    style G fill:#fff3e0,stroke:#333,stroke-width:1px
+    style H fill:#fff3e0,stroke:#333,stroke-width:1px
+```
+
 ## Prerequisites
 
 - Dart SDK 3.3+ with `dart` on your PATH.

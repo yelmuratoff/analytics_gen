@@ -198,6 +198,14 @@ final class ParameterParser {
       dartImport = paramValue['import'] as String?; // Parse import
       // Validation rules
       regex = paramValue['regex'] as String?;
+      if (regex != null && regex.contains("'''")) {
+        throw AnalyticsParseException(
+          'Regex pattern for parameter "$rawName" cannot contain triple quotes '
+          "('''). This prevents generation errors in Dart raw strings.",
+          filePath: filePath,
+          span: paramValue.nodes['regex']?.span ?? valueNode.span,
+        );
+      }
       minLength = paramValue['min_length'] as int?;
       maxLength = paramValue['max_length'] as int?;
       min = paramValue['min'] as num?;
