@@ -17,7 +17,7 @@ Two developers. Two features. Same event. **Completely different parameters.**
 
 Because of this mismatch, your Data Analyst's SQL query (`SUM(value)`) ignored 100% of the new revenue. The report is wrong. The trust is damaged.
 
-This is the **"Stringly Typed" Trap**. And there is a better way.
+This is the **"Stringly Typed" Trap**.
 
 ## The "Stringly Typed" Trap
 
@@ -41,7 +41,7 @@ This breaks in three ways:
 
 We don't guess with our backend APIs. We use Swagger/OpenAPI or GraphQL. We define a **contract**, and we generate the client code.
 
-**`analytics_gen`** brings this same engineering discipline to your data pipeline.
+**`analytics_gen`** applies this same logic to your data pipeline.
 
 Instead of writing Dart code manually, you define your events in a YAML schema. This schema becomes the **Single Source of Truth**.
 
@@ -173,7 +173,7 @@ events:
 
 ## Conclusion
 
-Analytics is not just "logging". It is the eyes and ears of your product. If your analytics are blurry (untyped) or hallucinating (invalid data), your product decisions will be wrong.
+Analytics isn't just logging. It's how we know if a feature actually works. If your data is untyped or invalid, your product decisions will be wrong.
 
 Stop treating analytics as an afterthought. Treat it as code. Define the schema, generate the implementation, and never worry about a typo breaking your funnel again.
 
