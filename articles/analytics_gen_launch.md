@@ -2,9 +2,7 @@
 
 **We demand strict contracts for our APIs. It's time our analytics got the same treatment.**
 
-![Main Banner](https://github.com/yelmuratoff/analytics_gen/blob/main/assets/analytics_gen_banner.png?raw=true)
-
----
+![Main Banner](https://raw.githubusercontent.com/yelmuratoff/analytics_gen/main/assets/analytics_gen_banner.png)
 
 Imagine this scenario: You launch a new feature. The UI is polished, the animations are 60fps, and the unit tests are green. You go to sleep.
 
@@ -146,8 +144,7 @@ Bad data is caught **on the client**, in debug mode, before it ever pollutes you
 
 ## How It Works
 
-![Usage Image](https://github.com/yelmuratoff/analytics_gen/blob/main/assets/banner_v2.png?raw=true)
-
+![Usage Image](https://raw.githubusercontent.com/yelmuratoff/analytics_gen/main/assets/banner_v2.png)
 
 ## Beyond Code: The "Bus Factor"
 
@@ -179,8 +176,6 @@ events:
 Analytics is not just "logging". It is the eyes and ears of your product. If your analytics are blurry (untyped) or hallucinating (invalid data), your product decisions will be wrong.
 
 Stop treating analytics as an afterthought. Treat it as code. Define the schema, generate the implementation, and never worry about a typo breaking your funnel again.
-
----
 
 **Ready to clean up your data pipeline?**
 
