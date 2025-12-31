@@ -41,7 +41,7 @@ This breaks in three ways:
 
 We stopped guessing with our backend APIs years ago. We use Swagger/OpenAPI or GraphQL. We define a **contract**, and we generate the client code.
 
-**`analytics_gen`** applies this same logic to your data pipeline.
+`analytics_gen` applies this same logic to your data pipeline.
 
 Instead of writing Dart code manually, you define your events in a YAML schema. This schema becomes the **Single Source of Truth**.
 
@@ -181,5 +181,3 @@ Stop treating analytics as an afterthought. Treat it as code. Define the schema,
 
 📦 **Pub.dev**: [analytics_gen](https://pub.dev/packages/analytics_gen)
 ⭐️ **GitHub**: [yelmuratoff/analytics_gen](https://github.com/yelmuratoff/analytics_gen)
-
-#Flutter #Dart #DataEngineering #CodeGeneration #MobileDev #Analytics
