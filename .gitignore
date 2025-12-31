@@ -40,3 +40,4 @@ coverage/
 
 # AI Related Files
 .agent/prompts/
+prompts/
