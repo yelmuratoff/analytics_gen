@@ -52,6 +52,7 @@ import 'contexts/user_properties_context.dart';
 final class Analytics extends AnalyticsBase
     with
         AnalyticsAuth,
+        AnalyticsCommerce,
         AnalyticsPurchase,
         AnalyticsScreen,
         AnalyticsTheme,
@@ -176,6 +177,39 @@ final class Analytics extends AnalyticsBase
       ],
     ),
     AnalyticsDomain(
+      name: 'commerce',
+      events: <AnalyticsEvent>[
+        AnalyticsEvent(
+          name: 'purchase_completed',
+          description: 'Triggered when a user completes a payment.',
+          deprecated: false,
+          parameters: <AnalyticsParameter>[
+            AnalyticsParameter(
+              name: 'currency',
+              type: 'string',
+              isNullable: false,
+              allowedValues: <Object>['USD', 'EUR', 'GBP'],
+            ),
+            AnalyticsParameter(
+              name: 'items_count',
+              type: 'int',
+              isNullable: false,
+            ),
+            AnalyticsParameter(
+              name: 'transaction_id',
+              type: 'string',
+              isNullable: false,
+            ),
+            AnalyticsParameter(
+              name: 'value',
+              type: 'double',
+              isNullable: false,
+            ),
+          ],
+        ),
+      ],
+    ),
+    AnalyticsDomain(
       name: 'purchase',
       events: <AnalyticsEvent>[
         AnalyticsEvent(
@@ -278,7 +312,7 @@ final class Analytics extends AnalyticsBase
   ];
 
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '-38de3d7f6b7d2668';
+  static const String planFingerprint = '-408c63c8a50d52c0';
 
   // --- Singleton Compatibility ---
 

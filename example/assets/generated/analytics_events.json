@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "fingerprint": "-38de3d7f6b7d2668",
-    "total_domains": 3,
-    "total_events": 10,
-    "total_parameters": 20
+    "fingerprint": "-408c63c8a50d52c0",
+    "total_domains": 4,
+    "total_events": 11,
+    "total_parameters": 24
   },
   "domains": [
     {
@@ -168,6 +168,58 @@
           "deprecated": false,
           "line_number": 59,
           "event_name": "auth_verify_user"
+        }
+      ]
+    },
+    {
+      "name": "commerce",
+      "event_count": 1,
+      "parameter_count": 4,
+      "events": [
+        {
+          "name": "purchase_completed",
+          "description": "Triggered when a user completes a payment.",
+          "identifier": "commerce.purchase_completed",
+          "parameters": [
+            {
+              "name": "currency",
+              "source_name": "currency",
+              "code_name": "currency",
+              "type": "string",
+              "is_nullable": false,
+              "allowed_values": [
+                "USD",
+                "EUR",
+                "GBP"
+              ]
+            },
+            {
+              "name": "items_count",
+              "source_name": "items_count",
+              "code_name": "items_count",
+              "type": "int",
+              "is_nullable": false
+            },
+            {
+              "name": "transaction_id",
+              "source_name": "transaction_id",
+              "code_name": "transaction_id",
+              "type": "string",
+              "is_nullable": false,
+              "min_length": 10
+            },
+            {
+              "name": "value",
+              "source_name": "value",
+              "code_name": "value",
+              "type": "double",
+              "is_nullable": false,
+              "min": 0.01
+            }
+          ],
+          "deprecated": false,
+          "line_number": 3,
+          "event_name": "commerce_purchase_completed"
         }
       ]
     },

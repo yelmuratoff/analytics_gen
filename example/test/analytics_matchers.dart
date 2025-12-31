@@ -181,6 +181,62 @@ Matcher isAuthVerifyUser({Object? localStatus, Object? status}) {
   });
 }
 
+// Domain: commerce
+/// Matcher for commerce.purchase_completed
+Matcher isCommercePurchaseCompleted({
+  Object? currency,
+  Object? itemsCount,
+  Object? transactionId,
+  Object? value,
+}) {
+  return predicate((item) {
+    if (item is! Map) return false;
+    final Map<String, dynamic> params = Map.from(item);
+
+    if (currency != null) {
+      if (!params.containsKey("currency")) return false;
+      final actual = params["currency"];
+      if (currency is Matcher) {
+        if (!currency.matches(actual, {})) return false;
+      } else {
+        if (currency is AnalyticsCommercePurchaseCompletedCurrencyEnum) {
+          if (actual != currency.value) return false;
+        } else {
+          if (actual != currency) return false;
+        }
+      }
+    }
+    if (itemsCount != null) {
+      if (!params.containsKey("items_count")) return false;
+      final actual = params["items_count"];
+      if (itemsCount is Matcher) {
+        if (!itemsCount.matches(actual, {})) return false;
+      } else {
+        if (actual != itemsCount) return false;
+      }
+    }
+    if (transactionId != null) {
+      if (!params.containsKey("transaction_id")) return false;
+      final actual = params["transaction_id"];
+      if (transactionId is Matcher) {
+        if (!transactionId.matches(actual, {})) return false;
+      } else {
+        if (actual != transactionId) return false;
+      }
+    }
+    if (value != null) {
+      if (!params.containsKey("value")) return false;
+      final actual = params["value"];
+      if (value is Matcher) {
+        if (!value.matches(actual, {})) return false;
+      } else {
+        if (actual != value) return false;
+      }
+    }
+    return true;
+  });
+}
+
 // Domain: purchase
 /// Matcher for purchase.cancelled
 Matcher isPurchaseCancelled({Object? productId, Object? reason}) {

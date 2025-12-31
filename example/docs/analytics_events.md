@@ -1,11 +1,12 @@
 # Analytics Events Documentation
 
-Fingerprint: `-38de3d7f6b7d2668`
-Domains: 3 | Events: 10 | Parameters: 20
+Fingerprint: `-408c63c8a50d52c0`
+Domains: 4 | Events: 11 | Parameters: 24
 
 ## Table of Contents
 
 - [auth](#auth)
+- [commerce](#commerce)
 - [purchase](#purchase)
 - [screen](#screen)
 - [Theme](#theme)
@@ -13,9 +14,9 @@ Domains: 3 | Events: 10 | Parameters: 20
 
 ## Summary
 
-- **Total Domains**: 3
-- **Total Events**: 10
-- **Total Parameters**: 20
+- **Total Domains**: 4
+- **Total Events**: 11
+- **Total Parameters**: 24
 
 ## auth
 
@@ -43,6 +44,26 @@ Analytics.instance.logAuthLoginV2(
 );
 
 Analytics.instance.logAuthLogout();
+
+```
+
+## commerce
+
+Events: 1 | Parameters: 4
+
+| Event | Description | Status | Parameters | Metadata |
+|-------|-------------|--------|------------|----------|
+| commerce_purchase_completed | Triggered when a user completes a payment. | Active | `currency` (AnalyticsCommercePurchaseCompletedCurrencyEnum) (allowed: USD, EUR, GBP)<br>`items_count` (int)<br>`transaction_id` (String)<br>`value` (double) | - |
+
+### Code Examples
+
+```dart
+Analytics.instance.logCommercePurchaseCompleted(
+  currency: AnalyticsCommercePurchaseCompletedCurrencyEnum.usd,
+  itemsCount: 123,
+  transactionId: 'example',
+  value: 1.5,
+);
 
 ```
 

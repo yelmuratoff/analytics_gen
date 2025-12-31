@@ -10,6 +10,10 @@ auth,signup,,,false,,User creates a new account,,,,33,,,,,method,,,,,false,,,,,,
 auth,signup,,,false,,User creates a new account,,,,33,,,,,referral_code,,,,Optional referral code used during signup,true,,,,,,referral_code,,^[A-Z0-9]{6}$,referral_code,string,regex:^[A-Z0-9]{6}$
 auth,verify_user,,,false,,User verification status change,,,,59,,,,,local_status,package:analytics_gen_example/local_enums.dart,LocalStatus,,,false,,,,,,local_status,,,local_status,dynamic,
 auth,verify_user,,,false,,User verification status change,,,,59,,,,,status,package:analytics_gen_example/models.dart,VerificationStatus,,,false,,,,,,status,,,status,dynamic,
+commerce,purchase_completed,,,false,,Triggered when a user completes a payment.,,,,3,,,,USD|EUR|GBP,currency,,,,,false,,,,,,currency,,,currency,string,
+commerce,purchase_completed,,,false,,Triggered when a user completes a payment.,,,,3,,,,,items_count,,,,,false,,,,,,items_count,,,items_count,int,
+commerce,purchase_completed,,,false,,Triggered when a user completes a payment.,,,,3,,,,,transaction_id,,,,,false,,,,,10,transaction_id,,,transaction_id,string,min_len:10
+commerce,purchase_completed,,,false,,Triggered when a user completes a payment.,,,,3,,,,,value,,,,,false,,,,0.01,,value,,,value,double,min:0.01
 purchase,cancelled,,,false,,User cancelled a purchase,,,,19,,,,,product_id,,,,,false,,,,,,product_id,,,product_id,string,
 purchase,cancelled,,,false,,User cancelled a purchase,,,,19,,,,,reason,,,,Reason for cancellation,true,,,,,,reason,,,reason,string,
 purchase,completed,,,false,,User completed a purchase,,,,3,,,,,currency_code,,,,,false,,,,,,currency-code,,,currency,string,

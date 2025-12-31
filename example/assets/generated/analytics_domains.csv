@@ -1,4 +1,5 @@
 name,event_count,parameter_count
 auth,6,10
+commerce,1,4
 purchase,2,6
 screen,2,4

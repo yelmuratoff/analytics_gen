@@ -1,0 +1,15 @@
+commerce:
+  purchase_completed:
+    description: "Triggered when a user completes a payment."
+    parameters:
+      transaction_id:
+        type: string
+        min_length: 10
+      value:
+        type: double
+        min: 0.01
+      currency:
+        type: string
+        allowed_values: ["USD", "EUR", "GBP"] # Generates an Enum!
+      items_count:
+        type: int

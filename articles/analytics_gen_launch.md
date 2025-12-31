@@ -1,106 +1,187 @@
-<div align="center">
-  <h1>Stop Writing Analytics Code. Start Defining It.</h1>
+# Stop Debugging Analytics. Start Defining It.
 
-  <a href="https://pub.dev/packages/analytics_gen">
-    <img src="https://github.com/yelmuratoff/analytics_gen/blob/main/assets/analytics_gen_banner.png?raw=true" width="600">
-  </a>
-
-  <h3>Type-safe analytics, automated documentation, and data integrity-from a single source of truth.</h3>
-</div>
+**We demand strict contracts for our APIs. It's time our analytics got the same treatment.**
 
 ---
 
-As a Developer who has seen the inside of massive codebases, I've witnessed the same tragedy play out in almost every product team.
+Imagine this scenario: You launch a new feature. The UI is polished, the animations are 60fps, and the unit tests are green. You go to sleep.
 
-> It starts innocently. A Product Manager asks for a new event: `user_clicked_button`.
-> A developer adds `analytics.logEvent('user_clicked_button')`.
-> A week later, another developer adds `analytics.logEvent('UserClickedButton')`.
-> A month later, a data analyst asks why the `button_id` parameter is a string in iOS but an integer in Android.
-> **Six months later, your dashboard is a graveyard of untrustworthy data.**
+Next morning, the Product Manager pings you: *"Hey, the revenue dashboard shows zero growth. Did the feature fail?"*
 
-We treat our production code with rigor-CI/CD, type safety, code reviews. Yet we treat our analytics-the very data that drives our business decisions-like a "stringly typed" afterthought.
+You panic. You check Stripe-money is flowing. You check the backend-orders are created. Finally, you dig into the analytics code and find the culprit.
 
-**It's time to stop writing analytics code by hand.**
+*   The **Cart Checkout** logs: `{'value': 49.99, 'currency': 'USD'}`
+*   The new **One-Click Buy** logs: `{'price': 49.99, 'currency_code': 'USD'}`
 
-Meet **`analytics_gen`**, a tool designed to bring engineering discipline to your data pipeline.
+Two developers. Two features. Same event. **Completely different parameters.**
 
-## The Philosophy: Schema First
+Because of this mismatch, your Data Analyst's SQL query (`SUM(value)`) ignored 100% of the new revenue. The report is wrong. The trust is damaged.
 
-The core problem with analytics is **drift**. The implementation drifts from the spec, the docs drift from the code, and the platforms drift from each other.
+This is the **"Stringly Typed" Trap**. And there is a better way.
 
-`analytics_gen` solves this by enforcing a **Single Source of Truth**. You define your analytics plan in YAML, and the tool generates everything else.
+## The Hidden Cost of Strings
 
-### 1. Type-Safe Dart Code
-Instead of guessing event names and parameter keys, you get a generated, type-safe API.
+In many Flutter projects, analytics is treated as a second-class citizen. It's often implemented like this:
 
-**❌ Before (The "Stringly Typed" Nightmare):**
 ```dart
-// Hope you spelled 'purchase_completed' right...
-// And is 'value' a double or an int?
-analytics.logEvent('purchase_completed', {'value': 99.99});
+// ❌ The "Stringly Typed" Nightmare
+analytics.logEvent('add_to_cart', {
+  'item_id': 'sku_123',
+  'quantity': 1,
+  'price': '99.99', // Wait, is this a String or Double?
+});
 ```
 
-**✅ After (The `analytics_gen` Way):**
-```dart
-// Compile-time checked. Autocompleted. Documented.
-analytics.logPurchaseCompleted(
-  value: 99.99,
-  currency: 'USD',
-  itemCount: 3,
-);
-```
+This approach has three fatal flaws:
+1.  **No Type Safety**: You can send a `String` where a `Double` is expected.
+2.  **No Validation**: You can send an empty `item_id` or a negative `quantity`.
+3.  **Documentation Drift**: The Confluence page says the parameter is `currency_code`, but the code sends `currency`. Who is right?
 
-If you change a parameter in the YAML, your build fails until you update the code. No more silent regressions.
+## The Solution: Schema-First Development
 
-### 2. Validation at the Source
-Garbage in, garbage out. If your analytics ingestion pipeline is receiving bad data, your charts are lying to you. `analytics_gen` lets you define validation rules directly in your schema.
+We solved this problem for APIs with tools like Swagger/OpenAPI and GraphQL. We define a **contract** (schema), and we generate the code.
+
+**`analytics_gen`** brings this same discipline to your analytics pipeline.
+
+Instead of writing Dart code manually, you define your events in a YAML schema. This schema becomes the **Single Source of Truth**.
+
+### 1. Define the Contract
+
+Here is how a robust event definition looks in `analytics_gen`:
 
 ```yaml
-# events/search.yaml
-search_event:
-  parameters:
-    query:
-      type: string
-      min_length: 3
-      regex: "^[a-zA-Z0-9 ]+$"
-    category:
-      type: string
-      allowed_values: ['electronics', 'books', 'clothing']
+# events/commerce.yaml
+commerce:
+  purchase_completed:
+    description: "Triggered when a user completes a payment."
+    parameters:
+      transaction_id:
+        type: string
+        min_length: 10
+      value:
+        type: double
+        min: 0.01
+      currency:
+        type: string
+        allowed_values: ['USD', 'EUR', 'GBP'] # Generates an Enum!
+      items_count:
+        type: int
 ```
 
-The generator creates runtime checks that enforce these rules *before* the event leaves the client. It also generates Dart `enums` for `allowed_values`, making invalid states unrepresentable.
+### 2. Generate the Code
 
-### 3. Automated Documentation & Exports
-Your stakeholders (PMs, Data Analysts) don't read Dart code. They need documentation.
-`analytics_gen` automatically generates:
-- 📘 **Markdown Docs**: Always up-to-date, readable descriptions of every event and parameter.
-- 📊 **CSV/JSON Exports**: Machine-readable schemas that can be ingested by your data warehouse (BigQuery, Snowflake) to validate incoming data.
-- 🗄️ **SQL Schemas**: Ready-to-run `CREATE TABLE` statements.
+Running `dart run analytics_gen:generate` produces a strictly typed Dart API.
 
-## Built for Scale
+```dart
+/// Generated mixin for commerce analytics events
+mixin AnalyticsCommerce on AnalyticsBase {
+  /// Triggered when a user completes a payment.
+  ///
+  /// Parameters:
+  /// - `currency`: AnalyticsCommercePurchaseCompletedCurrencyEnum
+  /// - `items_count`: int
+  /// - `transaction_id`: String
+  /// - `value`: double
+  void logCommercePurchaseCompleted({
+    required AnalyticsCommercePurchaseCompletedCurrencyEnum currency,
+    required int itemsCount,
+    required String transactionId,
+    required double value,
+    Map<String, Object?>? parameters,
+  }) {
+    if (transactionId.length < 10) {
+      throw ArgumentError.value(
+        transactionId,
+        'transactionId',
+        'length must be at least 10',
+      );
+    }
 
-I built `analytics_gen` with the constraints of large-scale engineering in mind.
+    if (value < 0.01) {
+      throw ArgumentError.value(
+        value,
+        'value',
+        'must be at least 0.01',
+      );
+    }
 
-- **Domain Splitting**: Break your plan into multiple YAML files (e.g., `auth.yaml`, `checkout.yaml`) so different teams can own their domains without merge conflict hell.
-- **Shared Parameters**: Define `user_id` or `session_id` once in `shared.yaml` and reuse them everywhere. **DRY** applied to data.
-- **Dual-Write Migration**: Changing event names or structures? Use `dual_write_to` to log to both the old and new events simultaneously during the transition, ensuring zero data loss.
+    final eventParameters = <String, Object?>{
+      'description': 'Triggered when a user completes a payment.',
+      "currency": currency.value,
+      "items_count": itemsCount,
+      "transaction_id": transactionId,
+      "value": value,
+    }..addAll(parameters ?? const {});
 
-## Architecture: Flexible & Robust
+    logger.logEvent(
+      name: "commerce_purchase_completed",
+      parameters: eventParameters,
+    );
+  }
+}
+```
 
-The generated code doesn't lock you into a specific provider. It sits *above* your SDKs.
+If you try to pass a `String` to `value`, the code won't compile. If you try to pass "YEN" as a currency, the code won't compile.
 
-- 🔌 **Multi-Provider Support**: Send the same event to Firebase, Amplitude, and your internal warehouse with a single call.
-- ⚡ **Async & Batching**: The generated API is synchronous (fire-and-forget) so it never blocks your UI, but the backend supports async buffering, retries, and batching for network efficiency.
-- 🌍 **Contexts**: Manage global state (like `user_role` or `theme`) separately from ephemeral events.
+### 3. Runtime Validation (The Safety Net)
 
-## Try It Out
+Type safety catches bugs at compile time, but what about runtime data? What if `transaction_id` comes from a backend response and is empty?
 
-If you're tired of debugging why your funnel drop-off looks wrong, or if you just want the same level of tooling for your data as you have for your app logic, give `analytics_gen` a try.
+`analytics_gen` automatically generates assertions and validations based on your YAML rules (`min_length`, `regex`, `min/max`).
 
-It's not just a code generator; it's a contract between your code and your data.
+```dart
+// Inside the generated code:
+if (transactionId.length < 10) {
+  throw ArgumentError.value(
+    transactionId,
+    'transactionId',
+    'must be at least 10 characters',
+  );
+}
+```
 
-<div align="center">
+Bad data is caught **on the client**, in debug mode, before it ever pollutes your data warehouse.
 
-**[Get started on pub.dev](https://pub.dev/packages/analytics_gen)** • **[Star on GitHub](https://github.com/yelmuratoff/analytics_gen)**
+## How It Works
 
-</div>
+[IMAGE PROMPT: A high-tech isometric diagram showing the data flow. Left side: A file icon labeled "YAML Schema" glowing with code syntax. Arrows flow from it to three distinct outputs on the right: 1. A mobile phone screen showing "Dart Code" with shield icons (Type Safety). 2. A document icon labeled "Markdown Docs". 3. A database cylinder labeled "CSV/JSON". The background is a clean, dark engineering blueprint style with neon blue and white accents. The overall vibe is "Single Source of Truth".]
+
+## Beyond Code: The "Bus Factor"
+
+The biggest hidden cost of analytics is knowledge transfer. When the developer who implemented `checkout_v2` leaves, who knows what the `status` parameter means?
+
+`analytics_gen` solves this by auto-generating documentation alongside your code.
+
+*   **Markdown Docs**: A `README.md` file that lists every event, parameter, and description. It lives in your repo and updates with every PR.
+*   **Data Dictionary**: It can generate JSON/CSV schemas that you can upload to Segment, Amplitude, or your Data Warehouse to validate ingestion.
+
+## Real World Migration Strategy
+
+"This sounds great, but I have an existing app with 500 events. I can't rewrite everything."
+
+You don't have to. `analytics_gen` is designed for **incremental adoption**.
+
+1.  **Domain Splitting**: You don't need one giant file. Create `auth.yaml`, `profile.yaml`, `commerce.yaml`. Start with just one domain.
+2.  **Dual Write**: Migrating event names? Use the `dual_write_to` feature to send data to both the old and new event names simultaneously during the transition period.
+
+```yaml
+events:
+  login_success:
+    # Logs to both 'login_success' AND 'user_logged_in'
+    dual_write_to: ['user_logged_in']
+```
+
+## Conclusion
+
+Analytics is not just "logging". It is the eyes and ears of your product. If your analytics are blurry (untyped) or hallucinating (invalid data), your product decisions will be wrong.
+
+Stop treating analytics as an afterthought. Treat it as code. Define the schema, generate the implementation, and never worry about a typo breaking your funnel again.
+
+---
+
+**Ready to clean up your data pipeline?**
+
+📦 **Pub.dev**: [analytics_gen](https://pub.dev/packages/analytics_gen)
+⭐️ **GitHub**: [yelmuratoff/analytics_gen](https://github.com/yelmuratoff/analytics_gen)
+
+#Flutter #Dart #DataEngineering #CodeGeneration #MobileDev #Analytics

@@ -8,6 +8,10 @@ user_exists,bool,Whether the user exists or not,,,user_exists,,,,true,,,,,,,,use
 referral_code,string,Optional referral code used during signup,,,referral_code,,,,true,,,,,,,^[A-Z0-9]{6}$,referral_code,regex:^[A-Z0-9]{6}$
 local_status,dynamic,,,,local_status,package:analytics_gen_example/local_enums.dart,LocalStatus,,false,,,,,,,,local_status,
 status,dynamic,,,,status,package:analytics_gen_example/models.dart,VerificationStatus,,false,,,,,,,,status,
+currency,string,,,USD|EUR|GBP,currency,,,,false,,,,,,,,currency,
+items_count,int,,,,items_count,,,,false,,,,,,,,items_count,
+transaction_id,string,,,,transaction_id,,,,false,,,,,10,,,transaction_id,min_len:10
+value,double,,,,value,,,,false,,,,0.01,,,,value,min:0.01
 product_id,string,,,,product_id,,,,false,,,,,,,,product_id,
 reason,string,Reason for cancellation,,,reason,,,,true,,,,,,,,reason,
 currency-code,string,,,,currency_code,,,,false,,,,,,,,currency,

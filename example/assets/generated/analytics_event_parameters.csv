@@ -9,6 +9,10 @@ auth_signup,method,true
 auth_signup,referral_code,false
 auth_verify_user,local_status,true
 auth_verify_user,status,true
+commerce_purchase_completed,currency,true
+commerce_purchase_completed,items_count,true
+commerce_purchase_completed,transaction_id,true
+commerce_purchase_completed,value,true
 purchase_flow_cancelled,product_id,true
 purchase_flow_cancelled,reason,false
 purchase_flow_completed,currency-code,true
