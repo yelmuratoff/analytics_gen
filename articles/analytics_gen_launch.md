@@ -2,6 +2,8 @@
 
 **We demand strict contracts for our APIs. It's time our analytics got the same treatment.**
 
+![Main Banner](https://github.com/yelmuratoff/analytics_gen/blob/main/assets/analytics_gen_banner.png?raw=true)
+
 ---
 
 Imagine this scenario: You launch a new feature. The UI is polished, the animations are 60fps, and the unit tests are green. You go to sleep.
@@ -144,7 +146,8 @@ Bad data is caught **on the client**, in debug mode, before it ever pollutes you
 
 ## How It Works
 
-[IMAGE PROMPT: A high-tech isometric diagram showing the data flow. Left side: A file icon labeled "YAML Schema" glowing with code syntax. Arrows flow from it to three distinct outputs on the right: 1. A mobile phone screen showing "Dart Code" with shield icons (Type Safety). 2. A document icon labeled "Markdown Docs". 3. A database cylinder labeled "CSV/JSON". The background is a clean, dark engineering blueprint style with neon blue and white accents. The overall vibe is "Single Source of Truth".]
+![Usage Image](https://github.com/yelmuratoff/analytics_gen/blob/main/assets/banner_v2.png?raw=true)
+
 
 ## Beyond Code: The "Bus Factor"
 
