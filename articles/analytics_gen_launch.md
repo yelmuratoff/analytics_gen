@@ -8,7 +8,7 @@ You launch a new feature. The UI is polished, the animations are 60fps, and the 
 
 Next morning, the Product Manager pings you: *"Hey, the revenue dashboard shows zero growth. Did the feature fail?"*
 
-You panic. You check Stripe-money is flowing. You check the backend-orders are created. Finally, you dig into the analytics code and find the culprit.
+You panic. You check Stripe—money is flowing. You check the backend—orders are created. Finally, you dig into the analytics code and find the culprit.
 
 *   The **Cart Checkout** logs: `{'value': 49.99, 'currency': 'USD'}`
 *   The new **One-Click Buy** logs: `{'price': 49.99, 'currency_code': 'USD'}`
@@ -39,7 +39,7 @@ This breaks in three ways:
 
 ## The Fix: Treat Analytics Like APIs
 
-We don't guess with our backend APIs. We use Swagger/OpenAPI or GraphQL. We define a **contract**, and we generate the client code.
+We stopped guessing with our backend APIs years ago. We use Swagger/OpenAPI or GraphQL. We define a **contract**, and we generate the client code.
 
 **`analytics_gen`** applies this same logic to your data pipeline.
 
@@ -157,7 +157,7 @@ The biggest hidden cost of analytics is knowledge transfer. When the developer w
 
 ## Real World Migration Strategy
 
-"This sounds great, but I have an existing app with 500 events. I can't rewrite everything."
+I know what you're thinking: *"I have an existing app with 500 events. I can't rewrite everything."*
 
 You don't have to. `analytics_gen` is designed for **incremental adoption**.
 
