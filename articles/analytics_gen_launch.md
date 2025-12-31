@@ -4,7 +4,7 @@
 
 ![Main Banner](https://raw.githubusercontent.com/yelmuratoff/analytics_gen/main/assets/analytics_gen_banner.png)
 
-Imagine this scenario: You launch a new feature. The UI is polished, the animations are 60fps, and the unit tests are green. You go to sleep.
+You launch a new feature. The UI is polished, the animations are 60fps, and the unit tests are green. You go to sleep.
 
 Next morning, the Product Manager pings you: *"Hey, the revenue dashboard shows zero growth. Did the feature fail?"*
 
@@ -19,7 +19,7 @@ Because of this mismatch, your Data Analyst's SQL query (`SUM(value)`) ignored 1
 
 This is the **"Stringly Typed" Trap**. And there is a better way.
 
-## The Hidden Cost of Strings
+## The "Stringly Typed" Trap
 
 In many Flutter projects, analytics is treated as a second-class citizen. It's often implemented like this:
 
@@ -32,16 +32,16 @@ analytics.logEvent('add_to_cart', {
 });
 ```
 
-This approach has three fatal flaws:
+This breaks in three ways:
 1.  **No Type Safety**: You can send a `String` where a `Double` is expected.
 2.  **No Validation**: You can send an empty `item_id` or a negative `quantity`.
 3.  **Documentation Drift**: The Confluence page says the parameter is `currency_code`, but the code sends `currency`. Who is right?
 
-## The Solution: Schema-First Development
+## The Fix: Treat Analytics Like APIs
 
-We solved this problem for APIs with tools like Swagger/OpenAPI and GraphQL. We define a **contract** (schema), and we generate the code.
+We don't guess with our backend APIs. We use Swagger/OpenAPI or GraphQL. We define a **contract**, and we generate the client code.
 
-**`analytics_gen`** brings this same discipline to your analytics pipeline.
+**`analytics_gen`** brings this same engineering discipline to your data pipeline.
 
 Instead of writing Dart code manually, you define your events in a YAML schema. This schema becomes the **Single Source of Truth**.
 
