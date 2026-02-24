@@ -1,7 +1,7 @@
 /// Defines how analytics domains, events, and parameters are named.
 ///
 /// The default strategy enforces snake_case domains/parameters and uses a
-/// `<domain>: <event>` template when no custom `event_name` is provided.
+/// `{domain}: {event}` template when no custom `event_name` is provided.
 final class NamingStrategy {
   /// Creates a new naming strategy.
   const NamingStrategy({
@@ -132,9 +132,7 @@ final class NamingStrategy {
   static String _toTitleCase(String text) {
     if (text.isEmpty) return text;
     final words =
-        text.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), ' ').trim().split(' ');
-    // Handle split returning empty strings for consecutive delimiters if regex was different,
-    // but replacing block of non-alphanum with single space prevents that mostly.
+        text.replaceAll(RegExp(r'[_\-]+'), ' ').trim().split(RegExp(r'\s+'));
     return words.where((w) => w.isNotEmpty).map((word) {
       return word[0].toUpperCase() + word.substring(1).toLowerCase();
     }).join(' ');

@@ -21,10 +21,10 @@ void main() {
     test('supports Title Case convention', () {
       final strategy =
           NamingStrategy(convention: EventNamingConvention.titleCase);
-      // "my_domain: my_event" -> "My Domain My Event"
+      // "my_domain: my_event" -> "My Domain: My Event"
       final result =
           strategy.renderEventName(domain: 'my_domain', event: 'my_event');
-      expect(result, 'My Domain My Event');
+      expect(result, 'My Domain: My Event');
     });
 
     test('supports original convention', () {
@@ -79,6 +79,18 @@ void main() {
           strategy.renderEventName(
               domain: 'x', event: 'order_completed_successfully'),
           'Order Completed Successfully',
+        );
+      });
+
+      test('title_case preserves colon separator from explicit template', () {
+        final strategy = NamingStrategy(
+          convention: EventNamingConvention.titleCase,
+          eventNameTemplate: '{domain}: {event}',
+        );
+        expect(
+          strategy.renderEventName(
+              domain: 'chat', event: 'under_dev_sheet_shown'),
+          'Chat: Under Dev Sheet Shown',
         );
       });
     });

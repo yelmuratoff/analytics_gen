@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6]
+
+### Bug Fixes
+
+- Fixed `NamingStrategy._toTitleCase` stripping structural punctuation (e.g. `:`) from `event_name_template`. Previously, using `casing: title_case` with a template like `"{domain}: {event}"` produced `"Chat Under Dev Sheet Shown"` instead of `"Chat: Under Dev Sheet Shown"`. Only `_` and `-` are now treated as word boundaries.
+
 ## [1.0.5]
+
 - Added `templates/analytics_gen.yaml` as a reference for all configuration options.
 - Added `templates/events.yaml` demonstrating event and parameter definitions.
 - Update README to enhance clarity and structure of `analytics_gen` documentation.
@@ -11,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ## [1.0.4]
 
 ### Improvements
+
 - Introduced `CapabilityProviderBase` to replace `CapabilityProviderMixin` (deprecated).
 - Added `--metrics` flag to track generation performance.
 - Added "Dead Event" Audit Enhancement with git commit info.
@@ -20,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Added `doc/PERFORMANCE.md`, `doc/TROUBLESHOOTING.md`, `doc/TESTING.md`.
 
 ### Bug Fixes
+
 - Fixed data loss bug in `BatchingAnalytics` where queue would stall after failed auto-flush.
 - Fixed `ConfigParser` crash when optional fields are explicitly `null`.
 - `CapabilityRegistry` now throws `StateError` on duplicate capability keys.
@@ -28,6 +37,7 @@ All notable changes to this project will be documented in this file.
 ## [1.0.3]
 
 ### Features
+
 - Added "Dead Event" Audit Command (`dart run analytics_gen:audit`).
 - Added `test_matchers` target to generate typed `package:test` matchers.
 - Added `dart_type` parameter option to map parameters to existing Dart types.
@@ -35,6 +45,7 @@ All notable changes to this project will be documented in this file.
 - Added configurable event naming strategy (`casing`: `snake_case`, `title_case`, `original`).
 
 ### Improvements
+
 - Generated code now uses `const` maps for constant event parameters.
 - Removed auto-generated tests in favor of `test_matchers`.
 
@@ -51,6 +62,7 @@ All notable changes to this project will be documented in this file.
 ## [0.2.1]
 
 ### Breaking Changes
+
 - **Configuration restructured** into logical groups (`inputs`, `outputs`, `targets`, `rules`).
   ```yaml
   # Old → New
@@ -61,6 +73,7 @@ All notable changes to this project will be documented in this file.
   ```
 
 ### Features
+
 - **Shared Event Parameters** via `shared_parameters` config.
 - Parameter validation DSL: `regex`, `min_length`, `max_length`, `min`, `max`.
 - Enum generation for parameters with `allowed_values`.
@@ -70,12 +83,14 @@ All notable changes to this project will be documented in this file.
 ## [0.2.0]
 
 ### Features
+
 - **Extensible Metadata**: Support for `meta` key-value pairs in YAML.
 - **Batching & Async**: Added `BatchingAnalytics` and `AsyncAnalyticsAdapter`.
 - **Flexible Naming**: Configurable naming strategies.
 - **Strict Mode**: `strict_event_names` to prevent high-cardinality.
 
 ### Improvements
+
 - Optimized generator with parallel processing.
 - Full test coverage (100%).
 
@@ -92,6 +107,7 @@ All notable changes to this project will be documented in this file.
 ## [0.1.4]
 
 ### Features
+
 - Added CLI flags: `--validate-only`, `--watch`, `--verbose`, `--plan`.
 - `MultiProviderAnalytics` with error isolation and `onProviderFailure` hook.
 - Event deprecation lifecycle with `deprecated` + `replacement`.
@@ -99,6 +115,7 @@ All notable changes to this project will be documented in this file.
 - Deterministic fingerprints in exports (no timestamps).
 
 ### Improvements
+
 - Stricter YAML parser with better error messages.
 - `RecordedAnalyticsEvent` for typed mock assertions.
 
