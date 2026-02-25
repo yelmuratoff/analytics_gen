@@ -6,69 +6,73 @@
 
 # -----------------------------------------------------------------------------
 # Event Definitions
-# Keys at the root level represent event names.
+# Keys at the root level represent domains, grouping related events together.
 # -----------------------------------------------------------------------------
 
-# Example 1: A simple event with basic parameters
-user_login:
-  description: Triggered when a user successfully logs in.
-  parameters:
-    method:
-      type: string
-      description: The method used to login (e.g. email, google, apple).
-      allowed_values: [email, google, apple, facebook] # Enforces enum generation
-    success:
-      type: bool
-      description: Whether the login was successful.
+auth:
+  # Example 1: A simple event with basic parameters
+  user_login:
+    description: Triggered when a user successfully logs in.
+    parameters:
+      method:
+        type: string
+        description: The method used to login (e.g. email, google, apple).
+        allowed_values: [email, google, apple, facebook] # Enforces enum generation
+      success:
+        type: bool
+        description: Whether the login was successful.
 
-# Example 2: An event with advanced parameter configuration
-purchase_completed:
-  description: Triggered when a purchase transaction is completed.
-  # Optional: unique identifier (overrides default naming strategy)
-  identifier: purchase.complete
-  # Optional: metadata for custom tooling or documentation
-  meta:
-    jira_ticket: PROJ-123
-    owner: billing-team
-  parameters:
-    transaction_id:
-      type: string
-      description: Unique ID of the transaction.
-      # Validation rules
-      min_length: 10
-      max_length: 50
-      regex: "^TXN-[0-9]+"
+commerce:
+  # Example 2: An event with advanced parameter configuration
+  purchase_completed:
+    description: Triggered when a purchase transaction is completed.
+    # Optional: unique identifier (overrides default naming strategy)
+    identifier: purchase.complete
+    # Optional: metadata for custom tooling or documentation
+    meta:
+      jira_ticket: PROJ-123
+      owner: billing-team
+    parameters:
+      transaction_id:
+        type: string
+        description: Unique ID of the transaction.
+        # Validation rules
+        min_length: 10
+        max_length: 50
+        regex: "^TXN-[0-9]+"
 
-    amount:
-      type: double
-      description: The total amount paid.
-      min: 0.0
-      # Custom parameter name sent to analytics backend (if different from key)
-      param_name: total_revenue
+      amount:
+        type: double
+        description: The total amount paid.
+        min: 0.0
+        # Custom parameter name sent to analytics backend (if different from key)
+        param_name: total_revenue
 
-    currency:
-      # Use a custom Dart type
-      type: string
-      dart_type: CurrencyCode
-      # Optional: Import the type specifically for this parameter
-      # If not provided here, it must be in the global 'imports' list in analytics_gen.yaml
-      import: package:my_app/models/currency.dart
-      description: The 3-letter currency code.
+      currency:
+        # Use a custom Dart type
+        type: string
+        dart_type: CurrencyCode
+        # Optional: Import the type specifically for this parameter
+        # If not provided here, it must be in the global 'imports' list in analytics_gen.yaml
+        import: package:my_app/models/currency.dart
+        description: The 3-letter currency code.
 
-    items_count:
-      type: int
-      description: Number of items in the cart.
-      min: 1
+      items_count:
+        type: int
+        description: Number of items in the cart.
+        min: 1
 
-    coupon_code:
-      type: string? # Nullable type
-      description: Optional coupon code applied.
+      coupon_code:
+        type: string? # Nullable type
+        description: Optional coupon code applied.
 
-# Example 3: Deprecated event
-legacy_event:
-  description: This event is no longer used.
-  deprecated: true
-  replacement: purchase_completed # Suggests what to use instead
+legacy:
+  # Example 3: Deprecated event
+  legacy_event:
+    description: This event is no longer used.
+    deprecated: true
+    replacement: commerce.purchase_completed # Suggests what to use instead
+
 
 # -----------------------------------------------------------------------------
 # Parameter Properties Reference
