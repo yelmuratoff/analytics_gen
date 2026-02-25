@@ -73,6 +73,23 @@ legacy:
     deprecated: true
     replacement: commerce.purchase_completed # Suggests what to use instead
 
+navigation:
+  # Example 4: Advanced event features (custom naming, dual_write_to, added_in)
+  screen_view:
+    description: Triggered when a user views a screen.
+    # Optional: override event name. Supports string interpolation with parameter keys
+    event_name: "Navigation: {screen_name}"
+    # Optional: trigger other events automatically
+    dual_write_to: ["legacy.legacy_event"]
+    # Optional: track lifecycle of event
+    added_in: "1.2.0"
+    parameters:
+      screen_name:
+        type: string
+        description: The name of the current screen.
+      previous_screen:
+        type: string?
+        description: The screen they navigated from.
 
 # -----------------------------------------------------------------------------
 # Parameter Properties Reference
@@ -91,7 +108,10 @@ legacy:
 # param_name: (Optional) The actual key sent to the analytics service.
 #             Defaults to the parameter key in YAML.
 #
+# identifier: (Optional) Dart code identifier overrides for parameter generation.
+#
 # allowed_values: (Optional) List of valid values. Generates an Enum in Dart.
+#                 Supports numbers (int, double, num), booleans and strings.
 #
 # min/max: (Optional) Range constraints for numeric types.
 #
@@ -99,11 +119,14 @@ legacy:
 #
 # regex: (Optional) Regular expression pattern for string validation.
 #
-# meta: (Optional) Custom key-value pairs for metadata.
+# meta: (Optional) Custom JSON map for parameter metadata.
 #
 # added_in: (Optional) Version string when this parameter was added.
 #
 # deprecated_in: (Optional) Version string when this parameter was deprecated.
+#
+# operations: (Optional) List of operations supported (e.g., set, increment).
+#             Primarily used for Context parameters.
 
 # -----------------------------------------------------------------------------
 # Context Definitions (for 'contexts' files)
