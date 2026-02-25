@@ -71,6 +71,7 @@ legacy:
   legacy_event:
     description: This event is no longer used.
     deprecated: true
+    deprecated_in: "1.1.0"
     replacement: commerce.purchase_completed # Suggests what to use instead
 
 navigation:
