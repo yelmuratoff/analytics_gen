@@ -7,6 +7,7 @@ import 'package:analytics_gen/analytics_gen.dart';
 import 'package:meta/meta.dart';
 
 import 'generated_events.dart';
+export 'generated_events.dart';
 import 'contexts/theme_context.dart';
 import 'contexts/user_properties_context.dart';
 
