@@ -35,6 +35,7 @@ class AnalyticsClassRenderer extends BaseRenderer {
     buffer.writeln("import 'package:meta/meta.dart';");
     buffer.writeln();
     buffer.writeln("import 'generated_events.dart';");
+    buffer.writeln("export 'generated_events.dart';");
 
     for (final contextName in contexts.keys.toList()..sort()) {
       buffer.writeln("import 'contexts/${contextName}_context.dart';");
