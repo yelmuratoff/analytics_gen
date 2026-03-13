@@ -68,9 +68,15 @@ class EnumRenderer {
   }
 
   /// Converts a string value to a valid Dart enum identifier.
+  ///
+  /// Handles reserved words (e.g. `continue` → `valueContinue`) and
+  /// digit-prefixed identifiers (e.g. `123test` → `value123test`).
   String toEnumIdentifier(String value) {
     final camel = StringUtils.toCamelCase(value);
     if (camel.isEmpty) return 'empty';
+    if (StringUtils.dartReservedWords.contains(camel)) {
+      return 'value${camel[0].toUpperCase()}${camel.substring(1)}';
+    }
     if (RegExp(r'^[0-9]').hasMatch(camel)) {
       return 'value$camel';
     }

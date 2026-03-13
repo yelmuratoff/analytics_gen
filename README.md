@@ -65,10 +65,10 @@
    ```yaml
    analytics_gen:
      inputs:
-       events: 'events'               # Directory path (scans top-level)
+       events: "events" # Directory path (scans top-level)
        # events: 'events/**/*.yaml'   # Or use glob patterns for recursive scanning
      outputs:
-       dart: 'lib/src/analytics/generated'
+       dart: "lib/src/analytics/generated"
    ```
 3. **Generate** code/doc/exports with `dart run analytics_gen:generate --docs --exports`.
 4. **Initialize + use** the generated API:
@@ -129,6 +129,7 @@ search_event:
 ```
 
 Supported rules:
+
 - `regex`: Regular expression pattern (String).
 - `min_length`: Minimum string length (int).
 - `max_length`: Maximum string length (int).
@@ -144,10 +145,11 @@ login:
   parameters:
     method:
       type: string
-      allowed_values: ['email', 'google', 'apple']
+      allowed_values: ["email", "google", "apple"]
 ```
 
 Generated code:
+
 ```dart
 enum AnalyticsAuthLoginMethodEnum {
   email('email'),
@@ -174,6 +176,7 @@ feature:
 ```
 
 Generated code:
+
 ```dart
 void logFeatureInteract({
   required VerificationStatus status,
@@ -196,23 +199,25 @@ void logFeatureInteract({
 You have two ways to add imports for your custom types:
 
 #### 1. Global Imports (Recommended for Barrel Files)
+
 Add a list of imports to your `analytics_gen.yaml`. These will be added to **every** generated event file. This is ideal if you have a single "barrel file" that exports all your analytics enums.
 
 ```yaml
 analytics_gen:
   inputs:
     imports:
-      - 'package:my_app/analytics/analytics_types.dart'
-      - 'package:my_app/core/models/user_status.dart'
+      - "package:my_app/analytics/analytics_types.dart"
+      - "package:my_app/core/models/user_status.dart"
 ```
 
 #### 2. Local Imports (For One-offs)
+
 Specify the import directly on the parameter using the `import` key. This is useful for unique types used in only one place.
 
 ```yaml
 status:
   dart_type: VerificationStatus
-  import: 'package:my_app/features/auth/verification_status.dart'
+  import: "package:my_app/features/auth/verification_status.dart"
 ```
 
 ## Dual-Write Migration
@@ -247,6 +252,7 @@ user_login:
 ```
 
 This metadata is:
+
 - Available at runtime via `Analytics.plan`.
 - Included in the generated Markdown documentation.
 - Exported to JSON and CSV for external analysis.
@@ -256,6 +262,7 @@ This metadata is:
 Define common parameters in a central file to ensure consistency and reduce duplication.
 
 1. **Create a shared parameters file** (e.g., `events/shared.yaml`):
+
    ```yaml
    parameters:
      flow_id:
@@ -266,6 +273,7 @@ Define common parameters in a central file to ensure consistency and reduce dupl
    ```
 
 2. **Configure it** in `analytics_gen.yaml`:
+
    ```yaml
    analytics_gen:
      inputs:
@@ -292,6 +300,7 @@ Define common parameters in a central file to ensure consistency and reduce dupl
 Contexts allow you to define global properties (like user attributes, device info, or theme settings) that are managed separately from individual events.
 
 1. **Define a context file** (e.g., `events/user_properties.yaml`):
+
    ```yaml
    user_properties:
      user_id:
@@ -299,10 +308,11 @@ Contexts allow you to define global properties (like user attributes, device inf
        description: Unique identifier for the user
      user_role:
        type: string
-       allowed_values: ['admin', 'viewer']
+       allowed_values: ["admin", "viewer"]
    ```
 
 2. **Register it** in `analytics_gen.yaml`:
+
    ```yaml
    analytics_gen:
      inputs:
@@ -311,6 +321,7 @@ Contexts allow you to define global properties (like user attributes, device inf
    ```
 
 3. **Use the generated API**:
+
    ```dart
    // The generator creates a mixin and capability interface
    Analytics.instance.setUserId('123');
@@ -354,7 +365,7 @@ Contexts allow you to define global properties (like user attributes, device inf
 - [Performance Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/PERFORMANCE.md) - detailed optimization tips for build and runtime.
 - [Troubleshooting](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/TROUBLESHOOTING.md) - common errors and fixes.
 - [API Reference](https://pub.dev/documentation/analytics_gen/latest/) - generated Dart API docs on pub.dev.
-CLI Commands
+  CLI Commands
 
 ```bash
 dart run analytics_gen:generate              # code only (default)
@@ -398,6 +409,7 @@ dart run analytics_gen:audit
 ```
 
 **Output Example:**
+
 ```text
 [WARN] Found 2 dead events (0 usages):
 [WARN]   - auth.login_v2 (Method: logAuthLoginV2)
@@ -407,6 +419,7 @@ dart run analytics_gen:audit
 ```
 
 Supported flags:
+
 - `--config`: Path to your config file (default: `analytics_gen.yaml`).
 - `--verbose`: Show detailed logs.
 
@@ -545,17 +558,15 @@ import 'analytics_matchers.dart';
 
 test('logs login event', () {
   // ... trigger action ...
-  
+
   verify(() => analytics.logEvent(
-    name: 'auth.login', 
+    name: 'auth.login',
     parameters: isAuthLogin(
       method: AuthLoginMethod.email,
     ),
   ));
 });
 ```
-
-
 
 ## Contributing
 
@@ -584,7 +595,6 @@ Every PR description flows through `.github/pull_request_template.md`, which lin
 
 - **Is it safe to commit generated files?**
   Committing generated files is supported. Outputs are deterministic and intended to be reviewed in PRs (see [`doc/CODE_REVIEW.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md)).
-
 
 ## License
 

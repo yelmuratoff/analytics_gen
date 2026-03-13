@@ -1,7 +1,17 @@
+import 'package:analyzer/dart/ast/token.dart' show Keyword;
+
 /// Internal string helpers used by generators.
 ///
 /// Not exported from the public API.
 final class StringUtils {
+  /// All Dart keywords (reserved, built-in, and pseudo).
+  ///
+  /// Derived from the `analyzer` package so it stays in sync with the
+  /// Dart language specification automatically.
+  static final dartReservedWords = <String>{
+    for (final keyword in Keyword.values) keyword.lexeme,
+  };
+
   /// Capitalizes the first letter and converts snake_case to PascalCase.
   ///
   /// Handles edge cases like leading/trailing underscores and multiple consecutive underscores.

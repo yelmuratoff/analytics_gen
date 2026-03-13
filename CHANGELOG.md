@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8]
+
+### Features
+
+- Added `dartReservedWords` to `StringUtil` to prevent enum member name collisions with Dart keywords.
+
 ## [1.0.7]
 
 ### Features

@@ -115,6 +115,33 @@ void main() {
       expect(result, contains("value789item('789item');"));
     });
 
+    test('renders event with allowed values containing Dart reserved words',
+        () {
+      final event = AnalyticsEvent(
+        name: 'button_clicked',
+        description: 'Button clicked',
+        parameters: [
+          AnalyticsParameter(
+            name: 'cta_name',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['continue', 'hub-market', 'default', 'new'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'profile', events: [event]);
+      final allDomains = {'profile': domain};
+
+      final result = renderer.renderDomainFile('profile', domain, allDomains);
+
+      expect(
+          result, contains('enum AnalyticsProfileButtonClickedCtaNameEnum {'));
+      expect(result, contains("valueContinue('continue'),"));
+      expect(result, contains("hubMarket('hub-market'),"));
+      expect(result, contains("valueDefault('default'),"));
+      expect(result, contains("valueNew('new');"));
+    });
+
     test('renders event with non-string parameter having allowed values', () {
       final event = AnalyticsEvent(
         name: 'select',
