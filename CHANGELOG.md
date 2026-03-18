@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0]
+
+### Features
+
+- Added `boolean` as an alias for `bool` type across type mapping, parsing, and documentation generation.
+
 ## [1.0.8]
 
 ### Features
