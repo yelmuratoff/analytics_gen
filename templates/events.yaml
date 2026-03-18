@@ -133,26 +133,9 @@ navigation:
 #             Primarily used for Context parameters.
 
 # -----------------------------------------------------------------------------
-# Context Definitions (for 'contexts' files)
+# Related Templates
 # -----------------------------------------------------------------------------
-# Contexts are defined similarly to events but represent state tracked across many events.
-# Place these in files referenced by 'contexts' in analytics_gen.yaml.
-
-# user_properties:
-#   description: Properties associated with the user profile.
-#   parameters:
-#     lifetime_value:
-#       type: double
-#       operations: [set, increment] # Supported operations for this property
-
-# -----------------------------------------------------------------------------
-# Shared Parameters (for 'shared_parameters' files)
-# -----------------------------------------------------------------------------
-# Shared parameters allow you to define a parameter once and reuse it.
-# Place these in files referenced by 'shared_parameters' in analytics_gen.yaml.
-
-# screen_view:
-#   parameters:
-#     screen_name:
-#       type: string
-#       description: The name of the screen being viewed.
+# See also:
+#   - shared_parameters.yaml — Template for defining shared (global) parameters
+#   - context.yaml            — Template for defining contexts (user/session properties)
+#   - analytics_gen.yaml      — Template for the main configuration file

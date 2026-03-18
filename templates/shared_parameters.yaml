@@ -1,0 +1,92 @@
+# shared_parameters.yaml
+#
+# This template demonstrates how to define shared (global) parameters.
+# Shared parameters are defined once and automatically injected into every event,
+# ensuring consistency across your analytics taxonomy.
+#
+# Place this file in your project and reference it in analytics_gen.yaml:
+#
+#   inputs:
+#     shared_parameters:
+#       - events/shared/user_params.yaml
+#       - events/shared/app_params.yaml
+#
+# The root key must be 'parameters'.
+
+# -----------------------------------------------------------------------------
+# Basic shared parameters
+# -----------------------------------------------------------------------------
+parameters:
+  # Simple string parameter added to every event
+  session_id:
+    type: string
+    description: Unique identifier for the current session.
+
+  # Parameter with allowed values — generates an enum in Dart
+  platform:
+    type: string
+    description: The platform the user is on.
+    allowed_values: [ios, android, web]
+
+  # Nullable parameter — will be optional in generated code
+  user_id:
+    type: string?
+    description: The authenticated user ID, if available.
+
+  # Parameter with a custom param_name sent to the analytics backend
+  app_version:
+    type: string
+    description: Current application version.
+    param_name: app_ver
+
+  # Numeric parameter with validation constraints
+  screen_width:
+    type: int
+    description: Width of the device screen in pixels.
+    min: 0
+
+  # Parameter with a custom Dart type
+  locale:
+    type: string
+    dart_type: Locale
+    import: dart:ui
+    description: The user's current locale.
+
+  # Parameter with metadata
+  build_number:
+    type: int
+    description: The application build number.
+    meta:
+      owner: platform-team
+
+# -----------------------------------------------------------------------------
+# Shared Parameter Properties Reference
+# -----------------------------------------------------------------------------
+#
+# type: (Required) Data type.
+#       Supported: string, int, double, float, bool, boolean, num, number,
+#                  list, map, datetime, date, uri.
+#       Append '?' for nullable (e.g., string?).
+#
+# description: (Optional) Human-readable description.
+#
+# dart_type: (Optional) Override the inferred Dart type (e.g., for enums or value classes).
+#
+# import: (Optional) Dart library to import for 'dart_type'.
+#
+# param_name: (Optional) The actual key sent to the analytics service.
+#             Defaults to the YAML key.
+#
+# allowed_values: (Optional) List of valid values. Generates an Enum in Dart.
+#
+# min/max: (Optional) Range constraints for numeric types.
+#
+# min_length/max_length: (Optional) Length constraints for string types.
+#
+# regex: (Optional) Regular expression pattern for string validation.
+#
+# meta: (Optional) Custom metadata map.
+#
+# added_in: (Optional) Version string when this parameter was added.
+#
+# deprecated_in: (Optional) Version string when this parameter was deprecated.
