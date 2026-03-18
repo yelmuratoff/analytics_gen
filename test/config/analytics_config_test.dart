@@ -148,7 +148,9 @@ void main() {
       expect(config.meta.autoTrackingCreationDate, isTrue);
     });
 
-    test('meta.auto_tracking_creation_date defaults to false when meta section is absent', () {
+    test(
+        'meta.auto_tracking_creation_date defaults to false when meta section is absent',
+        () {
       final yaml = {
         'analytics_gen': {
           'inputs': {'events': 'events'},

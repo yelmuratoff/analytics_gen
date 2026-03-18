@@ -13,23 +13,21 @@ mixin AnalyticsScreen on AnalyticsBase {
   /// Parameters:
   /// - `legacy-screen-code`: String - Three-letter code provided by data team
   void logScreenLegacyView({
-      required String legacyScreenCode,
-      Map<String, Object?>? parameters,
-    }) {
-
+    required String legacyScreenCode,
+    Map<String, Object?>? parameters,
+  }) {
     final eventParameters = <String, Object?>{
       'description': 'Legacy backend identifier kept for parity',
       'tracking_creation_date': '2026-03-18T14:58:15',
       "legacy-screen-code": legacyScreenCode,
     }..addAll(parameters ?? const {});
 
-    logger.logEvent(
-      name: "Screen: Legacy",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "Screen: Legacy", parameters: eventParameters);
   }
 
-  @Deprecated('This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.')
+  @Deprecated(
+    'This event uses string interpolation in its name, which causes high cardinality. Use parameters instead.',
+  )
   /// User views a screen
   ///
   /// Parameters:
@@ -37,12 +35,11 @@ mixin AnalyticsScreen on AnalyticsBase {
   /// - `previous_screen`: String? - Name of the previous screen
   /// - `screen_name`: String
   void logScreenView({
-      int? durationMs,
-      String? previousScreen,
-      required String screenName,
-      Map<String, Object?>? parameters,
-    }) {
-
+    int? durationMs,
+    String? previousScreen,
+    required String screenName,
+    Map<String, Object?>? parameters,
+  }) {
     final eventParameters = <String, Object?>{
       'description': 'User views a screen',
       'tracking_creation_date': '2026-03-18T14:58:15',
@@ -51,10 +48,6 @@ mixin AnalyticsScreen on AnalyticsBase {
       "screen_name": screenName,
     }..addAll(parameters ?? const {});
 
-    logger.logEvent(
-      name: "Screen: ${screenName}",
-      parameters: eventParameters,
-    );
+    logger.logEvent(name: "Screen: ${screenName}", parameters: eventParameters);
   }
-
 }

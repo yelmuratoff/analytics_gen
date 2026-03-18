@@ -131,14 +131,12 @@ class GenerationPipeline {
   ) async {
     if (!config.meta.autoTrackingCreationDate) return plan;
 
-    final ledgerPath =
-        path.join(projectRoot, '.analytics_tracking.json');
+    final ledgerPath = path.join(projectRoot, '.analytics_tracking.json');
     final ledger = TrackingLedger(ledgerPath: ledgerPath);
 
     final eventKeys = <String>[
       for (final entry in plan.domains.entries)
-        for (final event in entry.value.events)
-          '${entry.key}.${event.name}',
+        for (final event in entry.value.events) '${entry.key}.${event.name}',
     ];
 
     final existingCount = (await ledger.load()).length;

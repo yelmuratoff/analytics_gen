@@ -4,7 +4,8 @@
 import 'package:analytics_gen/analytics_gen.dart';
 
 /// Capability interface for UserProperties
-abstract interface class UserPropertiesCapability implements AnalyticsCapability {
+abstract interface class UserPropertiesCapability
+    implements AnalyticsCapability {
   void appendUserPropertiesProperty(String name, Object? value);
   void incrementUserPropertiesProperty(String name, Object? value);
   void removeUserPropertiesProperty(String name, Object? value);
@@ -12,23 +13,31 @@ abstract interface class UserPropertiesCapability implements AnalyticsCapability
 }
 
 /// Key for UserProperties capability
-const userPropertiesKey = CapabilityKey<UserPropertiesCapability>('user_properties');
+const userPropertiesKey = CapabilityKey<UserPropertiesCapability>(
+  'user_properties',
+);
 
 /// Mixin for Analytics class
 mixin AnalyticsUserProperties on AnalyticsBase {
   /// Whether the user has a premium subscription
   void setUserPropertiesIsPremium(bool value) {
-    capability(userPropertiesKey)?.setUserPropertiesProperty('is_premium', value);
+    capability(
+      userPropertiesKey,
+    )?.setUserPropertiesProperty('is_premium', value);
   }
 
   /// Total number of logins
   void setUserPropertiesLoginCount(int value) {
-    capability(userPropertiesKey)?.setUserPropertiesProperty('login_count', value);
+    capability(
+      userPropertiesKey,
+    )?.setUserPropertiesProperty('login_count', value);
   }
 
   /// Total number of logins
   void incrementUserPropertiesLoginCount(int value) {
-    capability(userPropertiesKey)?.incrementUserPropertiesProperty('login_count', value);
+    capability(
+      userPropertiesKey,
+    )?.incrementUserPropertiesProperty('login_count', value);
   }
 
   /// User tags
@@ -56,7 +65,8 @@ mixin AnalyticsUserProperties on AnalyticsBase {
         'must be one of admin, editor, viewer',
       );
     }
-    capability(userPropertiesKey)?.setUserPropertiesProperty('user_role', value);
+    capability(
+      userPropertiesKey,
+    )?.setUserPropertiesProperty('user_role', value);
   }
-
 }

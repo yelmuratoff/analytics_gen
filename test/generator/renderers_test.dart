@@ -209,7 +209,9 @@ void main() {
       expect(result, contains("'must be between 1 and 100',"));
     });
 
-    test('renders meta entries in eventParameters when includeMetaInParameters is true', () {
+    test(
+        'renders meta entries in eventParameters when includeMetaInParameters is true',
+        () {
       final configWithMeta = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
         outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
@@ -229,13 +231,16 @@ void main() {
       final domain = AnalyticsDomain(name: 'auth', events: [event]);
       final allDomains = {'auth': domain};
 
-      final result = rendererWithMeta.renderDomainFile('auth', domain, allDomains);
+      final result =
+          rendererWithMeta.renderDomainFile('auth', domain, allDomains);
 
       expect(result, contains("'owner': 'auth-team',"));
-      expect(result, contains("'tracking_creation_date': '2026-03-18T14:30:45',"));
+      expect(
+          result, contains("'tracking_creation_date': '2026-03-18T14:30:45',"));
     });
 
-    test('does not render meta entries when includeMetaInParameters is false', () {
+    test('does not render meta entries when includeMetaInParameters is false',
+        () {
       final event = AnalyticsEvent(
         name: 'login',
         description: 'User logs in',
@@ -272,13 +277,16 @@ void main() {
       final domain = AnalyticsDomain(name: 'app', events: [event]);
       final allDomains = {'app': domain};
 
-      final result = rendererWithMeta.renderDomainFile('app', domain, allDomains);
+      final result =
+          rendererWithMeta.renderDomainFile('app', domain, allDomains);
 
       expect(result, contains("'is_critical': true,"));
       expect(result, contains("'priority': 42,"));
     });
 
-    test('renders event with empty meta and includeMetaInParameters true as no-op', () {
+    test(
+        'renders event with empty meta and includeMetaInParameters true as no-op',
+        () {
       final configWithMeta = AnalyticsConfig(
         inputs: AnalyticsInputs(eventsPath: 'events'),
         outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
@@ -294,7 +302,8 @@ void main() {
       final domain = AnalyticsDomain(name: 'auth', events: [event]);
       final allDomains = {'auth': domain};
 
-      final result = rendererWithMeta.renderDomainFile('auth', domain, allDomains);
+      final result =
+          rendererWithMeta.renderDomainFile('auth', domain, allDomains);
 
       // Should still generate the method, just no meta entries
       expect(result, contains('void logAuthLogout('));

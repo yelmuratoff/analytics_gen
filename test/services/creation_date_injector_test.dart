@@ -20,7 +20,8 @@ void main() {
       );
     }
 
-    AnalyticsEvent makeEvent(String name, {Map<String, dynamic> meta = const {}}) {
+    AnalyticsEvent makeEvent(String name,
+        {Map<String, dynamic> meta = const {}}) {
       return AnalyticsEvent(
         name: name,
         description: 'Test event',
@@ -43,7 +44,9 @@ void main() {
 
     test('preserves existing meta keys alongside injected date', () {
       final plan = makePlan({
-        'auth': [makeEvent('login', meta: {'owner': 'auth-team', 'tier': 'critical'})],
+        'auth': [
+          makeEvent('login', meta: {'owner': 'auth-team', 'tier': 'critical'})
+        ],
       });
 
       final ledger = {'auth.login': '2026-01-15'};
@@ -55,9 +58,13 @@ void main() {
       expect(meta['tier'], 'critical');
     });
 
-    test('ledger value takes precedence over manually set tracking_creation_date', () {
+    test(
+        'ledger value takes precedence over manually set tracking_creation_date',
+        () {
       final plan = makePlan({
-        'auth': [makeEvent('login', meta: {'tracking_creation_date': '2099-12-31'})],
+        'auth': [
+          makeEvent('login', meta: {'tracking_creation_date': '2099-12-31'})
+        ],
       });
 
       final ledger = {'auth.login': '2026-01-15'};

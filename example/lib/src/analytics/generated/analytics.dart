@@ -50,22 +50,19 @@ import 'contexts/user_properties_context.dart';
 ///
 /// Note: Capabilities are provider-specific. Ensure your analytics
 /// provider implements the required capability interfaces.
-final class Analytics extends AnalyticsBase with
-    AnalyticsAuth,
-    AnalyticsCommerce,
-    AnalyticsPurchase,
-    AnalyticsScreen,
-    AnalyticsTheme,
-    AnalyticsUserProperties
-{
+final class Analytics extends AnalyticsBase
+    with
+        AnalyticsAuth,
+        AnalyticsCommerce,
+        AnalyticsPurchase,
+        AnalyticsScreen,
+        AnalyticsTheme,
+        AnalyticsUserProperties {
   final IAnalytics _analytics;
   final AnalyticsCapabilityResolver? _capabilities;
 
   /// Constructor for Dependency Injection.
-  const Analytics(
-    this._analytics, [
-    this._capabilities,
-  ]);
+  const Analytics(this._analytics, [this._capabilities]);
 
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
@@ -88,9 +85,7 @@ final class Analytics extends AnalyticsBase with
               type: 'string',
               isNullable: false,
               description: 'Login method (email, google, apple)',
-              meta: <String, Object?>{
-                'is_sensitive': true,
-              },
+              meta: <String, Object?>{'is_sensitive': true},
             ),
           ],
         ),
@@ -108,11 +103,7 @@ final class Analytics extends AnalyticsBase with
               type: 'string',
               isNullable: false,
               description: 'Login method v2 (email, google, apple)',
-              allowedValues: <Object>[
-                'email',
-                'google',
-                'apple',
-              ],
+              allowedValues: <Object>['email', 'google', 'apple'],
             ),
             AnalyticsParameter(
               name: 'session_id',
@@ -129,8 +120,7 @@ final class Analytics extends AnalyticsBase with
           meta: <String, Object?>{
             'tracking_creation_date': '2026-03-18T14:58:15',
           },
-          parameters: <AnalyticsParameter>[
-          ],
+          parameters: <AnalyticsParameter>[],
         ),
         AnalyticsEvent(
           name: 'phone_login',
@@ -221,11 +211,7 @@ final class Analytics extends AnalyticsBase with
               name: 'currency',
               type: 'string',
               isNullable: false,
-              allowedValues: <Object>[
-                'USD',
-                'EUR',
-                'GBP',
-              ],
+              allowedValues: <Object>['USD', 'EUR', 'GBP'],
             ),
             AnalyticsParameter(
               name: 'items_count',
@@ -370,7 +356,9 @@ final class Analytics extends AnalyticsBase with
   /// Access the singleton instance
   static Analytics get instance {
     if (_instance == null) {
-      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance.\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.');
+      throw StateError(
+        'Analytics.initialize() must be called before accessing Analytics.instance.\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.',
+      );
     }
     return _instance!;
   }
@@ -400,6 +388,6 @@ final class Analytics extends AnalyticsBase with
   IAnalytics get logger => _analytics;
 
   @override
-  AnalyticsCapabilityResolver get capabilities => _capabilities ?? super.capabilities;
+  AnalyticsCapabilityResolver get capabilities =>
+      _capabilities ?? super.capabilities;
 }
-
