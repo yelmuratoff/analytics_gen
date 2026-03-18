@@ -101,10 +101,14 @@ class AnalyticsMeta {
   /// Creates a new meta configuration.
   const AnalyticsMeta({
     this.autoTrackingCreationDate = false,
+    this.includeMetaInParameters = false,
   });
 
   /// Whether to automatically track event creation dates via a ledger file.
   final bool autoTrackingCreationDate;
+
+  /// Whether to include event meta fields in the generated event parameters map.
+  final bool includeMetaInParameters;
 }
 
 /// Configuration for analytics code generation.

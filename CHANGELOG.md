@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
   - The `tracking_creation_date` value is automatically injected into each event's `meta` field during generation.
   - Existing entries are never overwritten — the ledger preserves the original creation timestamp.
   - The ledger file is placed next to `analytics_gen.yaml` and should be committed to version control.
+- Added `meta.include_meta_in_parameters` config option to include event meta fields in the generated `eventParameters` map sent to analytics providers (e.g. Amplitude, Mixpanel). Default: `false`.
 
 ## [1.0.8]
 

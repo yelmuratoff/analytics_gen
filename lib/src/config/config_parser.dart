@@ -152,6 +152,11 @@ class ConfigParser {
           YamlKeys.autoTrackingCreationDate,
           false,
         ),
+        includeMetaInParameters: val(
+          metaConfig,
+          YamlKeys.includeMetaInParameters,
+          false,
+        ),
       ),
     );
   }

@@ -19,6 +19,7 @@ mixin AnalyticsScreen on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'Legacy backend identifier kept for parity',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "legacy-screen-code": legacyScreenCode,
     }..addAll(parameters ?? const {});
 
@@ -44,6 +45,7 @@ mixin AnalyticsScreen on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'User views a screen',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       if (durationMs != null) "duration_ms": durationMs,
       if (previousScreen != null) "previous_screen": previousScreen,
       "screen_name": screenName,

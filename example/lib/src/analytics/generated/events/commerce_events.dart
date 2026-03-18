@@ -51,6 +51,7 @@ mixin AnalyticsCommerce on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'Triggered when a user completes a payment.',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "currency": currency.value,
       "items_count": itemsCount,
       "transaction_id": transactionId,

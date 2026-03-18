@@ -159,6 +159,24 @@ void main() {
       expect(config.meta.autoTrackingCreationDate, isFalse);
     });
 
+    test('parses meta.include_meta_in_parameters when enabled', () {
+      final yaml = {
+        'analytics_gen': {
+          'meta': {
+            'include_meta_in_parameters': true,
+          },
+        },
+      };
+
+      final config = ConfigParser().parse(yaml);
+      expect(config.meta.includeMetaInParameters, isTrue);
+    });
+
+    test('meta.include_meta_in_parameters defaults to false', () {
+      final config = ConfigParser().parse({});
+      expect(config.meta.includeMetaInParameters, isFalse);
+    });
+
     test('throws FormatException with readable message for invalid map fields',
         () {
       final yaml = {

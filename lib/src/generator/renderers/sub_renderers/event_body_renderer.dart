@@ -39,19 +39,24 @@ class EventBodyRenderer {
     // 3. Prepare parameters map
     final includeDescription =
         config.rules.includeEventDescription && event.description.isNotEmpty;
+    final includeMeta =
+        config.meta.includeMetaInParameters && event.meta.isNotEmpty;
 
     final hasParametersParam = event.parameters
         .any((p) => StringUtils.toCamelCase(p.codeName) == 'parameters');
     final parametersArgName =
         hasParametersParam ? 'analyticsParameters' : 'parameters';
 
-    if (event.parameters.isNotEmpty || includeDescription) {
+    if (event.parameters.isNotEmpty || includeDescription || includeMeta) {
       buffer.writeln('final eventParameters = <String, Object?>{');
 
       if (includeDescription) {
         buffer.writeln(
           "  'description': '${StringUtils.escapeSingleQuoted(event.description)}',",
         );
+      }
+      if (includeMeta) {
+        _renderMetaEntries(buffer, event.meta);
       }
       for (final param in event.parameters) {
         final camelParam = StringUtils.toCamelCase(param.codeName);
@@ -120,6 +125,26 @@ class EventBodyRenderer {
     }
 
     return buffer.toString();
+  }
+
+  void _renderMetaEntries(CodeBuffer buffer, Map<String, dynamic> meta) {
+    final sortedKeys = meta.keys.toList()..sort();
+    for (final key in sortedKeys) {
+      final value = meta[key];
+      if (value is String) {
+        buffer.writeln(
+          "  '${StringUtils.escapeSingleQuoted(key)}': '${StringUtils.escapeSingleQuoted(value)}',",
+        );
+      } else if (value is bool) {
+        buffer.writeln("  '${StringUtils.escapeSingleQuoted(key)}': $value,");
+      } else if (value is num) {
+        buffer.writeln("  '${StringUtils.escapeSingleQuoted(key)}': $value,");
+      } else {
+        buffer.writeln(
+          "  '${StringUtils.escapeSingleQuoted(key)}': '${StringUtils.escapeSingleQuoted(value.toString())}',",
+        );
+      }
+    }
   }
 
   void _renderValidations(

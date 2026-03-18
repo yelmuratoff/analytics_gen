@@ -53,6 +53,7 @@ final class YamlKeys {
 
   // Meta config keys
   static const String autoTrackingCreationDate = 'auto_tracking_creation_date';
+  static const String includeMetaInParameters = 'include_meta_in_parameters';
 
   // Event keys
   static const String eventName = 'event_name';

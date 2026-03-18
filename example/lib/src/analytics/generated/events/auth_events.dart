@@ -34,6 +34,9 @@ mixin AnalyticsAuth on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'User logs in to the application',
+      'owner': 'auth-team',
+      'tier': 'critical',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "method": method,
     }..addAll(parameters ?? const {});
 
@@ -56,6 +59,7 @@ mixin AnalyticsAuth on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'User logs in to the application (v2)',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "login-method": loginMethod.value,
       "session_id": sessionId,
     }..addAll(parameters ?? const {});
@@ -75,6 +79,7 @@ mixin AnalyticsAuth on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'User logs out',
+      'tracking_creation_date': '2026-03-18T14:58:15',
     }..addAll(parameters ?? const {});
 
     logger.logEvent(
@@ -99,6 +104,7 @@ mixin AnalyticsAuth on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'When user logs in via phone',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "phone_country": phoneCountry,
       "tracking-token": trackingToken,
       if (userExists != null) "user_exists": userExists,
@@ -131,6 +137,7 @@ mixin AnalyticsAuth on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'User creates a new account',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "method": method,
       if (referralCode != null) "referral_code": referralCode,
     }..addAll(parameters ?? const {});
@@ -154,6 +161,7 @@ mixin AnalyticsAuth on AnalyticsBase {
 
     final eventParameters = <String, Object?>{
       'description': 'User verification status change',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "local_status": localStatus.name,
       "status": status.name,
     }..addAll(parameters ?? const {});

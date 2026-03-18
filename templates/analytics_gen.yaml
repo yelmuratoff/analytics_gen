@@ -123,6 +123,14 @@ analytics_gen:
     # Default: false
     auto_tracking_creation_date: true
 
+    # Include event meta fields as parameters in the generated logEvent calls.
+    # When enabled, all key-value pairs from event `meta` are added to the
+    # `eventParameters` map alongside regular parameters.
+    # Useful for sending metadata (e.g. tracking_creation_date) to providers
+    # like Amplitude, Mixpanel, etc.
+    # Default: false
+    include_meta_in_parameters: true
+
   # ---------------------------------------------------------------------------
   # Naming Strategy
   # Control how names are formatted in the generated code and exports.
