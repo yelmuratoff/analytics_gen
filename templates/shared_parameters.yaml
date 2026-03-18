@@ -93,6 +93,7 @@ parameters:
 # type: (Required) Data type.
 #       Supported: string, int, double, float, bool, boolean, num, number,
 #                  list, map, datetime, date, uri.
+#       Aliases: boolean → bool, float → double, number → num, date → datetime.
 #       Append '?' for nullable (e.g., string?).
 #
 # description: (Optional) Human-readable description.
@@ -102,6 +103,9 @@ parameters:
 # import: (Optional) Dart library to import for 'dart_type'.
 #
 # param_name: (Optional) The actual key sent to the analytics service.
+#             Defaults to the YAML key.
+#
+# identifier: (Optional) Override the Dart code identifier for this parameter.
 #             Defaults to the YAML key.
 #
 # allowed_values: (Optional) List of valid values. Generates an Enum in Dart.
