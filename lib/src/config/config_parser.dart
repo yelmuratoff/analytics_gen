@@ -32,6 +32,7 @@ class ConfigParser {
     final outputs = safeMap(config[YamlKeys.outputs], YamlKeys.outputs);
     final targets = safeMap(config[YamlKeys.targets], YamlKeys.targets);
     final rules = safeMap(config[YamlKeys.rules], YamlKeys.rules);
+    final metaConfig = safeMap(config[YamlKeys.meta], YamlKeys.meta);
 
     T val<T>(Map map, String key, T defaultVal) {
       final v = map[key];
@@ -145,6 +146,18 @@ class ConfigParser {
         ),
       ),
       naming: NamingStrategy.fromYaml(config[YamlKeys.naming] as Map?),
+      meta: AnalyticsMeta(
+        autoTrackingCreationDate: val(
+          metaConfig,
+          YamlKeys.autoTrackingCreationDate,
+          false,
+        ),
+        includeMetaInParameters: val(
+          metaConfig,
+          YamlKeys.includeMetaInParameters,
+          false,
+        ),
+      ),
     );
   }
 }

@@ -110,6 +110,28 @@ analytics_gen:
     prevent_event_parameter_duplicates: false
 
   # ---------------------------------------------------------------------------
+  # Meta Field Injection
+  # Automatically inject metadata into events during generation.
+  # ---------------------------------------------------------------------------
+  meta:
+    # Automatically track when each event was first seen via a ledger file.
+    # When enabled, the generator maintains a `.analytics_tracking.json` file
+    # next to `analytics_gen.yaml` that records an ISO 8601 timestamp for each
+    # event on first generation. The `tracking_creation_date` value is injected
+    # into each event's `meta` field. The ledger file should be committed to
+    # version control.
+    # Default: false
+    auto_tracking_creation_date: true
+
+    # Include event meta fields as parameters in the generated logEvent calls.
+    # When enabled, all key-value pairs from event `meta` are added to the
+    # `eventParameters` map alongside regular parameters.
+    # Useful for sending metadata (e.g. tracking_creation_date) to providers
+    # like Amplitude, Mixpanel, etc.
+    # Default: false
+    include_meta_in_parameters: true
+
+  # ---------------------------------------------------------------------------
   # Naming Strategy
   # Control how names are formatted in the generated code and exports.
   # ---------------------------------------------------------------------------
@@ -122,18 +144,56 @@ analytics_gen:
     # Default: true
     enforce_snake_case_parameters: true
 
+    # Naming convention applied to the generated event name after template rendering.
+    # Available values:
+    #   - snake_case: "Example Event" → "example_event" (useful for SQL/BigQuery)
+    #   - title_case: "example_event" → "Example Event" (useful for Mixpanel, Amplitude)
+    #   - original:   preserves the raw template output as-is
+    # Default: snake_case
+    casing: snake_case
+
     # Template for formatting the event name in exports/docs.
     # Available placeholders: {domain}, {event}, {domain_alias}
-    # Default: "{domain_alias}: {event}"
+    # The result is then transformed by the 'casing' convention above.
+    # Default: "{domain}: {event}"
     event_name_template: "{domain_alias}: {event}"
 
     # Template for formatting the unique identifier for events.
-    # Default: "{domain}.{event}"
+    # NOT affected by the 'casing' convention — always rendered as-is.
+    # Available placeholders: {domain}, {event}, {domain_alias}
+    # Default: "{domain}: {event}"
     identifier_template: "{domain}.{event}"
 
     # Human-friendly aliases for domains (filenames).
-    # Used in documentation and event_name_template.
+    # Used in documentation and when {domain_alias} placeholder is used in templates.
     domain_aliases:
       auth: "Authentication"
       onboarding: "User Onboarding"
       purchase: "Purchase Flow"
+
+# ---------------------------------------------------------------------------
+# Key Aliases (legacy / flat-style)
+# ---------------------------------------------------------------------------
+# For convenience, some keys can also be placed at the root `analytics_gen`
+# level instead of inside their respective sections. The nested form takes
+# precedence if both are specified.
+#
+# Flat key               → Equivalent nested path
+# ──────────────────────────────────────────────────────
+# events_path            → inputs.events
+# shared_parameters      → inputs.shared_parameters
+# contexts               → inputs.contexts
+# imports                → inputs.imports
+# output_path            → outputs.dart
+# docs_path              → outputs.docs
+# exports_path           → outputs.exports
+# generate_csv           → targets.csv
+# generate_json          → targets.json
+# generate_sql           → targets.sql
+# generate_docs          → targets.docs
+# generate_plan          → targets.plan
+# generate_test_matchers → targets.test_matchers
+# include_event_description        → rules.include_event_description
+# strict_event_names               → rules.strict_event_names
+# enforce_centrally_defined_parameters → rules.enforce_centrally_defined_parameters
+# prevent_event_parameter_duplicates   → rules.prevent_event_parameter_duplicates

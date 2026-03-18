@@ -74,7 +74,11 @@ final class Analytics extends AnalyticsBase
           description: 'User logs in to the application',
           deprecated: true,
           replacement: 'auth.login_v2',
-          meta: <String, Object?>{'owner': 'auth-team', 'tier': 'critical'},
+          meta: <String, Object?>{
+            'owner': 'auth-team',
+            'tier': 'critical',
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'method',
@@ -89,6 +93,9 @@ final class Analytics extends AnalyticsBase
           name: 'login_v2',
           description: 'User logs in to the application (v2)',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'login-method',
@@ -110,6 +117,9 @@ final class Analytics extends AnalyticsBase
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[],
         ),
         AnalyticsEvent(
@@ -118,6 +128,9 @@ final class Analytics extends AnalyticsBase
           identifier: 'auth.phone_login',
           customEventName: 'Auth: Phone {phone_country}',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'phone_country',
@@ -144,6 +157,9 @@ final class Analytics extends AnalyticsBase
           name: 'signup',
           description: 'User creates a new account',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'method',
@@ -162,6 +178,9 @@ final class Analytics extends AnalyticsBase
           name: 'verify_user',
           description: 'User verification status change',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'local_status',
@@ -184,6 +203,9 @@ final class Analytics extends AnalyticsBase
           name: 'purchase_completed',
           description: 'Triggered when a user completes a payment.',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'currency',
@@ -217,6 +239,9 @@ final class Analytics extends AnalyticsBase
           name: 'cancelled',
           description: 'User cancelled a purchase',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'product_id',
@@ -235,6 +260,9 @@ final class Analytics extends AnalyticsBase
           name: 'completed',
           description: 'User completed a purchase',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'currency-code',
@@ -273,6 +301,9 @@ final class Analytics extends AnalyticsBase
           identifier: 'screen.legacy_view',
           customEventName: 'Screen: Legacy',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'legacy-screen-code',
@@ -288,6 +319,9 @@ final class Analytics extends AnalyticsBase
           description: 'User views a screen',
           customEventName: 'Screen: {screen_name}',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'duration_ms',
@@ -313,7 +347,7 @@ final class Analytics extends AnalyticsBase
   ];
 
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '-408c63c8a50d52c0';
+  static const String planFingerprint = '-20afb29386600458';
 
   // --- Singleton Compatibility ---
 

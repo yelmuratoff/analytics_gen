@@ -210,6 +210,106 @@ void main() {
     });
 
     test(
+        'renders meta entries in eventParameters when includeMetaInParameters is true',
+        () {
+      final configWithMeta = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        meta: AnalyticsMeta(includeMetaInParameters: true),
+      );
+      final rendererWithMeta = EventRenderer(configWithMeta);
+
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        meta: {
+          'tracking_creation_date': '2026-03-18T14:30:45',
+          'owner': 'auth-team',
+        },
+        parameters: [],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+      final allDomains = {'auth': domain};
+
+      final result =
+          rendererWithMeta.renderDomainFile('auth', domain, allDomains);
+
+      expect(result, contains("'owner': 'auth-team',"));
+      expect(
+          result, contains("'tracking_creation_date': '2026-03-18T14:30:45',"));
+    });
+
+    test('does not render meta entries when includeMetaInParameters is false',
+        () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        meta: {'owner': 'auth-team'},
+        parameters: [
+          AnalyticsParameter(name: 'method', type: 'string', isNullable: false),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+      final allDomains = {'auth': domain};
+
+      final result = renderer.renderDomainFile('auth', domain, allDomains);
+
+      expect(result, isNot(contains("'owner'")));
+    });
+
+    test('renders meta with numeric and boolean values', () {
+      final configWithMeta = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        meta: AnalyticsMeta(includeMetaInParameters: true),
+      );
+      final rendererWithMeta = EventRenderer(configWithMeta);
+
+      final event = AnalyticsEvent(
+        name: 'action',
+        description: 'Action performed',
+        meta: {
+          'is_critical': true,
+          'priority': 42,
+        },
+        parameters: [],
+      );
+      final domain = AnalyticsDomain(name: 'app', events: [event]);
+      final allDomains = {'app': domain};
+
+      final result =
+          rendererWithMeta.renderDomainFile('app', domain, allDomains);
+
+      expect(result, contains("'is_critical': true,"));
+      expect(result, contains("'priority': 42,"));
+    });
+
+    test(
+        'renders event with empty meta and includeMetaInParameters true as no-op',
+        () {
+      final configWithMeta = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        meta: AnalyticsMeta(includeMetaInParameters: true),
+      );
+      final rendererWithMeta = EventRenderer(configWithMeta);
+
+      final event = AnalyticsEvent(
+        name: 'logout',
+        description: 'User logs out',
+        parameters: [],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+      final allDomains = {'auth': domain};
+
+      final result =
+          rendererWithMeta.renderDomainFile('auth', domain, allDomains);
+
+      // Should still generate the method, just no meta entries
+      expect(result, contains('void logAuthLogout('));
+    });
+
+    test(
         'adds @Deprecated when interpolation used (even if strict_event_names is true, assuming parser bypassed)',
         () {
       final config = AnalyticsConfig(

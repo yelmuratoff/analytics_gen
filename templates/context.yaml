@@ -1,0 +1,110 @@
+# context.yaml
+#
+# This template demonstrates how to define a context (user/session properties).
+# Contexts represent state that is tracked across many events — for example,
+# user profile attributes or session-level settings.
+#
+# Place this file in your project and reference it in analytics_gen.yaml:
+#
+#   inputs:
+#     contexts:
+#       - events/contexts/user_properties.yaml
+#       - events/contexts/theme_context.yaml
+#
+# The root key is the context name (e.g., 'user_properties').
+# Generated code will include:
+#   - A capability interface (e.g., UserPropertiesCapability)
+#   - A mixin with convenience methods (e.g., setUserPropertiesIsPremium())
+#   - Enum types for properties with allowed_values
+
+# -----------------------------------------------------------------------------
+# Example: User Properties Context
+# -----------------------------------------------------------------------------
+user_properties:
+  # Simple property — default operation is 'set'
+  user_id:
+    type: string
+    description: Unique identifier for the user.
+
+  # Property with allowed values — generates an enum
+  user_role:
+    type: string
+    description: Role of the user in the system.
+    allowed_values: [admin, editor, viewer]
+
+  # Boolean property
+  is_premium:
+    type: bool
+    description: Whether the user has a premium subscription.
+
+  # Numeric property with multiple operations
+  # Generates: setUserPropertiesLoginCount() and incrementUserPropertiesLoginCount()
+  login_count:
+    type: int
+    description: Total number of logins.
+    operations: [set, increment]
+
+  # List property with append/remove operations
+  # Generates: appendUserPropertiesTags() and removeUserPropertiesTags()
+  tags:
+    type: List<String>
+    description: User tags for segmentation.
+    operations: [append, remove]
+
+  # Numeric property with all available operations
+  lifetime_value:
+    type: double
+    description: Total revenue from this user.
+    operations: [set, increment]
+    min: 0.0
+
+  # Property with metadata
+  signup_date:
+    type: datetime
+    description: When the user signed up.
+    meta:
+      pii: false
+
+# -----------------------------------------------------------------------------
+# Context Property Reference
+# -----------------------------------------------------------------------------
+#
+# type: (Required) Data type.
+#       Supported: string, int, double, float, bool, boolean, num, number,
+#                  list, map, datetime, date, uri.
+#       Aliases: boolean → bool, float → double, number → num, date → datetime.
+#       Append '?' for nullable (e.g., string?).
+#
+# description: (Optional) Human-readable description.
+#
+# param_name: (Optional) The actual key sent to the analytics service.
+#             Defaults to the YAML key.
+#
+# identifier: (Optional) Override the Dart code identifier for this property.
+#             Defaults to the YAML key.
+#
+# operations: (Optional) List of supported operations for this property.
+#             Available operations:
+#               - set: Replace the current value
+#               - increment: Add to a numeric value (int, double, num)
+#               - append: Add items to a list
+#               - remove: Remove items from a list
+#             Default: [set] (if omitted, only 'set' is generated)
+#
+# allowed_values: (Optional) List of valid values. Generates an Enum.
+#
+# dart_type: (Optional) Override the inferred Dart type.
+#
+# import: (Optional) Dart library to import for 'dart_type'.
+#
+# min/max: (Optional) Range constraints for numeric types.
+#
+# min_length/max_length: (Optional) Length constraints for string types.
+#
+# regex: (Optional) Regular expression pattern for string validation.
+#
+# meta: (Optional) Custom metadata map.
+#
+# added_in: (Optional) Version string when this parameter was added.
+#
+# deprecated_in: (Optional) Version string when this parameter was deprecated.

@@ -22,7 +22,7 @@ domain_name:
     identifier: auth: login        # Optional canonical identifier
     parameters:
       param_key:
-        type: string               # Types: string, int, double, bool, map, list, custom
+        type: string               # Types: string, int, double, float, bool, boolean, num, number, map, list, datetime, date, uri
         description: Why this matters
         identifier: userId         # Override generated Dart parameter
         param_name: user-id        # Override provider payload key
@@ -38,10 +38,16 @@ The generator maps YAML primitive names to Dart types. Prefer lower-case primiti
 | `string` | `String` | |
 | `int` | `int` | |
 | `double` | `double` | |
+| `float` | `double` | Alias for `double`. |
 | `bool` | `bool` | |
+| `boolean` | `bool` | Alias for `bool`. |
+| `num` | `num` | |
+| `number` | `num` | Alias for `num`. |
 | `list` | `List<dynamic>` | Use `list<String>` etc. if supported by your provider adapter. |
 | `map` | `Map<String, dynamic>` | |
-| `DateTime` | `DateTime` | Custom types pass through as-is. |
+| `datetime` | `DateTime` | |
+| `date` | `DateTime` | Alias for `datetime`. |
+| `uri` | `Uri` | |
 
 **Nullable parameters**: Append `?` to the type (e.g., `string?`, `int?`).
 
@@ -49,7 +55,7 @@ Rules of thumb:
 
 - `parameters` must be a map (use `{}` when none).
 - Nullable parameters append `?` (e.g., `string?`).
-- Custom types (like `DateTime`) pass through directly; ensure your providers can handle them.
+- Custom types pass through directly; ensure your providers can handle them.
 
 ## Naming Strategy
 

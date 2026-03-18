@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0]
+
+### Features
+
+- Added `boolean` as an alias for `bool` type across type mapping, parsing, and documentation generation.
+- Added automatic tracking creation date injection via a new ledger file and `meta.auto_tracking_creation_date` config option.
+  - When enabled, the generator maintains a `.analytics_tracking.json` ledger file that records an ISO 8601 timestamp (`yyyy-MM-ddTHH:mm:ss`) when each event is first seen.
+  - The `tracking_creation_date` value is automatically injected into each event's `meta` field during generation.
+  - Existing entries are never overwritten — the ledger preserves the original creation timestamp.
+  - The ledger file is placed next to `analytics_gen.yaml` and should be committed to version control.
+- Added `meta.include_meta_in_parameters` config option to include event meta fields in the generated `eventParameters` map sent to analytics providers (e.g. Amplitude, Mixpanel). Default: `false`.
+
 ## [1.0.8]
 
 ### Features

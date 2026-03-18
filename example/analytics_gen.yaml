@@ -56,6 +56,16 @@ analytics_gen:
     # Default: false
     prevent_event_parameter_duplicates: false
 
+  # Meta field injection
+  meta:
+    # Automatically track when each event was first seen via a ledger file.
+    # Creates .analytics_tracking.json next to analytics_gen.yaml. Default: false
+    auto_tracking_creation_date: true
+
+    # Include event meta fields in the generated eventParameters map.
+    # When true, meta key-value pairs are sent alongside regular parameters. Default: false
+    include_meta_in_parameters: true
+
   naming:
     # Keep snake_case domains (files/mixins stay stable) but allow legacy parameter
     # keys to opt-in via per-parameter `identifier`.

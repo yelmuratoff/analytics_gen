@@ -20,6 +20,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
   }) {
     final eventParameters = <String, Object?>{
       'description': 'User cancelled a purchase',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "product_id": productId,
       if (reason != null) "reason": reason,
     }..addAll(parameters ?? const {});
@@ -46,6 +47,7 @@ mixin AnalyticsPurchase on AnalyticsBase {
   }) {
     final eventParameters = <String, Object?>{
       'description': 'User completed a purchase',
+      'tracking_creation_date': '2026-03-18T14:58:15',
       "currency-code": currencyCode,
       "amount_value": price,
       "product_id": productId,
