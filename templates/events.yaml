@@ -1,8 +1,14 @@
 # events_template.yaml
 #
-# This template demonstrates how to define analytics events, shared parameters, and contexts.
+# This template demonstrates how to define analytics events.
 # Rename this file (e.g., to 'auth.yaml' or 'purchase.yaml') and place it in your configured
 # events directory (default: 'events/').
+#
+# Each root key is a domain name. Events are grouped under their domain.
+# One file can contain one or more domains.
+#
+# Parameters can be defined inline or pulled from shared_parameters files
+# by using a null value (see Example 1b below).
 
 # -----------------------------------------------------------------------------
 # Event Definitions
@@ -21,6 +27,20 @@ auth:
       success:
         type: bool
         description: Whether the login was successful.
+
+  # Example 1b: Event that references shared parameters
+  # Requires shared parameters to be configured in analytics_gen.yaml:
+  #   inputs:
+  #     shared_parameters:
+  #       - events/shared/user_params.yaml
+  user_login_v2:
+    description: User logs in (v2, with shared params).
+    parameters:
+      session_id:          # ← null value = pulls full definition from shared parameters
+      platform:            # ← null value = pulls full definition from shared parameters
+      method:              # ← local parameter, defined inline
+        type: string
+        allowed_values: [email, google, apple]
 
 commerce:
   # Example 2: An event with advanced parameter configuration
@@ -93,6 +113,35 @@ navigation:
         description: The screen they navigated from.
 
 # -----------------------------------------------------------------------------
+# Event Properties Reference
+# -----------------------------------------------------------------------------
+#
+# description: (Required) Human-readable event description.
+#
+# event_name: (Optional) Custom event name. Supports {parameter_key} interpolation.
+#             Requires strict_event_names: false in rules if using interpolation.
+#
+# identifier: (Optional) Unique event identifier. Overrides the naming strategy.
+#             If omitted, generated from identifier_template in naming config.
+#
+# deprecated: (Optional) Boolean. Marks the event as deprecated in generated code.
+#
+# replacement: (Optional) Suggested replacement event (e.g., "commerce.purchase_v2").
+#
+# added_in: (Optional) Version string when this event was introduced.
+#
+# deprecated_in: (Optional) Version string when this event was deprecated.
+#
+# dual_write_to: (Optional) List of event identifiers to trigger alongside this event.
+#                Format: ["domain.event_name", ...]
+#
+# meta: (Optional) Arbitrary key-value map. Useful for custom metadata
+#       (e.g., jira_ticket, owner, category). When include_meta_in_parameters
+#       is enabled, these are included in the eventParameters map.
+#
+# parameters: (Optional) Map of parameter definitions (see below).
+
+# -----------------------------------------------------------------------------
 # Parameter Properties Reference
 # -----------------------------------------------------------------------------
 #
@@ -131,6 +180,13 @@ navigation:
 #
 # operations: (Optional) List of operations supported (e.g., set, increment).
 #             Primarily used for Context parameters.
+#
+# CONSTRAINTS:
+# - dart_type and allowed_values are mutually exclusive (cannot use both).
+# - allowed_values is only supported for scalar types: string, bool, int, double, num.
+# - regex cannot contain triple quotes (''') — this prevents Dart raw string errors.
+# - A null-value parameter (e.g., `session_id:`) references a shared parameter
+#   with the same name. If no shared parameter exists, the type defaults to dynamic.
 
 # -----------------------------------------------------------------------------
 # Related Templates

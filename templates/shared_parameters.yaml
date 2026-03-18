@@ -1,17 +1,44 @@
 # shared_parameters.yaml
 #
 # This template demonstrates how to define shared (global) parameters.
-# Shared parameters are defined once and automatically injected into every event,
+# Shared parameters are defined once and can be reused across multiple events,
 # ensuring consistency across your analytics taxonomy.
 #
-# Place this file in your project and reference it in analytics_gen.yaml:
+# SETUP:
+# 1. Create this file and reference it in analytics_gen.yaml:
 #
-#   inputs:
-#     shared_parameters:
-#       - events/shared/user_params.yaml
-#       - events/shared/app_params.yaml
+#      inputs:
+#        shared_parameters:
+#          - events/shared/user_params.yaml
+#          - events/shared/app_params.yaml
 #
-# The root key must be 'parameters'.
+# 2. The root key must be 'parameters'.
+#
+# USAGE IN EVENTS:
+# To reference a shared parameter from an event, use its name with a null value:
+#
+#   auth:
+#     login:
+#       description: User logs in.
+#       parameters:
+#         session_id:          # ← pulls definition from shared parameters
+#         platform:            # ← pulls definition from shared parameters
+#         method:              # ← local parameter (defined inline below)
+#           type: string
+#           allowed_values: [email, google]
+#
+# If the parameter name matches a shared parameter and the value is null,
+# the full shared definition (type, description, allowed_values, etc.) is used.
+# You can also redefine locally to override the shared version.
+#
+# RELATED RULES (in analytics_gen.yaml → rules):
+#   enforce_centrally_defined_parameters: true
+#     → ALL event parameters MUST exist in shared_parameters files.
+#       Any locally-defined parameter that is not in shared will cause an error.
+#
+#   prevent_event_parameter_duplicates: true
+#     → Events CANNOT redefine a parameter that exists in shared_parameters.
+#       Forces using the shared version without local overrides.
 
 # -----------------------------------------------------------------------------
 # Basic shared parameters
