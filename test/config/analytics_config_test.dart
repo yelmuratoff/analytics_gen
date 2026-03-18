@@ -20,6 +20,7 @@ void main() {
       expect(config.naming.eventNameTemplate, '{domain}: {event}');
       expect(config.inputs.sharedParameters, isEmpty);
       expect(config.inputs.contexts, isEmpty);
+      expect(config.meta.autoTrackingCreationDate, isFalse);
     });
 
     test('applies overrides when analytics_gen section exists', () {
@@ -132,6 +133,30 @@ void main() {
 
       expect(config.inputs.sharedParameters, ['shared/from_inputs.yaml']);
       expect(config.inputs.contexts, ['shared/from_inputs_context.yaml']);
+    });
+
+    test('parses meta.auto_tracking_creation_date when enabled', () {
+      final yaml = {
+        'analytics_gen': {
+          'meta': {
+            'auto_tracking_creation_date': true,
+          },
+        },
+      };
+
+      final config = ConfigParser().parse(yaml);
+      expect(config.meta.autoTrackingCreationDate, isTrue);
+    });
+
+    test('meta.auto_tracking_creation_date defaults to false when meta section is absent', () {
+      final yaml = {
+        'analytics_gen': {
+          'inputs': {'events': 'events'},
+        },
+      };
+
+      final config = ConfigParser().parse(yaml);
+      expect(config.meta.autoTrackingCreationDate, isFalse);
     });
 
     test('throws FormatException with readable message for invalid map fields',

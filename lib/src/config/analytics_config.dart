@@ -96,6 +96,17 @@ class AnalyticsRules {
   final bool preventEventParameterDuplicates;
 }
 
+/// Configuration for automatic meta field injection.
+class AnalyticsMeta {
+  /// Creates a new meta configuration.
+  const AnalyticsMeta({
+    this.autoTrackingCreationDate = false,
+  });
+
+  /// Whether to automatically track event creation dates via a ledger file.
+  final bool autoTrackingCreationDate;
+}
+
 /// Configuration for analytics code generation.
 final class AnalyticsConfig {
   /// Creates a new analytics configuration.
@@ -105,6 +116,7 @@ final class AnalyticsConfig {
     this.targets = const AnalyticsTargets(),
     this.rules = const AnalyticsRules(),
     this.naming = const NamingStrategy(),
+    this.meta = const AnalyticsMeta(),
   });
 
   /// Default configuration.
@@ -128,4 +140,7 @@ final class AnalyticsConfig {
 
   /// Naming controls applied across parsing and generation.
   final NamingStrategy naming;
+
+  /// Meta field injection configuration.
+  final AnalyticsMeta meta;
 }

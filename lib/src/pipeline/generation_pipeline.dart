@@ -7,11 +7,15 @@ import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/generator/output_manager.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:analytics_gen/src/models/tracking_plan.dart';
 import 'package:analytics_gen/src/pipeline/tracking_plan_loader.dart';
+import 'package:analytics_gen/src/services/creation_date_injector.dart';
 import 'package:analytics_gen/src/services/schema_evolution_checker.dart';
+import 'package:analytics_gen/src/services/tracking_ledger.dart';
 import 'package:analytics_gen/src/services/watcher_service.dart';
 import 'package:analytics_gen/src/util/banner_printer.dart';
 import 'package:analytics_gen/src/util/logger.dart';
+import 'package:path/path.dart' as path;
 import '../metrics/console_metrics.dart';
 import '../metrics/metrics.dart';
 
@@ -72,7 +76,8 @@ class GenerationPipeline {
         yamlParserFactory: _yamlParserFactory,
       );
 
-      final plan = await loader.load(request.logger);
+      final rawPlan = await loader.load(request.logger);
+      final plan = await _applyTrackingCreationDate(rawPlan, request.logger);
       final domains = plan.domains;
       final contexts = plan.contexts;
 
@@ -118,6 +123,33 @@ class GenerationPipeline {
       request.logger.error('Watch error: $e');
       exit(1);
     }
+  }
+
+  Future<TrackingPlan> _applyTrackingCreationDate(
+    TrackingPlan plan,
+    Logger logger,
+  ) async {
+    if (!config.meta.autoTrackingCreationDate) return plan;
+
+    final ledgerPath =
+        path.join(projectRoot, '.analytics_tracking.json');
+    final ledger = TrackingLedger(ledgerPath: ledgerPath);
+
+    final eventKeys = <String>[
+      for (final entry in plan.domains.entries)
+        for (final event in entry.value.events)
+          '${entry.key}.${event.name}',
+    ];
+
+    final existingCount = (await ledger.load()).length;
+    final entries = await ledger.reconcile(eventKeys);
+    final newCount = entries.length - existingCount;
+    logger.info(
+      'Tracking ledger: ${entries.length} events tracked'
+      '${newCount > 0 ? ' ($newCount new)' : ''}',
+    );
+
+    return const CreationDateInjector().inject(plan, entries);
   }
 
   List<_GeneratorTask> _buildTasks(
