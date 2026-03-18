@@ -357,7 +357,7 @@ final class DocsGenerator {
 
     return switch (normalizedType) {
       'int' => '123',
-      'bool' => 'true',
+      'bool' || 'boolean' => 'true',
       'double' || 'float' => '1.5',
       'string' => "'example'",
       'datetime' || 'date' => 'DateTime.fromMillisecondsSinceEpoch(0)',

@@ -311,11 +311,11 @@ final class ParameterParser {
             );
           }
           break;
-        case 'bool':
+        case 'bool' || 'boolean':
           if (allowedValues.any((v) => v is! bool)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of booleans '
-              'because its type is "bool".',
+              'because its type is "$normalizedType".',
               filePath: filePath,
               span: allowedValuesSpan ?? valueNode.span,
             );
@@ -359,7 +359,7 @@ final class ParameterParser {
         default:
           throw AnalyticsParseException(
             'allowed_values is only supported for scalar parameter types '
-            '(string, bool, int, double, num). '
+            '(string, bool, boolean, int, double, num). '
             'Parameter "$rawName" has unsupported type "$paramType".',
             filePath: filePath,
             span: allowedValuesSpan ?? valueNode.span,

@@ -711,6 +711,76 @@ void main() {
       );
     });
 
+    test('parses "boolean" as alias for "bool" type', () async {
+      final files = {
+        'feature.yaml': 'feature:\n'
+            '  click:\n'
+            '    description: User clicked\n'
+            '    parameters:\n'
+            '      is_active: boolean\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+
+      final param = domains['feature']!.events.first.parameters.first;
+      expect(param.name, equals('is_active'));
+      expect(param.type, equals('boolean'));
+      expect(param.isNullable, isFalse);
+    });
+
+    test('parses nullable "boolean?" parameter', () async {
+      final files = {
+        'feature.yaml': 'feature:\n'
+            '  click:\n'
+            '    description: User clicked\n'
+            '    parameters:\n'
+            '      is_active: boolean?\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+
+      final param = domains['feature']!.events.first.parameters.first;
+      expect(param.name, equals('is_active'));
+      expect(param.type, equals('boolean'));
+      expect(param.isNullable, isTrue);
+    });
+
+    test('parses "boolean" with allowed_values', () async {
+      final files = {
+        'feature.yaml': 'feature:\n'
+            '  click:\n'
+            '    description: User clicked\n'
+            '    parameters:\n'
+            '      is_active:\n'
+            '        type: boolean\n'
+            '        allowed_values: [true, false]\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+
+      final param = domains['feature']!.events.first.parameters.first;
+      expect(param.type, equals('boolean'));
+      expect(param.allowedValues, equals([true, false]));
+    });
+
+    test('parses "boolean" in complex parameter form', () async {
+      final files = {
+        'feature.yaml': 'feature:\n'
+            '  click:\n'
+            '    description: User clicked\n'
+            '    parameters:\n'
+            '      is_active:\n'
+            '        type: boolean\n'
+            '        description: Whether the item is active\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+
+      final param = domains['feature']!.events.first.parameters.first;
+      expect(param.type, equals('boolean'));
+      expect(param.description, equals('Whether the item is active'));
+    });
+
     test('wraps YAML parse error for event files into AnalyticsParseException',
         () async {
       final files = {'auth.yaml': 'invalid: yaml: content: [\n'};

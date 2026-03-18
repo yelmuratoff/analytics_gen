@@ -5,6 +5,7 @@ final class DartTypeMapper {
   static const Map<String, String> _kTypeMap = {
     'int': 'int',
     'bool': 'bool',
+    'boolean': 'bool',
     'float': 'double',
     'double': 'double',
     'string': 'String',
