@@ -1,4 +1,15 @@
 Type,Name,Key,Value
 Event,auth_login,owner,auth-team
 Event,auth_login,tier,critical
+Event,auth_login,tracking_creation_date,2026-03-18T14:58:15
 Parameter,method,is_sensitive,true
+Event,auth_login_v2,tracking_creation_date,2026-03-18T14:58:15
+Event,auth_logout,tracking_creation_date,2026-03-18T14:58:15
+Event,Auth: Phone {phone_country},tracking_creation_date,2026-03-18T14:58:15
+Event,auth_signup,tracking_creation_date,2026-03-18T14:58:15
+Event,auth_verify_user,tracking_creation_date,2026-03-18T14:58:15
+Event,commerce_purchase_completed,tracking_creation_date,2026-03-18T14:58:15
+Event,purchase_flow_cancelled,tracking_creation_date,2026-03-18T14:58:15
+Event,purchase_flow_completed,tracking_creation_date,2026-03-18T14:58:15
+Event,Screen: Legacy,tracking_creation_date,2026-03-18T14:58:15
+Event,Screen: {screen_name},tracking_creation_date,2026-03-18T14:58:15

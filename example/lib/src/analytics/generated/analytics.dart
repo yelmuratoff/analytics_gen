@@ -50,19 +50,22 @@ import 'contexts/user_properties_context.dart';
 ///
 /// Note: Capabilities are provider-specific. Ensure your analytics
 /// provider implements the required capability interfaces.
-final class Analytics extends AnalyticsBase
-    with
-        AnalyticsAuth,
-        AnalyticsCommerce,
-        AnalyticsPurchase,
-        AnalyticsScreen,
-        AnalyticsTheme,
-        AnalyticsUserProperties {
+final class Analytics extends AnalyticsBase with
+    AnalyticsAuth,
+    AnalyticsCommerce,
+    AnalyticsPurchase,
+    AnalyticsScreen,
+    AnalyticsTheme,
+    AnalyticsUserProperties
+{
   final IAnalytics _analytics;
   final AnalyticsCapabilityResolver? _capabilities;
 
   /// Constructor for Dependency Injection.
-  const Analytics(this._analytics, [this._capabilities]);
+  const Analytics(
+    this._analytics, [
+    this._capabilities,
+  ]);
 
   /// Runtime view of the generated tracking plan.
   static const List<AnalyticsDomain> plan = <AnalyticsDomain>[
@@ -74,14 +77,20 @@ final class Analytics extends AnalyticsBase
           description: 'User logs in to the application',
           deprecated: true,
           replacement: 'auth.login_v2',
-          meta: <String, Object?>{'owner': 'auth-team', 'tier': 'critical'},
+          meta: <String, Object?>{
+            'owner': 'auth-team',
+            'tier': 'critical',
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'method',
               type: 'string',
               isNullable: false,
               description: 'Login method (email, google, apple)',
-              meta: <String, Object?>{'is_sensitive': true},
+              meta: <String, Object?>{
+                'is_sensitive': true,
+              },
             ),
           ],
         ),
@@ -89,6 +98,9 @@ final class Analytics extends AnalyticsBase
           name: 'login_v2',
           description: 'User logs in to the application (v2)',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'login-method',
@@ -96,7 +108,11 @@ final class Analytics extends AnalyticsBase
               type: 'string',
               isNullable: false,
               description: 'Login method v2 (email, google, apple)',
-              allowedValues: <Object>['email', 'google', 'apple'],
+              allowedValues: <Object>[
+                'email',
+                'google',
+                'apple',
+              ],
             ),
             AnalyticsParameter(
               name: 'session_id',
@@ -110,7 +126,11 @@ final class Analytics extends AnalyticsBase
           name: 'logout',
           description: 'User logs out',
           deprecated: false,
-          parameters: <AnalyticsParameter>[],
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
+          parameters: <AnalyticsParameter>[
+          ],
         ),
         AnalyticsEvent(
           name: 'phone_login',
@@ -118,6 +138,9 @@ final class Analytics extends AnalyticsBase
           identifier: 'auth.phone_login',
           customEventName: 'Auth: Phone {phone_country}',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'phone_country',
@@ -144,6 +167,9 @@ final class Analytics extends AnalyticsBase
           name: 'signup',
           description: 'User creates a new account',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'method',
@@ -162,6 +188,9 @@ final class Analytics extends AnalyticsBase
           name: 'verify_user',
           description: 'User verification status change',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'local_status',
@@ -184,12 +213,19 @@ final class Analytics extends AnalyticsBase
           name: 'purchase_completed',
           description: 'Triggered when a user completes a payment.',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'currency',
               type: 'string',
               isNullable: false,
-              allowedValues: <Object>['USD', 'EUR', 'GBP'],
+              allowedValues: <Object>[
+                'USD',
+                'EUR',
+                'GBP',
+              ],
             ),
             AnalyticsParameter(
               name: 'items_count',
@@ -217,6 +253,9 @@ final class Analytics extends AnalyticsBase
           name: 'cancelled',
           description: 'User cancelled a purchase',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'product_id',
@@ -235,6 +274,9 @@ final class Analytics extends AnalyticsBase
           name: 'completed',
           description: 'User completed a purchase',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'currency-code',
@@ -273,6 +315,9 @@ final class Analytics extends AnalyticsBase
           identifier: 'screen.legacy_view',
           customEventName: 'Screen: Legacy',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'legacy-screen-code',
@@ -288,6 +333,9 @@ final class Analytics extends AnalyticsBase
           description: 'User views a screen',
           customEventName: 'Screen: {screen_name}',
           deprecated: false,
+          meta: <String, Object?>{
+            'tracking_creation_date': '2026-03-18T14:58:15',
+          },
           parameters: <AnalyticsParameter>[
             AnalyticsParameter(
               name: 'duration_ms',
@@ -313,7 +361,7 @@ final class Analytics extends AnalyticsBase
   ];
 
   /// The fingerprint of the plan used to generate this code.
-  static const String planFingerprint = '-408c63c8a50d52c0';
+  static const String planFingerprint = '-20afb29386600458';
 
   // --- Singleton Compatibility ---
 
@@ -322,9 +370,7 @@ final class Analytics extends AnalyticsBase
   /// Access the singleton instance
   static Analytics get instance {
     if (_instance == null) {
-      throw StateError(
-        'Analytics.initialize() must be called before accessing Analytics.instance.\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.',
-      );
+      throw StateError('Analytics.initialize() must be called before accessing Analytics.instance.\nEnsure you call Analytics.initialize() in your main() function or before using any analytics features.');
     }
     return _instance!;
   }
@@ -354,6 +400,6 @@ final class Analytics extends AnalyticsBase
   IAnalytics get logger => _analytics;
 
   @override
-  AnalyticsCapabilityResolver get capabilities =>
-      _capabilities ?? super.capabilities;
+  AnalyticsCapabilityResolver get capabilities => _capabilities ?? super.capabilities;
 }
+

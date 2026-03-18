@@ -26,23 +26,28 @@ mixin AnalyticsCommerce on AnalyticsBase {
   /// - `transaction_id`: String
   /// - `value`: double
   void logCommercePurchaseCompleted({
-    required AnalyticsCommercePurchaseCompletedCurrencyEnum currency,
-    required int itemsCount,
-    required String transactionId,
-    required double value,
-    Map<String, Object?>? parameters,
-  }) {
-    if (transactionId.length < 10) {
-      throw ArgumentError.value(
-        transactionId,
-        'transactionId',
-        'length must be at least 10',
-      );
-    }
+      required AnalyticsCommercePurchaseCompletedCurrencyEnum currency,
+      required int itemsCount,
+      required String transactionId,
+      required double value,
+      Map<String, Object?>? parameters,
+    }) {
 
-    if (value < 0.01) {
-      throw ArgumentError.value(value, 'value', 'must be at least 0.01');
-    }
+        if (transactionId.length < 10) {
+          throw ArgumentError.value(
+            transactionId,
+            'transactionId',
+            'length must be at least 10',
+          );
+        }
+
+        if (value < 0.01) {
+          throw ArgumentError.value(
+            value,
+            'value',
+            'must be at least 0.01',
+          );
+        }
 
     final eventParameters = <String, Object?>{
       'description': 'Triggered when a user completes a payment.',
@@ -57,4 +62,5 @@ mixin AnalyticsCommerce on AnalyticsBase {
       parameters: eventParameters,
     );
   }
+
 }

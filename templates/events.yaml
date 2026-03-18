@@ -96,8 +96,11 @@ navigation:
 # Parameter Properties Reference
 # -----------------------------------------------------------------------------
 #
-# type: (Required) Data type. Common values: string, int, double, bool, list, map.
-#       Append '?' for nullable (e.g., string?).
+# type: (Required) Data type. Supported values:
+#       string, int, double, float, bool, boolean, num, number,
+#       list, map, datetime, date, uri.
+#       Aliases: boolean → bool, float → double, number → num, date → datetime.
+#       Append '?' for nullable (e.g., string?, boolean?).
 #
 # description: (Optional) Human-readable description for docs and code comments.
 #

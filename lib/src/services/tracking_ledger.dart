@@ -15,9 +15,15 @@ final class TrackingLedger {
 
   final DateTime Function()? _clock;
 
-  String get _today {
+  String get _timestamp {
     final now = _clock?.call() ?? DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final y = now.year;
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    final h = now.hour.toString().padLeft(2, '0');
+    final min = now.minute.toString().padLeft(2, '0');
+    final s = now.second.toString().padLeft(2, '0');
+    return '$y-$m-${d}T$h:$min:$s';
   }
 
   /// Loads existing ledger entries from disk.
@@ -45,14 +51,14 @@ final class TrackingLedger {
 
   /// Reconciles event keys against the ledger.
   ///
-  /// New events get today's date. Existing entries are preserved.
+  /// New events get the current timestamp. Existing entries are preserved.
   /// Returns the full map of all entries (including newly added ones).
   Future<Map<String, String>> reconcile(List<String> eventKeys) async {
     final entries = await load();
     var changed = false;
     for (final key in eventKeys) {
       if (!entries.containsKey(key)) {
-        entries[key] = _today;
+        entries[key] = _timestamp;
         changed = true;
       }
     }

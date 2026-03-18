@@ -1,0 +1,13 @@
+{
+  "auth.login": "2026-03-18T14:58:15",
+  "auth.login_v2": "2026-03-18T14:58:15",
+  "auth.logout": "2026-03-18T14:58:15",
+  "auth.phone_login": "2026-03-18T14:58:15",
+  "auth.signup": "2026-03-18T14:58:15",
+  "auth.verify_user": "2026-03-18T14:58:15",
+  "commerce.purchase_completed": "2026-03-18T14:58:15",
+  "purchase.cancelled": "2026-03-18T14:58:15",
+  "purchase.completed": "2026-03-18T14:58:15",
+  "screen.legacy_view": "2026-03-18T14:58:15",
+  "screen.view": "2026-03-18T14:58:15"
+}

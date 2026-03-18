@@ -1,6 +1,6 @@
 # Analytics Events Documentation
 
-Fingerprint: `-408c63c8a50d52c0`
+Fingerprint: `-20afb29386600458`
 Domains: 4 | Events: 11 | Parameters: 24
 
 ## Table of Contents
@@ -24,12 +24,12 @@ Events: 6 | Parameters: 10
 
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
-| auth_login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (String): Login method (email, google, apple) [is_sensitive: true] | **owner**: auth-team<br>**tier**: critical |
-| auth_login_v2 | User logs in to the application (v2) | Active | `login-method` (AnalyticsAuthLoginV2LoginMethodEnum): Login method v2 (email, google, apple) (allowed: email, google, apple)<br>`session_id` (String): Unique identifier for the current session. | - |
-| auth_logout | User logs out | Active | - | - |
-| Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (String): ISO country code for the dialed number<br>`tracking-token` (String): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not | - |
-| auth_signup | User creates a new account | Active | `method` (String)<br>`referral_code` (String?): Optional referral code used during signup | - |
-| auth_verify_user | User verification status change | Active | `local_status` (LocalStatus)<br>`status` (VerificationStatus) | - |
+| auth_login | User logs in to the application | **Deprecated** -> `auth.login_v2` | `method` (String): Login method (email, google, apple) [is_sensitive: true] | **owner**: auth-team<br>**tier**: critical<br>**tracking_creation_date**: 2026-03-18T14:58:15 |
+| auth_login_v2 | User logs in to the application (v2) | Active | `login-method` (AnalyticsAuthLoginV2LoginMethodEnum): Login method v2 (email, google, apple) (allowed: email, google, apple)<br>`session_id` (String): Unique identifier for the current session. | **tracking_creation_date**: 2026-03-18T14:58:15 |
+| auth_logout | User logs out | Active | - | **tracking_creation_date**: 2026-03-18T14:58:15 |
+| Auth: Phone {phone_country} | When user logs in via phone | Active | `phone_country` (String): ISO country code for the dialed number<br>`tracking-token` (String): Legacy token kept for backend reconciliation<br>`user_exists` (bool?): Whether the user exists or not | **tracking_creation_date**: 2026-03-18T14:58:15 |
+| auth_signup | User creates a new account | Active | `method` (String)<br>`referral_code` (String?): Optional referral code used during signup | **tracking_creation_date**: 2026-03-18T14:58:15 |
+| auth_verify_user | User verification status change | Active | `local_status` (LocalStatus)<br>`status` (VerificationStatus) | **tracking_creation_date**: 2026-03-18T14:58:15 |
 
 ### Code Examples
 
@@ -53,7 +53,7 @@ Events: 1 | Parameters: 4
 
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
-| commerce_purchase_completed | Triggered when a user completes a payment. | Active | `currency` (AnalyticsCommercePurchaseCompletedCurrencyEnum) (allowed: USD, EUR, GBP)<br>`items_count` (int)<br>`transaction_id` (String)<br>`value` (double) | - |
+| commerce_purchase_completed | Triggered when a user completes a payment. | Active | `currency` (AnalyticsCommercePurchaseCompletedCurrencyEnum) (allowed: USD, EUR, GBP)<br>`items_count` (int)<br>`transaction_id` (String)<br>`value` (double) | **tracking_creation_date**: 2026-03-18T14:58:15 |
 
 ### Code Examples
 
@@ -73,8 +73,8 @@ Events: 2 | Parameters: 6
 
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
-| purchase_flow_cancelled | User cancelled a purchase | Active | `product_id` (String)<br>`reason` (String?): Reason for cancellation | - |
-| purchase_flow_completed | User completed a purchase | Active | `currency-code` (String)<br>`amount_value` (double): Localized amount used by legacy dashboards<br>`product_id` (String)<br>`quantity` (int): Number of items purchased | - |
+| purchase_flow_cancelled | User cancelled a purchase | Active | `product_id` (String)<br>`reason` (String?): Reason for cancellation | **tracking_creation_date**: 2026-03-18T14:58:15 |
+| purchase_flow_completed | User completed a purchase | Active | `currency-code` (String)<br>`amount_value` (double): Localized amount used by legacy dashboards<br>`product_id` (String)<br>`quantity` (int): Number of items purchased | **tracking_creation_date**: 2026-03-18T14:58:15 |
 
 ### Code Examples
 
@@ -99,8 +99,8 @@ Events: 2 | Parameters: 4
 
 | Event | Description | Status | Parameters | Metadata |
 |-------|-------------|--------|------------|----------|
-| Screen: Legacy | Legacy backend identifier kept for parity | Active | `legacy-screen-code` (String): Three-letter code provided by data team | - |
-| Screen: {screen_name} | User views a screen | Active | `duration_ms` (int?): Time spent on previous screen in milliseconds<br>`previous_screen` (String?): Name of the previous screen<br>`screen_name` (String) | - |
+| Screen: Legacy | Legacy backend identifier kept for parity | Active | `legacy-screen-code` (String): Three-letter code provided by data team | **tracking_creation_date**: 2026-03-18T14:58:15 |
+| Screen: {screen_name} | User views a screen | Active | `duration_ms` (int?): Time spent on previous screen in milliseconds<br>`previous_screen` (String?): Name of the previous screen<br>`screen_name` (String) | **tracking_creation_date**: 2026-03-18T14:58:15 |
 
 ### Code Examples
 

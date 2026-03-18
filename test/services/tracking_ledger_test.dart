@@ -73,8 +73,8 @@ void main() {
       expect(content.endsWith('\n'), isTrue);
     });
 
-    test('reconcile adds missing keys with today\'s date', () async {
-      final fixedDate = DateTime(2026, 3, 18);
+    test('reconcile adds missing keys with current timestamp', () async {
+      final fixedDate = DateTime(2026, 3, 18, 14, 30, 45);
       final ledger = createLedger(clock: () => fixedDate);
 
       final entries = await ledger.reconcile([
@@ -83,8 +83,8 @@ void main() {
       ]);
 
       expect(entries, {
-        'auth.login': '2026-03-18',
-        'auth.logout': '2026-03-18',
+        'auth.login': '2026-03-18T14:30:45',
+        'auth.logout': '2026-03-18T14:30:45',
       });
 
       // Verify file was written
@@ -94,10 +94,10 @@ void main() {
 
     test('reconcile preserves existing entries', () async {
       await File(ledgerPath).writeAsString(jsonEncode({
-        'auth.login': '2026-01-15',
+        'auth.login': '2026-01-15T09:00:00',
       }));
 
-      final fixedDate = DateTime(2026, 3, 18);
+      final fixedDate = DateTime(2026, 3, 18, 14, 30, 45);
       final ledger = createLedger(clock: () => fixedDate);
 
       final entries = await ledger.reconcile([
@@ -105,20 +105,20 @@ void main() {
         'auth.logout',
       ]);
 
-      expect(entries['auth.login'], '2026-01-15'); // preserved
-      expect(entries['auth.logout'], '2026-03-18'); // new
+      expect(entries['auth.login'], '2026-01-15T09:00:00'); // preserved
+      expect(entries['auth.logout'], '2026-03-18T14:30:45'); // new
     });
 
-    test('reconcile does not overwrite existing dates', () async {
+    test('reconcile does not overwrite existing entries', () async {
       await File(ledgerPath).writeAsString(jsonEncode({
-        'auth.login': '2025-06-01',
+        'auth.login': '2025-06-01T12:00:00',
       }));
 
-      final ledger = createLedger(clock: () => DateTime(2026, 3, 18));
+      final ledger = createLedger(clock: () => DateTime(2026, 3, 18, 14, 30));
 
       final entries = await ledger.reconcile(['auth.login']);
 
-      expect(entries['auth.login'], '2025-06-01');
+      expect(entries['auth.login'], '2025-06-01T12:00:00');
     });
 
     test('reconcile leaves removed event entries in place', () async {
@@ -153,12 +153,12 @@ void main() {
       expect(newModified, equals(lastModified));
     });
 
-    test('reconcile formats date with zero-padded month and day', () async {
-      final ledger = createLedger(clock: () => DateTime(2026, 1, 5));
+    test('reconcile formats timestamp with zero-padded components', () async {
+      final ledger = createLedger(clock: () => DateTime(2026, 1, 5, 3, 7, 9));
 
       final entries = await ledger.reconcile(['auth.login']);
 
-      expect(entries['auth.login'], '2026-01-05');
+      expect(entries['auth.login'], '2026-01-05T03:07:09');
     });
   });
 }

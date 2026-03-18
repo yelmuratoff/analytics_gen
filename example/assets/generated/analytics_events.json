@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fingerprint": "-408c63c8a50d52c0",
+    "fingerprint": "-20afb29386600458",
     "total_domains": 4,
     "total_events": 11,
     "total_parameters": 24
@@ -32,7 +32,8 @@
           "replacement": "auth.login_v2",
           "meta": {
             "owner": "auth-team",
-            "tier": "critical"
+            "tier": "critical",
+            "tracking_creation_date": "2026-03-18T14:58:15"
           },
           "line_number": 3,
           "event_name": "auth_login"
@@ -65,6 +66,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 17,
           "dual_write_to": [
             "auth.login"
@@ -76,6 +80,9 @@
           "description": "User logs out",
           "identifier": "auth.logout",
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 29,
           "event_name": "auth_logout"
         },
@@ -111,6 +118,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 42,
           "interpolated_name": "Auth: Phone ${phoneCountry}",
           "event_name": "Auth: Phone {phone_country}"
@@ -138,6 +148,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 33,
           "event_name": "auth_signup"
         },
@@ -166,6 +179,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 59,
           "event_name": "auth_verify_user"
         }
@@ -218,6 +234,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 3,
           "event_name": "commerce_purchase_completed"
         }
@@ -250,6 +269,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 19,
           "event_name": "purchase_flow_cancelled"
         },
@@ -290,6 +312,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 3,
           "event_name": "purchase_flow_completed"
         }
@@ -316,6 +341,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 15,
           "event_name": "Screen: Legacy"
         },
@@ -350,6 +378,9 @@
             }
           ],
           "deprecated": false,
+          "meta": {
+            "tracking_creation_date": "2026-03-18T14:58:15"
+          },
           "line_number": 3,
           "interpolated_name": "Screen: ${screenName}",
           "event_name": "Screen: {screen_name}"

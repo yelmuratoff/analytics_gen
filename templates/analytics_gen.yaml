@@ -110,6 +110,20 @@ analytics_gen:
     prevent_event_parameter_duplicates: false
 
   # ---------------------------------------------------------------------------
+  # Meta Field Injection
+  # Automatically inject metadata into events during generation.
+  # ---------------------------------------------------------------------------
+  meta:
+    # Automatically track when each event was first seen via a ledger file.
+    # When enabled, the generator maintains a `.analytics_tracking.json` file
+    # next to `analytics_gen.yaml` that records an ISO 8601 timestamp for each
+    # event on first generation. The `tracking_creation_date` value is injected
+    # into each event's `meta` field. The ledger file should be committed to
+    # version control.
+    # Default: false
+    auto_tracking_creation_date: true
+
+  # ---------------------------------------------------------------------------
   # Naming Strategy
   # Control how names are formatted in the generated code and exports.
   # ---------------------------------------------------------------------------
