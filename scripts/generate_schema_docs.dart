@@ -67,10 +67,13 @@ void main() {
   buf.writeln();
   buf.writeln(context['description'] ?? '');
   buf.writeln();
+  final paramProps = param['properties'] as Map<String, dynamic>;
+  final opsItems = (paramProps['operations'] as Map<String, dynamic>?)?['items'] as Map<String, dynamic>?;
+  final opsEnum = (opsItems?['enum'] as List?)?.map((e) => '`$e`').join(', ') ?? '';
   buf.writeln(
       'Context properties use the same fields as [Parameter](#parameter), ');
   buf.writeln(
-      'plus the `operations` field (`set`, `increment`, `append`, `remove`).');
+      'plus the `operations` field ($opsEnum).');
   buf.writeln();
 
   // Shared Parameters
