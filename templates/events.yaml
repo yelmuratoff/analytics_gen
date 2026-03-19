@@ -1,197 +1,86 @@
-# events_template.yaml
+# events.yaml — Event definitions
+# Auto-generated from schema — run: dart run scripts/generate_templates.dart
 #
-# This template demonstrates how to define analytics events.
-# Rename this file (e.g., to 'auth.yaml' or 'purchase.yaml') and place it in your configured
-# events directory (default: 'events/').
-#
-# Each root key is a domain name. Events are grouped under their domain.
-# One file can contain one or more domains.
-#
-# Parameters can be defined inline or pulled from shared_parameters files
-# by using a null value (see Example 1b below).
+# Each root key is a domain. Events are grouped under domains.
+# Parameters: inline type string, full object, or null (shared reference).
 
-# -----------------------------------------------------------------------------
-# Event Definitions
-# Keys at the root level represent domains, grouping related events together.
-# -----------------------------------------------------------------------------
+# ── Event fields ──
+#   description: Human-readable description of the event's purpose and when it should be fired.
+#   event_name: Override the generated event name that gets logged. If not set, the name is g...
+#   identifier: Optional canonical identifier for the event, used for uniqueness checks. Gene...
+#   deprecated: Marks the event as deprecated. Generates @Deprecated annotation in Dart code.
+#   replacement: The name of the replacement event if this event is deprecated.
+#   added_in: Version when this event was added.
+#   deprecated_in: Version when this event was deprecated.
+#   dual_write_to: List of other event names to trigger simultaneously when this event is logged...
+#   meta: Custom metadata for this event (e.g., ownership, Jira tickets, documentation ...
+#   parameters: Map of parameter definitions for this event. Keys are parameter names. Values...
+#
+# ── Parameter fields ──
+#   type: The data type of the parameter. Supports Dart primitive types and type aliases.
+#   description: Human-readable description of the parameter's purpose.
+#   identifier: Override the Dart code identifier (method parameter name). Defaults to the YA...
+#   param_name: Override the analytics key sent to providers. Defaults to the YAML key name.
+#   dart_type: Explicitly set the Dart type (e.g., a custom enum type). The generator will u...
+#   import: Custom import path for the dart_type. Required when dart_type references a ty...
+#   allowed_values: Restricts the parameter to a fixed set of values. The list type must match th...
+#   regex: Regex pattern for validation. Used in generated code for runtime validation. ...
+#   min_length: Minimum length for string parameters.
+#   max_length: Maximum length for string parameters.
+#   min: Minimum value for numeric parameters (int, double, num).
+#   max: Maximum value for numeric parameters (int, double, num).
+#   meta: Custom metadata for this parameter (e.g., ownership, Jira tickets, team).
+#   operations: List of operations supported by this parameter. Only used for context propert...
+#   added_in: Version when this parameter was added. Used for documentation and tracking.
+#   deprecated_in: Version when this parameter was deprecated. Used for documentation and tracking.
+
+# ── Examples ──
 
 auth:
-  # Example 1: A simple event with basic parameters
+  # Simple event
   user_login:
-    description: Triggered when a user successfully logs in.
+    description: User successfully logged in.
     parameters:
       method:
         type: string
-        description: The method used to login (e.g. email, google, apple).
-        allowed_values: [email, google, apple, facebook] # Enforces enum generation
-      success:
-        type: bool
-        description: Whether the login was successful.
-
-  # Example 1b: Event that references shared parameters
-  # Requires shared parameters to be configured in analytics_gen.yaml:
-  #   inputs:
-  #     shared_parameters:
-  #       - events/shared/user_params.yaml
-  user_login_v2:
-    description: User logs in (v2, with shared params).
-    parameters:
-      session_id:          # ← null value = pulls full definition from shared parameters
-      platform:            # ← null value = pulls full definition from shared parameters
-      method:              # ← local parameter, defined inline
-        type: string
         allowed_values: [email, google, apple]
+      success: bool
+
+  # Shared parameter references (null = from shared_parameters file)
+  user_login_v2:
+    description: User logs in (v2 with shared params).
+    parameters:
+      session_id:     # ← shared reference
+      method: string  # ← inline
+
+  # Deprecated event with replacement
+  user_login_legacy:
+    description: Old login event.
+    deprecated: true
+    replacement: user_login_v2
+    added_in: "1.0.0"
+    deprecated_in: "2.0.0"
+    parameters:
+      method: string
 
 commerce:
-  # Example 2: An event with advanced parameter configuration
-  purchase_completed:
-    description: Triggered when a purchase transaction is completed.
-    # Optional: unique identifier (overrides default naming strategy)
-    identifier: purchase.complete
-    # Optional: metadata for custom tooling or documentation
+  # Event with advanced parameters
+  purchase:
+    description: User completed a purchase.
+    dual_write_to: [purchase_v2]
     meta:
-      jira_ticket: PROJ-123
-      owner: billing-team
+      owner: commerce-team
+      jira: SHOP-456
     parameters:
-      transaction_id:
-        type: string
-        description: Unique ID of the transaction.
-        # Validation rules
-        min_length: 10
-        max_length: 50
-        regex: "^TXN-[0-9]+"
-
       amount:
         type: double
-        description: The total amount paid.
-        min: 0.0
-        # Custom parameter name sent to analytics backend (if different from key)
-        param_name: total_revenue
-
+        min: 0
+        description: Purchase amount in USD.
       currency:
-        # Use a custom Dart type
         type: string
-        dart_type: CurrencyCode
-        # Optional: Import the type specifically for this parameter
-        # If not provided here, it must be in the global 'imports' list in analytics_gen.yaml
-        import: package:my_app/models/currency.dart
-        description: The 3-letter currency code.
-
-      items_count:
-        type: int
-        description: Number of items in the cart.
-        min: 1
-
-      coupon_code:
-        type: string? # Nullable type
-        description: Optional coupon code applied.
-
-legacy:
-  # Example 3: Deprecated event
-  legacy_event:
-    description: This event is no longer used.
-    deprecated: true
-    deprecated_in: "1.1.0"
-    replacement: commerce.purchase_completed # Suggests what to use instead
-
-navigation:
-  # Example 4: Advanced event features (custom naming, dual_write_to, added_in)
-  screen_view:
-    description: Triggered when a user views a screen.
-    # Optional: override event name. Supports string interpolation with parameter keys
-    event_name: "Navigation: {screen_name}"
-    # Optional: trigger other events automatically
-    dual_write_to: ["legacy.legacy_event"]
-    # Optional: track lifecycle of event
-    added_in: "1.2.0"
-    parameters:
-      screen_name:
-        type: string
-        description: The name of the current screen.
-      previous_screen:
-        type: string?
-        description: The screen they navigated from.
-
-# -----------------------------------------------------------------------------
-# Event Properties Reference
-# -----------------------------------------------------------------------------
-#
-# description: (Required) Human-readable event description.
-#
-# event_name: (Optional) Custom event name. Supports {parameter_key} interpolation.
-#             Requires strict_event_names: false in rules if using interpolation.
-#
-# identifier: (Optional) Unique event identifier. Overrides the naming strategy.
-#             If omitted, generated from identifier_template in naming config.
-#
-# deprecated: (Optional) Boolean. Marks the event as deprecated in generated code.
-#
-# replacement: (Optional) Suggested replacement event (e.g., "commerce.purchase_v2").
-#
-# added_in: (Optional) Version string when this event was introduced.
-#
-# deprecated_in: (Optional) Version string when this event was deprecated.
-#
-# dual_write_to: (Optional) List of event identifiers to trigger alongside this event.
-#                Format: ["domain.event_name", ...]
-#
-# meta: (Optional) Arbitrary key-value map. Useful for custom metadata
-#       (e.g., jira_ticket, owner, category). When include_meta_in_parameters
-#       is enabled, these are included in the eventParameters map.
-#
-# parameters: (Optional) Map of parameter definitions (see below).
-
-# -----------------------------------------------------------------------------
-# Parameter Properties Reference
-# -----------------------------------------------------------------------------
-#
-# type: (Required) Data type. Supported values:
-#       string, int, double, float, bool, boolean, num, number,
-#       list, map, datetime, date, uri.
-#       Aliases: boolean → bool, float → double, number → num, date → datetime.
-#       Append '?' for nullable (e.g., string?, boolean?).
-#
-# description: (Optional) Human-readable description for docs and code comments.
-#
-# dart_type: (Optional) Overrides the inferred Dart type.
-#            Useful for enums or value classes.
-#
-# import: (Optional) The Dart library to import for 'dart_type'.
-#
-# param_name: (Optional) The actual key sent to the analytics service.
-#             Defaults to the parameter key in YAML.
-#
-# identifier: (Optional) Dart code identifier overrides for parameter generation.
-#
-# allowed_values: (Optional) List of valid values. Generates an Enum in Dart.
-#                 Supports numbers (int, double, num), booleans and strings.
-#
-# min/max: (Optional) Range constraints for numeric types.
-#
-# min_length/max_length: (Optional) Length constraints for string types.
-#
-# regex: (Optional) Regular expression pattern for string validation.
-#
-# meta: (Optional) Custom JSON map for parameter metadata.
-#
-# added_in: (Optional) Version string when this parameter was added.
-#
-# deprecated_in: (Optional) Version string when this parameter was deprecated.
-#
-# operations: (Optional) List of operations supported (e.g., set, increment).
-#             Primarily used for Context parameters.
-#
-# CONSTRAINTS:
-# - dart_type and allowed_values are mutually exclusive (cannot use both).
-# - allowed_values is only supported for scalar types: string, bool, int, double, num.
-# - regex cannot contain triple quotes (''') — this prevents Dart raw string errors.
-# - A null-value parameter (e.g., `session_id:`) references a shared parameter
-#   with the same name. If no shared parameter exists, the type defaults to dynamic.
-
-# -----------------------------------------------------------------------------
-# Related Templates
-# -----------------------------------------------------------------------------
-# See also:
-#   - shared_parameters.yaml — Template for defining shared (global) parameters
-#   - context.yaml            — Template for defining contexts (user/session properties)
-#   - analytics_gen.yaml      — Template for the main configuration file
+        regex: "^[A-Z]{3}$"
+        description: ISO 4217 currency code.
+      payment_method:
+        dart_type: PaymentMethod
+        import: package:my_app/models/payment.dart
+        description: Payment method enum.

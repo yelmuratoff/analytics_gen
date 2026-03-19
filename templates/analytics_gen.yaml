@@ -1,199 +1,116 @@
 # analytics_gen.yaml
-#
-# This is a template configuration file for the analytics_gen package.
-# It documents all available configuration options.
+# Auto-generated from schema — run: dart run scripts/generate_templates.dart
 
 analytics_gen:
-  # ---------------------------------------------------------------------------
-  # Input Configurations
-  # ---------------------------------------------------------------------------
+
+  # ── Input Configuration ──
   inputs:
-    # Path to the directory containing YAML event definition files.
-    # Relative to the project root.
-    # Default: 'events'
+
+    # Path to directory containing YAML event files (relative to project
+    # root).
     events: events
 
     # List of paths to shared parameter definition files.
-    # These files define parameters that can be reused across multiple events.
-    # Paths are relative to the project root.
-    # Default: []
-    shared_parameters:
-      - events/shared/user_params.yaml
-      - events/shared/app_params.yaml
+    shared_parameters: []
 
-    # List of paths to context definition files.
-    # Contexts are groups of parameters that are tracked together (e.g. user properties).
-    # Paths are relative to the project root.
-    # Default: []
-    contexts:
-      - events/contexts/user_properties.yaml
-      - events/contexts/theme_context.yaml
+    # List of paths to context definition files (user properties, theme,
+    # etc.).
+    contexts: []
 
-    # Global imports to be included in the generated Dart files.
-    # Useful for custom types used in parameters.
-    # Default: []
-    imports:
-      - package:my_app/models/analytics_enums.dart
-      - package:my_app/models/user_id.dart
+    # List of custom Dart import URIs to include in generated files.
+    imports: []
 
-  # ---------------------------------------------------------------------------
-  # Output Configurations
-  # ---------------------------------------------------------------------------
+  # ── Output Configuration ──
   outputs:
-    # Path where the generated Dart code will be written.
-    # Relative to the project root.
-    # Default: 'lib/src/analytics/generated'
+
+    # Path where generated Dart code will be written (relative to project
+    # root).
     dart: lib/src/analytics/generated
 
-    # Path where documentation (Markdown) will be generated.
-    # If omitted, documentation is not generated unless explicitly enabled in 'targets'.
-    # Default: null
-    docs: docs/analytics_events.md
+    # Path where documentation will be generated (optional). Required when
+    # generate_docs target is enabled.
+    # docs:
 
-    # Path where export files (CSV, JSON, SQL) will be generated.
-    # If omitted, exports are not generated unless explicitly enabled in 'targets'.
-    # Default: null
-    exports: assets/analytics
+    # Path where database exports (CSV, JSON, SQL) will be generated
+    # (optional). Required when CSV/JSON/SQL targets are enabled.
+    # exports:
 
-  # ---------------------------------------------------------------------------
-  # Generation Targets
-  # Control which artifacts are generated.
-  # ---------------------------------------------------------------------------
+  # ── Generation Targets ──
   targets:
-    # Generate CSV export of all events and parameters.
-    # Default: false
-    csv: true
 
-    # Generate JSON export of all events and parameters.
-    # Default: false
-    json: true
+    # Whether to generate CSV export of events and parameters.
+    csv: false
 
-    # Generate SQL script to create tables for events.
-    # Default: false
-    sql: true
+    # Whether to generate JSON export of events and parameters.
+    json: false
 
-    # Generate Markdown documentation.
-    # Default: false
-    docs: true
+    # Whether to generate SQL export (e.g., BigQuery schema).
+    sql: false
 
-    # Include the runtime tracking plan in the generated code.
-    # This allows accessing event metadata at runtime.
-    # Default: true
+    # Whether to generate Markdown documentation from event definitions.
+    docs: false
+
+    # Whether to include the runtime tracking plan in generated Dart code.
     plan: true
 
-    # Generate test matchers for use with package:test.
-    # Default: false
-    test_matchers: true
+    # Whether to generate test matchers for `package:test` to verify analytics
+    # calls in tests.
+    test_matchers: false
 
-  # ---------------------------------------------------------------------------
-  # Validation and Generation Rules
-  # ---------------------------------------------------------------------------
+  # ── Validation & Generation Rules ──
   rules:
-    # Include the event description as a parameter in the generated log method.
-    # Useful for debugging or generic loggers.
-    # Default: false
-    include_event_description: true
 
-    # Treat string interpolation in event names (e.g. "view_{screen}") as an error.
-    # Recommended to prevent high cardinality of event names.
-    # Default: true
+    # Whether to include the event 'description' field as a parameter in the
+    # generated analytics map.
+    include_event_description: false
+
+    # Whether to treat string interpolation characters ('{', '}') in event
+    # names as an error. Prevents high-cardinality dynamic event names.
     strict_event_names: true
 
-    # Enforce that ALL parameters must be defined in 'shared_parameters' files.
-    # Useful for strict governance of analytics taxonomy.
-    # Default: false
+    # Whether to enforce that ALL parameters must be defined in shared
+    # parameter files. Inline parameter definitions in events will cause an
+    # error.
     enforce_centrally_defined_parameters: false
 
-    # Prevent defining parameters in events that share a name with a global parameter
-    # but are defined locally.
-    # Default: false
+    # Whether to prevent defining parameters in events that already exist in
+    # shared parameter files. Forces use of the shared version.
     prevent_event_parameter_duplicates: false
 
-  # ---------------------------------------------------------------------------
-  # Meta Field Injection
-  # Automatically inject metadata into events during generation.
-  # ---------------------------------------------------------------------------
-  meta:
-    # Automatically track when each event was first seen via a ledger file.
-    # When enabled, the generator maintains a `.analytics_tracking.json` file
-    # next to `analytics_gen.yaml` that records an ISO 8601 timestamp for each
-    # event on first generation. The `tracking_creation_date` value is injected
-    # into each event's `meta` field. The ledger file should be committed to
-    # version control.
-    # Default: false
-    auto_tracking_creation_date: true
-
-    # Include event meta fields as parameters in the generated logEvent calls.
-    # When enabled, all key-value pairs from event `meta` are added to the
-    # `eventParameters` map alongside regular parameters.
-    # Useful for sending metadata (e.g. tracking_creation_date) to providers
-    # like Amplitude, Mixpanel, etc.
-    # Default: false
-    include_meta_in_parameters: true
-
-  # ---------------------------------------------------------------------------
-  # Naming Strategy
-  # Control how names are formatted in the generated code and exports.
-  # ---------------------------------------------------------------------------
+  # ── Naming Strategy ──
   naming:
-    # Enforce snake_case for event domain names (filenames).
-    # Default: true
-    enforce_snake_case_domains: true
 
-    # Enforce snake_case for parameter names.
-    # Default: true
-    enforce_snake_case_parameters: true
-
-    # Naming convention applied to the generated event name after template rendering.
-    # Available values:
-    #   - snake_case: "Example Event" → "example_event" (useful for SQL/BigQuery)
-    #   - title_case: "example_event" → "Example Event" (useful for Mixpanel, Amplitude)
-    #   - original:   preserves the raw template output as-is
-    # Default: snake_case
+    # The naming convention applied to generated event names.
+    # Options: snake_case, title_case, original
     casing: snake_case
 
-    # Template for formatting the event name in exports/docs.
-    # Available placeholders: {domain}, {event}, {domain_alias}
-    # The result is then transformed by the 'casing' convention above.
-    # Default: "{domain}: {event}"
-    event_name_template: "{domain_alias}: {event}"
+    # Whether to validate that domain keys are snake_case (pattern:
+    # ^[a-z0-9_]+$).
+    enforce_snake_case_domains: true
 
-    # Template for formatting the unique identifier for events.
-    # NOT affected by the 'casing' convention — always rendered as-is.
-    # Available placeholders: {domain}, {event}, {domain_alias}
-    # Default: "{domain}: {event}"
-    identifier_template: "{domain}.{event}"
+    # Whether to validate that parameter identifiers are snake_case (pattern:
+    # ^[a-z][a-z0-9_]*$).
+    enforce_snake_case_parameters: true
 
-    # Human-friendly aliases for domains (filenames).
-    # Used in documentation and when {domain_alias} placeholder is used in templates.
-    domain_aliases:
-      auth: "Authentication"
-      onboarding: "User Onboarding"
-      purchase: "Purchase Flow"
+    # Template for generating event names. Supports placeholders: {domain},
+    # {domain_alias}, {event}.
+    event_name_template: {domain}: {event}
 
-# ---------------------------------------------------------------------------
-# Key Aliases (legacy / flat-style)
-# ---------------------------------------------------------------------------
-# For convenience, some keys can also be placed at the root `analytics_gen`
-# level instead of inside their respective sections. The nested form takes
-# precedence if both are specified.
-#
-# Flat key               → Equivalent nested path
-# ──────────────────────────────────────────────────────
-# events_path            → inputs.events
-# shared_parameters      → inputs.shared_parameters
-# contexts               → inputs.contexts
-# imports                → inputs.imports
-# output_path            → outputs.dart
-# docs_path              → outputs.docs
-# exports_path           → outputs.exports
-# generate_csv           → targets.csv
-# generate_json          → targets.json
-# generate_sql           → targets.sql
-# generate_docs          → targets.docs
-# generate_plan          → targets.plan
-# generate_test_matchers → targets.test_matchers
-# include_event_description        → rules.include_event_description
-# strict_event_names               → rules.strict_event_names
-# enforce_centrally_defined_parameters → rules.enforce_centrally_defined_parameters
-# prevent_event_parameter_duplicates   → rules.prevent_event_parameter_duplicates
+    # Template for generating canonical event identifiers (used for uniqueness
+    # checks). Supports the same placeholders as event_name_template.
+    identifier_template: {domain}: {event}
+
+    # Map of domain name to alias. When present, {domain_alias} in templates
+    # resolves to the mapped value instead of the domain name.
+    domain_aliases: {}
+
+  # ── Meta Configuration ──
+  meta:
+
+    # Whether to automatically track event creation dates via a ledger file.
+    # Records when each event was first seen.
+    auto_tracking_creation_date: false
+
+    # Whether to include event meta fields (added_in, deprecated_in, etc.) in
+    # the generated event parameters map.
+    include_meta_in_parameters: false

@@ -30,11 +30,21 @@ analytics-gen-studio/ — Web studio (React/Vite)
 - **Studio site** — renders UI dynamically from schemas at runtime
 - **TypeScript types** — auto-generated from schemas (`npm run generate-types`)
 
-**To add a field/type/option** — edit the schema. Studio picks it up automatically. Studio must not contain hardcoded models, data, or schema values — it purely renders what schemas define.
+**To add a field/type/option** — edit the schema. Everything else updates automatically. Studio must not contain hardcoded models, data, or schema values — it purely renders what schemas define.
+
+## What is generated from schemas
+
+| Artifact | Command |
+|----------|---------|
+| **Templates** (`templates/*.yaml`) | `dart run scripts/generate_templates.dart` |
+| **Schema docs** (`doc/SCHEMA_REFERENCE.md`) | `dart run scripts/generate_schema_docs.dart` |
+| **Studio TypeScript types** | `cd analytics-gen-studio && npm run generate-types` |
+| **Studio UI** | Reads schemas at runtime — no generation needed |
 
 ## Key rules
 
-- Never hardcode schema-derived values in Studio — use `schemas/constants.ts` and `schemas/loader.ts`
-- Studio ConfigTab renders dynamically from `configSchema.properties`
+- Never hardcode schema-derived values anywhere — schemas are the SSOT
+- Studio: use `schemas/constants.ts` and `schemas/loader.ts`, ConfigTab renders dynamically
+- Templates and docs: regenerate after schema changes via scripts above
 - `npm run build` in studio: copies schemas → generates types → builds
 - YAML generation is generic (iterates object keys, not hardcoded field names)

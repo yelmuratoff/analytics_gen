@@ -1,3 +1,5 @@
+import '../util/yaml_keys.dart';
+
 /// Defines how analytics domains, events, and parameters are named.
 ///
 /// The default strategy enforces snake_case domains/parameters and uses a
@@ -20,7 +22,7 @@ final class NamingStrategy {
       return const NamingStrategy();
     }
 
-    final aliasesRaw = yaml['domain_aliases'];
+    final aliasesRaw = yaml[YamlKeys.domainAliases];
     final aliases = <String, String>{};
     if (aliasesRaw is Map) {
       for (final entry in aliasesRaw.entries) {
@@ -28,7 +30,7 @@ final class NamingStrategy {
       }
     }
 
-    final conventionStr = yaml['casing'] as String?;
+    final conventionStr = yaml[YamlKeys.casing] as String?;
     final convention = switch (conventionStr) {
       'snake_case' => EventNamingConvention.snakeCase,
       'title_case' => EventNamingConvention.titleCase,
@@ -38,13 +40,13 @@ final class NamingStrategy {
 
     return NamingStrategy(
       enforceSnakeCaseDomains:
-          yaml['enforce_snake_case_domains'] as bool? ?? true,
+          yaml[YamlKeys.enforceSnakeCaseDomains] as bool? ?? true,
       enforceSnakeCaseParameters:
-          yaml['enforce_snake_case_parameters'] as bool? ?? true,
+          yaml[YamlKeys.enforceSnakeCaseParameters] as bool? ?? true,
       eventNameTemplate:
-          yaml['event_name_template'] as String? ?? '{domain}: {event}',
+          yaml[YamlKeys.eventNameTemplate] as String? ?? '{domain}: {event}',
       identifierTemplate:
-          yaml['identifier_template'] as String? ?? '{domain}: {event}',
+          yaml[YamlKeys.identifierTemplate] as String? ?? '{domain}: {event}',
       domainAliases: aliases,
       convention: convention,
     );
