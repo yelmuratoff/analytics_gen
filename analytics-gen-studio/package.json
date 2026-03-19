@@ -8,7 +8,8 @@
     "copy-schemas": "cp ../schema/*.json public/schemas/",
     "build": "npm run copy-schemas && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "import": "node scripts/yaml-to-studio.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
