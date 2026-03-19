@@ -7,7 +7,8 @@ on:
       branches: [main]
 
 jobs:
-   test-and-coverage:
+   dart-tests:
+      name: Dart Tests & Coverage
       runs-on: ubuntu-latest
       steps:
          - name: Checkout repository
@@ -45,7 +46,6 @@ jobs:
 
          - name: Generate lcov report
            run: |
-              # Use the local dev_dependency to format coverage into lcov
               dart run coverage:format_coverage \
                 --lcov \
                 --in=coverage \
@@ -66,3 +66,33 @@ jobs:
            with:
               files: coverage/lcov.info
               fail_ci_if_error: false
+
+   studio-tests:
+      name: Studio Tests & Build
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout repository
+           uses: actions/checkout@v4
+
+         - name: Set up Node.js
+           uses: actions/setup-node@v4
+           with:
+              node-version: 20
+              cache: npm
+              cache-dependency-path: analytics-gen-studio/package-lock.json
+
+         - name: Install dependencies
+           working-directory: analytics-gen-studio
+           run: npm ci
+
+         - name: Run tests
+           working-directory: analytics-gen-studio
+           run: npm test
+
+         - name: Type check
+           working-directory: analytics-gen-studio
+           run: npx tsc -b
+
+         - name: Build
+           working-directory: analytics-gen-studio
+           run: npm run build
