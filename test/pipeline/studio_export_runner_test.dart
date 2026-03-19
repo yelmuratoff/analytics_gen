@@ -10,6 +10,21 @@ import 'package:test/test.dart';
 ///
 /// This is an integration test because the runner reads raw YAML files, not
 /// parsed models — so unit testing internal methods offers little value.
+
+/// Ensures example/ has resolved deps. Skips test if Flutter is unavailable.
+bool _ensureExampleDeps(String exampleDir) {
+  final configFile =
+      File(p.join(exampleDir, '.dart_tool', 'package_config.json'));
+  if (configFile.existsSync()) return true;
+  try {
+    final result = Process.runSync('flutter', ['pub', 'get'],
+        workingDirectory: exampleDir);
+    return result.exitCode == 0;
+  } catch (_) {
+    return false;
+  }
+}
+
 void main() {
   group('studio_export CLI', () {
     late Directory tempDir;
@@ -28,15 +43,9 @@ void main() {
       final exampleDir = p.join(projectRoot, 'example');
       final outputPath = p.join(tempDir.path, 'example-export.json');
 
-      // Ensure example deps are resolved (Flutter project needs flutter pub get)
-      if (!File(p.join(exampleDir, '.dart_tool', 'package_config.json'))
-          .existsSync()) {
-        final pubGet = Process.runSync('flutter', ['pub', 'get'],
-            workingDirectory: exampleDir);
-        if (pubGet.exitCode != 0) {
-          markTestSkipped('flutter pub get failed: ${pubGet.stderr}');
-          return;
-        }
+      if (!_ensureExampleDeps(exampleDir)) {
+        markTestSkipped('Flutter SDK not available');
+        return;
       }
 
       final result = Process.runSync(
@@ -136,15 +145,9 @@ void main() {
       final exampleDir = p.join(projectRoot, 'example');
       final outputPath = p.join(tempDir.path, 'exclude-test.json');
 
-      // Ensure example deps are resolved
-      if (!File(p.join(exampleDir, '.dart_tool', 'package_config.json'))
-          .existsSync()) {
-        final pubGet = Process.runSync('flutter', ['pub', 'get'],
-            workingDirectory: exampleDir);
-        if (pubGet.exitCode != 0) {
-          markTestSkipped('flutter pub get failed: ${pubGet.stderr}');
-          return;
-        }
+      if (!_ensureExampleDeps(exampleDir)) {
+        markTestSkipped('Flutter SDK not available');
+        return;
       }
 
       final result = Process.runSync(
