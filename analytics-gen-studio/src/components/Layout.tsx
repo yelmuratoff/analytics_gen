@@ -38,7 +38,7 @@ export default function Layout({ schemas }: LayoutProps) {
         <Box sx={{
           flex: '0 0 57%', overflow: 'auto', p: 3,
           bgcolor: '#FCFDF7',
-          borderRadius: 3,
+          borderRadius: 1.5,
           border: '1px solid #EEEBE8',
         }}>
           {renderTab()}
@@ -47,7 +47,7 @@ export default function Layout({ schemas }: LayoutProps) {
         <Box sx={{
           flex: 1, overflow: 'hidden',
           bgcolor: '#1E1E1E',
-          borderRadius: 3,
+          borderRadius: 1.5,
           display: 'flex', flexDirection: 'column',
         }}>
           <YamlPreview />
