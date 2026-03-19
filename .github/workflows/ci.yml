@@ -14,10 +14,10 @@ jobs:
          - name: Checkout repository
            uses: actions/checkout@v4
 
-         - name: Set up Dart
-           uses: dart-lang/setup-dart@v1
+         - name: Set up Flutter
+           uses: subosito/flutter-action@v2
            with:
-              sdk: stable
+              channel: stable
 
          - name: Cache pub dependencies
            uses: actions/cache@v4
@@ -30,13 +30,8 @@ jobs:
 
          - name: Install dependencies
            run: |
-              if [ -f example/pubspec.yaml ]; then
-                mv example/pubspec.yaml example/pubspec.yaml.bak
-              fi
               dart pub get
-              if [ -f example/pubspec.yaml.bak ]; then
-                mv example/pubspec.yaml.bak example/pubspec.yaml
-              fi
+              cd example && flutter pub get && cd ..
 
          - name: Analyze project
            run: dart analyze --fatal-infos
