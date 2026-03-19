@@ -19,6 +19,7 @@ import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
+import ConfirmDialog from '../ConfirmDialog.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
 
 interface SharedParamsTabProps {
@@ -37,6 +38,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addParamOpen, setAddParamOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
   const isFileExpanded = (i: number) => !collapsedFiles.has(i);
   const toggleExpand = (i: number) => {
@@ -80,10 +82,14 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: '#22A06B' }} />
                 </ListItemIcon>
-                <ListItemText primary={file.fileName} primaryTypographyProps={{
-                  fontSize: '0.82rem', fontWeight: 600,
-                }} />
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeSharedParamFile(fi); }} sx={hoverDel}>
+                <ListItemText
+                  primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.parameters).length || ''}</Typography></>}
+                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
+                />
+                <IconButton size="small" onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) });
+                }} sx={hoverDel}>
                   <CloseRounded sx={{ fontSize: 14 }} />
                 </IconButton>
               </ListItemButton>
@@ -139,6 +145,11 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             setSelectedPath({ tab: 'shared', fileIndex: addParamOpen, parameter: n });
             setAddParamOpen(null);
           }} />
+      )}
+      {confirmDelete && (
+        <ConfirmDialog open title={confirmDelete.title} message={confirmDelete.message}
+          onConfirm={() => { confirmDelete.action(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)} />
       )}
     </Box>
   );

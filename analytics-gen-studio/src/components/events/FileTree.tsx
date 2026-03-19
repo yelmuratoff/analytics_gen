@@ -6,6 +6,7 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -22,6 +23,7 @@ import AddRounded from '@mui/icons-material/AddRounded';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
+import ConfirmDialog from '../ConfirmDialog.tsx';
 
 export default function FileTree() {
   const files = useStore((s) => s.eventFiles);
@@ -37,7 +39,6 @@ export default function FileTree() {
   const addParameter = useStore((s) => s.addParameter);
   const removeParameter = useStore((s) => s.removeParameter);
 
-  // Build all possible keys so everything is expanded by default
   const allKeys = useMemo(() => {
     const keys = new Set<string>();
     files.forEach((file, fi) => {
@@ -46,9 +47,7 @@ export default function FileTree() {
       Object.entries(file.domains).forEach(([dn, events]) => {
         const dk = `${fk}.d${dn}`;
         keys.add(dk);
-        Object.keys(events).forEach((en) => {
-          keys.add(`${dk}.e${en}`);
-        });
+        Object.keys(events).forEach((en) => keys.add(`${dk}.e${en}`));
       });
     });
     return keys;
@@ -60,11 +59,11 @@ export default function FileTree() {
   const [addEventFor, setAddEventFor] = useState<{ fi: number; domain: string } | null>(null);
   const [addParamFor, setAddParamFor] = useState<{ fi: number; domain: string; event: string } | null>(null);
   const [sharedAnchorEl, setSharedAnchorEl] = useState<HTMLElement | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
   const allSharedParams = sharedParamFiles.flatMap((f) => Object.keys(f.parameters));
 
   const isExpanded = (key: string) => allKeys.has(key) && !collapsed.has(key);
-
   const toggle = (key: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -87,6 +86,17 @@ export default function FileTree() {
     ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: '#999' }} />
     : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: '#ccc' }} />;
 
+  const countBadge = (n: number) => (
+    <Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5, fontWeight: 500 }}>
+      {n}
+    </Typography>
+  );
+
+  const confirmDel = (title: string, message: string, action: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmDelete({ title, message, action });
+  };
+
   return (
     <>
       <Box sx={{ p: 1.5 }}>
@@ -98,14 +108,19 @@ export default function FileTree() {
 
       {files.length === 0 && (
         <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-          <InsertDriveFileRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 0.5 }} />
-          <Typography sx={{ fontSize: '0.75rem', color: '#ccc' }}>No event files yet</Typography>
+          <InsertDriveFileRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 1 }} />
+          <Typography sx={{ fontSize: '0.78rem', color: '#aaa', mb: 1.5 }}>No event files yet</Typography>
+          <Button size="small" variant="outlined" onClick={() => setAddFileOpen(true)}
+            sx={{ fontSize: '0.72rem' }}>
+            Create your first file
+          </Button>
         </Box>
       )}
 
       <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
         {files.map((file, fi) => {
           const fk = `f${fi}`;
+          const totalEvents = Object.values(file.domains).reduce((sum, evts) => sum + Object.keys(evts).length, 0);
           return (
             <Box key={fi}>
               <ListItemButton onClick={() => toggle(fk)} dense sx={{ py: 0.4 }}>
@@ -113,10 +128,15 @@ export default function FileTree() {
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: '#E8A84E' }} />
                 </ListItemIcon>
-                <ListItemText primary={file.fileName} primaryTypographyProps={{
-                  fontSize: '0.82rem', fontWeight: 600,
-                }} />
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeEventFile(fi); }} sx={hoverDel}>
+                <ListItemText
+                  primary={<>{file.fileName}{totalEvents > 0 && countBadge(totalEvents)}</>}
+                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
+                />
+                <IconButton size="small" onClick={confirmDel(
+                  `Delete ${file.fileName}?`,
+                  `This will remove all domains, events and parameters in this file.`,
+                  () => removeEventFile(fi),
+                )} sx={hoverDel}>
                   <CloseRounded sx={{ fontSize: 14 }} />
                 </IconButton>
               </ListItemButton>
@@ -124,6 +144,7 @@ export default function FileTree() {
                 <List dense disablePadding>
                   {Object.entries(file.domains).map(([dn, events]) => {
                     const dk = `${fk}.d${dn}`;
+                    const eventCount = Object.keys(events).length;
                     return (
                       <Box key={dn}>
                         <ListItemButton sx={{ pl: 4, py: 0.35 }} onClick={() => toggle(dk)} dense>
@@ -131,10 +152,15 @@ export default function FileTree() {
                           <ListItemIcon sx={{ minWidth: 24, ml: 0.2 }}>
                             <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
                           </ListItemIcon>
-                          <ListItemText primary={dn} primaryTypographyProps={{
-                            fontSize: '0.8rem', fontWeight: 600, color: '#DF4926',
-                          }} />
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeDomain(fi, dn); }} sx={hoverDel}>
+                          <ListItemText
+                            primary={<>{dn}{eventCount > 0 && countBadge(eventCount)}</>}
+                            primaryTypographyProps={{ fontSize: '0.8rem', fontWeight: 600, color: '#DF4926' }}
+                          />
+                          <IconButton size="small" onClick={confirmDel(
+                            `Delete domain "${dn}"?`,
+                            `This will remove ${eventCount} event(s) and all their parameters.`,
+                            () => removeDomain(fi, dn),
+                          )} sx={hoverDel}>
                             <CloseRounded sx={{ fontSize: 13 }} />
                           </IconButton>
                         </ListItemButton>
@@ -142,6 +168,7 @@ export default function FileTree() {
                           <List dense disablePadding>
                             {Object.entries(events).map(([en, event]) => {
                               const ek = `${dk}.e${en}`;
+                              const paramCount = Object.keys(event.parameters).length;
                               return (
                                 <Box key={en}>
                                   <ListItemButton sx={{
@@ -155,10 +182,15 @@ export default function FileTree() {
                                     <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
                                       <ElectricBoltRounded sx={{ fontSize: 15, color: '#E8A84E' }} />
                                     </ListItemIcon>
-                                    <ListItemText primary={en} primaryTypographyProps={{
-                                      fontSize: '0.78rem', fontWeight: 500,
-                                    }} />
-                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeEvent(fi, dn, en); }} sx={hoverDel}>
+                                    <ListItemText
+                                      primary={<>{en}{paramCount > 0 && countBadge(paramCount)}</>}
+                                      primaryTypographyProps={{ fontSize: '0.78rem', fontWeight: 500 }}
+                                    />
+                                    <IconButton size="small" onClick={confirmDel(
+                                      `Delete event "${en}"?`,
+                                      `This will remove the event and its ${paramCount} parameter(s).`,
+                                      () => removeEvent(fi, dn, en),
+                                    )} sx={hoverDel}>
                                       <CloseRounded sx={{ fontSize: 12 }} />
                                     </IconButton>
                                   </ListItemButton>
@@ -177,11 +209,20 @@ export default function FileTree() {
                                               : <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />}
                                           </ListItemIcon>
                                           <ListItemText
-                                            primary={pn}
-                                            secondary={pv === null ? 'shared' : typeof pv === 'string' ? pv : pv?.type}
-                                            primaryTypographyProps={{
-                                              fontSize: '0.74rem', fontFamily: '"JetBrains Mono", monospace',
-                                            }}
+                                            primary={
+                                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                <span>{pn}</span>
+                                                {pv === null && (
+                                                  <Chip label="shared" size="small" sx={{
+                                                    height: 16, fontSize: '0.58rem', fontWeight: 600,
+                                                    bgcolor: 'rgba(223,73,38,0.08)', color: '#DF4926',
+                                                    '& .MuiChip-label': { px: 0.6 },
+                                                  }} />
+                                                )}
+                                              </Box>
+                                            }
+                                            secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
+                                            primaryTypographyProps={{ fontSize: '0.74rem', fontFamily: '"JetBrains Mono", monospace' }}
                                             secondaryTypographyProps={{ fontSize: '0.62rem' }}
                                           />
                                           <IconButton size="small" onClick={(e) => {
@@ -204,7 +245,7 @@ export default function FileTree() {
                                           setSharedAnchorEl(e.currentTarget);
                                         }} dense>
                                           <LinkRounded sx={{ fontSize: 14, color: '#999', mr: 0.5 }} />
-                                          <ListItemText primary="Shared" primaryTypographyProps={{
+                                          <ListItemText primary="Link shared" primaryTypographyProps={{
                                             fontSize: '0.7rem', color: '#999', fontWeight: 500,
                                           }} />
                                         </ListItemButton>
@@ -239,6 +280,7 @@ export default function FileTree() {
         })}
       </List>
 
+      {/* Shared param picker */}
       <Menu anchorEl={sharedAnchorEl} open={!!sharedAnchorEl}
         onClose={() => { setSharedAnchorEl(null); setAddParamFor(null); }}
         slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}>
@@ -253,6 +295,18 @@ export default function FileTree() {
         ))}
       </Menu>
 
+      {/* Confirm delete */}
+      {confirmDelete && (
+        <ConfirmDialog
+          open
+          title={confirmDelete.title}
+          message={confirmDelete.message}
+          onConfirm={() => { confirmDelete.action(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {/* Add dialogs */}
       <AddItemDialog open={addFileOpen} title="Add Event File" label="File name" placeholder="auth.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
         onAdd={(n) => { addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`); setAddFileOpen(false); }} />

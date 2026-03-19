@@ -25,6 +25,7 @@ import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
+import ConfirmDialog from '../ConfirmDialog.tsx';
 import ContextPropertyEditor from './ContextPropertyEditor.tsx';
 
 interface ContextsTabProps {
@@ -45,6 +46,7 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
   const [contextNameInput, setContextNameInput] = useState('');
   const [addPropOpen, setAddPropOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
   const isFileExpanded = (i: number) => !collapsedFiles.has(i);
   const toggleExpand = (i: number) => {
@@ -105,10 +107,14 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
                 </ListItemIcon>
-                <ListItemText primary={file.fileName} primaryTypographyProps={{
-                  fontSize: '0.82rem', fontWeight: 600,
-                }} />
-                <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeContextFile(fi); }} sx={hoverDel}>
+                <ListItemText
+                  primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
+                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
+                />
+                <IconButton size="small" onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All properties in this context will be removed.', action: () => removeContextFile(fi) });
+                }} sx={hoverDel}>
                   <CloseRounded sx={{ fontSize: 14 }} />
                 </IconButton>
               </ListItemButton>
@@ -190,6 +196,11 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
             setSelectedPath({ tab: 'contexts', fileIndex: addPropOpen, contextProperty: n });
             setAddPropOpen(null);
           }} />
+      )}
+      {confirmDelete && (
+        <ConfirmDialog open title={confirmDelete.title} message={confirmDelete.message}
+          onConfirm={() => { confirmDelete.action(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)} />
       )}
     </Box>
   );
