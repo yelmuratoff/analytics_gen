@@ -9,11 +9,9 @@ Ensure analytics-gen-studio is 100% schema-driven.
 
 ## Steps
 
-1. Copy schemas: `cp schema/*.json analytics-gen-studio/public/schemas/`
-2. Generate types: `cd analytics-gen-studio && npm run generate-types`
-3. Run TypeScript check: `npx tsc --noEmit`
-4. Run tests: `npx vitest run`
-5. Run build: `npm run build`
+1. Full build (copies schemas + generates types + TS check + bundle):
+   `cd analytics-gen-studio && npm run build`
+2. Run tests: `npx vitest run`
 6. Scan for hardcoded schema values:
    ```
    grep -rn for hardcoded types, operations, field names, defaults

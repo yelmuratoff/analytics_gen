@@ -14,6 +14,7 @@ Deep review of `schema/*.json` files.
    - `lib/src/parser/parameter_parser.dart` — does it handle all parameter.schema.json fields?
    - `lib/src/parser/event_parser.dart` — does it handle all events.schema.json fields?
    - `lib/src/parser/context_parser.dart` — does it handle all context.schema.json fields?
+   - `lib/src/parser/shared_parameter_parser.dart` — does it handle all shared_parameters.schema.json fields?
    - `lib/src/config/config_parser.dart` — does it handle all analytics_gen.schema.json fields?
 3. Cross-reference with Dart models:
    - `lib/src/models/analytics_parameter.dart` — all fields from parameter schema present?
