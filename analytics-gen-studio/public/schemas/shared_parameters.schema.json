@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/shared_parameters.schema.json",
+  "title": "Shared Parameters File",
+  "description": "Defines reusable analytics parameters that can be referenced across multiple events. Shared parameters are defined once and referenced by name (with null value) in event definitions.",
+  "type": "object",
+  "properties": {
+    "parameters": {
+      "type": "object",
+      "title": "Shared Parameters Map",
+      "description": "Map of parameter definitions. Keys are parameter names, values are parameter definitions (type string or full parameter object).",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "title": "Simple Type",
+            "description": "Shorthand: just the type name. Append '?' for nullable.",
+            "examples": ["string", "int?", "bool"]
+          },
+          {
+            "$ref": "./parameter.schema.json",
+            "title": "Full Parameter Definition"
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "parameters": {
+        "session_id": "string",
+        "user_id": {
+          "type": "string",
+          "description": "The unique user identifier",
+          "regex": "^[a-f0-9]{24}$"
+        },
+        "platform": {
+          "type": "string",
+          "allowed_values": ["ios", "android", "web"]
+        }
+      }
+    }
+  ]
+}

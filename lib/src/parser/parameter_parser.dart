@@ -6,6 +6,7 @@ import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_parameter.dart';
 import '../util/string_utils.dart';
+import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
 
 /// Parses analytics parameters from YAML.
@@ -129,8 +130,8 @@ final class ParameterParser {
     String? wireNameOverride;
 
     if (paramValue is YamlMap) {
-      identifierOverride = paramValue['identifier'] as String?;
-      wireNameOverride = paramValue['param_name'] as String?;
+      identifierOverride = paramValue[YamlKeys.identifier] as String?;
+      wireNameOverride = paramValue[YamlKeys.paramName] as String?;
     }
 
     final codeIdentifier = identifierOverride ?? rawName;
@@ -174,12 +175,12 @@ final class ParameterParser {
 
     if (paramValue is YamlMap) {
       // Complex parameter with 'type' and/or 'description'
-      description = paramValue['description'] as String?;
-      addedIn = paramValue['added_in'] as String?;
-      deprecatedIn = paramValue['deprecated_in'] as String?;
-      dartType = paramValue['dart_type'] as String?;
+      description = paramValue[YamlKeys.description] as String?;
+      addedIn = paramValue[YamlKeys.addedIn] as String?;
+      deprecatedIn = paramValue[YamlKeys.deprecatedIn] as String?;
+      dartType = paramValue[YamlKeys.dartType] as String?;
 
-      final metaNode = paramValue.nodes['meta'];
+      final metaNode = paramValue.nodes[YamlKeys.meta];
       if (metaNode != null) {
         if (metaNode is! YamlMap) {
           throw AnalyticsParseException(
@@ -195,23 +196,23 @@ final class ParameterParser {
           span: metaNode.span,
         );
       }
-      dartImport = paramValue['import'] as String?; // Parse import
+      dartImport = paramValue[YamlKeys.dartImport] as String?;
       // Validation rules
-      regex = paramValue['regex'] as String?;
+      regex = paramValue[YamlKeys.regex] as String?;
       if (regex != null && regex.contains("'''")) {
         throw AnalyticsParseException(
           'Regex pattern for parameter "$rawName" cannot contain triple quotes '
           "('''). This prevents generation errors in Dart raw strings.",
           filePath: filePath,
-          span: paramValue.nodes['regex']?.span ?? valueNode.span,
+          span: paramValue.nodes[YamlKeys.regex]?.span ?? valueNode.span,
         );
       }
-      minLength = paramValue['min_length'] as int?;
-      maxLength = paramValue['max_length'] as int?;
-      min = paramValue['min'] as num?;
-      max = paramValue['max'] as num?;
+      minLength = paramValue[YamlKeys.minLength] as int?;
+      maxLength = paramValue[YamlKeys.maxLength] as int?;
+      min = paramValue[YamlKeys.min] as num?;
+      max = paramValue[YamlKeys.max] as num?;
 
-      final rawOperations = paramValue.nodes['operations'];
+      final rawOperations = paramValue.nodes[YamlKeys.operations];
       if (rawOperations != null) {
         if (rawOperations is! YamlList) {
           throw AnalyticsParseException(
@@ -226,34 +227,34 @@ final class ParameterParser {
       }
 
       // Check if 'type' key exists explicitly
-      if (paramValue.containsKey('type')) {
-        paramType = paramValue['type'].toString();
+      if (paramValue.containsKey(YamlKeys.type)) {
+        paramType = paramValue[YamlKeys.type].toString();
       } else {
-        // Fallback: Find type key (anything except keywords)
+        // Fallback: Find type key (anything except known property names)
+        const knownKeys = {
+          YamlKeys.description,
+          YamlKeys.allowedValues,
+          YamlKeys.identifier,
+          YamlKeys.paramName,
+          YamlKeys.dartType,
+          YamlKeys.meta,
+          YamlKeys.regex,
+          YamlKeys.minLength,
+          YamlKeys.maxLength,
+          YamlKeys.min,
+          YamlKeys.max,
+          YamlKeys.operations,
+          YamlKeys.addedIn,
+          YamlKeys.deprecatedIn,
+          YamlKeys.dartImport,
+        };
         final typeKey = paramValue.keys
-            .where(
-              (k) =>
-                  k.toString() != 'description' &&
-                  k.toString() != 'allowed_values' &&
-                  k.toString() != 'identifier' &&
-                  k.toString() != 'param_name' &&
-                  k.toString() != 'dart_type' &&
-                  k.toString() != 'meta' &&
-                  k.toString() != 'regex' &&
-                  k.toString() != 'min_length' &&
-                  k.toString() != 'max_length' &&
-                  k.toString() != 'min' &&
-                  k.toString() != 'max' &&
-                  k.toString() != 'operations' &&
-                  k.toString() != 'added_in' &&
-                  k.toString() != 'deprecated_in' &&
-                  k.toString() != 'import',
-            )
+            .where((k) => !knownKeys.contains(k.toString()))
             .firstOrNull;
         paramType = typeKey?.toString() ?? 'dynamic';
       }
 
-      final rawAllowed = paramValue.nodes['allowed_values'];
+      final rawAllowed = paramValue.nodes[YamlKeys.allowedValues];
       if (rawAllowed != null) {
         if (rawAllowed is! YamlList) {
           throw AnalyticsParseException(

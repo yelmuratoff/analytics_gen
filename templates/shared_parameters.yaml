@@ -1,123 +1,56 @@
-# shared_parameters.yaml
+# shared_parameters.yaml — Reusable parameters
+# Auto-generated from schema — run: dart run scripts/generate_templates.dart
 #
-# This template demonstrates how to define shared (global) parameters.
-# Shared parameters are defined once and can be reused across multiple events,
-# ensuring consistency across your analytics taxonomy.
-#
-# SETUP:
-# 1. Create this file and reference it in analytics_gen.yaml:
-#
-#      inputs:
-#        shared_parameters:
-#          - events/shared/user_params.yaml
-#          - events/shared/app_params.yaml
-#
-# 2. The root key must be 'parameters'.
-#
-# USAGE IN EVENTS:
-# To reference a shared parameter from an event, use its name with a null value:
-#
-#   auth:
-#     login:
-#       description: User logs in.
-#       parameters:
-#         session_id:          # ← pulls definition from shared parameters
-#         platform:            # ← pulls definition from shared parameters
-#         method:              # ← local parameter (defined inline below)
-#           type: string
-#           allowed_values: [email, google]
-#
-# If the parameter name matches a shared parameter and the value is null,
-# the full shared definition (type, description, allowed_values, etc.) is used.
-# You can also redefine locally to override the shared version.
-#
-# RELATED RULES (in analytics_gen.yaml → rules):
-#   enforce_centrally_defined_parameters: true
-#     → ALL event parameters MUST exist in shared_parameters files.
-#       Any locally-defined parameter that is not in shared will cause an error.
-#
-#   prevent_event_parameter_duplicates: true
-#     → Events CANNOT redefine a parameter that exists in shared_parameters.
-#       Forces using the shared version without local overrides.
+# Define once, reference in events with null value:
+#   parameters:
+#     session_id:   # ← pulls from shared
 
-# -----------------------------------------------------------------------------
-# Basic shared parameters
-# -----------------------------------------------------------------------------
+# ── Available fields ──
+#   type: The data type of the parameter. Supports Dart primitive types and t...
+#   description: Human-readable description of the parameter's purpose.
+#   identifier: Override the Dart code identifier (method parameter name). Defaults...
+#   param_name: Override the analytics key sent to providers. Defaults to the YAML ...
+#   dart_type: Explicitly set the Dart type (e.g., a custom enum type). The genera...
+#   import: Custom import path for the dart_type. Required when dart_type refer...
+#   allowed_values: Restricts the parameter to a fixed set of values. The list type mus...
+#   regex: Regex pattern for validation. Used in generated code for runtime va...
+#   min_length: Minimum length for string parameters.
+#   max_length: Maximum length for string parameters.
+#   min: Minimum value for numeric parameters (int, double, num).
+#   max: Maximum value for numeric parameters (int, double, num).
+#   meta: Custom metadata for this parameter (e.g., ownership, Jira tickets, ...
+#   operations: List of operations supported by this parameter. Only used for conte...
+#   added_in: Version when this parameter was added. Used for documentation and t...
+#   deprecated_in: Version when this parameter was deprecated. Used for documentation ...
+
 parameters:
-  # Simple string parameter added to every event
   session_id:
     type: string
-    description: Unique identifier for the current session.
+    description: Unique session identifier.
 
-  # Parameter with allowed values — generates an enum in Dart
   platform:
     type: string
-    description: The platform the user is on.
+    description: User platform.
     allowed_values: [ios, android, web]
 
-  # Nullable parameter — will be optional in generated code
   user_id:
     type: string?
-    description: The authenticated user ID, if available.
+    description: Authenticated user ID (nullable).
 
-  # Parameter with a custom param_name sent to the analytics backend
   app_version:
     type: string
-    description: Current application version.
+    description: Current app version.
     param_name: app_ver
+    regex: "^\d+\.\d+\.\d+$"
 
-  # Numeric parameter with validation constraints
   screen_width:
     type: int
-    description: Width of the device screen in pixels.
+    description: Device screen width in pixels.
     min: 0
+    max: 10000
 
-  # Parameter with a custom Dart type
   locale:
     type: string
     dart_type: Locale
     import: dart:ui
-    description: The user's current locale.
-
-  # Parameter with metadata
-  build_number:
-    type: int
-    description: The application build number.
-    meta:
-      owner: platform-team
-
-# -----------------------------------------------------------------------------
-# Shared Parameter Properties Reference
-# -----------------------------------------------------------------------------
-#
-# type: (Required) Data type.
-#       Supported: string, int, double, float, bool, boolean, num, number,
-#                  list, map, datetime, date, uri.
-#       Aliases: boolean → bool, float → double, number → num, date → datetime.
-#       Append '?' for nullable (e.g., string?).
-#
-# description: (Optional) Human-readable description.
-#
-# dart_type: (Optional) Override the inferred Dart type (e.g., for enums or value classes).
-#
-# import: (Optional) Dart library to import for 'dart_type'.
-#
-# param_name: (Optional) The actual key sent to the analytics service.
-#             Defaults to the YAML key.
-#
-# identifier: (Optional) Override the Dart code identifier for this parameter.
-#             Defaults to the YAML key.
-#
-# allowed_values: (Optional) List of valid values. Generates an Enum in Dart.
-#
-# min/max: (Optional) Range constraints for numeric types.
-#
-# min_length/max_length: (Optional) Length constraints for string types.
-#
-# regex: (Optional) Regular expression pattern for string validation.
-#
-# meta: (Optional) Custom metadata map.
-#
-# added_in: (Optional) Version string when this parameter was added.
-#
-# deprecated_in: (Optional) Version string when this parameter was deprecated.
+    description: User locale.

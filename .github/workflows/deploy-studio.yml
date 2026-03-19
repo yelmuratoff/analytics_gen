@@ -19,12 +19,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          ref: v2.0.0
+          node-version: 20
+          cache: npm
+          cache-dependency-path: analytics-gen-studio/package-lock.json
+
+      - name: Install dependencies
+        working-directory: analytics-gen-studio
+        run: npm ci
+
+      - name: Run tests
+        working-directory: analytics-gen-studio
+        run: npm test
+
+      - name: Type check
+        working-directory: analytics-gen-studio
+        run: npx tsc -b
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -46,6 +70,7 @@ jobs:
           path: analytics-gen-studio/dist
 
   deploy:
+    name: Deploy
     needs: build
     runs-on: ubuntu-latest
     environment:

@@ -51,9 +51,31 @@ final class YamlKeys {
   static const String preventEventParameterDuplicates =
       'prevent_event_parameter_duplicates';
 
+  // Naming keys
+  static const String casing = 'casing';
+  static const String enforceSnakeCaseDomains = 'enforce_snake_case_domains';
+  static const String enforceSnakeCaseParameters =
+      'enforce_snake_case_parameters';
+  static const String eventNameTemplate = 'event_name_template';
+  static const String identifierTemplate = 'identifier_template';
+  static const String domainAliases = 'domain_aliases';
+
   // Meta config keys
   static const String autoTrackingCreationDate = 'auto_tracking_creation_date';
   static const String includeMetaInParameters = 'include_meta_in_parameters';
+
+  // Parameter keys
+  static const String type = 'type';
+  static const String paramName = 'param_name';
+  static const String dartType = 'dart_type';
+  static const String dartImport = 'import';
+  static const String allowedValues = 'allowed_values';
+  static const String regex = 'regex';
+  static const String minLength = 'min_length';
+  static const String maxLength = 'max_length';
+  static const String min = 'min';
+  static const String max = 'max';
+  static const String operations = 'operations';
 
   // Event keys
   static const String eventName = 'event_name';

@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/parameter.schema.json",
+  "title": "Analytics Parameter",
+  "description": "Defines a single analytics event parameter with type, validation rules, and metadata.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "title": "Parameter Type",
+      "description": "The data type of the parameter. Supports Dart primitive types and type aliases.",
+      "examples": ["string", "int", "double", "bool", "dynamic", "num", "float", "boolean", "date", "datetime", "number"],
+      "x-aliases": {
+        "boolean": "bool",
+        "float": "double",
+        "number": "num",
+        "date": "datetime"
+      }
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Human-readable description of the parameter's purpose.",
+      "examples": ["The unique identifier for the user session", "Screen name where the event occurred"]
+    },
+    "identifier": {
+      "type": "string",
+      "title": "Code Identifier",
+      "description": "Override the Dart code identifier (method parameter name). Defaults to the YAML key name. Must be valid snake_case when enforce_snake_case_parameters is enabled.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "examples": ["user_id", "screen_name"]
+    },
+    "param_name": {
+      "type": "string",
+      "title": "Wire Name",
+      "description": "Override the analytics key sent to providers. Defaults to the YAML key name.",
+      "examples": ["user_id", "screenName"]
+    },
+    "dart_type": {
+      "type": "string",
+      "title": "Dart Type Override",
+      "description": "Explicitly set the Dart type (e.g., a custom enum type). The generator will use this type in the method signature and serialize it using `.name`. Cannot be combined with allowed_values.",
+      "examples": ["PaymentMethod", "ScreenType"],
+      "x-constraints": {
+        "mutually_exclusive_with": "allowed_values"
+      }
+    },
+    "import": {
+      "type": "string",
+      "title": "Dart Import Path",
+      "description": "Custom import path for the dart_type. Required when dart_type references a type from another package or file.",
+      "examples": ["package:my_app/models/payment_method.dart"]
+    },
+    "allowed_values": {
+      "type": "array",
+      "title": "Allowed Values",
+      "description": "Restricts the parameter to a fixed set of values. The list type must match the parameter type. Cannot be combined with dart_type.",
+      "minItems": 1,
+      "items": {},
+      "examples": [["credit_card", "debit_card", "cash"], [1, 2, 3], [true, false]],
+      "x-constraints": {
+        "mutually_exclusive_with": "dart_type",
+        "type_must_be_scalar": true,
+        "supported_types": ["string", "bool", "boolean", "int", "double", "float", "num", "number"]
+      }
+    },
+    "regex": {
+      "type": "string",
+      "title": "Regex Pattern",
+      "description": "Regex pattern for validation. Used in generated code for runtime validation. Cannot contain triple quotes (''').",
+      "examples": ["^[A-Z]{2}[0-9]{4}$", "^\\d{3}-\\d{4}$"]
+    },
+    "min_length": {
+      "type": "integer",
+      "title": "Minimum Length",
+      "description": "Minimum length for string parameters.",
+      "minimum": 0,
+      "examples": [1, 3]
+    },
+    "max_length": {
+      "type": "integer",
+      "title": "Maximum Length",
+      "description": "Maximum length for string parameters.",
+      "minimum": 1,
+      "examples": [50, 255]
+    },
+    "min": {
+      "type": "number",
+      "title": "Minimum Value",
+      "description": "Minimum value for numeric parameters (int, double, num).",
+      "examples": [0, -100]
+    },
+    "max": {
+      "type": "number",
+      "title": "Maximum Value",
+      "description": "Maximum value for numeric parameters (int, double, num).",
+      "examples": [100, 9999]
+    },
+    "meta": {
+      "type": "object",
+      "title": "Metadata",
+      "description": "Custom metadata for this parameter (e.g., ownership, Jira tickets, team).",
+      "additionalProperties": true,
+      "default": {},
+      "examples": [{"owner": "analytics-team", "jira": "AN-123"}]
+    },
+    "operations": {
+      "type": "array",
+      "title": "Operations",
+      "description": "List of operations supported by this parameter. Only used for context properties (user properties, etc.).",
+      "items": {
+        "type": "string",
+        "enum": ["set", "increment", "append", "remove"],
+        "x-note": "The parser accepts any string; this enum reflects the documented operations from the specification."
+      },
+      "examples": [["set"], ["set", "increment"], ["set", "append", "remove"]]
+    },
+    "added_in": {
+      "type": "string",
+      "title": "Added In Version",
+      "description": "Version when this parameter was added. Used for documentation and tracking.",
+      "examples": ["1.0.0", "2.3.1"]
+    },
+    "deprecated_in": {
+      "type": "string",
+      "title": "Deprecated In Version",
+      "description": "Version when this parameter was deprecated. Used for documentation and tracking.",
+      "examples": ["2.0.0", "3.1.0"]
+    }
+  },
+  "additionalProperties": {
+    "description": "Legacy type-as-key syntax: the parameter type can be specified as a YAML key instead of using the 'type' field. E.g., `my_param: { string: null, description: '...' }` is equivalent to `my_param: { type: string, description: '...' }`. Any key not matching a known property name is treated as the type."
+  },
+  "x-nullable-suffix": {
+    "description": "Appending '?' to the type or dart_type string marks the parameter as nullable. E.g., 'string?' means a nullable string, 'PaymentMethod?' means a nullable custom type."
+  },
+  "x-shorthand": {
+    "description": "A parameter can be defined as a simple string value (just the type) instead of a full object. E.g., `session_id: string` is equivalent to `session_id: { type: string }`. A null value references a shared parameter."
+  },
+  "x-legacy-type-key": {
+    "description": "When the 'type' key is not present, the parser searches for any key that is not a known property (description, allowed_values, identifier, param_name, dart_type, meta, regex, min_length, max_length, min, max, operations, added_in, deprecated_in, import) and uses it as the type. If no such key is found, defaults to 'dynamic'."
+  }
+}

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0]
+
+### Features
+
+- **Analytics Gen Studio** — web-based visual editor for analytics configuration, events, shared parameters, and contexts with real-time YAML preview.
+- **Schema as Single Source of Truth** — JSON schemas in `schema/` now drive everything: Studio UI, TypeScript types, YAML templates, and documentation.
+- **Schema-driven generation** — YAML templates, schema reference docs, and Studio TypeScript types are all auto-generated from JSON schemas.
+- **Studio features**: search/filter in event tree, keyboard shortcuts (Ctrl+S/O), notifications, compact array inputs, validation error badges on tabs, confirm dialogs for all deletions, auto-fill context name from filename.
+
+### Architecture
+
+- Studio renders all forms dynamically from JSON schemas — no hardcoded data.
+- TypeScript types auto-generated from schemas.
+- YAML templates and schema reference docs auto-generated from schemas.
+- All YAML field names centralized via constants — no raw string literals in parsers.
+
 ## [1.1.0]
 
 ### Features

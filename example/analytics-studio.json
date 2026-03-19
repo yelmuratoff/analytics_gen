@@ -1,0 +1,335 @@
+{
+  "version": 1,
+  "activeTab": "config",
+  "config": {
+    "inputs": {
+      "events": "events",
+      "shared_parameters": [
+        "events/shared_user.yaml",
+        "events/shared_app.yaml"
+      ],
+      "contexts": [
+        "events/theme_context.yaml",
+        "events/user_properties.yaml"
+      ],
+      "imports": [
+        "package:analytics_gen_example/models.dart"
+      ]
+    },
+    "outputs": {
+      "dart": "lib/src/analytics/generated",
+      "docs": "docs/analytics_events.md",
+      "exports": "assets/generated"
+    },
+    "targets": {
+      "docs": true,
+      "csv": true,
+      "json": true,
+      "sql": true,
+      "plan": true,
+      "test_matchers": true
+    },
+    "rules": {
+      "include_event_description": true,
+      "strict_event_names": false,
+      "enforce_centrally_defined_parameters": false,
+      "prevent_event_parameter_duplicates": false
+    },
+    "meta": {
+      "auto_tracking_creation_date": true,
+      "include_meta_in_parameters": true
+    },
+    "naming": {
+      "enforce_snake_case_domains": true,
+      "enforce_snake_case_parameters": true,
+      "event_name_template": "{domain_alias}: {event}",
+      "identifier_template": "{domain}.{event}",
+      "domain_aliases": {
+        "screen": "Screen Domain",
+        "purchase": "Purchase Flow"
+      }
+    }
+  },
+  "eventFiles": [
+    {
+      "fileName": "auth.yaml",
+      "domains": {
+        "auth": {
+          "login": {
+            "description": "User logs in to the application",
+            "deprecated": true,
+            "replacement": "auth.login_v2",
+            "meta": {
+              "owner": "auth-team",
+              "tier": "critical"
+            },
+            "parameters": {
+              "method": {
+                "type": "string",
+                "description": "Login method (email, google, apple)",
+                "meta": {
+                  "is_sensitive": true
+                }
+              }
+            }
+          },
+          "login_v2": {
+            "description": "User logs in to the application (v2)",
+            "dual_write_to": [
+              "auth.login"
+            ],
+            "parameters": {
+              "session_id": null,
+              "method": {
+                "type": "string",
+                "description": "Login method v2 (email, google, apple)",
+                "identifier": "login_method",
+                "param_name": "login-method",
+                "allowed_values": [
+                  "email",
+                  "google",
+                  "apple"
+                ]
+              }
+            }
+          },
+          "logout": {
+            "description": "User logs out",
+            "parameters": {}
+          },
+          "signup": {
+            "description": "User creates a new account",
+            "parameters": {
+              "method": "string",
+              "referral_code": {
+                "type": "string?",
+                "description": "Optional referral code used during signup",
+                "regex": "^[A-Z0-9]{6}$"
+              }
+            }
+          },
+          "phone_login": {
+            "description": "When user logs in via phone",
+            "event_name": "Auth: Phone {phone_country}",
+            "identifier": "auth.phone_login",
+            "parameters": {
+              "phone_country": {
+                "type": "string",
+                "description": "ISO country code for the dialed number"
+              },
+              "user_exists": {
+                "type": "bool?",
+                "description": "Whether the user exists or not"
+              },
+              "tracking_token": {
+                "type": "string",
+                "identifier": "tracking_token",
+                "param_name": "tracking-token",
+                "description": "Legacy token kept for backend reconciliation"
+              }
+            }
+          },
+          "verify_user": {
+            "description": "User verification status change",
+            "parameters": {
+              "status": {
+                "dart_type": "VerificationStatus",
+                "import": "package:analytics_gen_example/models.dart"
+              },
+              "local_status": {
+                "dart_type": "LocalStatus",
+                "import": "package:analytics_gen_example/local_enums.dart"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "fileName": "commere.yaml",
+      "domains": {
+        "commerce": {
+          "purchase_completed": {
+            "description": "Triggered when a user completes a payment.",
+            "parameters": {
+              "transaction_id": {
+                "type": "string",
+                "min_length": 10
+              },
+              "value": {
+                "type": "double",
+                "min": 0.01
+              },
+              "currency": {
+                "type": "string",
+                "allowed_values": [
+                  "USD",
+                  "EUR",
+                  "GBP"
+                ]
+              },
+              "items_count": {
+                "type": "int"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "fileName": "purchase.yaml",
+      "domains": {
+        "purchase": {
+          "completed": {
+            "description": "User completed a purchase",
+            "parameters": {
+              "product_id": "string",
+              "price": {
+                "type": "double",
+                "param_name": "amount_value",
+                "description": "Localized amount used by legacy dashboards"
+              },
+              "currency": {
+                "type": "string",
+                "identifier": "currency_code",
+                "param_name": "currency-code"
+              },
+              "quantity": {
+                "type": "int",
+                "description": "Number of items purchased"
+              }
+            }
+          },
+          "cancelled": {
+            "description": "User cancelled a purchase",
+            "parameters": {
+              "product_id": "string",
+              "reason": {
+                "type": "string?",
+                "description": "Reason for cancellation"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "fileName": "screen.yaml",
+      "domains": {
+        "screen": {
+          "view": {
+            "description": "User views a screen",
+            "event_name": "Screen: {screen_name}",
+            "parameters": {
+              "screen_name": "string",
+              "previous_screen": {
+                "type": "string?",
+                "description": "Name of the previous screen"
+              },
+              "duration_ms": {
+                "type": "int?",
+                "description": "Time spent on previous screen in milliseconds"
+              }
+            }
+          },
+          "legacy_view": {
+            "description": "Legacy backend identifier kept for parity",
+            "event_name": "Screen: Legacy",
+            "identifier": "screen.legacy_view",
+            "parameters": {
+              "legacy_screen_code": {
+                "type": "string",
+                "identifier": "legacy_screen_code",
+                "param_name": "legacy-screen-code",
+                "description": "Three-letter code provided by data team"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "sharedParamFiles": [
+    {
+      "fileName": "shared_user.yaml",
+      "parameters": {
+        "session_id": {
+          "type": "String",
+          "description": "Unique identifier for the current session."
+        },
+        "platform": {
+          "type": "String",
+          "allowed_values": [
+            "ios",
+            "android",
+            "web"
+          ]
+        }
+      }
+    },
+    {
+      "fileName": "shared_app.yaml",
+      "parameters": {}
+    }
+  ],
+  "contextFiles": [
+    {
+      "fileName": "theme_context.yaml",
+      "contextName": "theme",
+      "properties": {
+        "is_dark_mode": {
+          "type": "bool",
+          "description": "Whether the app is in dark mode"
+        },
+        "primary_color": {
+          "type": "String",
+          "description": "The primary color hex code",
+          "allowed_values": [
+            "#FF0000",
+            "#00FF00",
+            "#0000FF"
+          ]
+        }
+      }
+    },
+    {
+      "fileName": "user_properties.yaml",
+      "contextName": "user_properties",
+      "properties": {
+        "user_id": {
+          "type": "String",
+          "description": "Unique identifier for the user"
+        },
+        "user_role": {
+          "type": "String",
+          "description": "Role of the user in the system",
+          "allowed_values": [
+            "admin",
+            "editor",
+            "viewer"
+          ]
+        },
+        "is_premium": {
+          "type": "bool",
+          "description": "Whether the user has a premium subscription"
+        },
+        "login_count": {
+          "type": "int",
+          "description": "Total number of logins",
+          "operations": [
+            "set",
+            "increment"
+          ]
+        },
+        "tags": {
+          "type": "List<String>",
+          "description": "User tags",
+          "operations": [
+            "append",
+            "remove"
+          ]
+        }
+      }
+    }
+  ]
+}
