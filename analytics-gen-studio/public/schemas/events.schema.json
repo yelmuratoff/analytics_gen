@@ -1,149 +1,124 @@
 {
-   "$schema": "https://json-schema.org/draft/2020-12/schema",
-   "$id": "https://github.com/ArcaneArts/analytics_gen/schema/events.schema.json",
-   "title": "Analytics Events File",
-   "description": "Defines analytics events organized by domains. Each YAML file contains one or more domains, each containing one or more events with their parameters.",
-   "type": "object",
-   "additionalProperties": {
-      "$ref": "#/$defs/domain"
-   },
-   "examples": [
-      {
-         "auth": {
-            "login": {
-               "description": "User logged in",
-               "parameters": {
-                  "method": "string",
-                  "success": "bool"
-               }
-            }
-         }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/events.schema.json",
+  "title": "Analytics Events File",
+  "description": "Defines analytics events organized by domains. Each YAML file contains one or more domains, each containing one or more events with their parameters.",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/$defs/domain"
+  },
+  "examples": [
+    {
+      "auth": {
+        "login": {
+          "description": "User logged in",
+          "parameters": {
+            "method": "string",
+            "success": "bool"
+          }
+        }
       }
-   ],
-   "$defs": {
-      "domain": {
-         "type": "object",
-         "title": "Domain",
-         "description": "A logical grouping of related events (e.g., 'auth', 'purchase', 'navigation'). Domain keys must be snake_case when enforce_snake_case_domains is enabled.",
-         "additionalProperties": {
-            "$ref": "#/$defs/event"
-         }
+    }
+  ],
+  "$defs": {
+    "domain": {
+      "type": "object",
+      "title": "Domain",
+      "description": "A logical grouping of related events (e.g., 'auth', 'purchase', 'navigation'). Domain keys must be snake_case when enforce_snake_case_domains is enabled.",
+      "additionalProperties": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "event": {
+      "type": "object",
+      "title": "Event",
+      "description": "A single analytics event definition.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "title": "Description",
+          "description": "Human-readable description of the event's purpose and when it should be fired.",
+          "default": "No description provided",
+          "examples": ["User successfully completed the login flow", "Item was added to the shopping cart"]
+        },
+        "event_name": {
+          "type": "string",
+          "title": "Custom Event Name",
+          "description": "Override the generated event name that gets logged. If not set, the name is generated from the naming strategy template (e.g., '{domain}: {event}'). When strict_event_names is enabled, must not contain '{' or '}' interpolation characters.",
+          "examples": ["user_login", "Purchase Completed"]
+        },
+        "identifier": {
+          "type": "string",
+          "title": "Unique Identifier",
+          "description": "Optional canonical identifier for the event, used for uniqueness checks. Generated from identifier_template if not set.",
+          "examples": ["auth_login", "purchase_checkout"]
+        },
+        "deprecated": {
+          "type": "boolean",
+          "title": "Deprecated",
+          "description": "Marks the event as deprecated. Generates @Deprecated annotation in Dart code.",
+          "default": false
+        },
+        "replacement": {
+          "type": "string",
+          "title": "Replacement Event",
+          "description": "The name of the replacement event if this event is deprecated.",
+          "examples": ["login_v2"]
+        },
+        "added_in": {
+          "type": "string",
+          "title": "Added In Version",
+          "description": "Version when this event was added.",
+          "examples": ["1.0.0"]
+        },
+        "deprecated_in": {
+          "type": "string",
+          "title": "Deprecated In Version",
+          "description": "Version when this event was deprecated.",
+          "examples": ["2.0.0"]
+        },
+        "dual_write_to": {
+          "type": "array",
+          "title": "Dual Write To",
+          "description": "List of other event names to trigger simultaneously when this event is logged. Useful for migration periods.",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["login_v2", "auth_login_legacy"]]
+        },
+        "meta": {
+          "type": "object",
+          "title": "Metadata",
+          "description": "Custom metadata for this event (e.g., ownership, Jira tickets, documentation links).",
+          "additionalProperties": true,
+          "default": {},
+          "examples": [{"owner": "auth-team", "jira": "AUTH-456"}]
+        },
+        "parameters": {
+          "type": "object",
+          "title": "Event Parameters",
+          "description": "Map of parameter definitions for this event. Keys are parameter names. Values can be: a type string ('string', 'int?'), a full parameter object, or null to reference a shared parameter.",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string",
+                "title": "Simple Type",
+                "description": "Shorthand: just the type name. Append '?' for nullable."
+              },
+              {
+                "$ref": "./parameter.schema.json",
+                "title": "Full Parameter Definition"
+              },
+              {
+                "type": "null",
+                "title": "Shared Parameter Reference",
+                "description": "Null value means this parameter is defined in shared parameters."
+              }
+            ]
+          }
+        }
       },
-      "event": {
-         "type": "object",
-         "title": "Event",
-         "description": "A single analytics event definition.",
-         "properties": {
-            "description": {
-               "type": "string",
-               "title": "Description",
-               "description": "Human-readable description of the event's purpose and when it should be fired.",
-               "default": "No description provided",
-               "examples": [
-                  "User successfully completed the login flow",
-                  "Item was added to the shopping cart"
-               ]
-            },
-            "event_name": {
-               "type": "string",
-               "title": "Custom Event Name",
-               "description": "Override the generated event name that gets logged. If not set, the name is generated from the naming strategy template (e.g., '{domain}: {event}'). When strict_event_names is enabled, must not contain '{' or '}' interpolation characters.",
-               "examples": [
-                  "user_login",
-                  "Purchase Completed"
-               ]
-            },
-            "identifier": {
-               "type": "string",
-               "title": "Unique Identifier",
-               "description": "Optional canonical identifier for the event, used for uniqueness checks. Generated from identifier_template if not set.",
-               "examples": [
-                  "auth_login",
-                  "purchase_checkout"
-               ]
-            },
-            "deprecated": {
-               "type": "boolean",
-               "title": "Deprecated",
-               "description": "Marks the event as deprecated. Generates @Deprecated annotation in Dart code.",
-               "default": false
-            },
-            "replacement": {
-               "type": "string",
-               "title": "Replacement Event",
-               "description": "The name of the replacement event if this event is deprecated.",
-               "examples": [
-                  "login_v2"
-               ]
-            },
-            "added_in": {
-               "type": "string",
-               "title": "Added In Version",
-               "description": "Version when this event was added.",
-               "examples": [
-                  "1.0.0"
-               ]
-            },
-            "deprecated_in": {
-               "type": "string",
-               "title": "Deprecated In Version",
-               "description": "Version when this event was deprecated.",
-               "examples": [
-                  "2.0.0"
-               ]
-            },
-            "dual_write_to": {
-               "type": "array",
-               "title": "Dual Write To",
-               "description": "List of other event names to trigger simultaneously when this event is logged. Useful for migration periods.",
-               "items": {
-                  "type": "string"
-               },
-               "examples": [
-                  [
-                     "login_v2",
-                     "auth_login_legacy"
-                  ]
-               ]
-            },
-            "meta": {
-               "type": "object",
-               "title": "Metadata",
-               "description": "Custom metadata for this event (e.g., ownership, Jira tickets, documentation links).",
-               "additionalProperties": true,
-               "default": {},
-               "examples": [
-                  {
-                     "owner": "auth-team",
-                     "jira": "AUTH-456"
-                  }
-               ]
-            },
-            "parameters": {
-               "type": "object",
-               "title": "Event Parameters",
-               "description": "Map of parameter definitions for this event. Keys are parameter names. Values can be: a type string ('string', 'int?'), a full parameter object, or null to reference a shared parameter.",
-               "additionalProperties": {
-                  "oneOf": [
-                     {
-                        "type": "string",
-                        "title": "Simple Type",
-                        "description": "Shorthand: just the type name. Append '?' for nullable."
-                     },
-                     {
-                        "$ref": "./parameter.schema.json",
-                        "title": "Full Parameter Definition"
-                     },
-                     {
-                        "type": "null",
-                        "title": "Shared Parameter Reference",
-                        "description": "Null value means this parameter is defined in shared parameters."
-                     }
-                  ]
-               }
-            }
-         },
-         "additionalProperties": false
-      }
-   }
+      "additionalProperties": false
+    }
+  }
 }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ArcaneArts/analytics_gen/schema/shared_parameters.schema.json",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/shared_parameters.schema.json",
   "title": "Shared Parameters File",
   "description": "Defines reusable analytics parameters that can be referenced across multiple events. Shared parameters are defined once and referenced by name (with null value) in event definitions.",
   "type": "object",

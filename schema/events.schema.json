@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ArcaneArts/analytics_gen/schema/events.schema.json",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/events.schema.json",
   "title": "Analytics Events File",
   "description": "Defines analytics events organized by domains. Each YAML file contains one or more domains, each containing one or more events with their parameters.",
   "type": "object",

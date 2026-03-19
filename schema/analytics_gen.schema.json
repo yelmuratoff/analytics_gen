@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ArcaneArts/analytics_gen/schema/analytics_gen.schema.json",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/analytics_gen.schema.json",
   "title": "Analytics Gen Configuration",
   "description": "Main configuration file for analytics_gen code generator. Defines inputs, outputs, targets, rules, naming strategy, and meta field injection settings.",
   "type": "object",

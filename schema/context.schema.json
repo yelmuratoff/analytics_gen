@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ArcaneArts/analytics_gen/schema/context.schema.json",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/context.schema.json",
   "title": "Context Definition File",
   "description": "Defines a context (e.g., user properties, theme context) with its properties and supported operations. Each file contains exactly one context as the root key.",
   "type": "object",

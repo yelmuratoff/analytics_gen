@@ -1,449 +1,380 @@
 {
-   "$schema": "https://json-schema.org/draft/2020-12/schema",
-   "$id": "https://github.com/ArcaneArts/analytics_gen/schema/analytics_gen.schema.json",
-   "title": "Analytics Gen Configuration",
-   "description": "Main configuration file for analytics_gen code generator. Defines inputs, outputs, targets, rules, naming strategy, and meta field injection settings.",
-   "type": "object",
-   "properties": {
-      "analytics_gen": {
-         "type": "object",
-         "title": "Analytics Gen Root",
-         "description": "Root configuration object. All settings are nested under this key.",
-         "properties": {
-            "inputs": {
-               "type": "object",
-               "title": "Input Configuration",
-               "description": "Configures where analytics_gen reads its source YAML files.",
-               "properties": {
-                  "events": {
-                     "type": "string",
-                     "title": "Events Path",
-                     "description": "Path to directory containing YAML event files (relative to project root).",
-                     "default": "events",
-                     "examples": [
-                        "events",
-                        "analytics/events",
-                        "config/analytics"
-                     ]
-                  },
-                  "shared_parameters": {
-                     "type": "array",
-                     "title": "Shared Parameters Paths",
-                     "description": "List of paths to shared parameter definition files.",
-                     "items": {
-                        "type": "string"
-                     },
-                     "default": [],
-                     "examples": [
-                        [
-                           "shared_parameters.yaml"
-                        ],
-                        [
-                           "analytics/shared_user.yaml",
-                           "analytics/shared_app.yaml"
-                        ]
-                     ]
-                  },
-                  "contexts": {
-                     "type": "array",
-                     "title": "Context Paths",
-                     "description": "List of paths to context definition files (user properties, theme, etc.).",
-                     "items": {
-                        "type": "string"
-                     },
-                     "default": [],
-                     "examples": [
-                        [
-                           "user_properties.yaml"
-                        ],
-                        [
-                           "contexts/user.yaml",
-                           "contexts/theme.yaml"
-                        ]
-                     ]
-                  },
-                  "imports": {
-                     "type": "array",
-                     "title": "Custom Imports",
-                     "description": "List of custom Dart import URIs to include in generated files.",
-                     "items": {
-                        "type": "string"
-                     },
-                     "default": [],
-                     "examples": [
-                        [
-                           "package:my_app/models/enums.dart"
-                        ]
-                     ]
-                  }
-               },
-               "additionalProperties": false
-            },
-            "outputs": {
-               "type": "object",
-               "title": "Output Configuration",
-               "description": "Configures where analytics_gen writes generated files.",
-               "properties": {
-                  "dart": {
-                     "type": "string",
-                     "title": "Dart Output Path",
-                     "description": "Path where generated Dart code will be written (relative to project root).",
-                     "default": "lib/src/analytics/generated",
-                     "examples": [
-                        "lib/src/analytics/generated",
-                        "lib/generated/analytics"
-                     ]
-                  },
-                  "docs": {
-                     "type": "string",
-                     "title": "Documentation Output Path",
-                     "description": "Path where documentation will be generated (optional). Required when generate_docs target is enabled.",
-                     "examples": [
-                        "docs/analytics",
-                        "documentation/events"
-                     ]
-                  },
-                  "exports": {
-                     "type": "string",
-                     "title": "Exports Output Path",
-                     "description": "Path where database exports (CSV, JSON, SQL) will be generated (optional). Required when CSV/JSON/SQL targets are enabled.",
-                     "examples": [
-                        "exports/analytics",
-                        "data/exports"
-                     ]
-                  }
-               },
-               "additionalProperties": false
-            },
-            "targets": {
-               "type": "object",
-               "title": "Generation Targets",
-               "description": "Toggles for which output artifacts to generate.",
-               "properties": {
-                  "csv": {
-                     "type": "boolean",
-                     "title": "Generate CSV",
-                     "description": "Whether to generate CSV export of events and parameters.",
-                     "default": false
-                  },
-                  "json": {
-                     "type": "boolean",
-                     "title": "Generate JSON",
-                     "description": "Whether to generate JSON export of events and parameters.",
-                     "default": false
-                  },
-                  "sql": {
-                     "type": "boolean",
-                     "title": "Generate SQL",
-                     "description": "Whether to generate SQL export (e.g., BigQuery schema).",
-                     "default": false
-                  },
-                  "docs": {
-                     "type": "boolean",
-                     "title": "Generate Documentation",
-                     "description": "Whether to generate Markdown documentation from event definitions.",
-                     "default": false
-                  },
-                  "plan": {
-                     "type": "boolean",
-                     "title": "Generate Tracking Plan",
-                     "description": "Whether to include the runtime tracking plan in generated Dart code.",
-                     "default": true
-                  },
-                  "test_matchers": {
-                     "type": "boolean",
-                     "title": "Generate Test Matchers",
-                     "description": "Whether to generate test matchers for `package:test` to verify analytics calls in tests.",
-                     "default": false
-                  }
-               },
-               "additionalProperties": false
-            },
-            "rules": {
-               "type": "object",
-               "title": "Validation & Generation Rules",
-               "description": "Rules that control validation strictness and generation behavior.",
-               "properties": {
-                  "include_event_description": {
-                     "type": "boolean",
-                     "title": "Include Event Description",
-                     "description": "Whether to include the event 'description' field as a parameter in the generated analytics map.",
-                     "default": false
-                  },
-                  "strict_event_names": {
-                     "type": "boolean",
-                     "title": "Strict Event Names",
-                     "description": "Whether to treat string interpolation characters ('{', '}') in event names as an error. Prevents high-cardinality dynamic event names.",
-                     "default": true
-                  },
-                  "enforce_centrally_defined_parameters": {
-                     "type": "boolean",
-                     "title": "Enforce Centrally Defined Parameters",
-                     "description": "Whether to enforce that ALL parameters must be defined in shared parameter files. Inline parameter definitions in events will cause an error.",
-                     "default": false
-                  },
-                  "prevent_event_parameter_duplicates": {
-                     "type": "boolean",
-                     "title": "Prevent Event Parameter Duplicates",
-                     "description": "Whether to prevent defining parameters in events that already exist in shared parameter files. Forces use of the shared version.",
-                     "default": false
-                  }
-               },
-               "additionalProperties": false
-            },
-            "naming": {
-               "type": "object",
-               "title": "Naming Strategy",
-               "description": "Controls how domains, events, and parameters are named in generated code and analytics output.",
-               "properties": {
-                  "casing": {
-                     "type": "string",
-                     "title": "Event Name Casing",
-                     "description": "The naming convention applied to generated event names.",
-                     "enum": [
-                        "snake_case",
-                        "title_case",
-                        "original"
-                     ],
-                     "default": "snake_case",
-                     "examples": [
-                        "snake_case",
-                        "title_case",
-                        "original"
-                     ]
-                  },
-                  "enforce_snake_case_domains": {
-                     "type": "boolean",
-                     "title": "Enforce Snake Case Domains",
-                     "description": "Whether to validate that domain keys are snake_case (pattern: ^[a-z0-9_]+$).",
-                     "default": true
-                  },
-                  "enforce_snake_case_parameters": {
-                     "type": "boolean",
-                     "title": "Enforce Snake Case Parameters",
-                     "description": "Whether to validate that parameter identifiers are snake_case (pattern: ^[a-z][a-z0-9_]*$).",
-                     "default": true
-                  },
-                  "event_name_template": {
-                     "type": "string",
-                     "title": "Event Name Template",
-                     "description": "Template for generating event names. Supports placeholders: {domain}, {domain_alias}, {event}.",
-                     "default": "{domain}: {event}",
-                     "examples": [
-                        "{domain}: {event}",
-                        "{domain_alias}_{event}",
-                        "{event}"
-                     ]
-                  },
-                  "identifier_template": {
-                     "type": "string",
-                     "title": "Identifier Template",
-                     "description": "Template for generating canonical event identifiers (used for uniqueness checks). Supports the same placeholders as event_name_template.",
-                     "default": "{domain}: {event}",
-                     "examples": [
-                        "{domain}: {event}",
-                        "{domain}_{event}"
-                     ]
-                  },
-                  "domain_aliases": {
-                     "type": "object",
-                     "title": "Domain Aliases",
-                     "description": "Map of domain name to alias. When present, {domain_alias} in templates resolves to the mapped value instead of the domain name.",
-                     "additionalProperties": {
-                        "type": "string"
-                     },
-                     "default": {},
-                     "examples": [
-                        {
-                           "authentication": "auth",
-                           "user_management": "user"
-                        }
-                     ]
-                  }
-               },
-               "additionalProperties": false
-            },
-            "meta": {
-               "type": "object",
-               "title": "Meta Configuration",
-               "description": "Configuration for automatic meta field injection into generated events.",
-               "properties": {
-                  "auto_tracking_creation_date": {
-                     "type": "boolean",
-                     "title": "Auto Track Creation Date",
-                     "description": "Whether to automatically track event creation dates via a ledger file. Records when each event was first seen.",
-                     "default": false
-                  },
-                  "include_meta_in_parameters": {
-                     "type": "boolean",
-                     "title": "Include Meta in Parameters",
-                     "description": "Whether to include event meta fields (added_in, deprecated_in, etc.) in the generated event parameters map.",
-                     "default": false
-                  }
-               },
-               "additionalProperties": false
-            },
-            "events_path": {
-               "type": "string",
-               "title": "Events Path (flat alias)",
-               "description": "Flat alias for inputs.events. If both are set, inputs.events takes precedence.",
-               "x-alias-for": "inputs.events",
-               "examples": [
-                  "events"
-               ]
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/analytics_gen.schema.json",
+  "title": "Analytics Gen Configuration",
+  "description": "Main configuration file for analytics_gen code generator. Defines inputs, outputs, targets, rules, naming strategy, and meta field injection settings.",
+  "type": "object",
+  "properties": {
+    "analytics_gen": {
+      "type": "object",
+      "title": "Analytics Gen Root",
+      "description": "Root configuration object. All settings are nested under this key.",
+      "properties": {
+        "inputs": {
+          "type": "object",
+          "title": "Input Configuration",
+          "description": "Configures where analytics_gen reads its source YAML files.",
+          "properties": {
+            "events": {
+              "type": "string",
+              "title": "Events Path",
+              "description": "Path to directory containing YAML event files (relative to project root).",
+              "default": "events",
+              "examples": ["events", "analytics/events", "config/analytics"]
             },
             "shared_parameters": {
-               "type": "array",
-               "title": "Shared Parameters (flat alias)",
-               "description": "Flat alias for inputs.shared_parameters.",
-               "items": {
-                  "type": "string"
-               },
-               "x-alias-for": "inputs.shared_parameters"
+              "type": "array",
+              "title": "Shared Parameters Paths",
+              "description": "List of paths to shared parameter definition files.",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "examples": [["shared_parameters.yaml"], ["analytics/shared_user.yaml", "analytics/shared_app.yaml"]]
             },
             "contexts": {
-               "type": "array",
-               "title": "Contexts (flat alias)",
-               "description": "Flat alias for inputs.contexts.",
-               "items": {
-                  "type": "string"
-               },
-               "x-alias-for": "inputs.contexts"
+              "type": "array",
+              "title": "Context Paths",
+              "description": "List of paths to context definition files (user properties, theme, etc.).",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "examples": [["user_properties.yaml"], ["contexts/user.yaml", "contexts/theme.yaml"]]
             },
             "imports": {
-               "type": "array",
-               "title": "Imports (flat alias)",
-               "description": "Flat alias for inputs.imports.",
-               "items": {
-                  "type": "string"
-               },
-               "x-alias-for": "inputs.imports"
+              "type": "array",
+              "title": "Custom Imports",
+              "description": "List of custom Dart import URIs to include in generated files.",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "examples": [["package:my_app/models/enums.dart"]]
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputs": {
+          "type": "object",
+          "title": "Output Configuration",
+          "description": "Configures where analytics_gen writes generated files.",
+          "properties": {
+            "dart": {
+              "type": "string",
+              "title": "Dart Output Path",
+              "description": "Path where generated Dart code will be written (relative to project root).",
+              "default": "lib/src/analytics/generated",
+              "examples": ["lib/src/analytics/generated", "lib/generated/analytics"]
             },
-            "output_path": {
-               "type": "string",
-               "title": "Output Path (flat alias)",
-               "description": "Flat alias for outputs.dart.",
-               "x-alias-for": "outputs.dart",
-               "examples": [
-                  "lib/src/analytics/generated"
-               ]
+            "docs": {
+              "type": "string",
+              "title": "Documentation Output Path",
+              "description": "Path where documentation will be generated (optional). Required when generate_docs target is enabled.",
+              "examples": ["docs/analytics", "documentation/events"]
             },
-            "docs_path": {
-               "type": "string",
-               "title": "Docs Path (flat alias)",
-               "description": "Flat alias for outputs.docs.",
-               "x-alias-for": "outputs.docs"
+            "exports": {
+              "type": "string",
+              "title": "Exports Output Path",
+              "description": "Path where database exports (CSV, JSON, SQL) will be generated (optional). Required when CSV/JSON/SQL targets are enabled.",
+              "examples": ["exports/analytics", "data/exports"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "targets": {
+          "type": "object",
+          "title": "Generation Targets",
+          "description": "Toggles for which output artifacts to generate.",
+          "properties": {
+            "csv": {
+              "type": "boolean",
+              "title": "Generate CSV",
+              "description": "Whether to generate CSV export of events and parameters.",
+              "default": false
             },
-            "exports_path": {
-               "type": "string",
-               "title": "Exports Path (flat alias)",
-               "description": "Flat alias for outputs.exports.",
-               "x-alias-for": "outputs.exports"
+            "json": {
+              "type": "boolean",
+              "title": "Generate JSON",
+              "description": "Whether to generate JSON export of events and parameters.",
+              "default": false
             },
-            "generate_csv": {
-               "type": "boolean",
-               "title": "Generate CSV (flat alias)",
-               "description": "Flat alias for targets.csv.",
-               "x-alias-for": "targets.csv"
+            "sql": {
+              "type": "boolean",
+              "title": "Generate SQL",
+              "description": "Whether to generate SQL export (e.g., BigQuery schema).",
+              "default": false
             },
-            "generate_json": {
-               "type": "boolean",
-               "title": "Generate JSON (flat alias)",
-               "description": "Flat alias for targets.json.",
-               "x-alias-for": "targets.json"
+            "docs": {
+              "type": "boolean",
+              "title": "Generate Documentation",
+              "description": "Whether to generate Markdown documentation from event definitions.",
+              "default": false
             },
-            "generate_sql": {
-               "type": "boolean",
-               "title": "Generate SQL (flat alias)",
-               "description": "Flat alias for targets.sql.",
-               "x-alias-for": "targets.sql"
+            "plan": {
+              "type": "boolean",
+              "title": "Generate Tracking Plan",
+              "description": "Whether to include the runtime tracking plan in generated Dart code.",
+              "default": true
             },
-            "generate_docs": {
-               "type": "boolean",
-               "title": "Generate Docs (flat alias)",
-               "description": "Flat alias for targets.docs.",
-               "x-alias-for": "targets.docs"
-            },
-            "generate_plan": {
-               "type": "boolean",
-               "title": "Generate Plan (flat alias)",
-               "description": "Flat alias for targets.plan.",
-               "x-alias-for": "targets.plan"
-            },
-            "generate_test_matchers": {
-               "type": "boolean",
-               "title": "Generate Test Matchers (flat alias)",
-               "description": "Flat alias for targets.test_matchers.",
-               "x-alias-for": "targets.test_matchers"
-            },
+            "test_matchers": {
+              "type": "boolean",
+              "title": "Generate Test Matchers",
+              "description": "Whether to generate test matchers for `package:test` to verify analytics calls in tests.",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "rules": {
+          "type": "object",
+          "title": "Validation & Generation Rules",
+          "description": "Rules that control validation strictness and generation behavior.",
+          "properties": {
             "include_event_description": {
-               "type": "boolean",
-               "title": "Include Event Description (flat alias)",
-               "description": "Flat alias for rules.include_event_description.",
-               "x-alias-for": "rules.include_event_description"
+              "type": "boolean",
+              "title": "Include Event Description",
+              "description": "Whether to include the event 'description' field as a parameter in the generated analytics map.",
+              "default": false
             },
             "strict_event_names": {
-               "type": "boolean",
-               "title": "Strict Event Names (flat alias)",
-               "description": "Flat alias for rules.strict_event_names.",
-               "x-alias-for": "rules.strict_event_names"
+              "type": "boolean",
+              "title": "Strict Event Names",
+              "description": "Whether to treat string interpolation characters ('{', '}') in event names as an error. Prevents high-cardinality dynamic event names.",
+              "default": true
             },
             "enforce_centrally_defined_parameters": {
-               "type": "boolean",
-               "title": "Enforce Centrally Defined Parameters (flat alias)",
-               "description": "Flat alias for rules.enforce_centrally_defined_parameters.",
-               "x-alias-for": "rules.enforce_centrally_defined_parameters"
+              "type": "boolean",
+              "title": "Enforce Centrally Defined Parameters",
+              "description": "Whether to enforce that ALL parameters must be defined in shared parameter files. Inline parameter definitions in events will cause an error.",
+              "default": false
             },
             "prevent_event_parameter_duplicates": {
-               "type": "boolean",
-               "title": "Prevent Event Parameter Duplicates (flat alias)",
-               "description": "Flat alias for rules.prevent_event_parameter_duplicates.",
-               "x-alias-for": "rules.prevent_event_parameter_duplicates"
+              "type": "boolean",
+              "title": "Prevent Event Parameter Duplicates",
+              "description": "Whether to prevent defining parameters in events that already exist in shared parameter files. Forces use of the shared version.",
+              "default": false
             }
-         },
-         "additionalProperties": false
-      }
-   },
-   "required": [
-      "analytics_gen"
-   ],
-   "additionalProperties": false,
-   "examples": [
-      {
-         "analytics_gen": {
-            "inputs": {
-               "events": "events",
-               "shared_parameters": [
-                  "shared_parameters.yaml"
-               ],
-               "contexts": [
-                  "user_properties.yaml"
-               ]
+          },
+          "additionalProperties": false
+        },
+        "naming": {
+          "type": "object",
+          "title": "Naming Strategy",
+          "description": "Controls how domains, events, and parameters are named in generated code and analytics output.",
+          "properties": {
+            "casing": {
+              "type": "string",
+              "title": "Event Name Casing",
+              "description": "The naming convention applied to generated event names.",
+              "enum": ["snake_case", "title_case", "original"],
+              "default": "snake_case",
+              "examples": ["snake_case", "title_case", "original"]
             },
-            "outputs": {
-               "dart": "lib/src/analytics/generated",
-               "docs": "docs/analytics"
+            "enforce_snake_case_domains": {
+              "type": "boolean",
+              "title": "Enforce Snake Case Domains",
+              "description": "Whether to validate that domain keys are snake_case (pattern: ^[a-z0-9_]+$).",
+              "default": true
             },
-            "targets": {
-               "csv": true,
-               "plan": true,
-               "test_matchers": true
+            "enforce_snake_case_parameters": {
+              "type": "boolean",
+              "title": "Enforce Snake Case Parameters",
+              "description": "Whether to validate that parameter identifiers are snake_case (pattern: ^[a-z][a-z0-9_]*$).",
+              "default": true
             },
-            "rules": {
-               "strict_event_names": true,
-               "enforce_centrally_defined_parameters": false
+            "event_name_template": {
+              "type": "string",
+              "title": "Event Name Template",
+              "description": "Template for generating event names. Supports placeholders: {domain}, {domain_alias}, {event}.",
+              "default": "{domain}: {event}",
+              "examples": ["{domain}: {event}", "{domain_alias}_{event}", "{event}"]
             },
-            "naming": {
-               "casing": "snake_case",
-               "event_name_template": "{domain}: {event}",
-               "domain_aliases": {
-                  "authentication": "auth"
-               }
+            "identifier_template": {
+              "type": "string",
+              "title": "Identifier Template",
+              "description": "Template for generating canonical event identifiers (used for uniqueness checks). Supports the same placeholders as event_name_template.",
+              "default": "{domain}: {event}",
+              "examples": ["{domain}: {event}", "{domain}_{event}"]
             },
-            "meta": {
-               "auto_tracking_creation_date": true
+            "domain_aliases": {
+              "type": "object",
+              "title": "Domain Aliases",
+              "description": "Map of domain name to alias. When present, {domain_alias} in templates resolves to the mapped value instead of the domain name.",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "default": {},
+              "examples": [{"authentication": "auth", "user_management": "user"}]
             }
-         }
+          },
+          "additionalProperties": false
+        },
+        "meta": {
+          "type": "object",
+          "title": "Meta Configuration",
+          "description": "Configuration for automatic meta field injection into generated events.",
+          "properties": {
+            "auto_tracking_creation_date": {
+              "type": "boolean",
+              "title": "Auto Track Creation Date",
+              "description": "Whether to automatically track event creation dates via a ledger file. Records when each event was first seen.",
+              "default": false
+            },
+            "include_meta_in_parameters": {
+              "type": "boolean",
+              "title": "Include Meta in Parameters",
+              "description": "Whether to include event meta fields (added_in, deprecated_in, etc.) in the generated event parameters map.",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "events_path": {
+          "type": "string",
+          "title": "Events Path (flat alias)",
+          "description": "Flat alias for inputs.events. If both are set, inputs.events takes precedence.",
+          "x-alias-for": "inputs.events",
+          "examples": ["events"]
+        },
+        "shared_parameters": {
+          "type": "array",
+          "title": "Shared Parameters (flat alias)",
+          "description": "Flat alias for inputs.shared_parameters.",
+          "items": { "type": "string" },
+          "x-alias-for": "inputs.shared_parameters"
+        },
+        "contexts": {
+          "type": "array",
+          "title": "Contexts (flat alias)",
+          "description": "Flat alias for inputs.contexts.",
+          "items": { "type": "string" },
+          "x-alias-for": "inputs.contexts"
+        },
+        "imports": {
+          "type": "array",
+          "title": "Imports (flat alias)",
+          "description": "Flat alias for inputs.imports.",
+          "items": { "type": "string" },
+          "x-alias-for": "inputs.imports"
+        },
+        "output_path": {
+          "type": "string",
+          "title": "Output Path (flat alias)",
+          "description": "Flat alias for outputs.dart.",
+          "x-alias-for": "outputs.dart",
+          "examples": ["lib/src/analytics/generated"]
+        },
+        "docs_path": {
+          "type": "string",
+          "title": "Docs Path (flat alias)",
+          "description": "Flat alias for outputs.docs.",
+          "x-alias-for": "outputs.docs"
+        },
+        "exports_path": {
+          "type": "string",
+          "title": "Exports Path (flat alias)",
+          "description": "Flat alias for outputs.exports.",
+          "x-alias-for": "outputs.exports"
+        },
+        "generate_csv": {
+          "type": "boolean",
+          "title": "Generate CSV (flat alias)",
+          "description": "Flat alias for targets.csv.",
+          "x-alias-for": "targets.csv"
+        },
+        "generate_json": {
+          "type": "boolean",
+          "title": "Generate JSON (flat alias)",
+          "description": "Flat alias for targets.json.",
+          "x-alias-for": "targets.json"
+        },
+        "generate_sql": {
+          "type": "boolean",
+          "title": "Generate SQL (flat alias)",
+          "description": "Flat alias for targets.sql.",
+          "x-alias-for": "targets.sql"
+        },
+        "generate_docs": {
+          "type": "boolean",
+          "title": "Generate Docs (flat alias)",
+          "description": "Flat alias for targets.docs.",
+          "x-alias-for": "targets.docs"
+        },
+        "generate_plan": {
+          "type": "boolean",
+          "title": "Generate Plan (flat alias)",
+          "description": "Flat alias for targets.plan.",
+          "x-alias-for": "targets.plan"
+        },
+        "generate_test_matchers": {
+          "type": "boolean",
+          "title": "Generate Test Matchers (flat alias)",
+          "description": "Flat alias for targets.test_matchers.",
+          "x-alias-for": "targets.test_matchers"
+        },
+        "include_event_description": {
+          "type": "boolean",
+          "title": "Include Event Description (flat alias)",
+          "description": "Flat alias for rules.include_event_description.",
+          "x-alias-for": "rules.include_event_description"
+        },
+        "strict_event_names": {
+          "type": "boolean",
+          "title": "Strict Event Names (flat alias)",
+          "description": "Flat alias for rules.strict_event_names.",
+          "x-alias-for": "rules.strict_event_names"
+        },
+        "enforce_centrally_defined_parameters": {
+          "type": "boolean",
+          "title": "Enforce Centrally Defined Parameters (flat alias)",
+          "description": "Flat alias for rules.enforce_centrally_defined_parameters.",
+          "x-alias-for": "rules.enforce_centrally_defined_parameters"
+        },
+        "prevent_event_parameter_duplicates": {
+          "type": "boolean",
+          "title": "Prevent Event Parameter Duplicates (flat alias)",
+          "description": "Flat alias for rules.prevent_event_parameter_duplicates.",
+          "x-alias-for": "rules.prevent_event_parameter_duplicates"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["analytics_gen"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "analytics_gen": {
+        "inputs": {
+          "events": "events",
+          "shared_parameters": ["shared_parameters.yaml"],
+          "contexts": ["user_properties.yaml"]
+        },
+        "outputs": {
+          "dart": "lib/src/analytics/generated",
+          "docs": "docs/analytics"
+        },
+        "targets": {
+          "csv": true,
+          "plan": true,
+          "test_matchers": true
+        },
+        "rules": {
+          "strict_event_names": true,
+          "enforce_centrally_defined_parameters": false
+        },
+        "naming": {
+          "casing": "snake_case",
+          "event_name_template": "{domain}: {event}",
+          "domain_aliases": {
+            "authentication": "auth"
+          }
+        },
+        "meta": {
+          "auto_tracking_creation_date": true
+        }
       }
-   ]
+    }
+  ]
 }

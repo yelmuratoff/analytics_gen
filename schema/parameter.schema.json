@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ArcaneArts/analytics_gen/schema/parameter.schema.json",
+  "$id": "https://github.com/yelmuratoff/analytics_gen/schema/parameter.schema.json",
   "title": "Analytics Parameter",
   "description": "Defines a single analytics event parameter with type, validation rules, and metadata.",
   "type": "object",
