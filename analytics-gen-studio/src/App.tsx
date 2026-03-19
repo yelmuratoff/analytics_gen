@@ -20,7 +20,7 @@ const theme = createTheme({
     secondary: { main: '#1A1A1A' },
     background: {
       default: '#F5F3F0',
-      paper: '#FFFFFF',
+      paper: '#FCFDF7',
     },
     text: {
       primary: '#1A1A1A',
@@ -226,7 +226,7 @@ export default function App() {
           height: '100vh', flexDirection: 'column', gap: 2, bgcolor: 'background.default',
         }}>
           <Box sx={{
-            p: 5, borderRadius: 3, bgcolor: 'white', textAlign: 'center',
+            p: 5, borderRadius: 3, bgcolor: '#FCFDF7', textAlign: 'center',
             border: '1px solid #EEEBE8',
           }}>
             <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#D32F2F', mb: 1 }}>

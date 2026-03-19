@@ -48,7 +48,7 @@ export default function Toolbar() {
       <Box sx={{
         display: 'flex', alignItems: 'center',
         px: 3, py: 0.8,
-        bgcolor: '#FFFFFF',
+        bgcolor: '#FCFDF7',
         borderBottom: '1px solid #EEEBE8',
       }}>
         {/* Brand */}

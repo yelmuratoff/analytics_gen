@@ -20,7 +20,7 @@ export default function TabBar() {
   const setActiveTab = useStore((s) => s.setActiveTab);
 
   return (
-    <Box sx={{ px: 2, bgcolor: '#FFFFFF', borderBottom: '1px solid #EEEBE8' }}>
+    <Box sx={{ px: 2, bgcolor: '#FCFDF7', borderBottom: '1px solid #EEEBE8' }}>
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v as TabId)}

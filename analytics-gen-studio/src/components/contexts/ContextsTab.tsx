@@ -64,12 +64,20 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
+  const [fileError, setFileError] = useState('');
+  const [ctxError, setCtxError] = useState('');
+
   const handleAddFile = () => {
     const fn = fileNameInput.trim();
     const cn = contextNameInput.trim();
-    if (!fn || !cn) return;
+    if (!fn) { setFileError('File name is required'); return; }
+    if (!/^[a-zA-Z0-9_.\-/]+$/.test(fn)) { setFileError('Invalid characters'); return; }
+    if (!cn) { setCtxError('Context name is required'); return; }
+    if (!/^[a-z][a-z0-9_]*$/.test(cn)) { setCtxError('Must be snake_case'); return; }
+    if (files.some((f) => f.fileName === (fn.endsWith('.yaml') ? fn : `${fn}.yaml`))) { setFileError('File already exists'); return; }
     addContextFile(fn.endsWith('.yaml') ? fn : `${fn}.yaml`, cn);
     setFileNameInput(''); setContextNameInput('');
+    setFileError(''); setCtxError('');
     setAddFileOpen(false);
   };
 
@@ -158,10 +166,12 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
         <DialogContent sx={{ pt: '12px !important' }}>
           <TextField autoFocus fullWidth size="small" margin="dense" label="File name"
             placeholder="user_properties.yaml" value={fileNameInput}
-            onChange={(e) => setFileNameInput(e.target.value)} sx={{ mt: 1 }} />
+            error={!!fileError} helperText={fileError}
+            onChange={(e) => { setFileNameInput(e.target.value); setFileError(''); }} sx={{ mt: 1 }} />
           <TextField fullWidth size="small" margin="dense" label="Context name"
             placeholder="user_properties" value={contextNameInput}
-            onChange={(e) => setContextNameInput(e.target.value)}
+            error={!!ctxError} helperText={ctxError}
+            onChange={(e) => { setContextNameInput(e.target.value); setCtxError(''); }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddFile(); }} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
@@ -173,7 +183,7 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
 
       {addPropOpen !== null && (
         <AddItemDialog open title="Add Property" label="Name" placeholder="user_id"
-          existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
+          validateSnakeCase existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
           onClose={() => setAddPropOpen(null)}
           onAdd={(n) => {
             addContextProperty(addPropOpen, n, { type: 'string' });

@@ -62,7 +62,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
 
       <Box sx={{
         p: 2, mb: 3, borderRadius: 2.5,
-        bgcolor: '#FAFAFA',
+        bgcolor: '#F7F8F2',
         border: '1px solid #EEEBE8',
       }}>
         <Typography sx={{

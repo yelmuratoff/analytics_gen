@@ -1,0 +1,16 @@
+{
+  "name": "AnalyticsGen Studio",
+  "short_name": "AG Studio",
+  "description": "Visual YAML configuration builder for analytics_gen",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5F3F0",
+  "theme_color": "#DF4926",
+  "icons": [
+    { "src": "./favicon.ico", "type": "image/x-icon", "sizes": "16x16 32x32" },
+    { "src": "./icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "./icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "./icon-192-maskable.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "./icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}

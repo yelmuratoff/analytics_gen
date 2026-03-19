@@ -37,7 +37,7 @@ export default function Layout({ schemas }: LayoutProps) {
         {/* Form panel */}
         <Box sx={{
           flex: '0 0 57%', overflow: 'auto', p: 3,
-          bgcolor: '#FFFFFF',
+          bgcolor: '#FCFDF7',
           borderRadius: 3,
           border: '1px solid #EEEBE8',
         }}>

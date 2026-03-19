@@ -254,16 +254,16 @@ export default function FileTree() {
       </Menu>
 
       <AddItemDialog open={addFileOpen} title="Add Event File" label="File name" placeholder="auth.yaml"
-        existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
+        isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
         onAdd={(n) => { addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`); setAddFileOpen(false); }} />
       {addDomainFor !== null && !addEventFor && (
         <AddItemDialog open title="Add Domain" label="Domain name" placeholder="auth"
-          existingNames={Object.keys(files[addDomainFor]?.domains ?? {})} onClose={() => setAddDomainFor(null)}
+          validateSnakeCase existingNames={Object.keys(files[addDomainFor]?.domains ?? {})} onClose={() => setAddDomainFor(null)}
           onAdd={(n) => { addDomain(addDomainFor, n); setAddDomainFor(null); }} />
       )}
       {addEventFor && !sharedAnchorEl && (
         <AddItemDialog open title="Add Event" label="Event name" placeholder="login"
-          existingNames={Object.keys(files[addEventFor.fi]?.domains[addEventFor.domain] ?? {})}
+          validateSnakeCase existingNames={Object.keys(files[addEventFor.fi]?.domains[addEventFor.domain] ?? {})}
           onClose={() => setAddEventFor(null)}
           onAdd={(n) => {
             addEvent(addEventFor.fi, addEventFor.domain, n);
@@ -273,7 +273,7 @@ export default function FileTree() {
       )}
       {addParamFor && !sharedAnchorEl && (
         <AddItemDialog open title="Add Parameter" label="Parameter name" placeholder="session_id"
-          existingNames={Object.keys(files[addParamFor.fi]?.domains[addParamFor.domain]?.[addParamFor.event]?.parameters ?? {})}
+          validateSnakeCase existingNames={Object.keys(files[addParamFor.fi]?.domains[addParamFor.domain]?.[addParamFor.event]?.parameters ?? {})}
           onClose={() => setAddParamFor(null)}
           onAdd={(n) => {
             addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, n, { type: 'string' });

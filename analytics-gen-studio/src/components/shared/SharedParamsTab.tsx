@@ -128,11 +128,11 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         )}
       </Box>
       <AddItemDialog open={addFileOpen} title="Add File" label="File name" placeholder="shared_user.yaml"
-        existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
+        isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
         onAdd={(n) => addSharedParamFile(n.endsWith('.yaml') ? n : `${n}.yaml`)} />
       {addParamOpen !== null && (
         <AddItemDialog open title="Add Parameter" label="Name" placeholder="session_id"
-          existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
+          validateSnakeCase existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
           onClose={() => setAddParamOpen(null)}
           onAdd={(n) => {
             addSharedParam(addParamOpen, n, { type: 'string' });
