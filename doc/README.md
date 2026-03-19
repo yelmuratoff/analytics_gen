@@ -18,17 +18,6 @@ Welcome to the documentation for the **analytics_gen** package. This folder cont
 - [AI Prompt Guide](PROMPT_GUIDE.md) – "System prompt" to help LLMs generate valid YAML for you.
 - [API Reference](https://pub.dev/documentation/analytics_gen/latest/) – Generated Dart API docs on pub.dev.
 
-## Schema Infrastructure
-
-JSON schemas in `schema/` are the single source of truth. Generated artifacts:
-
-| Artifact | Command |
-|----------|---------|
-| YAML templates (`templates/`) | `dart run scripts/generate_templates.dart` |
-| This schema reference doc | `dart run scripts/generate_schema_docs.dart` |
-| Studio TypeScript types | `cd analytics-gen-studio && npm run generate-types` |
-| Full sync + verify | `./scripts/sync.sh` |
-
 ## Studio (Web UI)
 
-The `analytics-gen-studio/` directory contains a visual editor. See the main [README](../README.md#studio-web-ui) for details.
+[Analytics Gen Studio](https://yelmuratoff.github.io/analytics_gen/) is a visual editor for creating and managing analytics configuration. See the main [README](../README.md#studio-web-ui) for details.
