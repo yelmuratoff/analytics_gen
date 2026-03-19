@@ -4,8 +4,8 @@ Welcome to the documentation for the **analytics_gen** package. This folder cont
 
 ## Contents
 
+- [Schema Reference](SCHEMA_REFERENCE.md) – **Complete reference for all YAML fields** — every config option, event property, and parameter field with types, defaults, and descriptions.
 - [Onboarding Guide](ONBOARDING.md) – How to get started with the package.
-- [Schema Reference](SCHEMA_REFERENCE.md) – Auto-generated reference for all YAML fields, types, and defaults.
 - [Validation & Naming](VALIDATION.md) – Schema validation rules and naming conventions.
 - [Naming & Configuration](NAMING.md) – Naming strategies, templates, and casing options.
 - [Capabilities](CAPABILITIES.md) – Overview of capability keys and provider integration.

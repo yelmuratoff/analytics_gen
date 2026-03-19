@@ -364,8 +364,8 @@ Contexts allow you to define global properties (like user attributes, device inf
 
 ## Documentation Hub
 
+- [Schema Reference](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCHEMA_REFERENCE.md) - **complete reference for all YAML fields** — every config option, event property, and parameter field with types, defaults, and descriptions.
 - [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
-- [Schema Reference](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCHEMA_REFERENCE.md) - auto-generated reference for all YAML fields, types, and defaults.
 - [Validation & Naming](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
 - [Naming & Configuration Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/NAMING.md) - recipes for "Engineer Friendly" vs "Business Readable" naming, templates, and casing.
 - [Capabilities](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
