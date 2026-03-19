@@ -4,21 +4,30 @@ import { immer } from 'zustand/middleware/immer';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
 import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
 
-/** Initial defaults matching the JSON schema defaults.
- *  These are overridden by schema-derived defaults when schemas load (see App.tsx).
- *  If schemas add new defaults, they take precedence at runtime. */
-const fallbackConfig: ConfigState = {
-  inputs: { events: 'events', shared_parameters: [], contexts: [], imports: [] },
-  outputs: { dart: 'lib/src/analytics/generated' },
-  targets: { csv: false, json: false, sql: false, docs: false, plan: true, test_matchers: false },
-  rules: { include_event_description: false, strict_event_names: true, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false },
-  naming: { casing: 'snake_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '{domain}: {event}', identifier_template: '{domain}: {event}', domain_aliases: {} },
-  meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false },
-};
+/** Placeholder config — replaced by schema-derived defaults on first load.
+ *  See App.tsx: applySchemaDefaults() fills real values from schema.
+ *  This is only used before schemas are loaded (splash screen). */
+let schemaDefaultConfig: ConfigState | null = null;
+
+/** Called from App.tsx after schemas load to set the real defaults */
+export function setSchemaDefaultConfig(config: ConfigState) {
+  schemaDefaultConfig = config;
+  // If store still has empty config (first visit), apply defaults
+  const current = useStore.getState().config;
+  if (!current.outputs.dart) {
+    useStore.getState().setConfig(config);
+  }
+}
+
+function getDefaultConfig(): ConfigState {
+  if (schemaDefaultConfig) return schemaDefaultConfig;
+  // Minimal placeholder — will be overridden by schema defaults
+  return { inputs: { events: '', shared_parameters: [], contexts: [], imports: [] }, outputs: { dart: '' }, targets: {}, rules: {}, naming: { casing: '', enforce_snake_case_domains: false, enforce_snake_case_parameters: false, event_name_template: '', identifier_template: '', domain_aliases: {} }, meta: {} } as unknown as ConfigState;
+}
 
 const initialState = {
   activeTab: 'config' as const,
-  config: fallbackConfig,
+  config: getDefaultConfig(),
   eventFiles: [],
   sharedParamFiles: [],
   contextFiles: [],
@@ -112,7 +121,7 @@ export const useStore = create<StudioState>()(
 
       setSelectedPath: (path) => set((s) => { s.selectedPath = path; }),
 
-      resetState: () => set(() => ({ ...initialState })),
+      resetState: () => set(() => ({ ...initialState, config: getDefaultConfig() })),
       loadProject: (data) => set(() => ({
         ...initialState,
         ...(data.activeTab && { activeTab: data.activeTab }),

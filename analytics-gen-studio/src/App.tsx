@@ -8,6 +8,7 @@ import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import Layout from './components/Layout.tsx';
 import { loadSchemas, type LoadedSchemas } from './schemas/loader.ts';
 import { applySchemaConstants } from './schemas/constants.ts';
+import { setSchemaDefaultConfig } from './state/store.ts';
 
 const theme = createTheme({
   palette: {
@@ -225,6 +226,7 @@ export default function App() {
     loadSchemas()
       .then((loaded) => {
         applySchemaConstants(loaded);
+        setSchemaDefaultConfig(loaded.defaultConfig);
         setSchemas(loaded);
       })
       .catch((err) => setError(err.message));

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-// Provide localStorage mock for zustand persist middleware
+// Provide localStorage mock FIRST — must exist before zustand persist initializes
 const store: Record<string, string> = {};
 const localStorageMock = {
   getItem: (key: string) => store[key] ?? null,
