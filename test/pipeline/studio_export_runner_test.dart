@@ -25,7 +25,19 @@ void main() {
     test('exports the example project correctly', () {
       // Use the real example/ directory
       final projectRoot = Directory.current.path;
+      final exampleDir = p.join(projectRoot, 'example');
       final outputPath = p.join(tempDir.path, 'example-export.json');
+
+      // Ensure example deps are resolved (Flutter project needs flutter pub get)
+      if (!File(p.join(exampleDir, '.dart_tool', 'package_config.json'))
+          .existsSync()) {
+        final pubGet = Process.runSync('flutter', ['pub', 'get'],
+            workingDirectory: exampleDir);
+        if (pubGet.exitCode != 0) {
+          markTestSkipped('flutter pub get failed: ${pubGet.stderr}');
+          return;
+        }
+      }
 
       final result = Process.runSync(
         Platform.executable,
@@ -36,7 +48,7 @@ void main() {
           outputPath,
           '--no-verbose',
         ],
-        workingDirectory: p.join(projectRoot, 'example'),
+        workingDirectory: exampleDir,
       );
 
       expect(result.exitCode, 0,
@@ -121,7 +133,19 @@ void main() {
 
     test('event files exclude shared and context files', () {
       final projectRoot = Directory.current.path;
+      final exampleDir = p.join(projectRoot, 'example');
       final outputPath = p.join(tempDir.path, 'exclude-test.json');
+
+      // Ensure example deps are resolved
+      if (!File(p.join(exampleDir, '.dart_tool', 'package_config.json'))
+          .existsSync()) {
+        final pubGet = Process.runSync('flutter', ['pub', 'get'],
+            workingDirectory: exampleDir);
+        if (pubGet.exitCode != 0) {
+          markTestSkipped('flutter pub get failed: ${pubGet.stderr}');
+          return;
+        }
+      }
 
       final result = Process.runSync(
         Platform.executable,
@@ -132,7 +156,7 @@ void main() {
           outputPath,
           '--no-verbose'
         ],
-        workingDirectory: p.join(projectRoot, 'example'),
+        workingDirectory: exampleDir,
       );
       expect(result.exitCode, 0);
 
