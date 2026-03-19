@@ -225,7 +225,10 @@ export default function App() {
   useEffect(() => {
     loadSchemas()
       .then((loaded) => {
-        applySchemaConstants(loaded);
+        applySchemaConstants({
+          ...loaded,
+          defaultParamType: loaded.parameterTypes[0] ?? 'string',
+        });
         setSchemaDefaultConfig(loaded.defaultConfig);
         setSchemas(loaded);
       })

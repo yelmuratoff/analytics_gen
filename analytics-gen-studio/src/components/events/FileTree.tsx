@@ -25,6 +25,7 @@ import AddRounded from '@mui/icons-material/AddRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
+import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 
@@ -400,7 +401,7 @@ export default function FileTree() {
           validateSnakeCase existingNames={Object.keys(files[addParamFor.fi]?.domains[addParamFor.domain]?.[addParamFor.event]?.parameters ?? {})}
           onClose={() => setAddParamFor(null)}
           onAdd={(n) => {
-            addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, n, { type: 'string' });
+            addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, n, { type: DEFAULT_PARAM_TYPE });
             setSelectedPath({ tab: 'events', fileIndex: addParamFor.fi, domain: addParamFor.domain, event: addParamFor.event, parameter: n });
             setAddParamFor(null);
           }} />

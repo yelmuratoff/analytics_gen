@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
+import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import type { ParamDef } from '../../types/index.ts';
 
 interface SharedParamEditorProps {
@@ -25,7 +26,7 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
   const rawValue = file.parameters[paramName];
   const formData: ParamDef = typeof rawValue === 'string'
     ? { type: rawValue }
-    : (rawValue ?? { type: 'string' });
+    : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) updateSharedParam(fileIndex, paramName, e.formData as ParamDef);

@@ -14,6 +14,7 @@ import InputLabel from '@mui/material/InputLabel';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
+import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import type { ParamDef } from '../../types/index.ts';
 
 interface ParameterEditorProps {
@@ -64,7 +65,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
 
   const formData: ParamDef = typeof rawValue === 'string'
     ? { type: rawValue }
-    : (rawValue ?? { type: 'string' });
+    : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
   const header = (
     <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -91,7 +92,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
         <FormControl fullWidth size="small">
           <InputLabel>Type</InputLabel>
           <Select
-            value={formData.type ?? 'string'}
+            value={formData.type ?? DEFAULT_PARAM_TYPE}
             label="Type"
             onChange={(e) => updateParameter(fileIndex, domain, eventName, paramName, e.target.value)}
           >

@@ -8,6 +8,7 @@ import Chip from '@mui/material/Chip';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
+import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import type { ParamDef } from '../../types/index.ts';
 
 interface ContextPropertyEditorProps {
@@ -28,7 +29,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
   const rawValue = file.properties[propName];
   const formData: ParamDef = typeof rawValue === 'string'
     ? { type: rawValue }
-    : (rawValue ?? { type: 'string' });
+    : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
   const currentOps = formData.operations ?? [];
 

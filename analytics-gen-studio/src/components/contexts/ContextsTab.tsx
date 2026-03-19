@@ -26,7 +26,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
-import { SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
+import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import ContextPropertyEditor from './ContextPropertyEditor.tsx';
@@ -247,7 +247,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
           validateSnakeCase existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
           onClose={() => setAddPropOpen(null)}
           onAdd={(n) => {
-            addContextProperty(addPropOpen, n, { type: 'string' });
+            addContextProperty(addPropOpen, n, { type: DEFAULT_PARAM_TYPE });
             setSelectedPath({ tab: 'contexts', fileIndex: addPropOpen, contextProperty: n });
             setAddPropOpen(null);
           }} />

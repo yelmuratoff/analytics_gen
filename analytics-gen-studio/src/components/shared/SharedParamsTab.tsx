@@ -21,6 +21,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
+import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
@@ -183,7 +184,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           validateSnakeCase existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
           onClose={() => setAddParamOpen(null)}
           onAdd={(n) => {
-            addSharedParam(addParamOpen, n, { type: 'string' });
+            addSharedParam(addParamOpen, n, { type: DEFAULT_PARAM_TYPE });
             setSelectedPath({ tab: 'shared', fileIndex: addParamOpen, parameter: n });
             setAddParamOpen(null);
           }} />

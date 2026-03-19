@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '../state/store.ts';
 import type { ValidationError, ParamDef } from '../types/index.ts';
-import { SNAKE_CASE_PARAM, SNAKE_CASE_DOMAIN } from '../schemas/constants.ts';
+import { SNAKE_CASE_PARAM, SNAKE_CASE_DOMAIN, NON_NUMERIC_TYPES } from '../schemas/constants.ts';
 
 function validateParam(paramName: string, param: ParamDef | string | null, path: string, tab: 'events' | 'shared' | 'contexts', enforceSnakeParams: boolean): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -26,7 +26,7 @@ function validateParam(paramName: string, param: ParamDef | string | null, path:
   // min_length / max_length only for string-like types
   const baseType = param.type?.replace(/\?$/, '');
   const isStringLike = baseType === 'string';
-  const isNumericLike = baseType && !['string', 'bool', 'boolean', 'dynamic'].includes(baseType);
+  const isNumericLike = baseType && !NON_NUMERIC_TYPES.has(baseType);
 
   if ((param.min_length !== undefined || param.max_length !== undefined) && baseType && !isStringLike) {
     errors.push({ path, message: 'min_length/max_length only apply to string type', tab });
