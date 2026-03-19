@@ -51,7 +51,18 @@ else
   fail "docs generation failed"
 fi
 
-# ─── 2. Dart library checks ───
+# ─── 2. Generate API documentation (dartdoc) ───
+
+step "Generate API docs (dart doc)"
+if dart doc 2>&1 | grep -q "Success!"; then
+  TOPIC_COUNT=$(ls doc/api/topics/*-topic.html 2>/dev/null | wc -l | tr -d ' ')
+  ok "doc/api/ — $TOPIC_COUNT topic pages"
+else
+  dart doc 2>&1 | grep -E "error|warning" | tail -5
+  fail "dart doc failed"
+fi
+
+# ─── 3. Dart library checks ───
 
 step "Dart analyze"
 if dart analyze lib/ bin/ test/ 2>&1 | tail -1 | grep -q "No issues"; then
@@ -72,7 +83,7 @@ else
   fail "dart test — some tests failed"
 fi
 
-# ─── 3. Sync schemas to Studio ───
+# ─── 4. Sync schemas & docs to Studio ───
 
 step "Copy schemas to Studio"
 if [ -d "analytics-gen-studio/public/schemas" ]; then
@@ -82,7 +93,17 @@ else
   fail "analytics-gen-studio/public/schemas/ not found"
 fi
 
-# ─── 4. Studio checks ───
+step "Copy API docs to Studio"
+if [ -d "doc/api" ]; then
+  rm -rf analytics-gen-studio/public/docs
+  cp -r doc/api analytics-gen-studio/public/docs
+  FIX_OUTPUT=$(cd analytics-gen-studio && node scripts/fix-docs-redirects.mjs 2>&1)
+  ok "doc/api/ → analytics-gen-studio/public/docs/ ($FIX_OUTPUT)"
+else
+  fail "doc/api/ not found — run 'dart doc' first"
+fi
+
+# ─── 5. Studio checks ───
 
 step "Studio: generate TypeScript types"
 cd analytics-gen-studio
@@ -122,7 +143,7 @@ fi
 
 cd "$ROOT"
 
-# ─── 5. Cross-reference check ───
+# ─── 6. Cross-reference check ───
 
 step "Schema ↔ YamlKeys cross-reference"
 MISSING=$(node -e "
@@ -157,7 +178,7 @@ else
   fail "Missing in YamlKeys: $MISSING"
 fi
 
-# ─── 6. Studio hardcode check ───
+# ─── 7. Studio hardcode check ───
 
 step "Studio: no hardcoded schema values"
 cd analytics-gen-studio/src
@@ -172,7 +193,7 @@ else
   fail "$HARDCODE potential hardcoded values found in Studio"
 fi
 
-# ─── 7. Schema validation (schemas are valid JSON) ───
+# ─── 8. Schema validation (schemas are valid JSON) ───
 
 step "Schema files valid JSON"
 SCHEMA_OK=true
