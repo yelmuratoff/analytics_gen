@@ -1,4 +1,5 @@
 #!/usr/bin/env dart
+
 // ignore: dangling_library_doc_comments
 /// Generates YAML template files from JSON schemas.
 /// Run: dart run scripts/generate_templates.dart
@@ -12,7 +13,8 @@ void main() {
   final outputDir = Directory('templates');
 
   if (!schemaDir.existsSync()) {
-    stderr.writeln('Error: schema/ directory not found. Run from project root.');
+    stderr
+        .writeln('Error: schema/ directory not found. Run from project root.');
     exit(1);
   }
   outputDir.createSync(recursive: true);
@@ -26,7 +28,8 @@ void main() {
 }
 
 Map<String, dynamic> _loadSchema(Directory dir, String name) {
-  return jsonDecode(File('${dir.path}/$name').readAsStringSync()) as Map<String, dynamic>;
+  return jsonDecode(File('${dir.path}/$name').readAsStringSync())
+      as Map<String, dynamic>;
 }
 
 // ── Config template ──
@@ -38,7 +41,8 @@ void _generateConfigTemplate(Directory schemaDir, Directory outputDir) {
 
   final buf = StringBuffer();
   buf.writeln('# analytics_gen.yaml');
-  buf.writeln('# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
+  buf.writeln(
+      '# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
   buf.writeln();
   buf.writeln('analytics_gen:');
 
@@ -50,10 +54,13 @@ void _generateConfigTemplate(Directory schemaDir, Directory outputDir) {
     }
   }
 
-  File('${outputDir.path}/analytics_gen.yaml').writeAsStringSync(buf.toString());
+  File('${outputDir.path}/analytics_gen.yaml')
+      .writeAsStringSync(buf.toString());
 }
 
-void _writeObjectSection(StringBuffer buf, String key, Map<String, dynamic> schema, {int indent = 0}) {
+void _writeObjectSection(
+    StringBuffer buf, String key, Map<String, dynamic> schema,
+    {int indent = 0}) {
   final pad = ' ' * indent;
   final title = schema['title'] as String? ?? key;
   buf.writeln();
@@ -62,11 +69,13 @@ void _writeObjectSection(StringBuffer buf, String key, Map<String, dynamic> sche
 
   final props = schema['properties'] as Map<String, dynamic>? ?? {};
   for (final entry in props.entries) {
-    _writeField(buf, entry.key, entry.value as Map<String, dynamic>, indent: indent + 2);
+    _writeField(buf, entry.key, entry.value as Map<String, dynamic>,
+        indent: indent + 2);
   }
 }
 
-void _writeField(StringBuffer buf, String key, Map<String, dynamic> schema, {int indent = 0}) {
+void _writeField(StringBuffer buf, String key, Map<String, dynamic> schema,
+    {int indent = 0}) {
   final pad = ' ' * indent;
   final desc = schema['description'] as String?;
   final type = schema['type'] as String?;
@@ -98,17 +107,20 @@ void _writeField(StringBuffer buf, String key, Map<String, dynamic> schema, {int
 
 void _generateEventsTemplate(Directory schemaDir, Directory outputDir) {
   final schema = _loadSchema(schemaDir, 'events.schema.json');
-  final eventDef = (schema[r'$defs'] as Map<String, dynamic>)['event'] as Map<String, dynamic>;
+  final eventDef = (schema[r'$defs'] as Map<String, dynamic>)['event']
+      as Map<String, dynamic>;
   final eventProps = eventDef['properties'] as Map<String, dynamic>;
   final paramSchema = _loadSchema(schemaDir, 'parameter.schema.json');
   final paramProps = paramSchema['properties'] as Map<String, dynamic>;
 
   final buf = StringBuffer();
   buf.writeln('# events.yaml — Event definitions');
-  buf.writeln('# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
+  buf.writeln(
+      '# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
   buf.writeln('#');
   buf.writeln('# Each root key is a domain. Events are grouped under domains.');
-  buf.writeln('# Parameters: inline type string, full object, or null (shared reference).');
+  buf.writeln(
+      '# Parameters: inline type string, full object, or null (shared reference).');
   buf.writeln();
 
   // Compact reference
@@ -140,7 +152,8 @@ void _generateEventsTemplate(Directory schemaDir, Directory outputDir) {
   buf.writeln('        allowed_values: [email, google, apple]');
   buf.writeln('      success: bool');
   buf.writeln();
-  buf.writeln('  # Shared parameter references (null = from shared_parameters file)');
+  buf.writeln(
+      '  # Shared parameter references (null = from shared_parameters file)');
   buf.writeln('  user_login_v2:');
   buf.writeln('    description: User logs in (v2 with shared params).');
   buf.writeln('    parameters:');
@@ -184,13 +197,15 @@ void _generateEventsTemplate(Directory schemaDir, Directory outputDir) {
 
 // ── Shared parameters template ──
 
-void _generateSharedParametersTemplate(Directory schemaDir, Directory outputDir) {
+void _generateSharedParametersTemplate(
+    Directory schemaDir, Directory outputDir) {
   final paramSchema = _loadSchema(schemaDir, 'parameter.schema.json');
   final paramProps = paramSchema['properties'] as Map<String, dynamic>;
 
   final buf = StringBuffer();
   buf.writeln('# shared_parameters.yaml — Reusable parameters');
-  buf.writeln('# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
+  buf.writeln(
+      '# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
   buf.writeln('#');
   buf.writeln('# Define once, reference in events with null value:');
   buf.writeln('#   parameters:');
@@ -239,7 +254,8 @@ void _generateSharedParametersTemplate(Directory schemaDir, Directory outputDir)
   buf.writeln('    import: dart:ui');
   buf.writeln('    description: User locale.');
 
-  File('${outputDir.path}/shared_parameters.yaml').writeAsStringSync(buf.toString());
+  File('${outputDir.path}/shared_parameters.yaml')
+      .writeAsStringSync(buf.toString());
 }
 
 // ── Context template ──
@@ -247,16 +263,20 @@ void _generateSharedParametersTemplate(Directory schemaDir, Directory outputDir)
 void _generateContextTemplate(Directory schemaDir, Directory outputDir) {
   final paramSchema = _loadSchema(schemaDir, 'parameter.schema.json');
   final paramProps = paramSchema['properties'] as Map<String, dynamic>;
-  final opsEnum = ((paramProps['operations'] as Map<String, dynamic>)['items'] as Map<String, dynamic>)['enum'] as List?;
+  final opsEnum = ((paramProps['operations'] as Map<String, dynamic>)['items']
+      as Map<String, dynamic>)['enum'] as List?;
 
   final buf = StringBuffer();
-  buf.writeln('# context.yaml — Context properties (user properties, session, etc.)');
-  buf.writeln('# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
+  buf.writeln(
+      '# context.yaml — Context properties (user properties, session, etc.)');
+  buf.writeln(
+      '# Auto-generated from schema — run: dart run scripts/generate_templates.dart');
   buf.writeln('#');
   if (opsEnum != null) {
     buf.writeln('# Operations: ${opsEnum.join(', ')}');
   }
-  buf.writeln('# Root key = context name. Properties support all parameter fields + operations.');
+  buf.writeln(
+      '# Root key = context name. Properties support all parameter fields + operations.');
   buf.writeln();
 
   buf.writeln('user_properties:');
@@ -298,7 +318,11 @@ String _yamlValue(dynamic value) {
   if (value is String) return value;
   if (value is bool) return value.toString();
   if (value is num) return value.toString();
-  if (value is List) return value.isEmpty ? '[]' : '\n${value.map((e) => '      - $e').join('\n')}';
+  if (value is List) {
+    return value.isEmpty
+        ? '[]'
+        : '\n${value.map((e) => '      - $e').join('\n')}';
+  }
   if (value is Map) return value.isEmpty ? '{}' : jsonEncode(value);
   return value.toString();
 }

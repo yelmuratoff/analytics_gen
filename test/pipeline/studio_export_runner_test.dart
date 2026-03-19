@@ -64,7 +64,9 @@ void main() {
       expect(config.keys.every((k) {
         final val = config[k];
         return val is Map;
-      }), true, reason: 'All config top-level values should be Maps (sections), not scalar aliases');
+      }), true,
+          reason:
+              'All config top-level values should be Maps (sections), not scalar aliases');
 
       // Event files
       final eventFiles = json['eventFiles'] as List;
@@ -94,7 +96,8 @@ void main() {
 
       // Verify dart_type param
       final verifyUser = authDomain['verify_user'] as Map<String, dynamic>;
-      expect(verifyUser['parameters']['status']['dart_type'], 'VerificationStatus');
+      expect(verifyUser['parameters']['status']['dart_type'],
+          'VerificationStatus');
 
       // Shared param files
       final sharedFiles = json['sharedParamFiles'] as List;
@@ -122,7 +125,13 @@ void main() {
 
       final result = Process.runSync(
         Platform.executable,
-        ['run', 'analytics_gen:studio_export', '-o', outputPath, '--no-verbose'],
+        [
+          'run',
+          'analytics_gen:studio_export',
+          '-o',
+          outputPath,
+          '--no-verbose'
+        ],
         workingDirectory: p.join(projectRoot, 'example'),
       );
       expect(result.exitCode, 0);
