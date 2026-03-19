@@ -33,7 +33,7 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: '#000', letterSpacing: '-0.02em' }}>
+        <Typography variant="h5">
           {paramName}
         </Typography>
         <Typography variant="caption">{file.fileName}</Typography>

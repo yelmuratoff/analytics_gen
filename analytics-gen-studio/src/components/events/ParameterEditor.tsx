@@ -41,7 +41,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
     return (
       <Box>
         <Box sx={{ mb: 3 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: '#000', letterSpacing: '-0.02em' }}>
+          <Typography variant="h5">
             {paramName}
           </Typography>
           <Typography variant="caption">shared reference</Typography>
@@ -50,7 +50,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
           p: 2.5, borderRadius: 1.5, border: '2px dashed #E8E4E0',
           bgcolor: '#FAF7F4',
         }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', color: '#DF4926', mb: 0.5 }}>
+          <Typography variant="subtitle1" sx={{ color: '#DF4926', mb: 0.5 }}>
             Shared Parameter
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -68,7 +68,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   const header = (
     <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
       <Box>
-        <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: '#000', letterSpacing: '-0.02em' }}>
+        <Typography variant="h5">
           {paramName}
         </Typography>
         <Typography variant="caption">{eventName} / {domain}</Typography>

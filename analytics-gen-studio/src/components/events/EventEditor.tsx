@@ -55,7 +55,7 @@ export default function EventEditor({ fileIndex, domain, eventName }: EventEdito
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: '#000', letterSpacing: '-0.02em' }}>
+        <Typography variant="h5">
           {eventName}
         </Typography>
         <Typography variant="caption">{domain}</Typography>

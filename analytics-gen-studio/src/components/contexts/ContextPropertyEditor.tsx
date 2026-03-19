@@ -54,7 +54,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: '#000', letterSpacing: '-0.02em' }}>
+        <Typography variant="h5">
           {propName}
         </Typography>
         <Typography variant="caption">{file.contextName}</Typography>
@@ -80,7 +80,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
                 size="small"
                 onClick={() => handleOpToggle(op)}
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: '0.75rem',
                   cursor: 'pointer',
                   transition: 'all 0.1s ease',

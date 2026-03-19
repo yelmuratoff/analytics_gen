@@ -99,7 +99,7 @@ export default function Toolbar() {
       </Box>
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 800, pb: 0.5 }}>Reset everything?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, pb: 0.5 }}>Reset everything?</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ fontSize: '0.85rem' }}>
             All tabs will be cleared and restored to defaults. This cannot be undone.

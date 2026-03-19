@@ -162,7 +162,7 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
       </Box>
 
       <Dialog open={addFileOpen} onClose={() => setAddFileOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800, pb: 0.5 }}>Add Context</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, pb: 0.5 }}>Add Context</DialogTitle>
         <DialogContent sx={{ pt: '12px !important' }}>
           <TextField autoFocus fullWidth size="small" margin="dense" label="File name"
             placeholder="user_properties.yaml" value={fileNameInput}

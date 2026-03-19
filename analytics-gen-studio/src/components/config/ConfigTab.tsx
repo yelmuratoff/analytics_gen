@@ -23,7 +23,7 @@ export default function ConfigTab({ schema }: ConfigTabProps) {
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: '1.3rem', color: '#000', letterSpacing: '-0.03em' }}>
+        <Typography variant="h4">
           Configuration
         </Typography>
         <Typography variant="caption">analytics_gen.yaml</Typography>
