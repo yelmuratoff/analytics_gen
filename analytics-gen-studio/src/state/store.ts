@@ -138,9 +138,13 @@ export const useStore = create<StudioState>()(
       setSelectedPath: (path) => set((s) => { s.selectedPath = path; }),
 
       resetState: () => set(() => ({ ...initialState })),
-      loadProject: (state) => set(() => ({
+      loadProject: (data) => set(() => ({
         ...initialState,
-        ...state,
+        ...(data.activeTab && { activeTab: data.activeTab }),
+        ...(data.config && { config: data.config }),
+        ...(data.eventFiles && { eventFiles: data.eventFiles }),
+        ...(data.sharedParamFiles && { sharedParamFiles: data.sharedParamFiles }),
+        ...(data.contextFiles && { contextFiles: data.contextFiles }),
       })),
     })),
     {

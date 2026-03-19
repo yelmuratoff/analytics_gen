@@ -68,10 +68,6 @@ export function useValidation(): ValidationError[] {
     if (!config.outputs.dart) {
       errors.push({ path: 'config.outputs.dart', message: 'Dart output path is required', tab: 'config' });
     }
-    if (config.naming.event_name_template && config.rules.strict_event_names) {
-      // Template uses {}, that's fine — strict_event_names applies to event_name overrides, not the template
-    }
-
     // Events
     const evFileNames = new Set<string>();
     for (const file of eventFiles) {
