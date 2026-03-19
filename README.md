@@ -45,6 +45,7 @@
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Studio (Web UI)](#studio-web-ui)
 - [CLI Commands](#cli-commands)
 - [Key Features](#key-features)
 - [Documentation Hub](#documentation-hub)
@@ -77,6 +78,15 @@
 5. **Review diffs** for generated Dart, docs, and exports during PRs-treat them as production code.
 
 Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md).
+
+## Studio (Web UI)
+
+**[Analytics Gen Studio](https://yelmuratoff.github.io/analytics_gen/)** is a visual editor for your analytics configuration. Instead of editing YAML files manually, use the Studio to:
+
+- Configure `analytics_gen.yaml` with toggles, dropdowns, and path inputs
+- Create and edit events, parameters, shared parameters, and contexts
+- Preview generated YAML in real time
+- Export as ZIP or save/load project files
 
 ## CLI Commands
 
@@ -355,31 +365,16 @@ Contexts allow you to define global properties (like user attributes, device inf
 ## Documentation Hub
 
 - [Onboarding Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md) - setup checklist, command reference, troubleshooting.
+- [Schema Reference](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCHEMA_REFERENCE.md) - auto-generated reference for all YAML fields, types, and defaults.
 - [Validation & Naming](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/VALIDATION.md) - schema, strict naming rules, and error explanations.
 - [Naming & Configuration Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/NAMING.md) - recipes for "Engineer Friendly" vs "Business Readable" naming, templates, and casing.
 - [Capabilities](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CAPABILITIES.md) - why capability keys exist and how to expose provider-specific APIs.
-
 - [Migration Guides](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/MIGRATION_GUIDES.md) - playbooks for moving Firebase manual strings, Amplitude events, and Mixpanel plans into YAML while keeping downstream dashboards stable.
 - [Code Review checklist](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md) - what to inspect in YAML, generated code, docs, and provider adapters during PRs.
 - [Scalability & Performance](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/SCALABILITY.md) - benchmarks and limits for large enterprise plans (100+ domains / 1000+ events).
 - [Performance Guide](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/PERFORMANCE.md) - detailed optimization tips for build and runtime.
 - [Troubleshooting](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/TROUBLESHOOTING.md) - common errors and fixes.
 - [API Reference](https://pub.dev/documentation/analytics_gen/latest/) - generated Dart API docs on pub.dev.
-  CLI Commands
-
-```bash
-dart run analytics_gen:generate              # code only (default)
-dart run analytics_gen:generate --docs       # code + docs
-dart run analytics_gen:generate --docs --exports
-dart run analytics_gen:generate --docs --no-code
-dart run analytics_gen:generate --exports --no-code
-dart run analytics_gen:generate --validate-only
-dart run analytics_gen:generate --plan
-dart run analytics_gen:generate --watch              # incremental rebuilds on file change
-dart run analytics_gen:audit                         # scan for unused events
-```
-
-Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop-the config still drives CI.
 
 ## Validation & Quality
 
@@ -574,7 +569,7 @@ Contributions welcome! Please:
 
 1. Fork the repo and open a PR with focused changes.
 2. Add unit tests for new features/validations.
-3. Run `dart analyze`, `dart test`, and the generator before submitting.
+3. Run `dart analyze` and `dart test` before submitting.
 4. Document user-facing changes in the README or the relevant doc under [`doc/`](https://github.com/yelmuratoff/analytics_gen/tree/main/doc).
 
 Every PR description flows through `.github/pull_request_template.md`, which links directly to [`doc/CODE_REVIEW.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/CODE_REVIEW.md). Walk through that checklist (YAML, generated Dart, doc/exports, providers, and security) before requesting a review so reviewers only need to validate, not rediscover, regressions.

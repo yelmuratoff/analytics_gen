@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0]
+
+### Features
+
+- **Analytics Gen Studio** — web-based visual editor for analytics configuration, events, shared parameters, and contexts with real-time YAML preview.
+- **Schema as Single Source of Truth** — JSON schemas in `schema/` now drive everything: Studio UI, TypeScript types, YAML templates, and documentation.
+- **Schema-driven code generation scripts**:
+  - `dart run scripts/generate_templates.dart` — generates `templates/*.yaml` from schemas.
+  - `dart run scripts/generate_schema_docs.dart` — generates `doc/SCHEMA_REFERENCE.md` from schemas.
+  - `npm run generate-types` (in studio) — generates TypeScript types from schemas.
+- **`./scripts/sync.sh`** — single command to regenerate everything, run all tests (Dart + Studio), and verify schema cross-references.
+- **YamlKeys constants** — all YAML field names centralized in `lib/src/util/yaml_keys.dart`, including naming strategy and parameter fields. No hardcoded strings in parsers.
+- **Studio features**: search/filter in event tree, keyboard shortcuts (Ctrl+S/O), Snackbar notifications, compact RJSF array templates, validation error badges on tabs, confirm dialogs for all deletions, auto-fill context name from filename.
+
+### Architecture
+
+- Studio renders all forms dynamically from JSON schemas — no hardcoded models, data, or field lists.
+- Schema-derived runtime constants (`schemas/constants.ts`) for default values, validation patterns, parameter types, operations.
+- TypeScript types auto-generated from schemas via `json-schema-to-typescript`.
+- ConfigTab fully dynamic — reads sections, fields, labels, hints from `configSchema.properties`.
+- Event editor, parameter editor, operations, casing options — all extracted from schemas at load time.
+- YAML generation uses generic field iteration instead of hardcoded field names.
+
+### Infrastructure
+
+- `schema/` contains 5 JSON Schema files (analytics_gen, events, parameter, shared_parameters, context).
+- `.claude/CLAUDE.md` — project instructions documenting schema-first architecture.
+- `.claude/skills/` — 8 Claude Code skills (review-schema, review-code, review-all, sync-studio, add-event-field, add-config-option, validate, generate-all).
+- `scripts/sync.sh` — 12-step verification pipeline.
+
 ## [1.1.0]
 
 ### Features

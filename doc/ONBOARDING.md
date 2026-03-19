@@ -20,6 +20,17 @@ graph TD
     style H fill:#fff3e0,stroke:#333,stroke-width:1px
 ```
 
+## Visual Editor (Studio)
+
+Prefer a UI over YAML? Use **Analytics Gen Studio** — a web-based editor that reads schemas dynamically:
+
+```bash
+cd analytics-gen-studio
+npm install && npm run dev
+```
+
+Studio lets you visually create events, parameters, shared parameters, and contexts with real-time YAML preview. All form fields, types, and validation come directly from JSON schemas.
+
 ## Prerequisites
 
 - Dart SDK 3.3+ with `dart` on your PATH.
