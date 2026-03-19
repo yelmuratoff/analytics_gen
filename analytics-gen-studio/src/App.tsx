@@ -7,6 +7,7 @@ import Fade from '@mui/material/Fade';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import Layout from './components/Layout.tsx';
 import { loadSchemas, type LoadedSchemas } from './schemas/loader.ts';
+import { applySchemaConstants } from './schemas/constants.ts';
 
 const theme = createTheme({
   palette: {
@@ -222,7 +223,10 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     loadSchemas()
-      .then(setSchemas)
+      .then((loaded) => {
+        applySchemaConstants(loaded);
+        setSchemas(loaded);
+      })
       .catch((err) => setError(err.message));
   }, []);
 

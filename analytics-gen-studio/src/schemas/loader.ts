@@ -18,6 +18,12 @@ export interface LoadedSchemas {
   casingOptions: string[];
   /** Default config extracted from schema defaults */
   defaultConfig: ConfigState;
+  /** Default event description from events.schema.json */
+  defaultEventDescription: string;
+  /** Snake case regex pattern from config schema (for domains) */
+  snakeCaseDomainPattern: RegExp;
+  /** Snake case regex pattern from config schema (for params/identifiers) */
+  snakeCaseParamPattern: RegExp;
 }
 
 const SCHEMA_BASE = `${import.meta.env.BASE_URL}schemas`;
@@ -117,6 +123,25 @@ function extractDefaultConfig(configSchema: RJSFSchema): ConfigState {
   return extractDefaults(configSchema) as unknown as ConfigState;
 }
 
+function extractDefaultEventDescription(eventsSchema: RJSFSchema): string {
+  const eventDef = eventsSchema.$defs?.event as RJSFSchema | undefined;
+  const descProp = eventDef?.properties?.description as Record<string, unknown> | undefined;
+  return (descProp?.default as string) ?? 'No description provided';
+}
+
+function extractSnakeCasePatterns(configSchema: RJSFSchema): { domain: RegExp; param: RegExp } {
+  const naming = configSchema.properties?.naming as RJSFSchema | undefined;
+  const domainDesc = (naming?.properties?.enforce_snake_case_domains as Record<string, unknown>)?.description as string ?? '';
+  const paramDesc = (naming?.properties?.enforce_snake_case_parameters as Record<string, unknown>)?.description as string ?? '';
+  // Extract regex from description: "pattern: ^[a-z0-9_]+$"
+  const domainMatch = domainDesc.match(/pattern:\s*(\^[^)]+\$)/);
+  const paramMatch = paramDesc.match(/pattern:\s*(\^[^)]+\$)/);
+  return {
+    domain: domainMatch ? new RegExp(domainMatch[1]) : /^[a-z0-9_]+$/,
+    param: paramMatch ? new RegExp(paramMatch[1]) : /^[a-z][a-z0-9_]*$/,
+  };
+}
+
 export async function loadSchemas(): Promise<LoadedSchemas> {
   const [rawConfig, events, parameter, sharedParameters, context] = await Promise.all([
     fetchSchema('analytics_gen.schema.json'),
@@ -140,5 +165,7 @@ export async function loadSchemas(): Promise<LoadedSchemas> {
     operations: extractOperations(parameter),
     casingOptions: extractCasingOptions(configSchema),
     defaultConfig: extractDefaultConfig(configSchema),
+    defaultEventDescription: extractDefaultEventDescription(events),
+    ...(() => { const p = extractSnakeCasePatterns(configSchema); return { snakeCaseDomainPattern: p.domain, snakeCaseParamPattern: p.param }; })(),
   };
 }

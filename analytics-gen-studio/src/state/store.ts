@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
+import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
 
 /** Initial defaults matching the JSON schema defaults.
  *  These are overridden by schema-derived defaults when schemas load (see App.tsx).
@@ -51,7 +52,7 @@ export const useStore = create<StudioState>()(
       }),
       addEvent: (fileIndex, domain, eventName) => set((s) => {
         s.eventFiles[fileIndex].domains[domain][eventName] = {
-          description: 'No description provided',
+          description: DEFAULT_EVENT_DESCRIPTION,
           parameters: {},
         } as EventDef;
       }),

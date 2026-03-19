@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml';
 import type { ConfigState, EventFile, SharedParamFile, ContextFile, ParamDef } from '../types/index.ts';
+import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
 
 const DUMP_OPTIONS: yaml.DumpOptions = {
   lineWidth: -1,
@@ -73,7 +74,7 @@ function cleanEventFields(event: Record<string, unknown>): Record<string, unknow
   for (const [key, value] of Object.entries(event)) {
     if (key === 'parameters') continue; // handled separately
     if (value === undefined || value === '' || value === false) continue;
-    if (value === 'No description provided') continue;
+    if (value === DEFAULT_EVENT_DESCRIPTION) continue;
     if (Array.isArray(value) && value.length === 0) continue;
     if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) continue;
     cleaned[key] = value;

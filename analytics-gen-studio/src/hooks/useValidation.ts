@@ -1,15 +1,13 @@
 import { useMemo } from 'react';
 import { useStore } from '../state/store.ts';
 import type { ValidationError, ParamDef } from '../types/index.ts';
-
-const SNAKE_CASE = /^[a-z][a-z0-9_]*$/;
-const SNAKE_CASE_DOMAIN = /^[a-z0-9_]+$/;
+import { SNAKE_CASE_PARAM, SNAKE_CASE_DOMAIN } from '../schemas/constants.ts';
 
 function validateParam(paramName: string, param: ParamDef | string | null, path: string, tab: 'events' | 'shared' | 'contexts', enforceSnakeParams: boolean): ValidationError[] {
   const errors: ValidationError[] = [];
 
   // snake_case check on param name
-  if (enforceSnakeParams && !SNAKE_CASE.test(paramName)) {
+  if (enforceSnakeParams && !SNAKE_CASE_PARAM.test(paramName)) {
     errors.push({ path, message: `"${paramName}" must be snake_case (a-z, 0-9, _)`, tab });
   }
 
@@ -50,7 +48,7 @@ function validateParam(paramName: string, param: ParamDef | string | null, path:
   }
 
   // identifier pattern
-  if (param.identifier && !SNAKE_CASE.test(param.identifier)) {
+  if (param.identifier && !SNAKE_CASE_PARAM.test(param.identifier)) {
     errors.push({ path, message: `identifier "${param.identifier}" must be snake_case`, tab });
   }
 

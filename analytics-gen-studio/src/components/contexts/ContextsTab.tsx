@@ -26,6 +26,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
+import { SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import ContextPropertyEditor from './ContextPropertyEditor.tsx';
@@ -85,7 +86,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
     if (!fn) { setFileError('File name is required'); return; }
     if (!/^[a-zA-Z0-9_.\-/]+$/.test(fn)) { setFileError('Invalid characters'); return; }
     if (!cn) { setCtxError('Context name is required'); return; }
-    if (!/^[a-z][a-z0-9_]*$/.test(cn)) { setCtxError('Must be snake_case'); return; }
+    if (!SNAKE_CASE_PARAM.test(cn)) { setCtxError('Must be snake_case'); return; }
     if (files.some((f) => f.fileName === (fn.endsWith('.yaml') ? fn : `${fn}.yaml`))) { setFileError('File already exists'); return; }
     addContextFile(fn.endsWith('.yaml') ? fn : `${fn}.yaml`, cn);
     setFileNameInput(''); setContextNameInput('');
