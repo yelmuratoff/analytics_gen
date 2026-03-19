@@ -262,6 +262,59 @@ describe('store', () => {
       expect(useStore.getState().activeTab).toBe('shared');
       expect((useStore.getState() as any).version).toBeUndefined();
     });
+
+    it('loadProject with only config preserves empty arrays for others', () => {
+      useStore.getState().loadProject({
+        config: { ...useStore.getState().config, outputs: { dart: 'test' } },
+      } as any);
+      const s = useStore.getState();
+      expect(s.config.outputs.dart).toBe('test');
+      expect(s.eventFiles).toHaveLength(0);
+      expect(s.sharedParamFiles).toHaveLength(0);
+      expect(s.contextFiles).toHaveLength(0);
+    });
+
+    it('loadProject full roundtrip from studio_export format', () => {
+      const projectJson = {
+        version: 1,
+        activeTab: 'events',
+        config: {
+          inputs: { events: 'events', shared_parameters: ['s.yaml'], contexts: ['c.yaml'], imports: [] },
+          outputs: { dart: 'lib/gen', docs: 'docs/' },
+          targets: { csv: true, json: false, sql: false, docs: true, plan: true, test_matchers: false },
+          rules: { include_event_description: true, strict_event_names: false, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false },
+          naming: { casing: 'title_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '{domain}: {event}', identifier_template: '{domain}.{event}', domain_aliases: { auth: 'Auth' } },
+          meta: { auto_tracking_creation_date: true, include_meta_in_parameters: false },
+        },
+        eventFiles: [{
+          fileName: 'auth.yaml',
+          domains: {
+            auth: {
+              login: {
+                description: 'User logs in',
+                deprecated: true,
+                parameters: { session_id: null, method: 'string' },
+              },
+            },
+          },
+        }],
+        sharedParamFiles: [{ fileName: 's.yaml', parameters: { session_id: { type: 'string' } } }],
+        contextFiles: [{ fileName: 'c.yaml', contextName: 'user_props', properties: { count: { type: 'int', operations: ['set'] } } }],
+      };
+
+      useStore.getState().loadProject(projectJson as any);
+      const s = useStore.getState();
+
+      expect(s.activeTab).toBe('events');
+      expect(s.config.targets.csv).toBe(true);
+      expect(s.config.naming.casing).toBe('title_case');
+      expect(s.config.naming.domain_aliases.auth).toBe('Auth');
+      expect(s.config.meta.auto_tracking_creation_date).toBe(true);
+      expect(s.eventFiles[0].domains.auth.login.parameters.session_id).toBeNull();
+      expect(s.eventFiles[0].domains.auth.login.parameters.method).toBe('string');
+      expect(s.sharedParamFiles[0].parameters.session_id).toEqual({ type: 'string' });
+      expect((s.contextFiles[0].properties.count as any).operations).toEqual(['set']);
+    });
   });
 
   describe('navigation & selection', () => {

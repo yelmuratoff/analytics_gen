@@ -208,3 +208,57 @@ describe('generateContextFileYaml', () => {
     expect(y).toContain('ctx: {}');
   });
 });
+
+// ── Edge cases for cleanParam / isSimpleParam ──
+
+describe('cleanParam edge cases', () => {
+  it('collapses param with empty description + empty allowed_values + empty meta to shorthand', () => {
+    const y = generateEventFileYaml(eventFile({
+      d: { e: { parameters: { p: { type: 'string', description: '', allowed_values: [], meta: {}, operations: [] } } } },
+    }));
+    expect(y).toContain('p: string');
+    expect(y).not.toContain('description:');
+  });
+
+  it('keeps param as object when description is non-empty even if others empty', () => {
+    const y = generateEventFileYaml(eventFile({
+      d: { e: { parameters: { p: { type: 'string', description: 'Has desc', allowed_values: [], meta: {} } } } },
+    }));
+    expect(y).toContain('type: string');
+    expect(y).toContain('description: Has desc');
+  });
+
+  it('renders added_in without deprecated flag', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { added_in: '1.0.0', parameters: {} } } }));
+    expect(y).toContain('added_in:');
+    expect(y).not.toContain('deprecated:');
+  });
+
+  it('renders param with only description (no type) as object', () => {
+    const y = generateEventFileYaml(eventFile({
+      d: { e: { parameters: { p: { description: 'Just a desc' } } } },
+    }));
+    expect(y).toContain('description: Just a desc');
+  });
+
+  it('renders multiple events in same domain', () => {
+    const y = generateEventFileYaml(eventFile({
+      auth: {
+        login: { description: 'Login', parameters: { m: 'string' } },
+        logout: { parameters: {} },
+      },
+    }));
+    expect(y).toContain('login:');
+    expect(y).toContain('logout:');
+    expect(y).toContain('m: string');
+  });
+
+  it('renders multiple domains in same file', () => {
+    const y = generateEventFileYaml(eventFile({
+      auth: { login: { parameters: {} } },
+      purchase: { completed: { parameters: {} } },
+    }));
+    expect(y).toContain('auth:');
+    expect(y).toContain('purchase:');
+  });
+});
