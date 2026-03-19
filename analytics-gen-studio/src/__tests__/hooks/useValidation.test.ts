@@ -28,7 +28,8 @@ function validate() {
         errors.push({ path: dn, message: 'must be snake_case', tab: 'events' });
       }
       for (const [, event] of Object.entries(events)) {
-        if (config.rules.strict_event_names && event.event_name && (event.event_name.includes('{') || event.event_name.includes('}'))) {
+        const eventName_ = event.event_name as string | undefined;
+        if (config.rules.strict_event_names && eventName_ && (eventName_.includes('{') || eventName_.includes('}'))) {
           errors.push({ path: 'event', message: 'cannot contain { }', tab: 'events' });
         }
         for (const [pn, pv] of Object.entries(event.parameters)) {

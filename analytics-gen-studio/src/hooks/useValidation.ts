@@ -95,7 +95,8 @@ export function useValidation(): ValidationError[] {
           const ePath = `events.${file.fileName}.${domainName}.${eventName}`;
 
           // strict_event_names: custom event_name must not have { }
-          if (config.rules.strict_event_names && event.event_name && (event.event_name.includes('{') || event.event_name.includes('}'))) {
+          const eventName_ = event.event_name as string | undefined;
+          if (config.rules.strict_event_names && eventName_ && (eventName_.includes('{') || eventName_.includes('}'))) {
             errors.push({ path: ePath, message: 'event_name cannot contain { } when strict_event_names is enabled', tab: 'events' });
           }
 

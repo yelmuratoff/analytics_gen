@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SNAKE_CASE_PARAM } from '../schemas/constants.ts';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -44,7 +45,7 @@ export default function AddItemDialog({ open, title, label, placeholder, existin
       if (!VALID_YAML_KEY.test(input)) {
         return 'Must start with a letter or _, only letters, numbers, _';
       }
-      if (validateSnakeCase && !/^[a-z][a-z0-9_]*$/.test(input)) {
+      if (validateSnakeCase && !SNAKE_CASE_PARAM.test(input)) {
         return 'Must be snake_case (lowercase, numbers, underscores)';
       }
     }
