@@ -30,7 +30,7 @@ analytics-gen-studio/ — Web studio (React/Vite)
 - **Studio site** — renders UI dynamically from schemas at runtime
 - **TypeScript types** — auto-generated from schemas (`npm run generate-types`)
 
-**To add a field/type/option** — edit the schema. Studio picks it up automatically. No hardcoded schema values anywhere in Studio code.
+**To add a field/type/option** — edit the schema. Studio picks it up automatically. Studio must not contain hardcoded models, data, or schema values — it purely renders what schemas define.
 
 ## Key rules
 
