@@ -75,10 +75,10 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
           </Typography>
         </Box>
         <Box sx={{
-          p: 2.5, borderRadius: 1.5, border: '2px dashed #E8E4E0',
-          bgcolor: '#FAF7F4',
+          p: 2.5, borderRadius: 1.5, border: '2px dashed rgba(99,102,241,0.25)',
+          bgcolor: 'rgba(99,102,241,0.03)',
         }}>
-          <Typography variant="subtitle1" sx={{ color: '#DF4926', mb: 0.5 }}>
+          <Typography variant="subtitle1" sx={{ color: '#6366F1', mb: 0.5 }}>
             Shared Parameter
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
@@ -104,6 +104,14 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   const formData: ParamDef = typeof rawValue === 'string'
     ? { type: rawValue }
     : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
+
+  // Count filled advanced fields (everything except 'type')
+  const advancedSetCount = Object.entries(formData).filter(([k, v]) => {
+    if (k === 'type') return false;
+    if (v == null || v === '') return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    return true;
+  }).length;
 
   const header = (
     <Box sx={{ mb: 3 }}>
@@ -156,9 +164,16 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
           <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#555', flex: 1 }}>
             Advanced Options
           </Typography>
-          <Typography sx={{ fontSize: '0.75rem', color: '#bbb' }}>
-            All schema fields
-          </Typography>
+          {advancedSetCount > 0 && !advanced && (
+            <Box sx={{
+              px: 0.8, py: 0.15, borderRadius: 1,
+              bgcolor: 'rgba(46,125,50,0.08)',
+            }}>
+              <Typography sx={{ fontSize: '0.68rem', fontWeight: 600, color: '#2E7D32' }}>
+                {advancedSetCount} set
+              </Typography>
+            </Box>
+          )}
         </Box>
         <Collapse in={advanced}>
           <Box sx={{ px: 2, pb: 2, pt: 1 }}>

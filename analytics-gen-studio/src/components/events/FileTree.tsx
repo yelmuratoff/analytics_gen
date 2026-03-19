@@ -23,6 +23,9 @@ import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRound
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
+import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
+import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
+import Tooltip from '@mui/material/Tooltip';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
@@ -65,6 +68,7 @@ export default function FileTree() {
   const [addEventFor, setAddEventFor] = useState<{ fi: number; domain: string } | null>(null);
   const [addParamFor, setAddParamFor] = useState<{ fi: number; domain: string; event: string } | null>(null);
   const [sharedAnchorEl, setSharedAnchorEl] = useState<HTMLElement | null>(null);
+  const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
   const allSharedParams = sharedParamFiles.flatMap((f) => Object.keys(f.parameters));
@@ -78,6 +82,9 @@ export default function FileTree() {
       return next;
     });
   };
+  const allExpanded = allKeys.size > 0 && collapsed.size === 0;
+  const expandAll = () => setCollapsed(new Set());
+  const collapseAll = () => setCollapsed(new Set(allKeys));
 
   const isSel = (fi: number, domain?: string, event?: string, param?: string) =>
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&
@@ -138,10 +145,22 @@ export default function FileTree() {
   return (
     <>
       <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
-          fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
-          Add File
-        </Button>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
+            fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
+            Add File
+          </Button>
+          {files.length > 0 && (
+            <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
+              <IconButton size="small" onClick={allExpanded ? collapseAll : expandAll} sx={{
+                color: '#999', flexShrink: 0,
+                '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+              }}>
+                {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
         {files.length > 0 && (
           <TextField
             size="small"
@@ -269,7 +288,7 @@ export default function FileTree() {
                                           })} dense>
                                             <ListItemIcon sx={{ minWidth: 18 }}>
                                               {pv === null
-                                                ? <LinkRounded sx={{ fontSize: 14, color: '#DF4926' }} />
+                                                ? <LinkRounded sx={{ fontSize: 14, color: '#6366F1' }} />
                                                 : <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />}
                                             </ListItemIcon>
                                             <ListItemText
@@ -279,7 +298,7 @@ export default function FileTree() {
                                                   {pv === null && (
                                                     <Chip label="shared" size="small" sx={{
                                                       height: 16, fontSize: '0.6rem', fontWeight: 600,
-                                                      bgcolor: 'rgba(223,73,38,0.08)', color: '#DF4926',
+                                                      bgcolor: 'rgba(99,102,241,0.08)', color: '#6366F1',
                                                       '& .MuiChip-label': { px: 0.6 },
                                                     }} />
                                                   )}
@@ -300,26 +319,20 @@ export default function FileTree() {
                                         );
                                       })}
                                       {!q && (
-                                        <>
-                                          <ListItemButton sx={{ pl: 9.5, py: 0.15 }}
-                                            onClick={() => setAddParamFor({ fi, domain: dn, event: en })} dense>
-                                            <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
-                                            <ListItemText primary="New" primaryTypographyProps={{
-                                              fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
-                                            }} />
-                                          </ListItemButton>
-                                          {allSharedParams.length > 0 && (
-                                            <ListItemButton sx={{ pl: 9.5, py: 0.15 }} onClick={(e) => {
-                                              setAddParamFor({ fi, domain: dn, event: en });
-                                              setSharedAnchorEl(e.currentTarget);
-                                            }} dense>
-                                              <LinkRounded sx={{ fontSize: 14, color: '#999', mr: 0.5 }} />
-                                              <ListItemText primary="Link shared" primaryTypographyProps={{
-                                                fontSize: '0.75rem', color: '#999', fontWeight: 500,
-                                              }} />
-                                            </ListItemButton>
-                                          )}
-                                        </>
+                                        <ListItemButton sx={{ pl: 9.5, py: 0.15 }} onClick={(e) => {
+                                          setAddParamFor({ fi, domain: dn, event: en });
+                                          if (allSharedParams.length > 0) {
+                                            setAddMenuAnchor(e.currentTarget);
+                                          } else {
+                                            // No shared params — go straight to add local
+                                            setAddParamFor({ fi, domain: dn, event: en });
+                                          }
+                                        }} dense>
+                                          <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
+                                          <ListItemText primary="Add" primaryTypographyProps={{
+                                            fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
+                                          }} />
+                                        </ListItemButton>
                                       )}
                                     </List>
                                   </Collapse>
@@ -355,6 +368,29 @@ export default function FileTree() {
         })}
       </List>
 
+      {/* Add parameter menu (local + shared options) */}
+      <Menu anchorEl={addMenuAnchor} open={!!addMenuAnchor}
+        onClose={() => { setAddMenuAnchor(null); setAddParamFor(null); }}
+        slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}>
+        <MenuItem onClick={() => {
+          setAddMenuAnchor(null);
+          // addParamFor stays set — AddItemDialog will open
+        }} sx={{ fontSize: '0.82rem' }}>
+          <AddRounded sx={{ fontSize: 15, mr: 1, color: '#DF4926' }} />
+          New local parameter
+        </MenuItem>
+        {allSharedParams.length > 0 && (
+          <MenuItem onClick={() => {
+            const anchor = addMenuAnchor;
+            setAddMenuAnchor(null);
+            // Use the original "Add" button as anchor for the shared picker
+            requestAnimationFrame(() => setSharedAnchorEl(anchor));
+          }} sx={{ fontSize: '0.82rem' }}>
+            <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#6366F1' }} />
+            Link shared parameter
+          </MenuItem>
+        )}
+      </Menu>
       {/* Shared param picker */}
       <Menu anchorEl={sharedAnchorEl} open={!!sharedAnchorEl}
         onClose={() => { setSharedAnchorEl(null); setAddParamFor(null); }}
@@ -364,7 +400,7 @@ export default function FileTree() {
             if (addParamFor) addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, sp, null);
             setSharedAnchorEl(null); setAddParamFor(null);
           }} sx={{ fontSize: '0.82rem', fontFamily: '"JetBrains Mono", monospace' }}>
-            <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#DF4926' }} />
+            <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#6366F1' }} />
             {sp}
           </MenuItem>
         ))}
@@ -400,7 +436,7 @@ export default function FileTree() {
             setAddEventFor(null);
           }} />
       )}
-      {addParamFor && !sharedAnchorEl && (
+      {addParamFor && !sharedAnchorEl && !addMenuAnchor && (
         <AddItemDialog open title="Add Parameter" label="Parameter name" placeholder="session_id"
           validateSnakeCase existingNames={Object.keys(files[addParamFor.fi]?.domains[addParamFor.domain]?.[addParamFor.event]?.parameters ?? {})}
           onClose={() => setAddParamFor(null)}

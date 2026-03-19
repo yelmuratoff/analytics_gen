@@ -18,6 +18,8 @@ import RefreshRounded from '@mui/icons-material/RefreshRounded';
 import { useStore } from '../state/store.ts';
 import { exportAllAsZip, saveProject, loadProjectFile } from '../utils/export.ts';
 
+const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
+
 export default function Toolbar() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
@@ -109,18 +111,18 @@ export default function Toolbar() {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title="Ctrl+Shift+E" arrow>
+          <Tooltip title={`Export ZIP (${isMac ? '\u2318\u21E7E' : 'Ctrl+Shift+E'})`} arrow>
             <Button
               onClick={handleExportZip}
               size="small"
-              variant="outlined"
+              variant="contained"
               startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
-              sx={actionBtnSx}
+              sx={{ fontSize: '0.78rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
             >
               Export
             </Button>
           </Tooltip>
-          <Tooltip title="Ctrl+S" arrow>
+          <Tooltip title={`Save Project (${isMac ? '\u2318S' : 'Ctrl+S'})`} arrow>
             <Button
               onClick={handleSaveProject}
               size="small"
@@ -131,16 +133,12 @@ export default function Toolbar() {
               Save
             </Button>
           </Tooltip>
-          <Tooltip title="Open Project (Ctrl+O)" arrow>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              size="small"
-              variant="outlined"
-              startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
-              sx={actionBtnSx}
-            >
-              Open
-            </Button>
+          <Tooltip title={`Open Project (${isMac ? '\u2318O' : 'Ctrl+O'})`} arrow>
+            <IconButton onClick={() => fileInputRef.current?.click()} size="small" sx={{
+              color: '#999', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+            }}>
+              <FileOpenRounded sx={{ fontSize: 20 }} />
+            </IconButton>
           </Tooltip>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadProject} />
           <Tooltip title="Reset All" arrow>
@@ -169,7 +167,7 @@ export default function Toolbar() {
 
       <Snackbar
         open={!!snackbar}
-        autoHideDuration={2500}
+        autoHideDuration={snackbar?.severity === 'error' ? 6000 : 2500}
         onClose={() => setSnackbar(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

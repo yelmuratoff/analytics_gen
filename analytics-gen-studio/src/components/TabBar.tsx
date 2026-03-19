@@ -3,6 +3,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
+import Tooltip from '@mui/material/Tooltip';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
@@ -10,6 +11,9 @@ import LayersRounded from '@mui/icons-material/LayersRounded';
 import { useStore } from '../state/store.ts';
 import { useValidation } from '../hooks/useValidation.ts';
 import type { TabId } from '../types/index.ts';
+
+const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
+const modKey = isMac ? '\u2318' : 'Ctrl+';
 
 const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
   { id: 'config', label: 'Config', icon: <SettingsRounded sx={{ fontSize: 18 }} /> },
@@ -63,26 +67,20 @@ export default function TabBar() {
             key={t.id}
             value={t.id}
             label={
-              <Badge
-                badgeContent={errorCounts[t.id]}
-                color="error"
-                sx={{
-                  '& .MuiBadge-badge': {
-                    fontSize: '0.6rem', minWidth: 16, height: 16, p: 0,
-                    right: -10, top: -2,
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {t.label}
-                  <Box component="span" sx={{
-                    fontSize: '0.6rem', color: '#bbb', fontWeight: 400,
-                    ml: 0.3,
-                  }}>
-                    {i + 1}
-                  </Box>
-                </Box>
-              </Badge>
+              <Tooltip title={`${modKey}${i + 1}`} arrow enterDelay={600} placement="bottom">
+                <Badge
+                  badgeContent={errorCounts[t.id]}
+                  color="error"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      fontSize: '0.6rem', minWidth: 16, height: 16, p: 0,
+                      right: -10, top: -2,
+                    },
+                  }}
+                >
+                  <span>{t.label}</span>
+                </Badge>
+              </Tooltip>
             }
             icon={t.icon}
             iconPosition="start"

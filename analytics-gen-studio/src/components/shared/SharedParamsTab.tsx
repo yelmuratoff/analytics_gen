@@ -19,6 +19,9 @@ import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
+import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
+import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
+import Tooltip from '@mui/material/Tooltip';
 import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
@@ -102,6 +105,9 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
       return next;
     });
   };
+  const allExpanded = files.length > 0 && collapsedFiles.size === 0;
+  const expandAllFiles = () => setCollapsedFiles(new Set());
+  const collapseAllFiles = () => setCollapsedFiles(new Set(files.map((_, i) => i)));
 
   const isSel = (fi: number, p?: string) =>
     selectedPath?.tab === 'shared' && selectedPath.fileIndex === fi && selectedPath.parameter === p;
@@ -123,10 +129,22 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
       <Box data-shared-sidebar sx={{ width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0 }}>
         <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
-            fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
-            Add File
-          </Button>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
+              fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
+              Add File
+            </Button>
+            {files.length > 0 && (
+              <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
+                <IconButton size="small" onClick={allExpanded ? collapseAllFiles : expandAllFiles} sx={{
+                  color: '#999', flexShrink: 0,
+                  '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                }}>
+                  {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
           {files.length > 0 && (
             <TextField
               size="small"

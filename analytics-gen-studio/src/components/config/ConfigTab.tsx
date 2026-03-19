@@ -11,10 +11,13 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Collapse from '@mui/material/Collapse';
+import Tooltip from '@mui/material/Tooltip';
 import AddRounded from '@mui/icons-material/AddRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
+import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
+import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import InputRounded from '@mui/icons-material/InputRounded';
 import OutputRounded from '@mui/icons-material/OutputRounded';
 import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
@@ -41,14 +44,13 @@ function getSectionIcon(key: string) {
 
 // ── Reusable pieces ──
 
-function Section({ title, sectionKey, defaultOpen = true, children }: {
-  title: string; sectionKey: string; defaultOpen?: boolean; children: React.ReactNode;
+function Section({ title, sectionKey, open, onToggle, filledCount, children }: {
+  title: string; sectionKey: string; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
     <Box sx={{ mb: 1, borderRadius: 2.5, border: '1px solid #EEEBE8', overflow: 'hidden' }}>
       <Box
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
         sx={{
           display: 'flex', alignItems: 'center', gap: 1, py: 1.2, px: 2,
           cursor: 'pointer', userSelect: 'none',
@@ -61,6 +63,17 @@ function Section({ title, sectionKey, defaultOpen = true, children }: {
           : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: '#999' }} />}
         {getSectionIcon(sectionKey)}
         <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#333', flex: 1 }}>{title}</Typography>
+        {!open && filledCount != null && filledCount > 0 && (
+          <Chip
+            label={`${filledCount} set`}
+            size="small"
+            sx={{
+              height: 20, fontSize: '0.68rem', fontWeight: 600,
+              bgcolor: 'rgba(46,125,50,0.08)', color: '#2E7D32',
+              '& .MuiChip-label': { px: 0.8 },
+            }}
+          />
+        )}
       </Box>
       <Collapse in={open}>
         <Box sx={{ px: 2.5, pb: 2.5, pt: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -256,23 +269,56 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
   const updateConfig = useStore((s) => s.updateConfig);
 
   const sections = configSchema.properties ?? {};
+  const sectionKeys = Object.keys(sections).filter((k) => {
+    const s = sections[k] as Record<string, unknown>;
+    return s.type === 'object' && s.properties;
+  });
+
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(sectionKeys.length > 0 ? [sectionKeys[0]] : []));
+  const toggleSection = (key: string) => setOpenSections((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const allExpanded = sectionKeys.length > 0 && sectionKeys.every((k) => openSections.has(k));
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4">Configuration</Typography>
-        <Typography variant="caption">analytics_gen.yaml</Typography>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography variant="h4">Configuration</Typography>
+          <Typography variant="caption">analytics_gen.yaml</Typography>
+        </Box>
+        {sectionKeys.length > 1 && (
+          <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
+            <IconButton size="small" onClick={() => setOpenSections(allExpanded ? new Set() : new Set(sectionKeys))} sx={{
+              color: '#999', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+            }}>
+              {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 20 }} /> : <UnfoldMoreRounded sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
-      {Object.entries(sections).map(([sectionKey, sectionSchema]) => {
+      {Object.entries(sections).map(([sectionKey, sectionSchema], sectionIndex) => {
         const sec = sectionSchema as Record<string, unknown>;
         if (sec.type !== 'object' || !sec.properties) return null;
         const sectionTitle = (sec.title as string) ?? sectionKey;
         const sectionConfig = (config as unknown as Record<string, Record<string, unknown>>)[sectionKey] ?? {};
         const fields = sec.properties as Record<string, Record<string, unknown>>;
+        const filledCount = Object.entries(fields).filter(([fk, fs]) => {
+          const val = sectionConfig[fk];
+          if (val == null) return false;
+          const defVal = (fs as Record<string, unknown>).default;
+          if (val === defVal) return false;
+          if (typeof val === 'boolean') return val !== false;
+          if (typeof val === 'string') return val !== '';
+          if (Array.isArray(val)) return val.length > 0;
+          return true;
+        }).length;
 
         return (
-          <Section key={sectionKey} title={sectionTitle} sectionKey={sectionKey}>
+          <Section key={sectionKey} title={sectionTitle} sectionKey={sectionKey} open={openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
             {Object.entries(fields).map(([fieldKey, fieldSchema]) => (
               <DynamicField
                 key={fieldKey}

@@ -9,6 +9,7 @@ import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import FileDownloadRounded from '@mui/icons-material/FileDownloadRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
+import WrapTextRounded from '@mui/icons-material/WrapTextRounded';
 import { useYamlPreview } from '../hooks/useYamlPreview.ts';
 import { useValidation } from '../hooks/useValidation.ts';
 import { useStore } from '../state/store.ts';
@@ -63,6 +64,7 @@ export default function YamlPreview() {
   const tabErrors = errors.filter((e) => e.tab === activeTab);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [wordWrap, setWordWrap] = useState(false);
 
   const safeIndex = Math.min(activeFileIndex, Math.max(0, files.length - 1));
   const currentFile = files[safeIndex];
@@ -135,6 +137,14 @@ export default function YamlPreview() {
         <Typography sx={{ fontSize: '0.75rem', color: '#3D3D3D', mr: 1.5 }}>
           {lineCount}L
         </Typography>
+        <Tooltip title={wordWrap ? 'No wrap' : 'Wrap lines'} arrow>
+          <IconButton size="small" onClick={() => setWordWrap(!wordWrap)} sx={{
+            ...previewBtn,
+            ...(wordWrap && { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.1)' }),
+          }}>
+            <WrapTextRounded sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Tooltip>
         <Tooltip title={copied ? 'Copied!' : 'Copy'} arrow>
           <IconButton size="small" onClick={handleCopy} sx={previewBtn}>
             {copied ? <CheckCircleRounded sx={{ fontSize: 16, color: '#4CAF50' }} /> : <ContentCopyRounded sx={{ fontSize: 16 }} />}
@@ -162,7 +172,7 @@ export default function YamlPreview() {
           }}>
             {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
           </Box>
-          <Box component="code" sx={{ flex: 1, whiteSpace: 'pre', pl: 2.5, pr: 2 }}>
+          <Box component="code" sx={{ flex: 1, whiteSpace: wordWrap ? 'pre-wrap' : 'pre', wordBreak: wordWrap ? 'break-all' : 'normal', pl: 2.5, pr: 2 }}>
             {highlighted}
           </Box>
         </Box>
