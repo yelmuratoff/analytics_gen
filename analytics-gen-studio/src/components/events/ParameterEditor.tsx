@@ -5,12 +5,17 @@ import type { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
+import Collapse from '@mui/material/Collapse';
+import Button from '@mui/material/Button';
+import NavigateNextRounded from '@mui/icons-material/NavigateNextRounded';
+import TuneRounded from '@mui/icons-material/TuneRounded';
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
+import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
@@ -25,11 +30,14 @@ interface ParameterEditorProps {
   parameterSchema: RJSFSchema;
   /** Types extracted from parameter.schema.json at load time */
   parameterTypes: string[];
+  breadcrumb?: string[] | null;
 }
 
-export default function ParameterEditor({ fileIndex, domain, eventName, paramName, parameterSchema, parameterTypes }: ParameterEditorProps) {
+export default function ParameterEditor({ fileIndex, domain, eventName, paramName, parameterSchema, parameterTypes, breadcrumb }: ParameterEditorProps) {
   const files = useStore((s) => s.eventFiles);
   const updateParameter = useStore((s) => s.updateParameter);
+  const setActiveTab = useStore((s) => s.setActiveTab);
+  const setSelectedPath = useStore((s) => s.setSelectedPath);
   const [advanced, setAdvanced] = useState(false);
 
   const file = files[fileIndex];
@@ -38,15 +46,33 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   if (!event) return null;
   const rawValue = event.parameters[paramName];
 
+  const breadcrumbEl = breadcrumb && breadcrumb.length > 1 ? (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mb: 0.5, flexWrap: 'wrap' }}>
+      {breadcrumb.map((part, i) => (
+        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+          {i > 0 && <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />}
+          <Typography sx={{
+            fontSize: '0.75rem',
+            color: i === breadcrumb.length - 1 ? '#DF4926' : '#999',
+            fontWeight: i === breadcrumb.length - 1 ? 600 : 400,
+            fontFamily: '"JetBrains Mono", monospace',
+          }}>
+            {part}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  ) : null;
+
   // Shared ref
   if (rawValue === null) {
     return (
       <Box>
         <Box sx={{ mb: 3 }}>
+          {breadcrumbEl}
           <Typography variant="h5">
             {paramName}
           </Typography>
-          <Typography variant="caption">shared reference</Typography>
         </Box>
         <Box sx={{
           p: 2.5, borderRadius: 1.5, border: '2px dashed #E8E4E0',
@@ -55,9 +81,21 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
           <Typography variant="subtitle1" sx={{ color: '#DF4926', mb: 0.5 }}>
             Shared Parameter
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
             Defined in Shared Parameters tab. Resolved at generation time.
           </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<OpenInNewRounded sx={{ fontSize: 14 }} />}
+            onClick={() => {
+              setActiveTab('shared');
+              setSelectedPath(null);
+            }}
+            sx={{ fontSize: '0.75rem' }}
+          >
+            Go to Shared Params
+          </Button>
         </Box>
       </Box>
     );
@@ -68,44 +106,13 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
     : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
   const header = (
-    <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-      <Box>
-        <Typography variant="h5">
-          {paramName}
-        </Typography>
-        <Typography variant="caption">{eventName} / {domain}</Typography>
-      </Box>
-      <FormControlLabel
-        control={<Switch checked={advanced} onChange={(_, v) => setAdvanced(v)} size="small"
-          sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#DF4926' },
-            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#DF4926' } }}
-        />}
-        label={<Typography variant="caption" sx={{ fontWeight: 600 }}>Advanced</Typography>}
-      />
+    <Box sx={{ mb: 3 }}>
+      {breadcrumbEl}
+      <Typography variant="h5">
+        {paramName}
+      </Typography>
     </Box>
   );
-
-  if (!advanced) {
-    return (
-      <Box>
-        {header}
-        <FormControl fullWidth size="small">
-          <InputLabel>Type</InputLabel>
-          <Select
-            value={formData.type ?? DEFAULT_PARAM_TYPE}
-            label="Type"
-            onChange={(e) => updateParameter(fileIndex, domain, eventName, paramName, e.target.value)}
-          >
-            {parameterTypes.map((t) => (
-              <MenuItem key={t} value={t}>
-                <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>{t}</Typography>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-    );
-  }
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) updateParameter(fileIndex, domain, eventName, paramName, e.formData as ParamDef);
@@ -114,18 +121,62 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   return (
     <Box>
       {header}
-      <Form
-        schema={parameterSchema}
-        uiSchema={parameterEditorUiSchema}
-        formData={formData}
-        validator={validator}
-        onChange={handleChange}
-        templates={compactTemplates}
-        liveValidate
-        showErrorList={false}
-      >
-        <div />
-      </Form>
+      <FormControl fullWidth size="small" sx={{ mb: 2.5 }}>
+        <InputLabel>Type</InputLabel>
+        <Select
+          value={formData.type ?? DEFAULT_PARAM_TYPE}
+          label="Type"
+          onChange={(e) => updateParameter(fileIndex, domain, eventName, paramName, e.target.value)}
+        >
+          {parameterTypes.map((t) => (
+            <MenuItem key={t} value={t}>
+              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>{t}</Typography>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {/* Advanced options - collapsible section */}
+      <Box sx={{
+        borderRadius: 2, border: '1px solid #EEEBE8', overflow: 'hidden',
+      }}>
+        <Box
+          onClick={() => setAdvanced(!advanced)}
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 1, py: 1, px: 2,
+            cursor: 'pointer', userSelect: 'none',
+            bgcolor: advanced ? 'rgba(223,73,38,0.02)' : 'transparent',
+            '&:hover': { bgcolor: 'rgba(223,73,38,0.04)' },
+          }}
+        >
+          {advanced
+            ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
+            : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: '#999' }} />}
+          <TuneRounded sx={{ fontSize: 16, color: advanced ? '#DF4926' : '#999' }} />
+          <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#555', flex: 1 }}>
+            Advanced Options
+          </Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#bbb' }}>
+            All schema fields
+          </Typography>
+        </Box>
+        <Collapse in={advanced}>
+          <Box sx={{ px: 2, pb: 2, pt: 1 }}>
+            <Form
+              schema={parameterSchema}
+              uiSchema={parameterEditorUiSchema}
+              formData={formData}
+              validator={validator}
+              onChange={handleChange}
+              templates={compactTemplates}
+              liveValidate
+              showErrorList={false}
+            >
+              <div />
+            </Form>
+          </Box>
+        </Collapse>
+      </Box>
     </Box>
   );
 }

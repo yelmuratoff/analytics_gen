@@ -20,7 +20,7 @@ import CircleRounded from '@mui/icons-material/CircleRounded';
 import LinkRounded from '@mui/icons-material/LinkRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
-import CloseRounded from '@mui/icons-material/CloseRounded';
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
@@ -84,8 +84,9 @@ export default function FileTree() {
     selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param;
 
   const hoverDel = {
-    opacity: 0, transition: 'opacity 0.15s', color: '#ccc',
-    '&:hover': { color: '#D32F2F' },
+    opacity: 0, transition: 'opacity 0.15s', color: '#BCBCBC',
+    p: 0.5,
+    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)' },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
@@ -94,7 +95,7 @@ export default function FileTree() {
     : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: '#ccc' }} />;
 
   const countBadge = (n: number) => (
-    <Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5, fontWeight: 500 }}>
+    <Typography component="span" sx={{ fontSize: '0.75rem', color: '#bbb', ml: 0.5, fontWeight: 500 }}>
       {n}
     </Typography>
   );
@@ -164,9 +165,12 @@ export default function FileTree() {
       {files.length === 0 && (
         <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
           <InsertDriveFileRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 1 }} />
-          <Typography sx={{ fontSize: '0.78rem', color: '#aaa', mb: 1.5 }}>No event files yet</Typography>
+          <Typography sx={{ fontSize: '0.78rem', color: '#aaa', mb: 0.5 }}>No event files yet</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#ccc', mb: 1.5, lineHeight: 1.5, px: 1 }}>
+            Create a YAML file, then add domains and events with parameters inside.
+          </Typography>
           <Button size="small" variant="outlined" onClick={() => setAddFileOpen(true)}
-            sx={{ fontSize: '0.72rem' }}>
+            sx={{ fontSize: '0.75rem' }}>
             Create your first file
           </Button>
         </Box>
@@ -193,7 +197,7 @@ export default function FileTree() {
                   `This will remove all domains, events and parameters in this file.`,
                   () => removeEventFile(fi),
                 )} sx={hoverDel}>
-                  <CloseRounded sx={{ fontSize: 14 }} />
+                  <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                 </IconButton>
               </ListItemButton>
               <Collapse in={isExpanded(fk) || !!q}>
@@ -218,7 +222,7 @@ export default function FileTree() {
                             `This will remove ${eventCount} event(s) and all their parameters.`,
                             () => removeDomain(fi, dn),
                           )} sx={hoverDel}>
-                            <CloseRounded sx={{ fontSize: 13 }} />
+                            <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
                         <Collapse in={isExpanded(dk) || !!q}>
@@ -249,7 +253,7 @@ export default function FileTree() {
                                       `This will remove the event and its ${paramCount} parameter(s).`,
                                       () => removeEvent(fi, dn, en),
                                     )} sx={hoverDel}>
-                                      <CloseRounded sx={{ fontSize: 12 }} />
+                                      <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                                     </IconButton>
                                   </ListItemButton>
                                   <Collapse in={isExpanded(ek) || !!q}>
@@ -274,7 +278,7 @@ export default function FileTree() {
                                                   <span>{pn}</span>
                                                   {pv === null && (
                                                     <Chip label="shared" size="small" sx={{
-                                                      height: 16, fontSize: '0.58rem', fontWeight: 600,
+                                                      height: 16, fontSize: '0.6rem', fontWeight: 600,
                                                       bgcolor: 'rgba(223,73,38,0.08)', color: '#DF4926',
                                                       '& .MuiChip-label': { px: 0.6 },
                                                     }} />
@@ -282,15 +286,15 @@ export default function FileTree() {
                                                 </Box>
                                               }
                                               secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
-                                              primaryTypographyProps={{ fontSize: '0.74rem', fontFamily: '"JetBrains Mono", monospace' }}
-                                              secondaryTypographyProps={{ fontSize: '0.62rem' }}
+                                              primaryTypographyProps={{ fontSize: '0.75rem', fontFamily: '"JetBrains Mono", monospace' }}
+                                              secondaryTypographyProps={{ fontSize: '0.75rem' }}
                                             />
                                             <IconButton size="small" onClick={confirmDel(
                                               `Delete parameter "${pn}"?`,
                                               `This will remove the parameter from event "${en}".`,
                                               () => removeParameter(fi, dn, en, pn),
                                             )} sx={hoverDel}>
-                                              <CloseRounded sx={{ fontSize: 11 }} />
+                                              <DeleteOutlineRounded sx={{ fontSize: 14 }} />
                                             </IconButton>
                                           </ListItemButton>
                                         );
@@ -301,7 +305,7 @@ export default function FileTree() {
                                             onClick={() => setAddParamFor({ fi, domain: dn, event: en })} dense>
                                             <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
                                             <ListItemText primary="New" primaryTypographyProps={{
-                                              fontSize: '0.7rem', color: '#DF4926', fontWeight: 600,
+                                              fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
                                             }} />
                                           </ListItemButton>
                                           {allSharedParams.length > 0 && (
@@ -311,7 +315,7 @@ export default function FileTree() {
                                             }} dense>
                                               <LinkRounded sx={{ fontSize: 14, color: '#999', mr: 0.5 }} />
                                               <ListItemText primary="Link shared" primaryTypographyProps={{
-                                                fontSize: '0.7rem', color: '#999', fontWeight: 500,
+                                                fontSize: '0.75rem', color: '#999', fontWeight: 500,
                                               }} />
                                             </ListItemButton>
                                           )}
@@ -327,7 +331,7 @@ export default function FileTree() {
                                 onClick={() => setAddEventFor({ fi, domain: dn })} dense>
                                 <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
                                 <ListItemText primary="Add Event" primaryTypographyProps={{
-                                  fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
+                                  fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
                                 }} />
                               </ListItemButton>
                             )}

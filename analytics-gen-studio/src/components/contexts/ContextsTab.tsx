@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -19,7 +19,7 @@ import FolderRounded from '@mui/icons-material/FolderRounded';
 import CircleRounded from '@mui/icons-material/CircleRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
-import CloseRounded from '@mui/icons-material/CloseRounded';
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import LayersRounded from '@mui/icons-material/LayersRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
@@ -56,6 +56,34 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const [addPropOpen, setAddPropOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isDragging = useRef(false);
+
+  const handleMouseDown = useCallback(() => {
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const sidebar = document.querySelector('[data-contexts-sidebar]') as HTMLElement;
+      if (sidebar) {
+        const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+        setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, []);
 
   const q = search.toLowerCase();
 
@@ -72,8 +100,8 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
     selectedPath?.tab === 'contexts' && selectedPath.fileIndex === fi && selectedPath.contextProperty === p;
 
   const hoverDel = {
-    opacity: 0, transition: 'opacity 0.1s', color: '#BCBCBC',
-    '&:hover': { color: '#D32F2F' },
+    opacity: 0, transition: 'opacity 0.1s', color: '#BCBCBC', p: 0.5,
+    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)' },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
@@ -104,7 +132,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box sx={{ width: 240, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto' }}>
+      <Box data-contexts-sidebar sx={{ width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0 }}>
         <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
             fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
@@ -132,7 +160,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
             <LayersRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 0.5 }} />
-            <Typography sx={{ fontSize: '0.75rem', color: '#BCBCBC' }}>No contexts yet</Typography>
+            <Typography sx={{ fontSize: '0.78rem', color: '#BCBCBC', mb: 0.5 }}>No contexts yet</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#ddd', lineHeight: 1.5, px: 1 }}>
+              Contexts group properties that are set/updated during the app lifecycle.
+            </Typography>
           </Box>
         )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
@@ -147,14 +178,14 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
+                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.75rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
                     primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
                   />
                   <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All properties in this context will be removed.', action: () => removeContextFile(fi) });
                   }} sx={hoverDel}>
-                    <CloseRounded sx={{ fontSize: 14 }} />
+                    <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
                 <Collapse in={isFileExpanded(fi) || !!q}>
@@ -184,7 +215,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                             e.stopPropagation();
                             setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the property "${pn}" from context "${file.contextName}".`, action: () => removeContextProperty(fi, pn) });
                           }} sx={hoverDel}>
-                            <CloseRounded sx={{ fontSize: 13 }} />
+                            <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
                       );
@@ -193,7 +224,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                       <ListItemButton sx={{ pl: 7, py: 0.2 }} onClick={() => setAddPropOpen(fi)}>
                         <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
                         <ListItemText primary="Add Property" primaryTypographyProps={{
-                          fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
+                          fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
                         }} />
                       </ListItemButton>
                     )}
@@ -203,6 +234,16 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             );
           })}
         </List>
+      </Box>
+      {/* Resize handle */}
+      <Box
+        onMouseDown={handleMouseDown}
+        sx={{
+          width: 8, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          '&:hover .ctx-resize, &:active .ctx-resize': { bgcolor: '#DF4926', opacity: 0.3 },
+        }}
+      >
+        <Box className="ctx-resize" sx={{ width: 2, height: 32, borderRadius: 2, bgcolor: '#D0CCC8', opacity: 0.2, transition: 'all 0.15s ease' }} />
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (

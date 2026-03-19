@@ -5,6 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import NavigateNextRounded from '@mui/icons-material/NavigateNextRounded';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
@@ -55,11 +56,23 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mb: 0.5, flexWrap: 'wrap' }}>
+          <Typography sx={{ fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace' }}>
+            {file.fileName}
+          </Typography>
+          <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />
+          <Typography sx={{ fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace' }}>
+            {file.contextName}
+          </Typography>
+          <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />
+          <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>
+            {propName}
+          </Typography>
+        </Box>
         <Typography variant="h5">
           {propName}
         </Typography>
-        <Typography variant="caption">{file.contextName}</Typography>
       </Box>
 
       <Box sx={{

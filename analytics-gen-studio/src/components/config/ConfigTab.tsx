@@ -15,14 +15,34 @@ import AddRounded from '@mui/icons-material/AddRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
+import InputRounded from '@mui/icons-material/InputRounded';
+import OutputRounded from '@mui/icons-material/OutputRounded';
+import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
+import GavelRounded from '@mui/icons-material/GavelRounded';
+import TextFieldsRounded from '@mui/icons-material/TextFieldsRounded';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 
+// Map section keys to icons for visual variety
+const sectionIcons: Record<string, React.ReactNode> = {
+  inputs: <InputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  outputs: <OutputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  targets: <TrackChangesRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  rules: <GavelRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  naming: <TextFieldsRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  meta: <InfoOutlined sx={{ fontSize: 18, color: '#DF4926' }} />,
+};
+
+function getSectionIcon(key: string) {
+  return sectionIcons[key] ?? <SettingsRounded sx={{ fontSize: 18, color: '#DF4926' }} />;
+}
+
 // ── Reusable pieces ──
 
-function Section({ title, defaultOpen = true, children }: {
-  title: string; defaultOpen?: boolean; children: React.ReactNode;
+function Section({ title, sectionKey, defaultOpen = true, children }: {
+  title: string; sectionKey: string; defaultOpen?: boolean; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -39,7 +59,7 @@ function Section({ title, defaultOpen = true, children }: {
         {open
           ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
           : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: '#999' }} />}
-        <SettingsRounded sx={{ fontSize: 18, color: '#DF4926' }} />
+        {getSectionIcon(sectionKey)}
         <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#333', flex: 1 }}>{title}</Typography>
       </Box>
       <Collapse in={open}>
@@ -55,7 +75,7 @@ function FieldLabel({ label, hint }: { label: string; hint?: string }) {
   return (
     <Box>
       <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#444', mb: 0.3 }}>{label}</Typography>
-      {hint && <Typography sx={{ fontSize: '0.68rem', color: '#999', mb: 0.8, lineHeight: 1.4 }}>{hint}</Typography>}
+      {hint && <Typography sx={{ fontSize: '0.75rem', color: '#999', mb: 0.8, lineHeight: 1.4 }}>{hint}</Typography>}
     </Box>
   );
 }
@@ -81,7 +101,7 @@ function Toggle({ label, hint, checked, onChange }: {
       />
       <Box sx={{ flex: 1 }}>
         <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#333' }}>{label}</Typography>
-        {hint && <Typography sx={{ fontSize: '0.66rem', color: '#999', lineHeight: 1.4 }}>{hint}</Typography>}
+        {hint && <Typography sx={{ fontSize: '0.75rem', color: '#999', lineHeight: 1.4 }}>{hint}</Typography>}
       </Box>
     </Box>
   );
@@ -103,7 +123,7 @@ function PathList({ items, placeholder, onChange }: {
             deleteIcon={<CloseRounded sx={{ fontSize: 14 }} />}
             onDelete={() => onChange(items.filter((_, j) => j !== i))}
             sx={{
-              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.72rem', height: 28,
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.75rem', height: 28,
               bgcolor: 'rgba(223,73,38,0.06)', color: '#333',
               '& .MuiChip-deleteIcon': { color: '#ccc', '&:hover': { color: '#D32F2F' } },
             }}
@@ -215,7 +235,7 @@ function DynamicField({ fieldKey, schema, value, onChange }: {
     return (
       <Box>
         <FieldLabel label={title} hint={description} />
-        <Typography sx={{ fontSize: '0.68rem', color: '#999', fontStyle: 'italic' }}>
+        <Typography sx={{ fontSize: '0.75rem', color: '#999', fontStyle: 'italic' }}>
           Edit via YAML preview
         </Typography>
       </Box>
@@ -252,7 +272,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
         const fields = sec.properties as Record<string, Record<string, unknown>>;
 
         return (
-          <Section key={sectionKey} title={sectionTitle}>
+          <Section key={sectionKey} title={sectionTitle} sectionKey={sectionKey}>
             {Object.entries(fields).map(([fieldKey, fieldSchema]) => (
               <DynamicField
                 key={fieldKey}

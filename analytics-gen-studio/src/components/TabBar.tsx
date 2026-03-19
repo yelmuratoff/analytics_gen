@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -27,6 +28,21 @@ export default function TabBar() {
     return acc;
   }, {} as Record<TabId, number>);
 
+  // Keyboard shortcuts: Ctrl+1-4 to switch tabs
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= tabs.length) {
+        e.preventDefault();
+        setActiveTab(tabs[num - 1].id);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [setActiveTab]);
+
   return (
     <Box sx={{ px: 2, bgcolor: '#FCFDF7', borderBottom: '1px solid #EEEBE8' }}>
       <Tabs
@@ -42,7 +58,7 @@ export default function TabBar() {
           },
         }}
       >
-        {tabs.map((t) => (
+        {tabs.map((t, i) => (
           <Tab
             key={t.id}
             value={t.id}
@@ -57,7 +73,15 @@ export default function TabBar() {
                   },
                 }}
               >
-                {t.label}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {t.label}
+                  <Box component="span" sx={{
+                    fontSize: '0.6rem', color: '#bbb', fontWeight: 400,
+                    ml: 0.3,
+                  }}>
+                    {i + 1}
+                  </Box>
+                </Box>
               </Badge>
             }
             icon={t.icon}

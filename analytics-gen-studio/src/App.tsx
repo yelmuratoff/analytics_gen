@@ -47,8 +47,8 @@ const theme = createTheme({
     body1: { fontFamily: '"DM Sans", sans-serif', fontWeight: 400, fontSize: '0.875rem', lineHeight: 1.6 },
     body2: { fontFamily: '"DM Sans", sans-serif', fontWeight: 400, fontSize: '0.82rem', lineHeight: 1.6 },
     button: { fontFamily: '"DM Sans", sans-serif', fontWeight: 600, fontSize: '0.82rem' },
-    caption: { fontFamily: '"DM Sans", sans-serif', fontWeight: 500, fontSize: '0.73rem', color: '#999' },
-    overline: { fontFamily: '"DM Sans", sans-serif', fontWeight: 600, fontSize: '0.68rem', letterSpacing: '0.04em' },
+    caption: { fontFamily: '"DM Sans", sans-serif', fontWeight: 500, fontSize: '0.75rem', color: '#999' },
+    overline: { fontFamily: '"DM Sans", sans-serif', fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.04em' },
   },
   shape: { borderRadius: 10 },
   components: {

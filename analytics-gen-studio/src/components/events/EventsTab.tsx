@@ -1,3 +1,4 @@
+import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import type { RJSFSchema } from '@rjsf/utils';
@@ -15,6 +16,42 @@ interface EventsTabProps {
 
 export default function EventsTab({ parameterSchema, eventEditorSchema, parameterTypes }: EventsTabProps) {
   const selectedPath = useStore((s) => s.selectedPath);
+  const files = useStore((s) => s.eventFiles);
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const isDragging = useRef(false);
+
+  const handleMouseDown = useCallback(() => {
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const newWidth = e.clientX - (document.querySelector('[data-events-sidebar]') as HTMLElement)?.getBoundingClientRect().left;
+      if (newWidth) setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, []);
+
+  // Build breadcrumb from selectedPath
+  const breadcrumb = (() => {
+    if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) return null;
+    const file = files[selectedPath.fileIndex];
+    if (!file) return null;
+    const parts = [file.fileName, selectedPath.domain, selectedPath.event];
+    if (selectedPath.parameter) parts.push(selectedPath.parameter);
+    return parts.filter(Boolean) as string[];
+  })();
 
   const renderEditor = () => {
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) {
@@ -40,6 +77,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           paramName={selectedPath.parameter}
           parameterSchema={parameterSchema}
           parameterTypes={parameterTypes}
+          breadcrumb={breadcrumb}
         />
       );
     }
@@ -50,14 +88,40 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
         domain={selectedPath.domain!}
         eventName={selectedPath.event}
         eventEditorSchema={eventEditorSchema}
+        breadcrumb={breadcrumb}
       />
     );
   };
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box sx={{ width: 260, minWidth: 220, borderRight: '1px solid #EEEBE8', overflow: 'auto' }}>
+      <Box data-events-sidebar sx={{ width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0 }}>
         <FileTree />
+      </Box>
+      {/* Resize handle */}
+      <Box
+        onMouseDown={handleMouseDown}
+        sx={{
+          width: 8,
+          cursor: 'col-resize',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          '&:hover .sidebar-resize, &:active .sidebar-resize': {
+            bgcolor: '#DF4926',
+            opacity: 0.3,
+          },
+        }}
+      >
+        <Box className="sidebar-resize" sx={{
+          width: 2,
+          height: 32,
+          borderRadius: 2,
+          bgcolor: '#D0CCC8',
+          opacity: 0.2,
+          transition: 'all 0.15s ease',
+        }} />
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {renderEditor()}

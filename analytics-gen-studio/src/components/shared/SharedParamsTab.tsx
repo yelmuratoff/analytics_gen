@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -10,11 +10,12 @@ import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import Chip from '@mui/material/Chip';
 import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
 import CircleRounded from '@mui/icons-material/CircleRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
-import CloseRounded from '@mui/icons-material/CloseRounded';
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
@@ -32,6 +33,7 @@ interface SharedParamsTabProps {
 
 export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProps) {
   const files = useStore((s) => s.sharedParamFiles);
+  const eventFiles = useStore((s) => s.eventFiles);
   const selectedPath = useStore((s) => s.selectedPath);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
   const addSharedParamFile = useStore((s) => s.addSharedParamFile);
@@ -44,6 +46,51 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const [addParamOpen, setAddParamOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isDragging = useRef(false);
+
+  const handleMouseDown = useCallback(() => {
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const sidebar = document.querySelector('[data-shared-sidebar]') as HTMLElement;
+      if (sidebar) {
+        const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+        setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, []);
+
+  // Count how many events reference each shared param
+  const usageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    eventFiles.forEach((ef) => {
+      Object.values(ef.domains).forEach((events) => {
+        Object.values(events).forEach((event) => {
+          Object.entries(event.parameters).forEach(([pn, pv]) => {
+            if (pv === null) {
+              counts[pn] = (counts[pn] ?? 0) + 1;
+            }
+          });
+        });
+      });
+    });
+    return counts;
+  }, [eventFiles]);
 
   const q = search.toLowerCase();
 
@@ -60,8 +107,8 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     selectedPath?.tab === 'shared' && selectedPath.fileIndex === fi && selectedPath.parameter === p;
 
   const hoverDel = {
-    opacity: 0, transition: 'opacity 0.1s', color: '#BCBCBC',
-    '&:hover': { color: '#D32F2F' },
+    opacity: 0, transition: 'opacity 0.1s', color: '#BCBCBC', p: 0.5,
+    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)' },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
@@ -74,7 +121,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box sx={{ width: 240, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto' }}>
+      <Box data-shared-sidebar sx={{ width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0 }}>
         <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
             fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
@@ -102,7 +149,10 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
             <ShareRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 0.5 }} />
-            <Typography sx={{ fontSize: '0.75rem', color: '#BCBCBC' }}>No files yet</Typography>
+            <Typography sx={{ fontSize: '0.78rem', color: '#BCBCBC', mb: 0.5 }}>No files yet</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#ddd', lineHeight: 1.5, px: 1 }}>
+              Shared parameters can be referenced from any event across files.
+            </Typography>
           </Box>
         )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
@@ -117,20 +167,21 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#22A06B' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.parameters).length || ''}</Typography></>}
+                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.75rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.parameters).length || ''}</Typography></>}
                     primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
                   />
                   <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) });
                   }} sx={hoverDel}>
-                    <CloseRounded sx={{ fontSize: 14 }} />
+                    <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
                 <Collapse in={isFileExpanded(fi) || !!q}>
                   <List dense disablePadding>
                     {Object.keys(file.parameters).map((pn) => {
                       if (q && !pn.toLowerCase().includes(q) && !file.fileName.toLowerCase().includes(q)) return null;
+                      const uses = usageCounts[pn] ?? 0;
                       return (
                         <ListItemButton key={pn} sx={{
                           pl: 5.5, py: 0.3,
@@ -139,14 +190,28 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                           <ListItemIcon sx={{ minWidth: 18 }}>
                             <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />
                           </ListItemIcon>
-                          <ListItemText primary={pn} primaryTypographyProps={{
-                            fontSize: '0.76rem', fontFamily: '"JetBrains Mono", monospace',
-                          }} />
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <span>{pn}</span>
+                                {uses > 0 && (
+                                  <Chip label={`${uses} use${uses > 1 ? 's' : ''}`} size="small" sx={{
+                                    height: 16, fontSize: '0.6rem', fontWeight: 600,
+                                    bgcolor: 'rgba(46,125,50,0.08)', color: '#2E7D32',
+                                    '& .MuiChip-label': { px: 0.6 },
+                                  }} />
+                                )}
+                              </Box>
+                            }
+                            primaryTypographyProps={{
+                              fontSize: '0.76rem', fontFamily: '"JetBrains Mono", monospace',
+                            }}
+                          />
                           <IconButton size="small" onClick={(e) => {
                             e.stopPropagation();
                             setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the shared parameter "${pn}".`, action: () => removeSharedParam(fi, pn) });
                           }} sx={hoverDel}>
-                            <CloseRounded sx={{ fontSize: 13 }} />
+                            <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
                       );
@@ -155,7 +220,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                       <ListItemButton sx={{ pl: 5.5, py: 0.2 }} onClick={() => setAddParamOpen(fi)}>
                         <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
                         <ListItemText primary="Add Parameter" primaryTypographyProps={{
-                          fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
+                          fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
                         }} />
                       </ListItemButton>
                     )}
@@ -165,6 +230,16 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             );
           })}
         </List>
+      </Box>
+      {/* Resize handle */}
+      <Box
+        onMouseDown={handleMouseDown}
+        sx={{
+          width: 8, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          '&:hover .shared-resize, &:active .shared-resize': { bgcolor: '#DF4926', opacity: 0.3 },
+        }}
+      >
+        <Box className="shared-resize" sx={{ width: 2, height: 32, borderRadius: 2, bgcolor: '#D0CCC8', opacity: 0.2, transition: 'all 0.15s ease' }} />
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'shared' && selectedPath.parameter ? (

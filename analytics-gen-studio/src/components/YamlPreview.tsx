@@ -82,7 +82,7 @@ export default function YamlPreview() {
         <Typography sx={{ color: '#5C5C5C', fontSize: '0.82rem', fontWeight: 600 }}>
           No output yet
         </Typography>
-        <Typography sx={{ color: '#3D3D3D', fontSize: '0.72rem' }}>
+        <Typography sx={{ color: '#3D3D3D', fontSize: '0.75rem' }}>
           Add items in the editor to see YAML
         </Typography>
       </Box>
@@ -109,7 +109,7 @@ export default function YamlPreview() {
             minHeight: 32,
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             '& .MuiTab-root': {
-              minHeight: 32, py: 0, fontSize: '0.72rem',
+              minHeight: 32, py: 0, fontSize: '0.75rem',
               color: '#5C5C5C', fontFamily: '"JetBrains Mono", monospace',
               fontWeight: 500,
               '&.Mui-selected': { color: '#D4D4D4' },
@@ -127,12 +127,12 @@ export default function YamlPreview() {
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
         <Typography sx={{
-          flex: 1, fontSize: '0.74rem', fontWeight: 600,
+          flex: 1, fontSize: '0.75rem', fontWeight: 600,
           color: '#999', fontFamily: '"JetBrains Mono", monospace',
         }}>
           {currentFile.fileName}
         </Typography>
-        <Typography sx={{ fontSize: '0.62rem', color: '#3D3D3D', mr: 1.5 }}>
+        <Typography sx={{ fontSize: '0.75rem', color: '#3D3D3D', mr: 1.5 }}>
           {lineCount}L
         </Typography>
         <Tooltip title={copied ? 'Copied!' : 'Copy'} arrow>
@@ -158,7 +158,7 @@ export default function YamlPreview() {
           <Box component="span" sx={{
             px: 2, borderRight: '1px solid rgba(255,255,255,0.04)',
             color: 'rgba(255,255,255,0.15)', userSelect: 'none',
-            textAlign: 'right', minWidth: '3em', fontSize: '0.68rem',
+            textAlign: 'right', minWidth: '3em', fontSize: '0.75rem',
           }}>
             {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
           </Box>
@@ -171,24 +171,24 @@ export default function YamlPreview() {
       {/* Validation errors */}
       {tabErrors.length > 0 && (
         <Box sx={{
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          maxHeight: 120, overflow: 'auto',
-          px: 2, py: 1,
-          bgcolor: 'rgba(211,47,47,0.06)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          maxHeight: 160, overflow: 'auto',
+          px: 2, py: 1.5,
+          bgcolor: 'rgba(211,47,47,0.08)',
           '&::-webkit-scrollbar': { width: 4 },
           '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <ErrorOutlineRounded sx={{ fontSize: 14, color: '#FF6B6B' }} />
-            <Typography sx={{ fontSize: '0.68rem', color: '#FF6B6B', fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+            <ErrorOutlineRounded sx={{ fontSize: 16, color: '#FF6B6B' }} />
+            <Typography sx={{ fontSize: '0.78rem', color: '#FF6B6B', fontWeight: 700 }}>
               {tabErrors.length} issue{tabErrors.length > 1 ? 's' : ''}
             </Typography>
           </Box>
           {tabErrors.map((err, i) => (
             <Typography key={i} sx={{
-              fontSize: '0.68rem', color: '#D4D4D4', lineHeight: 1.6,
+              fontSize: '0.76rem', color: '#D4D4D4', lineHeight: 1.7,
               fontFamily: '"JetBrains Mono", monospace',
-              pl: 2.5,
+              pl: 3,
             }}>
               {err.message}
             </Typography>

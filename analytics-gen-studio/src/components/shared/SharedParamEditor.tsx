@@ -4,6 +4,7 @@ import type { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import NavigateNextRounded from '@mui/icons-material/NavigateNextRounded';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
@@ -34,11 +35,19 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mb: 0.5 }}>
+          <Typography sx={{ fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace' }}>
+            {file.fileName}
+          </Typography>
+          <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />
+          <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>
+            {paramName}
+          </Typography>
+        </Box>
         <Typography variant="h5">
           {paramName}
         </Typography>
-        <Typography variant="caption">{file.fileName}</Typography>
       </Box>
       <Form
         schema={parameterSchema}

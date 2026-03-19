@@ -13,7 +13,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import FolderZipRounded from '@mui/icons-material/FolderZipRounded';
 import FileOpenRounded from '@mui/icons-material/FileOpenRounded';
-import BookmarkAddRounded from '@mui/icons-material/BookmarkAddRounded';
+import SaveRounded from '@mui/icons-material/SaveRounded';
 import RefreshRounded from '@mui/icons-material/RefreshRounded';
 import { useStore } from '../state/store.ts';
 import { exportAllAsZip, saveProject, loadProjectFile } from '../utils/export.ts';
@@ -73,7 +73,13 @@ export default function Toolbar() {
     return () => window.removeEventListener('keydown', handler);
   }, [handleSaveProject, handleExportZip]);
 
-  const actionBtn = { color: '#999', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' } };
+  const actionBtnSx = {
+    fontSize: '0.78rem',
+    color: '#666',
+    borderColor: 'transparent',
+    whiteSpace: 'nowrap',
+    '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)', borderColor: 'transparent' },
+  };
 
   return (
     <>
@@ -103,23 +109,40 @@ export default function Toolbar() {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title="Export ZIP (Ctrl+Shift+E)" arrow>
-            <IconButton onClick={handleExportZip} size="small" sx={actionBtn}>
-              <FolderZipRounded sx={{ fontSize: 20 }} />
-            </IconButton>
+          <Tooltip title="Ctrl+Shift+E" arrow>
+            <Button
+              onClick={handleExportZip}
+              size="small"
+              variant="outlined"
+              startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
+              sx={actionBtnSx}
+            >
+              Export
+            </Button>
           </Tooltip>
-          <Tooltip title="Save Project (Ctrl+S)" arrow>
-            <IconButton onClick={handleSaveProject} size="small" sx={actionBtn}>
-              <BookmarkAddRounded sx={{ fontSize: 20 }} />
-            </IconButton>
+          <Tooltip title="Ctrl+S" arrow>
+            <Button
+              onClick={handleSaveProject}
+              size="small"
+              variant="outlined"
+              startIcon={<SaveRounded sx={{ fontSize: 18 }} />}
+              sx={actionBtnSx}
+            >
+              Save
+            </Button>
           </Tooltip>
           <Tooltip title="Open Project (Ctrl+O)" arrow>
-            <IconButton onClick={() => fileInputRef.current?.click()} size="small" sx={actionBtn}>
-              <FileOpenRounded sx={{ fontSize: 20 }} />
-            </IconButton>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              size="small"
+              variant="outlined"
+              startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
+              sx={actionBtnSx}
+            >
+              Open
+            </Button>
           </Tooltip>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadProject} />
-          <Box sx={{ width: 1, height: 20, bgcolor: '#E8E4E0', mx: 0.5 }} />
           <Tooltip title="Reset All" arrow>
             <IconButton onClick={() => setConfirmOpen(true)} size="small" sx={{
               color: '#ccc', '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.04)' },
