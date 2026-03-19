@@ -8,27 +8,15 @@ import { eventEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { useStore } from '../../state/store.ts';
 import type { EventDef } from '../../types/index.ts';
 
-const eventSchema: RJSFSchema = {
-  type: 'object',
-  properties: {
-    description: { type: 'string', title: 'Description', default: 'No description provided' },
-    event_name: { type: 'string', title: 'Custom Event Name' },
-    identifier: { type: 'string', title: 'Unique Identifier' },
-    deprecated: { type: 'boolean', title: 'Deprecated', default: false },
-    replacement: { type: 'string', title: 'Replacement Event' },
-    added_in: { type: 'string', title: 'Added In Version' },
-    deprecated_in: { type: 'string', title: 'Deprecated In Version' },
-    dual_write_to: { type: 'array', title: 'Dual Write To', items: { type: 'string' } },
-  },
-};
-
 interface EventEditorProps {
   fileIndex: number;
   domain: string;
   eventName: string;
+  /** Schema derived from events.schema.json at load time */
+  eventEditorSchema: RJSFSchema;
 }
 
-export default function EventEditor({ fileIndex, domain, eventName }: EventEditorProps) {
+export default function EventEditor({ fileIndex, domain, eventName, eventEditorSchema }: EventEditorProps) {
   const files = useStore((s) => s.eventFiles);
   const updateEvent = useStore((s) => s.updateEvent);
 
@@ -37,16 +25,8 @@ export default function EventEditor({ fileIndex, domain, eventName }: EventEdito
   const event = file.domains[domain]?.[eventName];
   if (!event) return null;
 
-  const formData = {
-    description: event.description,
-    event_name: event.event_name,
-    identifier: event.identifier,
-    deprecated: event.deprecated,
-    replacement: event.replacement,
-    added_in: event.added_in,
-    deprecated_in: event.deprecated_in,
-    dual_write_to: event.dual_write_to,
-  };
+  // Build formData from event, excluding 'parameters' (managed by tree UI)
+  const { parameters: _params, ...formData } = event;
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) updateEvent(fileIndex, domain, eventName, e.formData as EventDef);
@@ -61,7 +41,7 @@ export default function EventEditor({ fileIndex, domain, eventName }: EventEdito
         <Typography variant="caption">{domain}</Typography>
       </Box>
       <Form
-        schema={eventSchema}
+        schema={eventEditorSchema}
         uiSchema={eventEditorUiSchema}
         formData={formData}
         validator={validator}

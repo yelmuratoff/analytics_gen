@@ -9,15 +9,15 @@ import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { useStore } from '../../state/store.ts';
 import type { ParamDef } from '../../types/index.ts';
 
-const OPERATIONS = ['set', 'increment', 'append', 'remove'] as const;
-
 interface ContextPropertyEditorProps {
   fileIndex: number;
   propName: string;
   parameterSchema: RJSFSchema;
+  /** Operations extracted from parameter.schema.json at load time */
+  operations: string[];
 }
 
-export default function ContextPropertyEditor({ fileIndex, propName, parameterSchema }: ContextPropertyEditorProps) {
+export default function ContextPropertyEditor({ fileIndex, propName, parameterSchema, operations }: ContextPropertyEditorProps) {
   const files = useStore((s) => s.contextFiles);
   const updateContextProperty = useStore((s) => s.updateContextProperty);
 
@@ -71,7 +71,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
           Operations
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {OPERATIONS.map((op) => {
+          {operations.map((op) => {
             const active = currentOps.includes(op);
             return (
               <Chip

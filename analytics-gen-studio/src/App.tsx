@@ -217,7 +217,6 @@ const theme = createTheme({
 export default function App() {
   const [schemas, setSchemas] = useState<LoadedSchemas | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     loadSchemas()
       .then(setSchemas)

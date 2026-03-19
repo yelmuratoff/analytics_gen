@@ -9,9 +9,11 @@ import ParameterEditor from './ParameterEditor.tsx';
 
 interface EventsTabProps {
   parameterSchema: RJSFSchema;
+  eventEditorSchema: RJSFSchema;
+  parameterTypes: string[];
 }
 
-export default function EventsTab({ parameterSchema }: EventsTabProps) {
+export default function EventsTab({ parameterSchema, eventEditorSchema, parameterTypes }: EventsTabProps) {
   const selectedPath = useStore((s) => s.selectedPath);
 
   const renderEditor = () => {
@@ -37,6 +39,7 @@ export default function EventsTab({ parameterSchema }: EventsTabProps) {
           eventName={selectedPath.event}
           paramName={selectedPath.parameter}
           parameterSchema={parameterSchema}
+          parameterTypes={parameterTypes}
         />
       );
     }
@@ -46,6 +49,7 @@ export default function EventsTab({ parameterSchema }: EventsTabProps) {
         fileIndex={selectedPath.fileIndex}
         domain={selectedPath.domain!}
         eventName={selectedPath.event}
+        eventEditorSchema={eventEditorSchema}
       />
     );
   };

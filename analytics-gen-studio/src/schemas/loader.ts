@@ -1,4 +1,5 @@
 import type { RJSFSchema } from '@rjsf/utils';
+import type { ConfigState } from '../types/index.ts';
 
 export interface LoadedSchemas {
   configSchema: RJSFSchema;
@@ -7,6 +8,16 @@ export interface LoadedSchemas {
   sharedParametersSchema: RJSFSchema;
   contextSchema: RJSFSchema;
   rawConfigSchema: RJSFSchema;
+  /** Event-level schema for RJSF (without 'parameters' — those are managed separately) */
+  eventEditorSchema: RJSFSchema;
+  /** Parameter type options extracted from parameter.schema.json examples */
+  parameterTypes: string[];
+  /** Operations extracted from parameter.schema.json operations.items.enum */
+  operations: string[];
+  /** Casing options extracted from config schema naming.casing.enum */
+  casingOptions: string[];
+  /** Default config extracted from schema defaults */
+  defaultConfig: ConfigState;
 }
 
 const SCHEMA_BASE = `${import.meta.env.BASE_URL}schemas`;
@@ -40,13 +51,66 @@ function prepareParameterSchema(raw: RJSFSchema): RJSFSchema {
     ...raw,
     additionalProperties: false,
   };
-  // Remove minItems from allowed_values so rjsf doesn't auto-add empty items
   if (schema.properties?.allowed_values) {
     const av = { ...(schema.properties.allowed_values as Record<string, unknown>) };
     delete av.minItems;
     schema.properties = { ...schema.properties, allowed_values: av };
   }
   return schema;
+}
+
+function extractEventEditorSchema(eventsSchema: RJSFSchema): RJSFSchema {
+  const eventDef = eventsSchema.$defs?.event as RJSFSchema | undefined;
+  if (!eventDef?.properties) return { type: 'object', properties: {} };
+  const { parameters: _params, ...restProps } = eventDef.properties;
+  return { type: 'object', properties: restProps };
+}
+
+function extractParameterTypes(parameterSchema: RJSFSchema): string[] {
+  const typeProp = parameterSchema.properties?.type as Record<string, unknown> | undefined;
+  const examples = (typeProp?.examples as string[]) ?? [];
+  if (examples.length === 0) return ['string', 'string?'];
+  const withNullable = examples.flatMap((t) => [t, `${t}?`]);
+  return [...new Set(withNullable)];
+}
+
+function extractOperations(parameterSchema: RJSFSchema): string[] {
+  const opsProp = parameterSchema.properties?.operations as Record<string, unknown> | undefined;
+  const items = opsProp?.items as Record<string, unknown> | undefined;
+  return (items?.enum as string[]) ?? [];
+}
+
+function extractCasingOptions(configSchema: RJSFSchema): string[] {
+  const naming = configSchema.properties?.naming as RJSFSchema | undefined;
+  const casing = naming?.properties?.casing as Record<string, unknown> | undefined;
+  return (casing?.enum as string[]) ?? [];
+}
+
+/** Recursively extract `default` values from a JSON Schema object into a plain object */
+function extractDefaults(schema: RJSFSchema): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  if (!schema.properties) return result;
+  for (const [key, prop] of Object.entries(schema.properties)) {
+    const p = prop as Record<string, unknown>;
+    if (p.type === 'object' && p.properties) {
+      result[key] = extractDefaults(p as RJSFSchema);
+    } else if ('default' in p) {
+      result[key] = p.default;
+    } else if (p.type === 'array') {
+      result[key] = [];
+    } else if (p.type === 'string') {
+      result[key] = '';
+    } else if (p.type === 'boolean') {
+      result[key] = false;
+    } else if (p.type === 'object') {
+      result[key] = {};
+    }
+  }
+  return result;
+}
+
+function extractDefaultConfig(configSchema: RJSFSchema): ConfigState {
+  return extractDefaults(configSchema) as unknown as ConfigState;
 }
 
 export async function loadSchemas(): Promise<LoadedSchemas> {
@@ -58,12 +122,19 @@ export async function loadSchemas(): Promise<LoadedSchemas> {
     fetchSchema('context.schema.json'),
   ]);
 
+  const configSchema = prepareConfigSchema(rawConfig);
+
   return {
-    configSchema: prepareConfigSchema(rawConfig),
+    configSchema,
     eventsSchema: events,
     parameterSchema: prepareParameterSchema(parameter),
     sharedParametersSchema: sharedParameters,
     contextSchema: context,
     rawConfigSchema: rawConfig,
+    eventEditorSchema: extractEventEditorSchema(events),
+    parameterTypes: extractParameterTypes(parameter),
+    operations: extractOperations(parameter),
+    casingOptions: extractCasingOptions(configSchema),
+    defaultConfig: extractDefaultConfig(configSchema),
   };
 }

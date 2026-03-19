@@ -15,17 +15,17 @@ import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { useStore } from '../../state/store.ts';
 import type { ParamDef } from '../../types/index.ts';
 
-const TYPES = ['string', 'int', 'double', 'bool', 'num', 'dynamic', 'string?', 'int?', 'double?', 'bool?', 'num?', 'dynamic?'];
-
 interface ParameterEditorProps {
   fileIndex: number;
   domain: string;
   eventName: string;
   paramName: string;
   parameterSchema: RJSFSchema;
+  /** Types extracted from parameter.schema.json at load time */
+  parameterTypes: string[];
 }
 
-export default function ParameterEditor({ fileIndex, domain, eventName, paramName, parameterSchema }: ParameterEditorProps) {
+export default function ParameterEditor({ fileIndex, domain, eventName, paramName, parameterSchema, parameterTypes }: ParameterEditorProps) {
   const files = useStore((s) => s.eventFiles);
   const updateParameter = useStore((s) => s.updateParameter);
   const [advanced, setAdvanced] = useState(false);
@@ -94,7 +94,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
             label="Type"
             onChange={(e) => updateParameter(fileIndex, domain, eventName, paramName, e.target.value)}
           >
-            {TYPES.map((t) => (
+            {parameterTypes.map((t) => (
               <MenuItem key={t} value={t}>
                 <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>{t}</Typography>
               </MenuItem>

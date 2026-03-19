@@ -36,9 +36,10 @@ function deriveContextName(fileName: string): string {
 
 interface ContextsTabProps {
   parameterSchema: RJSFSchema;
+  operations: string[];
 }
 
-export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
+export default function ContextsTab({ parameterSchema, operations }: ContextsTabProps) {
   const files = useStore((s) => s.contextFiles);
   const selectedPath = useStore((s) => s.selectedPath);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
@@ -204,7 +205,7 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (
-          <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} />
+          <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
             <LayersRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1 }} />

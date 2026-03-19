@@ -3,47 +3,21 @@ import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
 
-const defaultConfig: ConfigState = {
-  inputs: {
-    events: 'events',
-    shared_parameters: [],
-    contexts: [],
-    imports: [],
-  },
-  outputs: {
-    dart: 'lib/src/analytics/generated',
-  },
-  targets: {
-    csv: false,
-    json: false,
-    sql: false,
-    docs: false,
-    plan: true,
-    test_matchers: false,
-  },
-  rules: {
-    include_event_description: false,
-    strict_event_names: true,
-    enforce_centrally_defined_parameters: false,
-    prevent_event_parameter_duplicates: false,
-  },
-  naming: {
-    casing: 'snake_case',
-    enforce_snake_case_domains: true,
-    enforce_snake_case_parameters: true,
-    event_name_template: '{domain}: {event}',
-    identifier_template: '{domain}: {event}',
-    domain_aliases: {},
-  },
-  meta: {
-    auto_tracking_creation_date: false,
-    include_meta_in_parameters: false,
-  },
+/** Initial defaults matching the JSON schema defaults.
+ *  These are overridden by schema-derived defaults when schemas load (see App.tsx).
+ *  If schemas add new defaults, they take precedence at runtime. */
+const fallbackConfig: ConfigState = {
+  inputs: { events: 'events', shared_parameters: [], contexts: [], imports: [] },
+  outputs: { dart: 'lib/src/analytics/generated' },
+  targets: { csv: false, json: false, sql: false, docs: false, plan: true, test_matchers: false },
+  rules: { include_event_description: false, strict_event_names: true, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false },
+  naming: { casing: 'snake_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '{domain}: {event}', identifier_template: '{domain}: {event}', domain_aliases: {} },
+  meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false },
 };
 
 const initialState = {
   activeTab: 'config' as const,
-  config: defaultConfig,
+  config: fallbackConfig,
   eventFiles: [],
   sharedParamFiles: [],
   contextFiles: [],

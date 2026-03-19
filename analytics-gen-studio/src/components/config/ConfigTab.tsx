@@ -160,7 +160,11 @@ const mono = { sx: { fontSize: '0.8rem', fontFamily: '"JetBrains Mono", monospac
 
 // ── Main ──
 
-export default function ConfigTab() {
+interface ConfigTabProps {
+  casingOptions: string[];
+}
+
+export default function ConfigTab({ casingOptions }: ConfigTabProps) {
   const config = useStore((s) => s.config);
   const updateConfig = useStore((s) => s.updateConfig);
 
@@ -259,9 +263,9 @@ export default function ConfigTab() {
             <Select value={config.naming.casing} label="Casing"
               onChange={(e) => set('naming', 'casing', e.target.value)}
               sx={{ fontSize: '0.82rem' }}>
-              <MenuItem value="snake_case">snake_case</MenuItem>
-              <MenuItem value="title_case">Title Case</MenuItem>
-              <MenuItem value="original">original</MenuItem>
+              {casingOptions.map((opt) => (
+                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Field>

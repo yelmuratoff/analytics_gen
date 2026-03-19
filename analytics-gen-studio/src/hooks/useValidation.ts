@@ -25,13 +25,17 @@ function validateParam(paramName: string, param: ParamDef | string | null, path:
     errors.push({ path, message: "regex cannot contain triple quotes (''')", tab });
   }
 
-  // min_length / max_length only for strings
-  if ((param.min_length !== undefined || param.max_length !== undefined) && param.type && !['string', 'string?'].includes(param.type)) {
+  // min_length / max_length only for string-like types
+  const baseType = param.type?.replace(/\?$/, '');
+  const isStringLike = baseType === 'string';
+  const isNumericLike = baseType && !['string', 'bool', 'boolean', 'dynamic'].includes(baseType);
+
+  if ((param.min_length !== undefined || param.max_length !== undefined) && baseType && !isStringLike) {
     errors.push({ path, message: 'min_length/max_length only apply to string type', tab });
   }
 
-  // min / max only for numbers
-  if ((param.min !== undefined || param.max !== undefined) && param.type && !['int', 'int?', 'double', 'double?', 'num', 'num?', 'float', 'float?', 'number', 'number?'].includes(param.type)) {
+  // min / max only for numeric types (anything that's not string/bool/dynamic)
+  if ((param.min !== undefined || param.max !== undefined) && baseType && !isNumericLike) {
     errors.push({ path, message: 'min/max only apply to numeric types', tab });
   }
 

@@ -68,29 +68,25 @@ export function generateConfigYaml(config: ConfigState): string {
   return yaml.dump(output, DUMP_OPTIONS);
 }
 
+function cleanEventFields(event: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(event)) {
+    if (key === 'parameters') continue; // handled separately
+    if (value === undefined || value === '' || value === false) continue;
+    if (value === 'No description provided') continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) continue;
+    cleaned[key] = value;
+  }
+  return cleaned;
+}
+
 export function generateEventFileYaml(file: EventFile): string {
   const output: Record<string, Record<string, unknown>> = {};
   for (const [domainName, events] of Object.entries(file.domains)) {
     output[domainName] = {};
     for (const [eventName, event] of Object.entries(events)) {
-      const eventOut: Record<string, unknown> = {};
-      if (event.description && event.description !== 'No description provided') {
-        eventOut.description = event.description;
-      }
-      if (event.event_name) eventOut.event_name = event.event_name;
-      if (event.identifier) eventOut.identifier = event.identifier;
-      if (event.deprecated) {
-        eventOut.deprecated = true;
-        if (event.replacement) eventOut.replacement = event.replacement;
-      }
-      if (event.added_in) eventOut.added_in = event.added_in;
-      if (event.deprecated_in) eventOut.deprecated_in = event.deprecated_in;
-      if (event.dual_write_to && event.dual_write_to.length > 0) {
-        eventOut.dual_write_to = event.dual_write_to;
-      }
-      if (event.meta && Object.keys(event.meta).length > 0) {
-        eventOut.meta = event.meta;
-      }
+      const eventOut = cleanEventFields(event as unknown as Record<string, unknown>);
 
       const params: Record<string, unknown> = {};
       for (const [paramName, paramValue] of Object.entries(event.parameters)) {
