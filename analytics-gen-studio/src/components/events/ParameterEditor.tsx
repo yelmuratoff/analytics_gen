@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
+import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
 import type { ParamDef } from '../../types/index.ts';
 
@@ -118,6 +119,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
         formData={formData}
         validator={validator}
         onChange={handleChange}
+        templates={compactTemplates}
         liveValidate
         showErrorList={false}
       >

@@ -119,7 +119,11 @@ const theme = createTheme({
         },
       },
     },
+    MuiTextField: {
+      defaultProps: { size: 'small' },
+    },
     MuiOutlinedInput: {
+      defaultProps: { size: 'small' as const },
       styleOverrides: {
         root: {
           borderRadius: 10,
@@ -130,9 +134,13 @@ const theme = createTheme({
       },
     },
     MuiInputLabel: {
+      defaultProps: { size: 'small' as const },
       styleOverrides: {
         root: { fontSize: '0.85rem', '&.Mui-focused': { color: '#DF4926' } },
       },
+    },
+    MuiSelect: {
+      defaultProps: { size: 'small' },
     },
     MuiCheckbox: {
       styleOverrides: {
@@ -204,11 +212,6 @@ const theme = createTheme({
           border: '1px solid #EEEBE8',
           borderRadius: 12,
         },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        root: { borderRadius: 10 },
       },
     },
   },

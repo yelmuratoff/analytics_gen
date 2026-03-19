@@ -5,6 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
+import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
 import type { ParamDef } from '../../types/index.ts';
 
@@ -44,6 +45,7 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
         formData={formData}
         validator={validator}
         onChange={handleChange}
+        templates={compactTemplates}
         liveValidate
         showErrorList={false}
       >

@@ -5,6 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { eventEditorUiSchema } from '../../schemas/ui-schemas.ts';
+import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
 import type { EventDef } from '../../types/index.ts';
 
@@ -46,6 +47,7 @@ export default function EventEditor({ fileIndex, domain, eventName, eventEditorS
         formData={formData}
         validator={validator}
         onChange={handleChange}
+        templates={compactTemplates}
         liveValidate
         showErrorList={false}
       >

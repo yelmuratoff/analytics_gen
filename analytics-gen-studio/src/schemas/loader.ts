@@ -54,6 +54,10 @@ function prepareParameterSchema(raw: RJSFSchema): RJSFSchema {
   if (schema.properties?.allowed_values) {
     const av = { ...(schema.properties.allowed_values as Record<string, unknown>) };
     delete av.minItems;
+    // Empty items schema `{}` causes RJSF to render nothing — default to string
+    if (av.items && typeof av.items === 'object' && Object.keys(av.items as object).length === 0) {
+      av.items = { type: 'string' };
+    }
     schema.properties = { ...schema.properties, allowed_values: av };
   }
   return schema;
