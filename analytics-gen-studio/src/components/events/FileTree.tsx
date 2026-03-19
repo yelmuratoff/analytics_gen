@@ -11,6 +11,8 @@ import Collapse from '@mui/material/Collapse';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
 import FolderRounded from '@mui/icons-material/FolderRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
@@ -20,6 +22,7 @@ import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRou
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
@@ -38,6 +41,8 @@ export default function FileTree() {
   const removeEvent = useStore((s) => s.removeEvent);
   const addParameter = useStore((s) => s.addParameter);
   const removeParameter = useStore((s) => s.removeParameter);
+
+  const [search, setSearch] = useState('');
 
   const allKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -62,6 +67,7 @@ export default function FileTree() {
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
   const allSharedParams = sharedParamFiles.flatMap((f) => Object.keys(f.parameters));
+  const q = search.toLowerCase();
 
   const isExpanded = (key: string) => allKeys.has(key) && !collapsed.has(key);
   const toggle = (key: string) => {
@@ -97,13 +103,61 @@ export default function FileTree() {
     setConfirmDelete({ title, message, action });
   };
 
+  // Check if an item matches the search (cascade: if a child matches, parents match)
+  const matchesSearch = (name: string) => !q || name.toLowerCase().includes(q);
+  const fileMatchesSearch = (fi: number) => {
+    if (!q) return true;
+    const file = files[fi];
+    if (file.fileName.toLowerCase().includes(q)) return true;
+    return Object.entries(file.domains).some(([dn, events]) =>
+      dn.toLowerCase().includes(q) ||
+      Object.entries(events).some(([en, ev]) =>
+        en.toLowerCase().includes(q) ||
+        Object.keys(ev.parameters).some((pn) => pn.toLowerCase().includes(q))
+      )
+    );
+  };
+  const domainMatchesSearch = (fi: number, dn: string) => {
+    if (!q) return true;
+    if (dn.toLowerCase().includes(q)) return true;
+    const events = files[fi].domains[dn];
+    return Object.entries(events).some(([en, ev]) =>
+      en.toLowerCase().includes(q) ||
+      Object.keys(ev.parameters).some((pn) => pn.toLowerCase().includes(q))
+    );
+  };
+  const eventMatchesSearch = (fi: number, dn: string, en: string) => {
+    if (!q) return true;
+    if (en.toLowerCase().includes(q)) return true;
+    const event = files[fi].domains[dn]?.[en];
+    return event ? Object.keys(event.parameters).some((pn) => pn.toLowerCase().includes(q)) : false;
+  };
+
   return (
     <>
-      <Box sx={{ p: 1.5 }}>
+      <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
           fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
           Add File
         </Button>
+        {files.length > 0 && (
+          <TextField
+            size="small"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded sx={{ fontSize: 16, color: '#bbb' }} />
+                  </InputAdornment>
+                ),
+                sx: { fontSize: '0.76rem', py: 0, height: 32 },
+              },
+            }}
+          />
+        )}
       </Box>
 
       {files.length === 0 && (
@@ -119,6 +173,7 @@ export default function FileTree() {
 
       <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
         {files.map((file, fi) => {
+          if (!fileMatchesSearch(fi)) return null;
           const fk = `f${fi}`;
           const totalEvents = Object.values(file.domains).reduce((sum, evts) => sum + Object.keys(evts).length, 0);
           return (
@@ -140,9 +195,10 @@ export default function FileTree() {
                   <CloseRounded sx={{ fontSize: 14 }} />
                 </IconButton>
               </ListItemButton>
-              <Collapse in={isExpanded(fk)}>
+              <Collapse in={isExpanded(fk) || !!q}>
                 <List dense disablePadding>
                   {Object.entries(file.domains).map(([dn, events]) => {
+                    if (!domainMatchesSearch(fi, dn)) return null;
                     const dk = `${fk}.d${dn}`;
                     const eventCount = Object.keys(events).length;
                     return (
@@ -164,9 +220,10 @@ export default function FileTree() {
                             <CloseRounded sx={{ fontSize: 13 }} />
                           </IconButton>
                         </ListItemButton>
-                        <Collapse in={isExpanded(dk)}>
+                        <Collapse in={isExpanded(dk) || !!q}>
                           <List dense disablePadding>
                             {Object.entries(events).map(([en, event]) => {
+                              if (!eventMatchesSearch(fi, dn, en)) return null;
                               const ek = `${dk}.e${en}`;
                               const paramCount = Object.keys(event.parameters).length;
                               return (
@@ -194,85 +251,98 @@ export default function FileTree() {
                                       <CloseRounded sx={{ fontSize: 12 }} />
                                     </IconButton>
                                   </ListItemButton>
-                                  <Collapse in={isExpanded(ek)}>
+                                  <Collapse in={isExpanded(ek) || !!q}>
                                     <List dense disablePadding>
-                                      {Object.entries(event.parameters).map(([pn, pv]) => (
-                                        <ListItemButton key={pn} sx={{
-                                          pl: 9.5, py: 0.25,
-                                          ...(isSel(fi, dn, en, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
-                                        }} onClick={() => setSelectedPath({
-                                          tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn,
-                                        })} dense>
-                                          <ListItemIcon sx={{ minWidth: 18 }}>
-                                            {pv === null
-                                              ? <LinkRounded sx={{ fontSize: 14, color: '#DF4926' }} />
-                                              : <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />}
-                                          </ListItemIcon>
-                                          <ListItemText
-                                            primary={
-                                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                <span>{pn}</span>
-                                                {pv === null && (
-                                                  <Chip label="shared" size="small" sx={{
-                                                    height: 16, fontSize: '0.58rem', fontWeight: 600,
-                                                    bgcolor: 'rgba(223,73,38,0.08)', color: '#DF4926',
-                                                    '& .MuiChip-label': { px: 0.6 },
-                                                  }} />
-                                                )}
-                                              </Box>
-                                            }
-                                            secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
-                                            primaryTypographyProps={{ fontSize: '0.74rem', fontFamily: '"JetBrains Mono", monospace' }}
-                                            secondaryTypographyProps={{ fontSize: '0.62rem' }}
-                                          />
-                                          <IconButton size="small" onClick={(e) => {
-                                            e.stopPropagation(); removeParameter(fi, dn, en, pn);
-                                          }} sx={hoverDel}>
-                                            <CloseRounded sx={{ fontSize: 11 }} />
-                                          </IconButton>
-                                        </ListItemButton>
-                                      ))}
-                                      <ListItemButton sx={{ pl: 9.5, py: 0.15 }}
-                                        onClick={() => setAddParamFor({ fi, domain: dn, event: en })} dense>
-                                        <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
-                                        <ListItemText primary="New" primaryTypographyProps={{
-                                          fontSize: '0.7rem', color: '#DF4926', fontWeight: 600,
-                                        }} />
-                                      </ListItemButton>
-                                      {allSharedParams.length > 0 && (
-                                        <ListItemButton sx={{ pl: 9.5, py: 0.15 }} onClick={(e) => {
-                                          setAddParamFor({ fi, domain: dn, event: en });
-                                          setSharedAnchorEl(e.currentTarget);
-                                        }} dense>
-                                          <LinkRounded sx={{ fontSize: 14, color: '#999', mr: 0.5 }} />
-                                          <ListItemText primary="Link shared" primaryTypographyProps={{
-                                            fontSize: '0.7rem', color: '#999', fontWeight: 500,
-                                          }} />
-                                        </ListItemButton>
+                                      {Object.entries(event.parameters).map(([pn, pv]) => {
+                                        if (!matchesSearch(pn)) return null;
+                                        return (
+                                          <ListItemButton key={pn} sx={{
+                                            pl: 9.5, py: 0.25,
+                                            ...(isSel(fi, dn, en, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
+                                          }} onClick={() => setSelectedPath({
+                                            tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn,
+                                          })} dense>
+                                            <ListItemIcon sx={{ minWidth: 18 }}>
+                                              {pv === null
+                                                ? <LinkRounded sx={{ fontSize: 14, color: '#DF4926' }} />
+                                                : <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                              primary={
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                  <span>{pn}</span>
+                                                  {pv === null && (
+                                                    <Chip label="shared" size="small" sx={{
+                                                      height: 16, fontSize: '0.58rem', fontWeight: 600,
+                                                      bgcolor: 'rgba(223,73,38,0.08)', color: '#DF4926',
+                                                      '& .MuiChip-label': { px: 0.6 },
+                                                    }} />
+                                                  )}
+                                                </Box>
+                                              }
+                                              secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
+                                              primaryTypographyProps={{ fontSize: '0.74rem', fontFamily: '"JetBrains Mono", monospace' }}
+                                              secondaryTypographyProps={{ fontSize: '0.62rem' }}
+                                            />
+                                            <IconButton size="small" onClick={confirmDel(
+                                              `Delete parameter "${pn}"?`,
+                                              `This will remove the parameter from event "${en}".`,
+                                              () => removeParameter(fi, dn, en, pn),
+                                            )} sx={hoverDel}>
+                                              <CloseRounded sx={{ fontSize: 11 }} />
+                                            </IconButton>
+                                          </ListItemButton>
+                                        );
+                                      })}
+                                      {!q && (
+                                        <>
+                                          <ListItemButton sx={{ pl: 9.5, py: 0.15 }}
+                                            onClick={() => setAddParamFor({ fi, domain: dn, event: en })} dense>
+                                            <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
+                                            <ListItemText primary="New" primaryTypographyProps={{
+                                              fontSize: '0.7rem', color: '#DF4926', fontWeight: 600,
+                                            }} />
+                                          </ListItemButton>
+                                          {allSharedParams.length > 0 && (
+                                            <ListItemButton sx={{ pl: 9.5, py: 0.15 }} onClick={(e) => {
+                                              setAddParamFor({ fi, domain: dn, event: en });
+                                              setSharedAnchorEl(e.currentTarget);
+                                            }} dense>
+                                              <LinkRounded sx={{ fontSize: 14, color: '#999', mr: 0.5 }} />
+                                              <ListItemText primary="Link shared" primaryTypographyProps={{
+                                                fontSize: '0.7rem', color: '#999', fontWeight: 500,
+                                              }} />
+                                            </ListItemButton>
+                                          )}
+                                        </>
                                       )}
                                     </List>
                                   </Collapse>
                                 </Box>
                               );
                             })}
-                            <ListItemButton sx={{ pl: 6.5, py: 0.2 }}
-                              onClick={() => setAddEventFor({ fi, domain: dn })} dense>
-                              <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                              <ListItemText primary="Add Event" primaryTypographyProps={{
-                                fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
-                              }} />
-                            </ListItemButton>
+                            {!q && (
+                              <ListItemButton sx={{ pl: 6.5, py: 0.2 }}
+                                onClick={() => setAddEventFor({ fi, domain: dn })} dense>
+                                <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                                <ListItemText primary="Add Event" primaryTypographyProps={{
+                                  fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
+                                }} />
+                              </ListItemButton>
+                            )}
                           </List>
                         </Collapse>
                       </Box>
                     );
                   })}
-                  <ListItemButton sx={{ pl: 4, py: 0.2 }} onClick={() => setAddDomainFor(fi)} dense>
-                    <AddRounded sx={{ fontSize: 16, color: '#DF4926', mr: 0.5 }} />
-                    <ListItemText primary="Add Domain" primaryTypographyProps={{
-                      fontSize: '0.76rem', color: '#DF4926', fontWeight: 600,
-                    }} />
-                  </ListItemButton>
+                  {!q && (
+                    <ListItemButton sx={{ pl: 4, py: 0.2 }} onClick={() => setAddDomainFor(fi)} dense>
+                      <AddRounded sx={{ fontSize: 16, color: '#DF4926', mr: 0.5 }} />
+                      <ListItemText primary="Add Domain" primaryTypographyProps={{
+                        fontSize: '0.76rem', color: '#DF4926', fontWeight: 600,
+                      }} />
+                    </ListItemButton>
+                  )}
                 </List>
               </Collapse>
             </Box>

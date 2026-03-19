@@ -13,6 +13,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
 import FolderRounded from '@mui/icons-material/FolderRounded';
 import CircleRounded from '@mui/icons-material/CircleRounded';
@@ -21,12 +22,17 @@ import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRound
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import LayersRounded from '@mui/icons-material/LayersRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
 import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import ContextPropertyEditor from './ContextPropertyEditor.tsx';
+
+function deriveContextName(fileName: string): string {
+  return fileName.replace(/\.yaml$/, '').replace(/[^a-z0-9_]/g, '_').replace(/^[^a-z]/, '').replace(/_+/g, '_').replace(/_$/, '');
+}
 
 interface ContextsTabProps {
   parameterSchema: RJSFSchema;
@@ -41,12 +47,15 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
   const addContextProperty = useStore((s) => s.addContextProperty);
   const removeContextProperty = useStore((s) => s.removeContextProperty);
 
+  const [search, setSearch] = useState('');
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [fileNameInput, setFileNameInput] = useState('');
   const [contextNameInput, setContextNameInput] = useState('');
   const [addPropOpen, setAddPropOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
+
+  const q = search.toLowerCase();
 
   const isFileExpanded = (i: number) => !collapsedFiles.has(i);
   const toggleExpand = (i: number) => {
@@ -83,14 +92,40 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
     setAddFileOpen(false);
   };
 
+  const fileMatchesSearch = (fi: number) => {
+    if (!q) return true;
+    const file = files[fi];
+    if (file.fileName.toLowerCase().includes(q)) return true;
+    if (file.contextName.toLowerCase().includes(q)) return true;
+    return Object.keys(file.properties).some((pn) => pn.toLowerCase().includes(q));
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
       <Box sx={{ width: 240, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto' }}>
-        <Box sx={{ p: 1.5 }}>
+        <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
             fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
             Add Context
           </Button>
+          {files.length > 0 && (
+            <TextField
+              size="small"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRounded sx={{ fontSize: 16, color: '#bbb' }} />
+                    </InputAdornment>
+                  ),
+                  sx: { fontSize: '0.76rem', py: 0, height: 32 },
+                },
+              }}
+            />
+          )}
         </Box>
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
@@ -99,61 +134,72 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
           </Box>
         )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
-          {files.map((file, fi) => (
-            <Box key={fi}>
-              <ListItemButton onClick={() => toggleExpand(fi)} dense sx={{ py: 0.4 }}>
-                {isFileExpanded(fi) ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: '#999' }} />
-                  : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: '#ccc' }} />}
-                <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
-                  <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
-                </ListItemIcon>
-                <ListItemText
-                  primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
-                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
-                />
-                <IconButton size="small" onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All properties in this context will be removed.', action: () => removeContextFile(fi) });
-                }} sx={hoverDel}>
-                  <CloseRounded sx={{ fontSize: 14 }} />
-                </IconButton>
-              </ListItemButton>
-              <Collapse in={isFileExpanded(fi)}>
-                <List dense disablePadding>
-                  <ListItemButton sx={{ pl: 5, py: 0.3 }} dense>
-                    <ListItemIcon sx={{ minWidth: 20 }}>
-                      <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
-                    </ListItemIcon>
-                    <ListItemText primary={file.contextName} primaryTypographyProps={{
-                      fontSize: '0.78rem', fontWeight: 600, color: '#DF4926',
-                    }} />
-                  </ListItemButton>
-                  {Object.keys(file.properties).map((pn) => (
-                    <ListItemButton key={pn} sx={{
-                      pl: 7, py: 0.3,
-                      ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
-                    }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
-                      <ListItemIcon sx={{ minWidth: 18 }}>
-                        <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />
+          {files.map((file, fi) => {
+            if (!fileMatchesSearch(fi)) return null;
+            return (
+              <Box key={fi}>
+                <ListItemButton onClick={() => toggleExpand(fi)} dense sx={{ py: 0.4 }}>
+                  {isFileExpanded(fi) ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: '#999' }} />
+                    : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: '#ccc' }} />}
+                  <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
+                    <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.62rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
+                    primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
+                  />
+                  <IconButton size="small" onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All properties in this context will be removed.', action: () => removeContextFile(fi) });
+                  }} sx={hoverDel}>
+                    <CloseRounded sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </ListItemButton>
+                <Collapse in={isFileExpanded(fi) || !!q}>
+                  <List dense disablePadding>
+                    <ListItemButton sx={{ pl: 5, py: 0.3 }} dense>
+                      <ListItemIcon sx={{ minWidth: 20 }}>
+                        <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
                       </ListItemIcon>
-                      <ListItemText primary={pn} primaryTypographyProps={{
-                        fontSize: '0.76rem', fontFamily: '"JetBrains Mono", monospace',
+                      <ListItemText primary={file.contextName} primaryTypographyProps={{
+                        fontSize: '0.78rem', fontWeight: 600, color: '#DF4926',
                       }} />
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeContextProperty(fi, pn); }} sx={hoverDel}>
-                        <CloseRounded sx={{ fontSize: 13 }} />
-                      </IconButton>
                     </ListItemButton>
-                  ))}
-                  <ListItemButton sx={{ pl: 7, py: 0.2 }} onClick={() => setAddPropOpen(fi)}>
-                    <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                    <ListItemText primary="Add Property" primaryTypographyProps={{
-                      fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
-                    }} />
-                  </ListItemButton>
-                </List>
-              </Collapse>
-            </Box>
-          ))}
+                    {Object.keys(file.properties).map((pn) => {
+                      if (q && !pn.toLowerCase().includes(q) && !file.fileName.toLowerCase().includes(q) && !file.contextName.toLowerCase().includes(q)) return null;
+                      return (
+                        <ListItemButton key={pn} sx={{
+                          pl: 7, py: 0.3,
+                          ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
+                        }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
+                          <ListItemIcon sx={{ minWidth: 18 }}>
+                            <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />
+                          </ListItemIcon>
+                          <ListItemText primary={pn} primaryTypographyProps={{
+                            fontSize: '0.76rem', fontFamily: '"JetBrains Mono", monospace',
+                          }} />
+                          <IconButton size="small" onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the property "${pn}" from context "${file.contextName}".`, action: () => removeContextProperty(fi, pn) });
+                          }} sx={hoverDel}>
+                            <CloseRounded sx={{ fontSize: 13 }} />
+                          </IconButton>
+                        </ListItemButton>
+                      );
+                    })}
+                    {!q && (
+                      <ListItemButton sx={{ pl: 7, py: 0.2 }} onClick={() => setAddPropOpen(fi)}>
+                        <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                        <ListItemText primary="Add Property" primaryTypographyProps={{
+                          fontSize: '0.74rem', color: '#DF4926', fontWeight: 600,
+                        }} />
+                      </ListItemButton>
+                    )}
+                  </List>
+                </Collapse>
+              </Box>
+            );
+          })}
         </List>
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
@@ -173,7 +219,14 @@ export default function ContextsTab({ parameterSchema }: ContextsTabProps) {
           <TextField autoFocus fullWidth size="small" margin="dense" label="File name"
             placeholder="user_properties.yaml" value={fileNameInput}
             error={!!fileError} helperText={fileError}
-            onChange={(e) => { setFileNameInput(e.target.value); setFileError(''); }} sx={{ mt: 1 }} />
+            onChange={(e) => {
+              const fn = e.target.value;
+              setFileNameInput(fn); setFileError('');
+              if (!contextNameInput || contextNameInput === deriveContextName(fileNameInput)) {
+                setContextNameInput(deriveContextName(fn));
+                setCtxError('');
+              }
+            }} sx={{ mt: 1 }} />
           <TextField fullWidth size="small" margin="dense" label="Context name"
             placeholder="user_properties" value={contextNameInput}
             error={!!ctxError} helperText={ctxError}

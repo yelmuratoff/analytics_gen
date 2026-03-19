@@ -8,7 +8,10 @@ import Tooltip from '@mui/material/Tooltip';
 import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import FileDownloadRounded from '@mui/icons-material/FileDownloadRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import { useYamlPreview } from '../hooks/useYamlPreview.ts';
+import { useValidation } from '../hooks/useValidation.ts';
+import { useStore } from '../state/store.ts';
 import { copyToClipboard, exportSingleFile } from '../utils/export.ts';
 
 function highlightYaml(content: string): React.ReactNode[] {
@@ -55,6 +58,9 @@ function highlightYaml(content: string): React.ReactNode[] {
 
 export default function YamlPreview() {
   const files = useYamlPreview();
+  const activeTab = useStore((s) => s.activeTab);
+  const errors = useValidation();
+  const tabErrors = errors.filter((e) => e.tab === activeTab);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [copied, setCopied] = useState(false);
 
@@ -161,6 +167,34 @@ export default function YamlPreview() {
           </Box>
         </Box>
       </Box>
+
+      {/* Validation errors */}
+      {tabErrors.length > 0 && (
+        <Box sx={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          maxHeight: 120, overflow: 'auto',
+          px: 2, py: 1,
+          bgcolor: 'rgba(211,47,47,0.06)',
+          '&::-webkit-scrollbar': { width: 4 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            <ErrorOutlineRounded sx={{ fontSize: 14, color: '#FF6B6B' }} />
+            <Typography sx={{ fontSize: '0.68rem', color: '#FF6B6B', fontWeight: 600 }}>
+              {tabErrors.length} issue{tabErrors.length > 1 ? 's' : ''}
+            </Typography>
+          </Box>
+          {tabErrors.map((err, i) => (
+            <Typography key={i} sx={{
+              fontSize: '0.68rem', color: '#D4D4D4', lineHeight: 1.6,
+              fontFamily: '"JetBrains Mono", monospace',
+              pl: 2.5,
+            }}>
+              {err.message}
+            </Typography>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

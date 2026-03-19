@@ -1,5 +1,8 @@
 import type { UiSchema } from '@rjsf/utils';
 
+// Use lowercase 'checkbox' so FieldTemplate recognizes it and skips duplicate description
+const checkbox = { 'ui:widget': 'checkbox' };
+
 export const configUiSchema: UiSchema = {
   'ui:order': ['inputs', 'outputs', 'targets', 'rules', 'naming', 'meta'],
   inputs: {
@@ -52,27 +55,27 @@ export const configUiSchema: UiSchema = {
   },
   targets: {
     'ui:order': ['plan', 'docs', 'csv', 'json', 'sql', 'test_matchers'],
-    csv: { 'ui:widget': 'CheckboxWidget' },
-    json: { 'ui:widget': 'CheckboxWidget' },
-    sql: { 'ui:widget': 'CheckboxWidget' },
-    docs: { 'ui:widget': 'CheckboxWidget' },
-    plan: { 'ui:widget': 'CheckboxWidget' },
-    test_matchers: { 'ui:widget': 'CheckboxWidget' },
+    csv: checkbox,
+    json: checkbox,
+    sql: checkbox,
+    docs: checkbox,
+    plan: checkbox,
+    test_matchers: checkbox,
   },
   rules: {
     'ui:order': ['strict_event_names', 'include_event_description', 'enforce_centrally_defined_parameters', 'prevent_event_parameter_duplicates'],
-    include_event_description: { 'ui:widget': 'CheckboxWidget' },
-    strict_event_names: { 'ui:widget': 'CheckboxWidget' },
-    enforce_centrally_defined_parameters: { 'ui:widget': 'CheckboxWidget' },
-    prevent_event_parameter_duplicates: { 'ui:widget': 'CheckboxWidget' },
+    include_event_description: checkbox,
+    strict_event_names: checkbox,
+    enforce_centrally_defined_parameters: checkbox,
+    prevent_event_parameter_duplicates: checkbox,
   },
   naming: {
     'ui:order': ['casing', 'enforce_snake_case_domains', 'enforce_snake_case_parameters', 'event_name_template', 'identifier_template', 'domain_aliases'],
     casing: {
       'ui:widget': 'SelectWidget',
     },
-    enforce_snake_case_domains: { 'ui:widget': 'CheckboxWidget' },
-    enforce_snake_case_parameters: { 'ui:widget': 'CheckboxWidget' },
+    enforce_snake_case_domains: checkbox,
+    enforce_snake_case_parameters: checkbox,
     event_name_template: {
       'ui:placeholder': '{domain}: {event}',
       'ui:help': 'Placeholders: {domain}, {domain_alias}, {event}',
@@ -84,8 +87,8 @@ export const configUiSchema: UiSchema = {
   },
   meta: {
     'ui:order': ['auto_tracking_creation_date', 'include_meta_in_parameters'],
-    auto_tracking_creation_date: { 'ui:widget': 'CheckboxWidget' },
-    include_meta_in_parameters: { 'ui:widget': 'CheckboxWidget' },
+    auto_tracking_creation_date: checkbox,
+    include_meta_in_parameters: checkbox,
   },
 };
 
@@ -95,7 +98,7 @@ export const eventEditorUiSchema: UiSchema = {
     'ui:options': { rows: 3 },
     'ui:placeholder': 'Describe when this event should be fired',
   },
-  deprecated: { 'ui:widget': 'CheckboxWidget' },
+  deprecated: checkbox,
   meta: {
     'ui:widget': 'textarea',
     'ui:options': { rows: 3 },
@@ -116,8 +119,6 @@ export const parameterEditorUiSchema: UiSchema = {
   },
   operations: {
     'ui:widget': 'checkboxes',
-    'ui:options': {
-      inline: true,
-    },
+    'ui:options': { inline: true },
   },
 };

@@ -1,11 +1,13 @@
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
+import Badge from '@mui/material/Badge';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
 import LayersRounded from '@mui/icons-material/LayersRounded';
 import { useStore } from '../state/store.ts';
+import { useValidation } from '../hooks/useValidation.ts';
 import type { TabId } from '../types/index.ts';
 
 const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
@@ -18,6 +20,12 @@ const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
 export default function TabBar() {
   const activeTab = useStore((s) => s.activeTab);
   const setActiveTab = useStore((s) => s.setActiveTab);
+  const errors = useValidation();
+
+  const errorCounts = tabs.reduce((acc, t) => {
+    acc[t.id] = errors.filter((e) => e.tab === t.id).length;
+    return acc;
+  }, {} as Record<TabId, number>);
 
   return (
     <Box sx={{ px: 2, bgcolor: '#FCFDF7', borderBottom: '1px solid #EEEBE8' }}>
@@ -35,7 +43,27 @@ export default function TabBar() {
         }}
       >
         {tabs.map((t) => (
-          <Tab key={t.id} value={t.id} label={t.label} icon={t.icon} iconPosition="start" disableRipple />
+          <Tab
+            key={t.id}
+            value={t.id}
+            label={
+              <Badge
+                badgeContent={errorCounts[t.id]}
+                color="error"
+                sx={{
+                  '& .MuiBadge-badge': {
+                    fontSize: '0.6rem', minWidth: 16, height: 16, p: 0,
+                    right: -10, top: -2,
+                  },
+                }}
+              >
+                {t.label}
+              </Badge>
+            }
+            icon={t.icon}
+            iconPosition="start"
+            disableRipple
+          />
         ))}
       </Tabs>
     </Box>
