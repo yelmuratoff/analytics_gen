@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock fetch for schema loading tests
-const mockSchemas = {
+const mockSchemas: Record<string, object> = {
   'analytics_gen.schema.json': {
     type: 'object',
     properties: {
@@ -28,52 +27,64 @@ const mockSchemas = {
   'context.schema.json': { type: 'object' },
 };
 
-beforeEach(() => {
+function mockFetch(overrides: Record<string, 'fail' | object> = {}) {
   vi.stubGlobal('fetch', vi.fn((url: string) => {
     const name = url.split('/').pop()!;
-    const schema = mockSchemas[name as keyof typeof mockSchemas];
+    if (overrides[name] === 'fail') return Promise.resolve({ ok: false, status: 404 });
+    const schema = overrides[name] ?? mockSchemas[name];
     if (!schema) return Promise.resolve({ ok: false, status: 404 });
     return Promise.resolve({ ok: true, json: () => Promise.resolve(schema) });
   }));
+}
+
+beforeEach(() => {
+  vi.resetModules();
+  mockFetch();
 });
 
 describe('loadSchemas', () => {
-  it('loads and transforms all schemas', async () => {
+  it('loads all 5 schemas', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
-    const schemas = await loadSchemas();
-
-    expect(schemas.configSchema).toBeDefined();
-    expect(schemas.eventsSchema).toBeDefined();
-    expect(schemas.parameterSchema).toBeDefined();
-    expect(schemas.sharedParametersSchema).toBeDefined();
-    expect(schemas.contextSchema).toBeDefined();
+    const s = await loadSchemas();
+    expect(s.configSchema).toBeDefined();
+    expect(s.eventsSchema).toBeDefined();
+    expect(s.parameterSchema).toBeDefined();
+    expect(s.sharedParametersSchema).toBeDefined();
+    expect(s.contextSchema).toBeDefined();
+    expect(s.rawConfigSchema).toBeDefined();
   });
 
-  it('strips x-alias-for fields from config schema', async () => {
+  it('strips x-alias-for from config schema', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
-    const schemas = await loadSchemas();
-
-    // Config schema should be unwrapped from analytics_gen root
-    // and should NOT contain alias fields
-    expect(schemas.configSchema.properties).toBeDefined();
-    expect(schemas.configSchema.properties!.events_path).toBeUndefined();
-    expect(schemas.configSchema.properties!.generate_csv).toBeUndefined();
-    // But should keep non-alias fields
-    expect(schemas.configSchema.properties!.inputs).toBeDefined();
+    const s = await loadSchemas();
+    expect(s.configSchema.properties?.events_path).toBeUndefined();
+    expect(s.configSchema.properties?.generate_csv).toBeUndefined();
+    expect(s.configSchema.properties?.inputs).toBeDefined();
   });
 
-  it('removes minItems from allowed_values in parameter schema', async () => {
+  it('removes minItems from allowed_values', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
-    const schemas = await loadSchemas();
-
-    const av = schemas.parameterSchema.properties?.allowed_values as any;
-    expect(av).toBeDefined();
-    expect(av.minItems).toBeUndefined();
+    const s = await loadSchemas();
+    expect((s.parameterSchema.properties?.allowed_values as any)?.minItems).toBeUndefined();
+    expect((s.parameterSchema.properties?.allowed_values as any)?.type).toBe('array');
   });
 
-  it('sets additionalProperties to false on parameter schema', async () => {
+  it('sets additionalProperties false on parameter schema', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
-    const schemas = await loadSchemas();
-    expect(schemas.parameterSchema.additionalProperties).toBe(false);
+    const s = await loadSchemas();
+    expect(s.parameterSchema.additionalProperties).toBe(false);
+  });
+
+  it('rejects on fetch failure', async () => {
+    mockFetch({ 'events.schema.json': 'fail' });
+    const { loadSchemas } = await import('../../schemas/loader.ts');
+    await expect(loadSchemas()).rejects.toThrow('Failed to load schema');
+  });
+
+  it('preserves rawConfigSchema unmodified', async () => {
+    const { loadSchemas } = await import('../../schemas/loader.ts');
+    const s = await loadSchemas();
+    // rawConfigSchema should still have analytics_gen wrapper
+    expect(s.rawConfigSchema.properties?.analytics_gen).toBeDefined();
   });
 });

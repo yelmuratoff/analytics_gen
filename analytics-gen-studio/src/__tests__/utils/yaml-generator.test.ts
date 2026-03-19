@@ -16,201 +16,195 @@ const defaultConfig: ConfigState = {
   meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false },
 };
 
+function eventFile(domains: EventFile['domains']): EventFile {
+  return { fileName: 'test.yaml', domains };
+}
+
 describe('generateConfigYaml', () => {
-  it('wraps output in analytics_gen root', () => {
-    const yaml = generateConfigYaml(defaultConfig);
-    expect(yaml).toMatch(/^analytics_gen:/);
+  it('wraps in analytics_gen root', () => {
+    expect(generateConfigYaml(defaultConfig)).toMatch(/^analytics_gen:/);
   });
 
   it('includes all sections', () => {
-    const yaml = generateConfigYaml(defaultConfig);
-    expect(yaml).toContain('inputs:');
-    expect(yaml).toContain('outputs:');
-    expect(yaml).toContain('targets:');
-    expect(yaml).toContain('rules:');
-    expect(yaml).toContain('naming:');
-    expect(yaml).toContain('meta:');
+    const y = generateConfigYaml(defaultConfig);
+    for (const s of ['inputs:', 'outputs:', 'targets:', 'rules:', 'naming:', 'meta:']) {
+      expect(y).toContain(s);
+    }
   });
 
-  it('omits optional outputs when empty', () => {
-    const yaml = generateConfigYaml(defaultConfig);
-    // outputs section should NOT have docs/exports keys (but targets.docs is fine)
-    const outputsSection = yaml.split('outputs:')[1].split('targets:')[0];
+  it('omits optional outputs when not set', () => {
+    const y = generateConfigYaml(defaultConfig);
+    const outputsSection = y.split('outputs:')[1].split('targets:')[0];
     expect(outputsSection).not.toContain('docs:');
     expect(outputsSection).not.toContain('exports:');
   });
 
   it('includes optional outputs when set', () => {
-    const config = { ...defaultConfig, outputs: { dart: 'lib/gen', docs: 'docs/', exports: 'out/' } };
-    const yaml = generateConfigYaml(config);
-    expect(yaml).toContain('docs: docs/');
-    expect(yaml).toContain('exports: out/');
+    const c = { ...defaultConfig, outputs: { dart: 'lib/gen', docs: 'docs/', exports: 'out/' } };
+    const y = generateConfigYaml(c);
+    expect(y).toContain('docs: docs/');
+    expect(y).toContain('exports: out/');
   });
 
   it('includes domain_aliases', () => {
-    const config = { ...defaultConfig, naming: { ...defaultConfig.naming, domain_aliases: { auth: 'Auth Flow' } } };
-    const yaml = generateConfigYaml(config);
-    expect(yaml).toContain('auth: Auth Flow');
+    const c = { ...defaultConfig, naming: { ...defaultConfig.naming, domain_aliases: { auth: 'Auth Flow' } } };
+    expect(generateConfigYaml(c)).toContain('auth: Auth Flow');
+  });
+
+  it('outputs shared_parameters as array', () => {
+    const c = { ...defaultConfig, inputs: { ...defaultConfig.inputs, shared_parameters: ['a.yaml', 'b.yaml'] } };
+    const y = generateConfigYaml(c);
+    expect(y).toContain('- a.yaml');
+    expect(y).toContain('- b.yaml');
+  });
+
+  it('outputs empty arrays inline', () => {
+    const y = generateConfigYaml(defaultConfig);
+    expect(y).toContain('shared_parameters: []');
   });
 });
 
 describe('generateEventFileYaml', () => {
   it('generates domain/event structure', () => {
-    const file: EventFile = {
-      fileName: 'auth.yaml',
-      domains: {
-        auth: {
-          login: { description: 'User logs in', parameters: {} },
-        },
-      },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('auth:');
-    expect(yaml).toContain('login:');
-    expect(yaml).toContain('description: User logs in');
+    const y = generateEventFileYaml(eventFile({ auth: { login: { description: 'User logs in', parameters: {} } } }));
+    expect(y).toContain('auth:');
+    expect(y).toContain('  login:');
+    expect(y).toContain('description: User logs in');
   });
 
-  it('renders shorthand params as type string', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: { d: { e: { parameters: { method: 'string' } } } },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('method: string');
+  it('renders shorthand params', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { method: 'string' } } } }));
+    expect(y).toContain('method: string');
   });
 
   it('renders null shared refs without null keyword', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: { d: { e: { parameters: { session_id: null } } } },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('session_id:');
-    expect(yaml).not.toContain('session_id: null');
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { session_id: null } } } }));
+    expect(y).toContain('session_id:');
+    expect(y).not.toContain('session_id: null');
   });
 
-  it('collapses type-only params to shorthand', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: { d: { e: { parameters: { age: { type: 'int' } } } } },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('age: int');
+  it('collapses type-only param to shorthand', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { age: { type: 'int' } } } } }));
+    expect(y).toContain('age: int');
   });
 
-  it('renders full param objects when extra fields present', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: {
-        d: {
-          e: {
-            parameters: {
-              method: { type: 'string', description: 'Login method', allowed_values: ['email', 'google'] },
-            },
-          },
-        },
-      },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('type: string');
-    expect(yaml).toContain('description: Login method');
-    expect(yaml).toContain('email');
+  it('renders full param with description', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { m: { type: 'string', description: 'Method' } } } } }));
+    expect(y).toContain('type: string');
+    expect(y).toContain('description: Method');
   });
 
-  it('includes deprecated/replacement fields', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: {
-        d: {
-          e: {
-            deprecated: true,
-            replacement: 'e_v2',
-            parameters: {},
-          },
-        },
-      },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('deprecated: true');
-    expect(yaml).toContain('replacement: e_v2');
+  it('renders allowed_values', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { m: { type: 'string', allowed_values: ['a', 'b'] } } } } }));
+    expect(y).toContain('- a');
+    expect(y).toContain('- b');
   });
 
-  it('includes meta, dual_write_to, event_name, identifier', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: {
-        d: {
-          e: {
-            event_name: 'Custom Name',
-            identifier: 'd.e',
-            dual_write_to: ['other'],
-            meta: { owner: 'team' },
-            parameters: {},
-          },
-        },
-      },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('event_name: Custom Name');
-    expect(yaml).toContain('identifier: d.e');
-    expect(yaml).toContain('- other');
-    expect(yaml).toContain('owner: team');
+  it('renders deprecated/replacement', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { deprecated: true, replacement: 'e_v2', parameters: {} } } }));
+    expect(y).toContain('deprecated: true');
+    expect(y).toContain('replacement: e_v2');
+  });
+
+  it('renders event_name, identifier, dual_write_to, meta', () => {
+    const y = generateEventFileYaml(eventFile({
+      d: { e: { event_name: 'Custom', identifier: 'd.e', dual_write_to: ['x'], meta: { owner: 'team' }, parameters: {} } },
+    }));
+    expect(y).toContain('event_name: Custom');
+    expect(y).toContain('identifier: d.e');
+    expect(y).toContain('- x');
+    expect(y).toContain('owner: team');
+  });
+
+  it('renders added_in/deprecated_in', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { added_in: '1.0', deprecated_in: '2.0', parameters: {} } } }));
+    expect(y).toContain('added_in:');
+    expect(y).toContain('deprecated_in:');
   });
 
   it('omits default description', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: { d: { e: { description: 'No description provided', parameters: {} } } },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).not.toContain('No description provided');
+    const y = generateEventFileYaml(eventFile({ d: { e: { description: 'No description provided', parameters: {} } } }));
+    expect(y).not.toContain('No description provided');
   });
 
-  it('handles empty parameters object', () => {
-    const file: EventFile = {
-      fileName: 'test.yaml',
-      domains: { d: { e: { parameters: {} } } },
-    };
-    const yaml = generateEventFileYaml(file);
-    expect(yaml).toContain('parameters: {}');
+  it('renders empty parameters as {}', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: {} } } }));
+    expect(y).toContain('parameters: {}');
+  });
+
+  it('handles empty domains', () => {
+    const y = generateEventFileYaml(eventFile({}));
+    expect(y).toBe('{}\n');
+  });
+
+  it('renders param with identifier/param_name', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { m: { type: 'string', identifier: 'my_id', param_name: 'my-name' } } } } }));
+    expect(y).toContain('identifier: my_id');
+    expect(y).toContain('param_name: my-name');
+  });
+
+  it('renders param with dart_type/import', () => {
+    const y = generateEventFileYaml(eventFile({ d: { e: { parameters: { s: { dart_type: 'MyEnum', import: 'package:app/enums.dart' } } } } }));
+    expect(y).toContain('dart_type: MyEnum');
+    expect(y).toContain('import: package:app/enums.dart');
+  });
+
+  it('renders param with regex/min/max/min_length/max_length', () => {
+    const y = generateEventFileYaml(eventFile({
+      d: { e: { parameters: { p: { type: 'string', regex: '^[A-Z]+$', min_length: 1, max_length: 10 } } } },
+    }));
+    expect(y).toContain('regex:');
+    expect(y).toContain('min_length: 1');
+    expect(y).toContain('max_length: 10');
+  });
+
+  it('strips empty fields from param objects', () => {
+    const y = generateEventFileYaml(eventFile({
+      d: { e: { parameters: { p: { type: 'string', description: '', allowed_values: [], meta: {}, operations: [] } } } },
+    }));
+    // Should collapse to shorthand since all extra fields are empty
+    expect(y).toContain('p: string');
   });
 });
 
 describe('generateSharedParamFileYaml', () => {
   it('wraps in parameters root', () => {
-    const file: SharedParamFile = { fileName: 'shared.yaml', parameters: { sid: 'string' } };
-    const yaml = generateSharedParamFileYaml(file);
-    expect(yaml).toMatch(/^parameters:/);
-    expect(yaml).toContain('sid: string');
+    const y = generateSharedParamFileYaml({ fileName: 's.yaml', parameters: { sid: 'string' } });
+    expect(y).toMatch(/^parameters:/);
+    expect(y).toContain('sid: string');
   });
 
-  it('renders full param objects', () => {
-    const file: SharedParamFile = {
-      fileName: 'shared.yaml',
-      parameters: { platform: { type: 'string', allowed_values: ['ios', 'android'] } },
-    };
-    const yaml = generateSharedParamFileYaml(file);
-    expect(yaml).toContain('type: string');
-    expect(yaml).toContain('ios');
+  it('renders full param with allowed_values', () => {
+    const y = generateSharedParamFileYaml({ fileName: 's.yaml', parameters: { p: { type: 'string', allowed_values: ['ios'] } } });
+    expect(y).toContain('type: string');
+    expect(y).toContain('- ios');
+  });
+
+  it('handles empty parameters', () => {
+    const y = generateSharedParamFileYaml({ fileName: 's.yaml', parameters: {} });
+    expect(y).toContain('parameters: {}');
   });
 });
 
 describe('generateContextFileYaml', () => {
-  it('uses contextName as root key', () => {
-    const file: ContextFile = { fileName: 'user.yaml', contextName: 'user_properties', properties: {} };
-    const yaml = generateContextFileYaml(file);
-    expect(yaml).toMatch(/^user_properties:/);
+  it('uses contextName as root', () => {
+    expect(generateContextFileYaml({ fileName: 'u.yaml', contextName: 'user_props', properties: {} }))
+      .toMatch(/^user_props:/);
   });
 
-  it('includes operations', () => {
-    const file: ContextFile = {
-      fileName: 'user.yaml',
-      contextName: 'user_props',
-      properties: { count: { type: 'int', operations: ['set', 'increment'] } },
-    };
-    const yaml = generateContextFileYaml(file);
-    expect(yaml).toContain('operations:');
-    expect(yaml).toContain('- set');
-    expect(yaml).toContain('- increment');
+  it('renders operations', () => {
+    const y = generateContextFileYaml({ fileName: 'u.yaml', contextName: 'ctx', properties: { c: { type: 'int', operations: ['set', 'increment'] } } });
+    expect(y).toContain('- set');
+    expect(y).toContain('- increment');
+  });
+
+  it('renders shorthand property', () => {
+    const y = generateContextFileYaml({ fileName: 'u.yaml', contextName: 'ctx', properties: { uid: 'string' } });
+    expect(y).toContain('uid: string');
+  });
+
+  it('handles empty properties', () => {
+    const y = generateContextFileYaml({ fileName: 'u.yaml', contextName: 'ctx', properties: {} });
+    expect(y).toContain('ctx: {}');
   });
 });
