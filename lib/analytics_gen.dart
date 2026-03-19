@@ -8,11 +8,18 @@
 ///
 /// {@category overview}
 /// {@category onboarding}
+/// {@category schema_reference}
 /// {@category validation}
+/// {@category naming}
 /// {@category capabilities}
+/// {@category performance}
+/// {@category testing}
 /// {@category migration}
 /// {@category scalability}
 /// {@category code_review}
+/// {@category troubleshooting}
+/// {@category prompt_guide}
+/// {@category api_reference}
 library;
 
 export 'src/config/analytics_config.dart';

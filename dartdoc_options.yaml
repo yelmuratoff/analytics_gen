@@ -2,16 +2,16 @@ dartdoc:
   categories:
     overview:
       markdown: doc/README.md
-      displayName: Overview
+      displayName: Project Overview
     onboarding:
       markdown: doc/ONBOARDING.md
-      displayName: Onboarding
+      displayName: Getting Started
     validation:
       markdown: doc/VALIDATION.md
       displayName: Validation & Naming
     capabilities:
       markdown: doc/CAPABILITIES.md
-      displayName: Capabilities
+      displayName: Analytics Capabilities
     migration:
       markdown: doc/MIGRATION_GUIDES.md
       displayName: Migration Guides
@@ -29,19 +29,23 @@ dartdoc:
       displayName: Performance Guide
     testing:
       markdown: doc/TESTING.md
-      displayName: Testing
+      displayName: Testing Guide
     troubleshooting:
       markdown: doc/TROUBLESHOOTING.md
-      displayName: Troubleshooting
+      displayName: Troubleshooting Guide
     prompt_guide:
       markdown: doc/PROMPT_GUIDE.md
       displayName: Prompt Guide
+    schema_reference:
+      markdown: doc/SCHEMA_REFERENCE.md
+      displayName: Schema Reference
     api_reference:
       markdown: doc/api_reference.md
       displayName: API Reference
   categoryOrder:
     - overview
     - onboarding
+    - schema_reference
     - validation
     - naming
     - capabilities

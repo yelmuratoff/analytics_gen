@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock file-saver to prevent DOM access after test cleanup
+vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
 
 // Mock FileReader since it's not available in Node test env
 class MockFileReader {
@@ -15,6 +18,11 @@ class MockFileReader {
 vi.stubGlobal('FileReader', MockFileReader);
 
 import { loadProjectFile } from '../../utils/export.ts';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 function makeFile(content: string): File {
   return new File([content], 'test.json', { type: 'application/json' });

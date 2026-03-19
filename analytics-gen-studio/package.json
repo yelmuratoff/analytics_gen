@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "copy-schemas": "cp ../schema/*.json public/schemas/",
+    "copy-docs": "rm -rf public/docs && cp -r ../doc/api public/docs && node scripts/fix-docs-redirects.mjs",
     "generate-types": "node scripts/generate-types.mjs",
-    "build": "npm run copy-schemas && npm run generate-types && tsc -b && vite build",
+    "build": "npm run copy-schemas && npm run copy-docs && npm run generate-types && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

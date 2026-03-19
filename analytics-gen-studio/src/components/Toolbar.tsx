@@ -15,13 +15,16 @@ import FolderZipRounded from '@mui/icons-material/FolderZipRounded';
 import FileOpenRounded from '@mui/icons-material/FileOpenRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import RefreshRounded from '@mui/icons-material/RefreshRounded';
+import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
 import { useStore } from '../state/store.ts';
 import { exportAllAsZip, saveProject, loadProjectFile } from '../utils/export.ts';
+import DocsDrawer from './DocsDrawer.tsx';
 
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
 
 export default function Toolbar() {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const store = useStore();
@@ -111,6 +114,17 @@ export default function Toolbar() {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title="API Documentation" arrow>
+            <Button
+              onClick={() => setDocsOpen(true)}
+              size="small"
+              variant="outlined"
+              startIcon={<MenuBookRounded sx={{ fontSize: 18 }} />}
+              sx={actionBtnSx}
+            >
+              Docs
+            </Button>
+          </Tooltip>
           <Tooltip title={`Export ZIP (${isMac ? '\u2318\u21E7E' : 'Ctrl+Shift+E'})`} arrow>
             <Button
               onClick={handleExportZip}
@@ -164,6 +178,8 @@ export default function Toolbar() {
             sx={{ bgcolor: '#D32F2F', '&:hover': { bgcolor: '#B71C1C' } }}>Reset</Button>
         </DialogActions>
       </Dialog>
+
+      <DocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />
 
       <Snackbar
         open={!!snackbar}
