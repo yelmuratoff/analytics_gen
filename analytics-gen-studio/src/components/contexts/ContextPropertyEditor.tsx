@@ -57,7 +57,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mb: 0.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'wrap' }}>
           <Typography sx={{ fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace' }}>
             {file.fileName}
           </Typography>
@@ -65,14 +65,11 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
           <Typography sx={{ fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace' }}>
             {file.contextName}
           </Typography>
-          <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />
-          <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>
+          <NavigateNextRounded sx={{ fontSize: 16, color: '#ccc' }} />
+          <Typography sx={{ fontSize: '1.05rem', color: '#1A1A1A', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace' }}>
             {propName}
           </Typography>
         </Box>
-        <Typography variant="h5">
-          {propName}
-        </Typography>
       </Box>
 
       <Box sx={{

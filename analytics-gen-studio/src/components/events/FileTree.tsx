@@ -161,10 +161,10 @@ export default function FileTree() {
             </Tooltip>
           )}
         </Box>
-        {files.length > 0 && (
-          <TextField
+        <TextField
             size="small"
-            placeholder="Search..."
+            placeholder={files.length > 0 ? 'Search...' : 'No items yet'}
+            disabled={files.length === 0}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             slotProps={{
@@ -178,7 +178,6 @@ export default function FileTree() {
               },
             }}
           />
-        )}
       </Box>
 
       {files.length === 0 && (

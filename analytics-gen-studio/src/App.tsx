@@ -228,6 +228,7 @@ export default function App() {
         applySchemaConstants({
           ...loaded,
           defaultParamType: loaded.parameterTypes[0] ?? 'string',
+          parameterTypes: loaded.parameterTypes,
         });
         setSchemaDefaultConfig(loaded.defaultConfig);
         setSchemas(loaded);

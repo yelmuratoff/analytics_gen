@@ -11,6 +11,9 @@ export let SNAKE_CASE_DOMAIN = /^[a-z0-9_]+$/;
 /** Default parameter type (first type from schema examples) */
 export let DEFAULT_PARAM_TYPE = 'string';
 
+/** All parameter types from schema */
+export let PARAMETER_TYPES: string[] = ['string'];
+
 /** Non-numeric base types — min/max don't apply to these */
 export let NON_NUMERIC_TYPES = new Set(['string', 'bool', 'boolean', 'dynamic']);
 
@@ -21,10 +24,12 @@ export function applySchemaConstants(values: {
   snakeCaseParamPattern: RegExp;
   nonNumericTypes?: string[];
   defaultParamType?: string;
+  parameterTypes?: string[];
 }) {
   DEFAULT_EVENT_DESCRIPTION = values.defaultEventDescription;
   SNAKE_CASE_DOMAIN = values.snakeCaseDomainPattern;
   SNAKE_CASE_PARAM = values.snakeCaseParamPattern;
   if (values.nonNumericTypes) NON_NUMERIC_TYPES = new Set(values.nonNumericTypes);
   if (values.defaultParamType) DEFAULT_PARAM_TYPE = values.defaultParamType;
+  if (values.parameterTypes) PARAMETER_TYPES = values.parameterTypes;
 }

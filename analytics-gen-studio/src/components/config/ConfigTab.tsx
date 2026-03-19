@@ -306,14 +306,13 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
         const sectionTitle = (sec.title as string) ?? sectionKey;
         const sectionConfig = (config as unknown as Record<string, Record<string, unknown>>)[sectionKey] ?? {};
         const fields = sec.properties as Record<string, Record<string, unknown>>;
-        const filledCount = Object.entries(fields).filter(([fk, fs]) => {
+        const filledCount = Object.entries(fields).filter(([fk]) => {
           const val = sectionConfig[fk];
           if (val == null) return false;
-          const defVal = (fs as Record<string, unknown>).default;
-          if (val === defVal) return false;
-          if (typeof val === 'boolean') return val !== false;
+          if (typeof val === 'boolean') return val === true;
           if (typeof val === 'string') return val !== '';
           if (Array.isArray(val)) return val.length > 0;
+          if (typeof val === 'object') return Object.keys(val as object).length > 0;
           return true;
         }).length;
 

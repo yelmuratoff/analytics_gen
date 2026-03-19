@@ -165,13 +165,15 @@ export default function YamlPreview() {
         '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
       }}>
         <Box component="pre" sx={{ m: 0, display: 'flex', py: 1.5 }}>
-          <Box component="span" sx={{
-            px: 2, borderRight: '1px solid rgba(255,255,255,0.04)',
-            color: 'rgba(255,255,255,0.15)', userSelect: 'none',
-            textAlign: 'right', minWidth: '3em', fontSize: '0.75rem',
-          }}>
-            {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
-          </Box>
+          {!wordWrap && (
+            <Box component="span" sx={{
+              px: 2, borderRight: '1px solid rgba(255,255,255,0.04)',
+              color: 'rgba(255,255,255,0.15)', userSelect: 'none',
+              textAlign: 'right', minWidth: '3em', fontSize: '0.75rem',
+            }}>
+              {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
+            </Box>
+          )}
           <Box component="code" sx={{ flex: 1, whiteSpace: wordWrap ? 'pre-wrap' : 'pre', wordBreak: wordWrap ? 'break-all' : 'normal', pl: 2.5, pr: 2 }}>
             {highlighted}
           </Box>

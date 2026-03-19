@@ -75,26 +75,28 @@ export default function Layout({ schemas }: LayoutProps) {
         <Box
           onMouseDown={handleMouseDown}
           sx={{
-            width: 12,
+            width: 16,
             cursor: 'col-resize',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            '&:hover .resize-indicator, &:active .resize-indicator': {
-              bgcolor: '#DF4926',
-              opacity: 0.4,
+            '&:hover .resize-grip, &:active .resize-grip': {
+              opacity: 0.6,
             },
           }}
         >
-          <Box className="resize-indicator" sx={{
-            width: 3,
-            height: 40,
-            borderRadius: 2,
-            bgcolor: '#D0CCC8',
-            opacity: 0.3,
-            transition: 'all 0.15s ease',
-          }} />
+          <Box className="resize-grip" sx={{
+            display: 'flex', flexDirection: 'column', gap: '3px',
+            opacity: 0.25, transition: 'opacity 0.15s ease',
+          }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
+                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
+                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
+              </Box>
+            ))}
+          </Box>
         </Box>
         {/* YAML preview panel */}
         <Box sx={{

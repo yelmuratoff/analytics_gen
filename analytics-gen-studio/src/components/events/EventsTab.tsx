@@ -102,26 +102,26 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
       <Box
         onMouseDown={handleMouseDown}
         sx={{
-          width: 8,
+          width: 12,
           cursor: 'col-resize',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          '&:hover .sidebar-resize, &:active .sidebar-resize': {
-            bgcolor: '#DF4926',
-            opacity: 0.3,
-          },
+          '&:hover .sidebar-resize, &:active .sidebar-resize': { opacity: 0.5 },
         }}
       >
         <Box className="sidebar-resize" sx={{
-          width: 2,
-          height: 32,
-          borderRadius: 2,
-          bgcolor: '#D0CCC8',
-          opacity: 0.2,
-          transition: 'all 0.15s ease',
-        }} />
+          display: 'flex', flexDirection: 'column', gap: '3px',
+          opacity: 0.2, transition: 'opacity 0.15s ease',
+        }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Box key={i} sx={{ display: 'flex', gap: '2px' }}>
+              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
+              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
+            </Box>
+          ))}
+        </Box>
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {renderEditor()}

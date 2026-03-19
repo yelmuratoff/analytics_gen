@@ -47,14 +47,14 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   const rawValue = event.parameters[paramName];
 
   const breadcrumbEl = breadcrumb && breadcrumb.length > 1 ? (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mb: 0.5, flexWrap: 'wrap' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'wrap' }}>
       {breadcrumb.map((part, i) => (
         <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-          {i > 0 && <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />}
+          {i > 0 && <NavigateNextRounded sx={{ fontSize: i === breadcrumb.length - 1 ? 16 : 14, color: '#ccc' }} />}
           <Typography sx={{
-            fontSize: '0.75rem',
-            color: i === breadcrumb.length - 1 ? '#DF4926' : '#999',
-            fontWeight: i === breadcrumb.length - 1 ? 600 : 400,
+            fontSize: i === breadcrumb.length - 1 ? '1.05rem' : '0.75rem',
+            color: i === breadcrumb.length - 1 ? '#1A1A1A' : '#999',
+            fontWeight: i === breadcrumb.length - 1 ? 700 : 400,
             fontFamily: '"JetBrains Mono", monospace',
           }}>
             {part}
@@ -70,9 +70,6 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
       <Box>
         <Box sx={{ mb: 3 }}>
           {breadcrumbEl}
-          <Typography variant="h5">
-            {paramName}
-          </Typography>
         </Box>
         <Box sx={{
           p: 2.5, borderRadius: 1.5, border: '2px dashed rgba(99,102,241,0.25)',
@@ -116,9 +113,6 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   const header = (
     <Box sx={{ mb: 3 }}>
       {breadcrumbEl}
-      <Typography variant="h5">
-        {paramName}
-      </Typography>
     </Box>
   );
 
@@ -132,7 +126,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
       <FormControl fullWidth size="small" sx={{ mb: 2.5 }}>
         <InputLabel>Type</InputLabel>
         <Select
-          value={formData.type ?? DEFAULT_PARAM_TYPE}
+          value={parameterTypes.includes(formData.type ?? '') ? formData.type : (parameterTypes.find((t) => t.toLowerCase() === (formData.type ?? '').toLowerCase()) ?? DEFAULT_PARAM_TYPE)}
           label="Type"
           onChange={(e) => updateParameter(fileIndex, domain, eventName, paramName, e.target.value)}
         >

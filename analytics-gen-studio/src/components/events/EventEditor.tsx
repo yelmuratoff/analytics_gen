@@ -39,14 +39,14 @@ export default function EventEditor({ fileIndex, domain, eventName, eventEditorS
     <Box>
       <Box sx={{ mb: 3 }}>
         {breadcrumb && breadcrumb.length > 1 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, mb: 0.5, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'wrap' }}>
             {breadcrumb.map((part, i) => (
               <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                {i > 0 && <NavigateNextRounded sx={{ fontSize: 14, color: '#ccc' }} />}
+                {i > 0 && <NavigateNextRounded sx={{ fontSize: i === breadcrumb.length - 1 ? 16 : 14, color: '#ccc' }} />}
                 <Typography sx={{
-                  fontSize: '0.75rem',
-                  color: i === breadcrumb.length - 1 ? '#DF4926' : '#999',
-                  fontWeight: i === breadcrumb.length - 1 ? 600 : 400,
+                  fontSize: i === breadcrumb.length - 1 ? '1.05rem' : '0.75rem',
+                  color: i === breadcrumb.length - 1 ? '#1A1A1A' : '#999',
+                  fontWeight: i === breadcrumb.length - 1 ? 700 : 400,
                   fontFamily: '"JetBrains Mono", monospace',
                 }}>
                   {part}
@@ -55,9 +55,6 @@ export default function EventEditor({ fileIndex, domain, eventName, eventEditorS
             ))}
           </Box>
         )}
-        <Typography variant="h5">
-          {eventName}
-        </Typography>
       </Box>
       <Form
         schema={eventEditorSchema}

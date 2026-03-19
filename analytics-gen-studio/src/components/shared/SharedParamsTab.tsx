@@ -145,10 +145,10 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
               </Tooltip>
             )}
           </Box>
-          {files.length > 0 && (
-            <TextField
+          <TextField
               size="small"
-              placeholder="Search..."
+              placeholder={files.length > 0 ? 'Search...' : 'No items yet'}
+              disabled={files.length === 0}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               slotProps={{
@@ -162,7 +162,6 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                 },
               }}
             />
-          )}
         </Box>
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
@@ -253,11 +252,21 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
       <Box
         onMouseDown={handleMouseDown}
         sx={{
-          width: 8, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          '&:hover .shared-resize, &:active .shared-resize': { bgcolor: '#DF4926', opacity: 0.3 },
+          width: 12, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          '&:hover .shared-resize, &:active .shared-resize': { opacity: 0.5 },
         }}
       >
-        <Box className="shared-resize" sx={{ width: 2, height: 32, borderRadius: 2, bgcolor: '#D0CCC8', opacity: 0.2, transition: 'all 0.15s ease' }} />
+        <Box className="shared-resize" sx={{
+          display: 'flex', flexDirection: 'column', gap: '3px',
+          opacity: 0.2, transition: 'opacity 0.15s ease',
+        }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Box key={i} sx={{ display: 'flex', gap: '2px' }}>
+              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
+              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
+            </Box>
+          ))}
+        </Box>
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'shared' && selectedPath.parameter ? (
