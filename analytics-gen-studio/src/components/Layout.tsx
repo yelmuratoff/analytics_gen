@@ -19,7 +19,7 @@ export default function Layout({ schemas }: LayoutProps) {
   const renderTab = () => {
     switch (activeTab) {
       case 'config':
-        return <ConfigTab schema={schemas.configSchema} />;
+        return <ConfigTab />;
       case 'events':
         return <EventsTab parameterSchema={schemas.parameterSchema} />;
       case 'shared':

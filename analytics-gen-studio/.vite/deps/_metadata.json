@@ -2,8 +2,14 @@
   "hash": "e0bfca9f",
   "configHash": "1689e599",
   "lockfileHash": "191c3e9b",
-  "browserHash": "dcef742e",
+  "browserHash": "0f9e3a8a",
   "optimized": {
+    "@mui/icons-material/AbcRounded": {
+      "src": "../../node_modules/@mui/icons-material/esm/AbcRounded.js",
+      "file": "@mui_icons-material_AbcRounded.js",
+      "fileHash": "5c513133",
+      "needsInterop": false
+    },
     "@mui/icons-material/AddRounded": {
       "src": "../../node_modules/@mui/icons-material/esm/AddRounded.js",
       "file": "@mui_icons-material_AddRounded.js",
@@ -38,6 +44,12 @@
       "src": "../../node_modules/@mui/icons-material/esm/ContentCopyRounded.js",
       "file": "@mui_icons-material_ContentCopyRounded.js",
       "fileHash": "ecf15984",
+      "needsInterop": false
+    },
+    "@mui/icons-material/DataObjectRounded": {
+      "src": "../../node_modules/@mui/icons-material/esm/DataObjectRounded.js",
+      "file": "@mui_icons-material_DataObjectRounded.js",
+      "fileHash": "5a3f0418",
       "needsInterop": false
     },
     "@mui/icons-material/ElectricBoltRounded": {
@@ -76,6 +88,12 @@
       "fileHash": "9d2a7bfe",
       "needsInterop": false
     },
+    "@mui/icons-material/GavelRounded": {
+      "src": "../../node_modules/@mui/icons-material/esm/GavelRounded.js",
+      "file": "@mui_icons-material_GavelRounded.js",
+      "fileHash": "714972db",
+      "needsInterop": false
+    },
     "@mui/icons-material/InsertDriveFileRounded": {
       "src": "../../node_modules/@mui/icons-material/esm/InsertDriveFileRounded.js",
       "file": "@mui_icons-material_InsertDriveFileRounded.js",
@@ -106,6 +124,12 @@
       "fileHash": "c0ac1c76",
       "needsInterop": false
     },
+    "@mui/icons-material/OutputRounded": {
+      "src": "../../node_modules/@mui/icons-material/esm/OutputRounded.js",
+      "file": "@mui_icons-material_OutputRounded.js",
+      "fileHash": "57fe9d57",
+      "needsInterop": false
+    },
     "@mui/icons-material/RefreshRounded": {
       "src": "../../node_modules/@mui/icons-material/esm/RefreshRounded.js",
       "file": "@mui_icons-material_RefreshRounded.js",
@@ -128,6 +152,12 @@
       "src": "../../node_modules/@mui/icons-material/esm/ShareRounded.js",
       "file": "@mui_icons-material_ShareRounded.js",
       "fileHash": "ae5efa8b",
+      "needsInterop": false
+    },
+    "@mui/icons-material/TuneRounded": {
+      "src": "../../node_modules/@mui/icons-material/esm/TuneRounded.js",
+      "file": "@mui_icons-material_TuneRounded.js",
+      "fileHash": "8fbe8fea",
       "needsInterop": false
     },
     "@mui/material/Alert": {
