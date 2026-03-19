@@ -4,6 +4,10 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -14,18 +18,33 @@ import Alert from '@mui/material/Alert';
 import FolderZipRounded from '@mui/icons-material/FolderZipRounded';
 import FileOpenRounded from '@mui/icons-material/FileOpenRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
+import SaveAsRounded from '@mui/icons-material/SaveAsRounded';
 import RefreshRounded from '@mui/icons-material/RefreshRounded';
 import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
 import { useStore } from '../state/store.ts';
-import { exportAllAsZip, saveProject, loadProjectFile } from '../utils/export.ts';
+import {
+  exportAllAsZip,
+  saveProject,
+  saveProjectAs,
+  openProject,
+  loadProjectFile,
+  getCurrentFileName,
+  clearFileHandle,
+  supportsFileSystemAccess,
+} from '../utils/export.ts';
 import DocsDrawer from './DocsDrawer.tsx';
 
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
+const mod = isMac ? '\u2318' : 'Ctrl+';
 
 export default function Toolbar() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [fileMenuAnchor, setFileMenuAnchor] = useState<HTMLElement | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const store = useStore();
 
@@ -34,18 +53,55 @@ export default function Toolbar() {
     setSnackbar({ message: 'ZIP exported', severity: 'success' });
   }, [store]);
 
-  const handleSaveProject = useCallback(() => {
-    saveProject(store);
-    setSnackbar({ message: 'Project saved', severity: 'success' });
+  const handleSave = useCallback(async () => {
+    try {
+      const result = await saveProject(store);
+      if (result.saved) {
+        setFileName(result.fileName);
+        setSnackbar({ message: `Saved${result.fileName ? ` → ${result.fileName}` : ''}`, severity: 'success' });
+      }
+    } catch (err) {
+      setSnackbar({ message: `Save failed: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+    }
   }, [store]);
 
-  const handleLoadProject = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSaveAs = useCallback(async () => {
+    try {
+      const name = await saveProjectAs(store);
+      if (name) {
+        setFileName(name);
+        setSnackbar({ message: `Saved → ${name}`, severity: 'success' });
+      }
+    } catch (err) {
+      setSnackbar({ message: `Save failed: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+    }
+  }, [store]);
+
+  const handleOpen = useCallback(async () => {
+    if (supportsFileSystemAccess) {
+      try {
+        const result = await openProject();
+        if (result) {
+          store.loadProject(result.data);
+          setFileName(result.fileName);
+          setSnackbar({ message: `Opened ${result.fileName}`, severity: 'success' });
+        }
+      } catch (err) {
+        setSnackbar({ message: `Failed to open: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  }, [store]);
+
+  const handleLoadFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const data = await loadProjectFile(file);
       store.loadProject(data);
-      setSnackbar({ message: 'Project loaded', severity: 'success' });
+      setFileName(file.name);
+      setSnackbar({ message: `Opened ${file.name}`, severity: 'success' });
     } catch (err) {
       setSnackbar({ message: `Failed to load: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
     }
@@ -54,29 +110,40 @@ export default function Toolbar() {
 
   const handleReset = () => {
     store.resetState();
+    clearFileHandle();
+    setFileName(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
   };
 
+  // Sync fileName from handle on mount (e.g. after page restore)
+  useEffect(() => {
+    const name = getCurrentFileName();
+    if (name) setFileName(name);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
-      if (e.key === 's') {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (!isMod) return;
+      if (e.key === 's' && e.shiftKey) {
         e.preventDefault();
-        handleSaveProject();
+        handleSaveAs();
+      } else if (e.key === 's') {
+        e.preventDefault();
+        handleSave();
       } else if (e.key === 'e' && e.shiftKey) {
         e.preventDefault();
         handleExportZip();
       } else if (e.key === 'o') {
         e.preventDefault();
-        fileInputRef.current?.click();
+        handleOpen();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleSaveProject, handleExportZip]);
+  }, [handleSave, handleSaveAs, handleExportZip, handleOpen]);
 
   const actionBtnSx = {
     fontSize: '0.78rem',
@@ -95,7 +162,7 @@ export default function Toolbar() {
         borderBottom: '1px solid #EEEBE8',
       }}>
         {/* Brand */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 'auto' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2 }}>
           <Box
             component="img"
             src={`${import.meta.env.BASE_URL}logo.png`}
@@ -112,6 +179,20 @@ export default function Toolbar() {
           </Box>
         </Box>
 
+        {/* Current file indicator */}
+        {fileName && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 'auto' }}>
+            <InsertDriveFileRounded sx={{ fontSize: 14, color: '#bbb' }} />
+            <Typography sx={{
+              fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace',
+              maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {fileName}
+            </Typography>
+          </Box>
+        )}
+        {!fileName && <Box sx={{ flex: 1 }} />}
+
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title="API Documentation" arrow>
@@ -125,7 +206,7 @@ export default function Toolbar() {
               Docs
             </Button>
           </Tooltip>
-          <Tooltip title={`Export ZIP (${isMac ? '\u2318\u21E7E' : 'Ctrl+Shift+E'})`} arrow>
+          <Tooltip title={`Export ZIP (${mod}\u21E7E)`} arrow>
             <Button
               onClick={handleExportZip}
               size="small"
@@ -136,25 +217,74 @@ export default function Toolbar() {
               Export
             </Button>
           </Tooltip>
-          <Tooltip title={`Save Project (${isMac ? '\u2318S' : 'Ctrl+S'})`} arrow>
+
+          {/* Save button with dropdown for Save As */}
+          <Box sx={{ display: 'flex' }}>
+            <Tooltip title={`Save${fileName ? ` → ${fileName}` : ''} (${mod}S)`} arrow>
+              <Button
+                onClick={handleSave}
+                size="small"
+                variant="outlined"
+                startIcon={<SaveRounded sx={{ fontSize: 18 }} />}
+                sx={{
+                  ...actionBtnSx,
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0,
+                  pr: 1,
+                }}
+              >
+                Save
+              </Button>
+            </Tooltip>
+            <Tooltip title="Save options" arrow>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={(e) => setFileMenuAnchor(e.currentTarget)}
+                sx={{
+                  ...actionBtnSx,
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+                  minWidth: 28,
+                  px: 0.5,
+                }}
+              >
+                <KeyboardArrowDownRounded sx={{ fontSize: 18 }} />
+              </Button>
+            </Tooltip>
+          </Box>
+          <Menu
+            anchorEl={fileMenuAnchor}
+            open={!!fileMenuAnchor}
+            onClose={() => setFileMenuAnchor(null)}
+            slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 200 } } }}
+          >
+            <MenuItem onClick={() => { setFileMenuAnchor(null); handleSave(); }}>
+              <ListItemIcon><SaveRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+              <ListItemText primary="Save" secondary={`${mod}S`}
+                primaryTypographyProps={{ fontSize: '0.82rem' }}
+                secondaryTypographyProps={{ fontSize: '0.7rem' }} />
+            </MenuItem>
+            <MenuItem onClick={() => { setFileMenuAnchor(null); handleSaveAs(); }}>
+              <ListItemIcon><SaveAsRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+              <ListItemText primary="Save As..." secondary={`${mod}\u21E7S`}
+                primaryTypographyProps={{ fontSize: '0.82rem' }}
+                secondaryTypographyProps={{ fontSize: '0.7rem' }} />
+            </MenuItem>
+          </Menu>
+
+          <Tooltip title={`Open Project (${mod}O)`} arrow>
             <Button
-              onClick={handleSaveProject}
+              onClick={handleOpen}
               size="small"
               variant="outlined"
-              startIcon={<SaveRounded sx={{ fontSize: 18 }} />}
+              startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
               sx={actionBtnSx}
             >
-              Save
+              Open
             </Button>
           </Tooltip>
-          <Tooltip title={`Open Project (${isMac ? '\u2318O' : 'Ctrl+O'})`} arrow>
-            <IconButton onClick={() => fileInputRef.current?.click()} size="small" sx={{
-              color: '#999', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
-            }}>
-              <FileOpenRounded sx={{ fontSize: 20 }} />
-            </IconButton>
-          </Tooltip>
-          <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadProject} />
+          <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadFallback} />
           <Tooltip title="Reset All" arrow>
             <IconButton onClick={() => setConfirmOpen(true)} size="small" sx={{
               color: '#ccc', '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.04)' },

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "activeTab": "config",
+  "activeTab": "events",
   "config": {
     "inputs": {
       "events": "events",
