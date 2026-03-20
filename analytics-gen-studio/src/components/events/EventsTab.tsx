@@ -119,9 +119,9 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           opacity: 0.35, transition: 'opacity 0.15s ease',
         }}>
           {[0, 1, 2, 3].map((i) => (
-            <Box key={i} sx={{ display: 'flex', gap: '2px' }}>
-              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
-              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
+            <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
+              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
+              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
             </Box>
           ))}
         </Box>

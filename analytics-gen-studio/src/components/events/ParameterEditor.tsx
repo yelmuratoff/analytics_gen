@@ -63,15 +63,20 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
           <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
             {i > 0 && <NavigateNextRounded sx={{ fontSize: isLast ? 16 : 14, color: '#ccc' }} />}
             <Typography
+              component={isClickable ? 'button' : 'span'}
               onClick={isClickable ? () => handleBreadcrumbClick(i) : undefined}
+              onKeyDown={isClickable ? (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBreadcrumbClick(i); } } : undefined}
+              tabIndex={isClickable ? 0 : undefined}
               sx={{
                 fontSize: isLast ? '1.05rem' : '0.75rem',
                 color: isLast ? '#1A1A1A' : '#999',
                 fontWeight: isLast ? 700 : 400,
                 fontFamily: '"JetBrains Mono", monospace',
+                background: 'none', border: 'none', p: 0, borderRadius: 0.5,
                 ...(isClickable && {
                   cursor: 'pointer',
                   '&:hover': { color: '#DF4926' },
+                  '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: 2 },
                 }),
               }}>
               {part}

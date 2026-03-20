@@ -84,11 +84,11 @@ export default function YamlPreview() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: '100%', gap: 1,
       }}>
-        <Typography sx={{ color: '#5C5C5C', fontSize: '0.82rem', fontWeight: 600 }}>
+        <Typography sx={{ color: '#777', fontSize: '0.82rem', fontWeight: 600 }}>
           No output yet
         </Typography>
-        <Typography sx={{ color: '#3D3D3D', fontSize: '0.75rem' }}>
-          Add items in the editor to see YAML
+        <Typography sx={{ color: '#555', fontSize: '0.75rem' }}>
+          Add events or parameters to see generated YAML
         </Typography>
       </Box>
     );
@@ -133,14 +133,14 @@ export default function YamlPreview() {
       }}>
         <Typography sx={{
           flex: 1, fontSize: '0.75rem', fontWeight: 600,
-          color: '#999', fontFamily: '"JetBrains Mono", monospace',
+          color: '#B0B0B0', fontFamily: '"JetBrains Mono", monospace',
         }}>
           {currentFile.fileName}
         </Typography>
         {tabErrors.length === 0 && (
           <CheckCircleRounded sx={{ fontSize: 14, color: '#4CAF50', mr: 0.5 }} />
         )}
-        <Typography sx={{ fontSize: '0.75rem', color: '#3D3D3D', mr: 1.5 }}>
+        <Typography sx={{ fontSize: '0.75rem', color: '#777', mr: 1.5 }}>
           {lineCount}L
         </Typography>
         <Tooltip title={wordWrap ? 'No wrap' : 'Wrap lines'} arrow>
@@ -202,16 +202,18 @@ export default function YamlPreview() {
           '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
-            <ErrorOutlineRounded sx={{ fontSize: 16, color: '#FF6B6B' }} />
-            <Typography sx={{ fontSize: '0.78rem', color: '#FF6B6B', fontWeight: 700 }}>
+            <ErrorOutlineRounded sx={{ fontSize: 16, color: '#FF8A80' }} />
+            <Typography sx={{ fontSize: '0.78rem', color: '#FF8A80', fontWeight: 700 }}>
               {tabErrors.length} issue{tabErrors.length > 1 ? 's' : ''}
             </Typography>
           </Box>
           {tabErrors.map((err, i) => {
-            const hasNav = err.fileIndex !== undefined && err.tab !== 'config';
-            return (
-              <Box key={i} onClick={hasNav ? () => {
-                setActiveTab(err.tab);
+            const hasNav = err.tab === 'config' || err.fileIndex !== undefined;
+            const handleClick = hasNav ? () => {
+              setActiveTab(err.tab);
+              if (err.tab === 'config') {
+                setSelectedPath(null);
+              } else {
                 const nav: SelectionPath = { tab: err.tab, fileIndex: err.fileIndex! };
                 if (err.tab === 'events') {
                   if (err.domain) nav.domain = err.domain;
@@ -223,11 +225,14 @@ export default function YamlPreview() {
                   if (err.contextProperty) nav.contextProperty = err.contextProperty;
                 }
                 setSelectedPath(nav);
-              } : undefined} sx={{
+              }
+            } : undefined;
+            return (
+              <Box key={i} onClick={handleClick} sx={{
                 fontSize: '0.76rem', color: '#D4D4D4', lineHeight: 1.7,
                 fontFamily: '"JetBrains Mono", monospace',
-                pl: 3, borderRadius: 0.5,
-                ...(hasNav && { cursor: 'pointer', '&:hover': { bgcolor: 'rgba(255,255,255,0.06)' } }),
+                pl: 3, py: 0.25, borderRadius: 0.5,
+                ...(hasNav && { cursor: 'pointer', '&:hover': { bgcolor: 'rgba(223,73,38,0.12)' } }),
               }}>
                 {err.message}
               </Box>

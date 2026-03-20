@@ -114,8 +114,8 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     selectedPath?.tab === 'shared' && selectedPath.fileIndex === fi && selectedPath.parameter === p;
 
   const hoverDel = {
-    opacity: 0, transition: 'opacity 0.1s', color: '#BCBCBC', p: 0.5,
-    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)' },
+    opacity: 0.2, transition: 'opacity 0.15s', color: '#BCBCBC', p: 0.5,
+    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
@@ -152,7 +152,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           </Box>
           <TextField
               size="small"
-              placeholder={files.length > 0 ? 'Search...' : 'No items yet'}
+              placeholder={files.length > 0 ? 'Search...' : 'Add a file to search'}
               disabled={files.length === 0}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -264,6 +264,8 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
       </Box>
       {/* Resize handle */}
       <Box
+        role="separator"
+        aria-label="Resize sidebar"
         onMouseDown={handleMouseDown}
         sx={{
           width: 12, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -275,9 +277,9 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           opacity: 0.35, transition: 'opacity 0.15s ease',
         }}>
           {[0, 1, 2, 3].map((i) => (
-            <Box key={i} sx={{ display: 'flex', gap: '2px' }}>
-              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
-              <Box sx={{ width: 2, height: 2, borderRadius: '50%', bgcolor: '#999' }} />
+            <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
+              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
+              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
             </Box>
           ))}
         </Box>

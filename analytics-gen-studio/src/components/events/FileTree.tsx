@@ -91,9 +91,9 @@ export default function FileTree() {
     selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param;
 
   const hoverDel = {
-    opacity: 0, transition: 'opacity 0.15s', color: '#BCBCBC',
+    opacity: 0.2, transition: 'opacity 0.15s', color: '#BCBCBC',
     p: 0.5,
-    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)' },
+    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
@@ -163,7 +163,7 @@ export default function FileTree() {
         </Box>
         <TextField
             size="small"
-            placeholder={files.length > 0 ? 'Search...' : 'No items yet'}
+            placeholder={files.length > 0 ? 'Search...' : 'Add a file to search'}
             disabled={files.length === 0}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
