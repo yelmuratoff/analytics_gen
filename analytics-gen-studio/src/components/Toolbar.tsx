@@ -215,7 +215,7 @@ export default function Toolbar() {
               fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace',
               maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-              {fileName}{isDirty ? ' •' : ''}
+              {fileName}{isDirty && <Box component="span" sx={{ color: '#DF4926', ml: 0.3 }}>●</Box>}
             </Typography>
           </Box>
         )}

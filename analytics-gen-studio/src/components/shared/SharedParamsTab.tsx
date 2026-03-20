@@ -127,7 +127,11 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box data-shared-sidebar sx={{ width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0 }}>
+      <Box data-shared-sidebar sx={{
+        width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0,
+        '&::-webkit-scrollbar': { width: 5 },
+        '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.08)', borderRadius: 3 },
+      }}>
         <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
@@ -165,7 +169,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         </Box>
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-            <ShareRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 0.5 }} />
+            <ShareRounded sx={{ fontSize: 30, color: '#D5D0CB', mb: 0.5 }} />
             <Typography sx={{ fontSize: '0.78rem', color: '#BCBCBC', mb: 0.5 }}>No files yet</Typography>
             <Typography sx={{ fontSize: '0.75rem', color: '#ddd', lineHeight: 1.5, px: 1 }}>
               Shared parameters can be referenced from any event across files.
@@ -253,12 +257,12 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         onMouseDown={handleMouseDown}
         sx={{
           width: 12, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          '&:hover .shared-resize, &:active .shared-resize': { opacity: 0.5 },
+          '&:hover .shared-resize, &:active .shared-resize': { opacity: 0.6 },
         }}
       >
         <Box className="shared-resize" sx={{
           display: 'flex', flexDirection: 'column', gap: '3px',
-          opacity: 0.2, transition: 'opacity 0.15s ease',
+          opacity: 0.35, transition: 'opacity 0.15s ease',
         }}>
           {[0, 1, 2, 3].map((i) => (
             <Box key={i} sx={{ display: 'flex', gap: '2px' }}>
@@ -273,7 +277,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           <SharedParamEditor fileIndex={selectedPath.fileIndex} paramName={selectedPath.parameter} parameterSchema={parameterSchema} />
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <ShareRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1.5 }} />
+            <ShareRounded sx={{ fontSize: 36, color: '#D5D0CB', mb: 1.5 }} />
             <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>Select a parameter</Typography>
             <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
               Shared parameters can be referenced from any event. Click one to edit.

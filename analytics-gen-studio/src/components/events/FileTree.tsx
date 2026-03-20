@@ -182,7 +182,7 @@ export default function FileTree() {
 
       {files.length === 0 && (
         <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-          <InsertDriveFileRounded sx={{ fontSize: 30, color: '#E8E4E0', mb: 1 }} />
+          <InsertDriveFileRounded sx={{ fontSize: 30, color: '#D5D0CB', mb: 1 }} />
           <Typography sx={{ fontSize: '0.78rem', color: '#aaa', mb: 0.5 }}>No event files yet</Typography>
           <Typography sx={{ fontSize: '0.75rem', color: '#ccc', mb: 1.5, lineHeight: 1.5, px: 1 }}>
             Create a YAML file, then add domains and events with parameters inside.

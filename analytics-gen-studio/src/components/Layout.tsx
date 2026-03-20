@@ -76,6 +76,8 @@ export default function Layout({ schemas }: LayoutProps) {
         </Box>
         {/* Resize handle */}
         <Box
+          role="separator"
+          aria-label="Resize panels"
           onMouseDown={handleMouseDown}
           sx={{
             width: 16,
@@ -91,7 +93,7 @@ export default function Layout({ schemas }: LayoutProps) {
         >
           <Box className="resize-grip" sx={{
             display: 'flex', flexDirection: 'column', gap: '3px',
-            opacity: dragging ? 1 : 0.25, transition: 'opacity 0.15s ease',
+            opacity: dragging ? 1 : 0.35, transition: 'opacity 0.15s ease',
           }}>
             {[0, 1, 2, 3, 4].map((i) => (
               <Box key={i} sx={{ display: 'flex', gap: '3px' }}>

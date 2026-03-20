@@ -46,21 +46,39 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   if (!event) return null;
   const rawValue = event.parameters[paramName];
 
+  const handleBreadcrumbClick = (index: number) => {
+    if (!breadcrumb || index >= breadcrumb.length - 1) return; // Don't navigate on last item (current)
+    // index 0 = file, 1 = domain, 2 = event — navigate to event
+    if (index === 2 || index === 1) {
+      setSelectedPath({ tab: 'events', fileIndex, domain, event: eventName });
+    }
+  };
+
   const breadcrumbEl = breadcrumb && breadcrumb.length > 1 ? (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'wrap' }}>
-      {breadcrumb.map((part, i) => (
-        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-          {i > 0 && <NavigateNextRounded sx={{ fontSize: i === breadcrumb.length - 1 ? 16 : 14, color: '#ccc' }} />}
-          <Typography sx={{
-            fontSize: i === breadcrumb.length - 1 ? '1.05rem' : '0.75rem',
-            color: i === breadcrumb.length - 1 ? '#1A1A1A' : '#999',
-            fontWeight: i === breadcrumb.length - 1 ? 700 : 400,
-            fontFamily: '"JetBrains Mono", monospace',
-          }}>
-            {part}
-          </Typography>
-        </Box>
-      ))}
+      {breadcrumb.map((part, i) => {
+        const isLast = i === breadcrumb.length - 1;
+        const isClickable = !isLast && i >= 1;
+        return (
+          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+            {i > 0 && <NavigateNextRounded sx={{ fontSize: isLast ? 16 : 14, color: '#ccc' }} />}
+            <Typography
+              onClick={isClickable ? () => handleBreadcrumbClick(i) : undefined}
+              sx={{
+                fontSize: isLast ? '1.05rem' : '0.75rem',
+                color: isLast ? '#1A1A1A' : '#999',
+                fontWeight: isLast ? 700 : 400,
+                fontFamily: '"JetBrains Mono", monospace',
+                ...(isClickable && {
+                  cursor: 'pointer',
+                  '&:hover': { color: '#DF4926' },
+                }),
+              }}>
+              {part}
+            </Typography>
+          </Box>
+        );
+      })}
     </Box>
   ) : null;
 

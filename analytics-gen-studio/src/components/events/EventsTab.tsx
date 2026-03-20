@@ -60,7 +60,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100%',
         }}>
-          <ElectricBoltRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1.5 }} />
+          <ElectricBoltRounded sx={{ fontSize: 36, color: '#D5D0CB', mb: 1.5 }} />
           <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>
             {selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
           </Typography>
@@ -98,11 +98,17 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box data-events-sidebar sx={{ width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0 }}>
+      <Box data-events-sidebar sx={{
+        width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0,
+        '&::-webkit-scrollbar': { width: 5 },
+        '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.08)', borderRadius: 3 },
+      }}>
         <FileTree />
       </Box>
       {/* Resize handle */}
       <Box
+        role="separator"
+        aria-label="Resize sidebar"
         onMouseDown={handleMouseDown}
         sx={{
           width: 12,
@@ -111,12 +117,12 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          '&:hover .sidebar-resize, &:active .sidebar-resize': { opacity: 0.5 },
+          '&:hover .sidebar-resize, &:active .sidebar-resize': { opacity: 0.6 },
         }}
       >
         <Box className="sidebar-resize" sx={{
           display: 'flex', flexDirection: 'column', gap: '3px',
-          opacity: 0.2, transition: 'opacity 0.15s ease',
+          opacity: 0.35, transition: 'opacity 0.15s ease',
         }}>
           {[0, 1, 2, 3].map((i) => (
             <Box key={i} sx={{ display: 'flex', gap: '2px' }}>
