@@ -14,6 +14,7 @@ import { useYamlPreview } from '../hooks/useYamlPreview.ts';
 import { useValidation } from '../hooks/useValidation.ts';
 import { useStore } from '../state/store.ts';
 import { copyToClipboard, exportSingleFile } from '../utils/export.ts';
+import type { SelectionPath } from '../types/index.ts';
 
 function highlightYaml(content: string): React.ReactNode[] {
   return content.split('\n').map((line, i) => {
@@ -60,6 +61,8 @@ function highlightYaml(content: string): React.ReactNode[] {
 export default function YamlPreview() {
   const files = useYamlPreview();
   const activeTab = useStore((s) => s.activeTab);
+  const setActiveTab = useStore((s) => s.setActiveTab);
+  const setSelectedPath = useStore((s) => s.setSelectedPath);
   const errors = useValidation();
   const tabErrors = errors.filter((e) => e.tab === activeTab);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
@@ -164,6 +167,7 @@ export default function YamlPreview() {
         flex: 1, overflow: 'auto',
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '0.76rem', lineHeight: 1.75,
+        scrollbarColor: 'rgba(255,255,255,0.08) transparent',
         '&::-webkit-scrollbar': { width: 5 },
         '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
       }}>
@@ -177,7 +181,10 @@ export default function YamlPreview() {
               {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
             </Box>
           )}
-          <Box component="code" sx={{ flex: 1, whiteSpace: wordWrap ? 'pre-wrap' : 'pre', wordBreak: wordWrap ? 'break-all' : 'normal', pl: 2.5, pr: 2 }}>
+          <Box component="code" sx={{
+            flex: 1, whiteSpace: wordWrap ? 'pre-wrap' : 'pre', wordBreak: wordWrap ? 'break-all' : 'normal', pl: 2.5, pr: 2,
+            '& > div:hover': { bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 0.5 },
+          }}>
             {highlighted}
           </Box>
         </Box>
@@ -190,6 +197,7 @@ export default function YamlPreview() {
           maxHeight: 160, overflow: 'auto',
           px: 2, py: 1.5,
           bgcolor: 'rgba(211,47,47,0.08)',
+          scrollbarColor: 'rgba(255,255,255,0.08) transparent',
           '&::-webkit-scrollbar': { width: 4 },
           '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
         }}>
@@ -199,15 +207,32 @@ export default function YamlPreview() {
               {tabErrors.length} issue{tabErrors.length > 1 ? 's' : ''}
             </Typography>
           </Box>
-          {tabErrors.map((err, i) => (
-            <Typography key={i} sx={{
-              fontSize: '0.76rem', color: '#D4D4D4', lineHeight: 1.7,
-              fontFamily: '"JetBrains Mono", monospace',
-              pl: 3,
-            }}>
-              {err.message}
-            </Typography>
-          ))}
+          {tabErrors.map((err, i) => {
+            const hasNav = err.fileIndex !== undefined && err.tab !== 'config';
+            return (
+              <Box key={i} onClick={hasNav ? () => {
+                setActiveTab(err.tab);
+                const nav: SelectionPath = { tab: err.tab, fileIndex: err.fileIndex! };
+                if (err.tab === 'events') {
+                  if (err.domain) nav.domain = err.domain;
+                  if (err.event) nav.event = err.event;
+                  if (err.parameter) nav.parameter = err.parameter;
+                } else if (err.tab === 'shared') {
+                  if (err.parameter) nav.parameter = err.parameter;
+                } else if (err.tab === 'contexts') {
+                  if (err.contextProperty) nav.contextProperty = err.contextProperty;
+                }
+                setSelectedPath(nav);
+              } : undefined} sx={{
+                fontSize: '0.76rem', color: '#D4D4D4', lineHeight: 1.7,
+                fontFamily: '"JetBrains Mono", monospace',
+                pl: 3, borderRadius: 0.5,
+                ...(hasNav && { cursor: 'pointer', '&:hover': { bgcolor: 'rgba(255,255,255,0.06)' } }),
+              }}>
+                {err.message}
+              </Box>
+            );
+          })}
         </Box>
       )}
     </Box>

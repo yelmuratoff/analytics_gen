@@ -28,24 +28,26 @@ import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 
-// Map section keys to icons for visual variety
-const sectionIcons: Record<string, React.ReactNode> = {
-  inputs: <InputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  outputs: <OutputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  targets: <TrackChangesRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  rules: <GavelRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  naming: <TextFieldsRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  meta: <InfoOutlined sx={{ fontSize: 18, color: '#DF4926' }} />,
+// Icon lookup from schema x-ui.icon values to MUI components
+const iconMap: Record<string, React.ReactNode> = {
+  input: <InputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  output: <OutputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  target: <TrackChangesRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  rule: <GavelRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  text_fields: <TextFieldsRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
+  info: <InfoOutlined sx={{ fontSize: 18, color: '#DF4926' }} />,
 };
 
-function getSectionIcon(key: string) {
-  return sectionIcons[key] ?? <SettingsRounded sx={{ fontSize: 18, color: '#DF4926' }} />;
+function getSectionIcon(schema: Record<string, unknown>) {
+  const xui = schema['x-ui'] as Record<string, string> | undefined;
+  const iconName = xui?.icon;
+  return (iconName && iconMap[iconName]) ?? <SettingsRounded sx={{ fontSize: 18, color: '#DF4926' }} />;
 }
 
 // ── Reusable pieces ──
 
-function Section({ title, sectionKey, open, onToggle, filledCount, children }: {
-  title: string; sectionKey: string; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
+function Section({ title, icon, open, onToggle, filledCount, children }: {
+  title: string; icon: React.ReactNode; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
 }) {
   return (
     <Box sx={{ mb: 1, borderRadius: 2.5, border: '1px solid #EEEBE8', overflow: 'hidden' }}>
@@ -61,7 +63,7 @@ function Section({ title, sectionKey, open, onToggle, filledCount, children }: {
         {open
           ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
           : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: '#999' }} />}
-        {getSectionIcon(sectionKey)}
+        {icon}
         <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#333', flex: 1 }}>{title}</Typography>
         {!open && filledCount != null && filledCount > 0 && (
           <Chip
@@ -76,7 +78,7 @@ function Section({ title, sectionKey, open, onToggle, filledCount, children }: {
         )}
       </Box>
       <Collapse in={open}>
-        <Box sx={{ px: 2.5, pb: 2.5, pt: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ px: 2.5, pb: 2, pt: 0.75, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {children}
         </Box>
       </Collapse>
@@ -88,7 +90,7 @@ function FieldLabel({ label, hint }: { label: string; hint?: string }) {
   return (
     <Box>
       <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#444', mb: 0.3 }}>{label}</Typography>
-      {hint && <Typography sx={{ fontSize: '0.75rem', color: '#999', mb: 0.8, lineHeight: 1.4 }}>{hint}</Typography>}
+      {hint && <Typography sx={{ fontSize: '0.75rem', color: '#999', mb: 0.5, lineHeight: 1.4 }}>{hint}</Typography>}
     </Box>
   );
 }
@@ -317,7 +319,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
         }).length;
 
         return (
-          <Section key={sectionKey} title={sectionTitle} sectionKey={sectionKey} open={openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
+          <Section key={sectionKey} title={sectionTitle} icon={getSectionIcon(sec)} open={openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
             {Object.entries(fields).map(([fieldKey, fieldSchema]) => (
               <DynamicField
                 key={fieldKey}

@@ -91,36 +91,38 @@ export function useValidation(): ValidationError[] {
 
     // Events
     const evFileNames = new Set<string>();
-    for (const file of eventFiles) {
+    for (let fi = 0; fi < eventFiles.length; fi++) {
+      const file = eventFiles[fi];
       if (!file.fileName) {
-        errors.push({ path: 'events', message: 'File name cannot be empty', tab: 'events' });
+        errors.push({ path: 'events', message: 'File name cannot be empty', tab: 'events', fileIndex: fi });
         continue;
       }
       if (evFileNames.has(file.fileName)) {
-        errors.push({ path: `events.${file.fileName}`, message: `Duplicate file name: ${file.fileName}`, tab: 'events' });
+        errors.push({ path: `events.${file.fileName}`, message: `Duplicate file name: ${file.fileName}`, tab: 'events', fileIndex: fi });
       }
       evFileNames.add(file.fileName);
 
       if (Object.keys(file.domains).length === 0) {
-        errors.push({ path: `events.${file.fileName}`, message: 'File has no domains', tab: 'events' });
+        errors.push({ path: `events.${file.fileName}`, message: 'File has no domains', tab: 'events', fileIndex: fi });
       }
 
       for (const [domainName, events] of Object.entries(file.domains)) {
         if (enforceSnakeDomains && !SNAKE_CASE_DOMAIN.test(domainName)) {
-          errors.push({ path: `events.${file.fileName}.${domainName}`, message: `Domain "${domainName}" must be snake_case`, tab: 'events' });
+          errors.push({ path: `events.${file.fileName}.${domainName}`, message: `Domain "${domainName}" must be snake_case`, tab: 'events', fileIndex: fi, domain: domainName });
         }
 
         for (const [eventName, event] of Object.entries(events)) {
           const ePath = `events.${file.fileName}.${domainName}.${eventName}`;
+          const nav = { fileIndex: fi, domain: domainName, event: eventName };
 
           // strict_event_names: custom event_name must not have { }
           const customEventName = event.event_name as string | undefined;
           if (cfg.rules?.strict_event_names && customEventName && (customEventName.includes('{') || customEventName.includes('}'))) {
-            errors.push({ path: ePath, message: 'event_name cannot contain { } when strict_event_names is enabled', tab: 'events' });
+            errors.push({ path: ePath, message: 'event_name cannot contain { } when strict_event_names is enabled', tab: 'events', ...nav });
           }
 
           for (const [paramName, paramVal] of Object.entries(event.parameters)) {
-            errors.push(...validateParam(paramName, paramVal, `${ePath}.${paramName}`, 'events', enforceSnakeParams));
+            errors.push(...validateParam(paramName, paramVal, `${ePath}.${paramName}`, 'events', enforceSnakeParams).map((e) => ({ ...e, ...nav, parameter: paramName })));
           }
         }
       }
@@ -128,38 +130,40 @@ export function useValidation(): ValidationError[] {
 
     // Shared params
     const spFileNames = new Set<string>();
-    for (const file of sharedParamFiles) {
+    for (let fi = 0; fi < sharedParamFiles.length; fi++) {
+      const file = sharedParamFiles[fi];
       if (!file.fileName) {
-        errors.push({ path: 'shared', message: 'File name cannot be empty', tab: 'shared' });
+        errors.push({ path: 'shared', message: 'File name cannot be empty', tab: 'shared', fileIndex: fi });
         continue;
       }
       if (spFileNames.has(file.fileName)) {
-        errors.push({ path: `shared.${file.fileName}`, message: `Duplicate file name: ${file.fileName}`, tab: 'shared' });
+        errors.push({ path: `shared.${file.fileName}`, message: `Duplicate file name: ${file.fileName}`, tab: 'shared', fileIndex: fi });
       }
       spFileNames.add(file.fileName);
 
       for (const [paramName, paramVal] of Object.entries(file.parameters)) {
-        errors.push(...validateParam(paramName, paramVal, `shared.${file.fileName}.${paramName}`, 'shared', enforceSnakeParams));
+        errors.push(...validateParam(paramName, paramVal, `shared.${file.fileName}.${paramName}`, 'shared', enforceSnakeParams).map((e) => ({ ...e, fileIndex: fi, parameter: paramName })));
       }
     }
 
     // Contexts
     const ctxFileNames = new Set<string>();
-    for (const file of contextFiles) {
+    for (let fi = 0; fi < contextFiles.length; fi++) {
+      const file = contextFiles[fi];
       if (!file.fileName) {
-        errors.push({ path: 'contexts', message: 'File name cannot be empty', tab: 'contexts' });
+        errors.push({ path: 'contexts', message: 'File name cannot be empty', tab: 'contexts', fileIndex: fi });
         continue;
       }
       if (!file.contextName) {
-        errors.push({ path: `contexts.${file.fileName}`, message: 'Context name cannot be empty', tab: 'contexts' });
+        errors.push({ path: `contexts.${file.fileName}`, message: 'Context name cannot be empty', tab: 'contexts', fileIndex: fi });
       }
       if (ctxFileNames.has(file.fileName)) {
-        errors.push({ path: `contexts.${file.fileName}`, message: `Duplicate file name: ${file.fileName}`, tab: 'contexts' });
+        errors.push({ path: `contexts.${file.fileName}`, message: `Duplicate file name: ${file.fileName}`, tab: 'contexts', fileIndex: fi });
       }
       ctxFileNames.add(file.fileName);
 
       for (const [propName, propVal] of Object.entries(file.properties)) {
-        errors.push(...validateParam(propName, propVal, `contexts.${file.fileName}.${propName}`, 'contexts', enforceSnakeParams));
+        errors.push(...validateParam(propName, propVal, `contexts.${file.fileName}.${propName}`, 'contexts', enforceSnakeParams).map((e) => ({ ...e, fileIndex: fi, contextProperty: propName })));
       }
     }
 

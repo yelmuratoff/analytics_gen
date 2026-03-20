@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
+import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
@@ -25,7 +26,17 @@ const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
 export default function TabBar() {
   const activeTab = useStore((s) => s.activeTab);
   const setActiveTab = useStore((s) => s.setActiveTab);
+  const eventFiles = useStore((s) => s.eventFiles);
+  const sharedParamFiles = useStore((s) => s.sharedParamFiles);
+  const contextFiles = useStore((s) => s.contextFiles);
   const errors = useValidation();
+
+  const itemCounts = useMemo(() => {
+    const eventsCount = eventFiles.reduce((sum, f) => sum + Object.values(f.domains).reduce((s, evts) => s + Object.keys(evts).length, 0), 0);
+    const sharedCount = sharedParamFiles.reduce((sum, f) => sum + Object.keys(f.parameters).length, 0);
+    const contextsCount = contextFiles.reduce((sum, f) => sum + Object.keys(f.properties).length, 0);
+    return { config: 0, events: eventsCount, shared: sharedCount, contexts: contextsCount } as Record<TabId, number>;
+  }, [eventFiles, sharedParamFiles, contextFiles]);
 
   const errorCounts = tabs.reduce((acc, t) => {
     acc[t.id] = errors.filter((e) => e.tab === t.id).length;
@@ -78,7 +89,14 @@ export default function TabBar() {
                     },
                   }}
                 >
-                  <span>{t.label}</span>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    {t.label}
+                    {itemCounts[t.id] > 0 && (
+                      <Typography component="span" sx={{ fontSize: '0.65rem', color: '#bbb', fontWeight: 500 }}>
+                        {itemCounts[t.id]}
+                      </Typography>
+                    )}
+                  </Box>
                 </Badge>
               </Tooltip>
             }

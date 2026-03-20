@@ -22,7 +22,9 @@ import SaveAsRounded from '@mui/icons-material/SaveAsRounded';
 import RefreshRounded from '@mui/icons-material/RefreshRounded';
 import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
+import Divider from '@mui/material/Divider';
 import { useStore } from '../state/store.ts';
 import {
   exportAllAsZip,
@@ -43,6 +45,7 @@ export default function Toolbar() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
   const [fileMenuAnchor, setFileMenuAnchor] = useState<HTMLElement | null>(null);
+  const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -215,7 +218,7 @@ export default function Toolbar() {
               fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace',
               maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-              {fileName}{isDirty && <Box component="span" sx={{ color: '#DF4926', ml: 0.3 }}>●</Box>}
+              {fileName}{isDirty && <Box component="span" sx={{ color: '#DF4926', ml: 0.75 }}>●</Box>}
             </Typography>
           </Box>
         )}
@@ -223,28 +226,18 @@ export default function Toolbar() {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title="API Documentation" arrow>
+          <Tooltip title={`Open Project (${mod}O)`} arrow>
             <Button
-              onClick={() => setDocsOpen(true)}
+              onClick={handleOpen}
               size="small"
               variant="outlined"
-              startIcon={<MenuBookRounded sx={{ fontSize: 18 }} />}
+              startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
               sx={actionBtnSx}
             >
-              Docs
+              Open
             </Button>
           </Tooltip>
-          <Tooltip title={`Export ZIP (${mod}\u21E7E)`} arrow>
-            <Button
-              onClick={handleExportZip}
-              size="small"
-              variant="contained"
-              startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
-              sx={{ fontSize: '0.78rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
-            >
-              Export
-            </Button>
-          </Tooltip>
+          <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadFallback} />
 
           {/* Save button with dropdown for Save As */}
           <Box sx={{ display: 'flex' }}>
@@ -302,25 +295,44 @@ export default function Toolbar() {
             </MenuItem>
           </Menu>
 
-          <Tooltip title={`Open Project (${mod}O)`} arrow>
+          <Tooltip title={`Export ZIP (${mod}\u21E7E)`} arrow>
             <Button
-              onClick={handleOpen}
+              onClick={handleExportZip}
               size="small"
-              variant="outlined"
-              startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
-              sx={actionBtnSx}
+              variant="contained"
+              startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
+              sx={{ fontSize: '0.78rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
             >
-              Open
+              Export
             </Button>
           </Tooltip>
-          <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadFallback} />
-          <Tooltip title="Reset All" arrow>
-            <IconButton onClick={() => setConfirmOpen(true)} size="small" sx={{
-              color: '#ccc', '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.04)' },
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#EEEBE8' }} />
+
+          <Tooltip title="More options" arrow>
+            <IconButton onClick={(e) => setMoreMenuAnchor(e.currentTarget)} size="small" sx={{
+              color: '#999', '&:hover': { color: '#666', bgcolor: 'rgba(0,0,0,0.03)' },
             }}>
-              <RefreshRounded sx={{ fontSize: 20 }} />
+              <MoreVertRounded sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
+          <Menu
+            anchorEl={moreMenuAnchor}
+            open={!!moreMenuAnchor}
+            onClose={() => setMoreMenuAnchor(null)}
+            slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}
+          >
+            <MenuItem onClick={() => { setMoreMenuAnchor(null); setDocsOpen(true); }}>
+              <ListItemIcon><MenuBookRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+              <ListItemText primary="API Docs" primaryTypographyProps={{ fontSize: '0.82rem' }} />
+            </MenuItem>
+            <MenuItem onClick={() => { setMoreMenuAnchor(null); setConfirmOpen(true); }} sx={{
+              color: '#D32F2F', '&:hover': { bgcolor: 'rgba(211,47,47,0.04)' },
+            }}>
+              <ListItemIcon><RefreshRounded sx={{ fontSize: 18, color: '#D32F2F' }} /></ListItemIcon>
+              <ListItemText primary="Reset All" primaryTypographyProps={{ fontSize: '0.82rem' }} />
+            </MenuItem>
+          </Menu>
         </Box>
       </Box>
 

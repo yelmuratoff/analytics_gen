@@ -32,6 +32,7 @@ import { useStore } from '../../state/store.ts';
 import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
+import EmptyState from '../EmptyState.tsx';
 import ContextPropertyEditor from './ContextPropertyEditor.tsx';
 
 function deriveContextName(fileName: string): string {
@@ -180,11 +181,20 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
         </Box>
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-            <LayersRounded sx={{ fontSize: 30, color: '#D5D0CB', mb: 0.5 }} />
-            <Typography sx={{ fontSize: '0.78rem', color: '#BCBCBC', mb: 0.5 }}>No contexts yet</Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#ddd', lineHeight: 1.5, px: 1 }}>
+            <Box sx={{
+              width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              bgcolor: 'rgba(0,0,0,0.02)', border: '2px dashed #E0DCD8',
+            }}>
+              <LayersRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />
+            </Box>
+            <Typography sx={{ fontSize: '0.82rem', color: '#999', mb: 0.5, fontWeight: 600 }}>No contexts yet</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#bbb', lineHeight: 1.5, px: 1, mb: 2 }}>
               Contexts group properties that are set/updated during the app lifecycle.
             </Typography>
+            <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.75rem' }}>
+              Add your first context
+            </Button>
           </Box>
         )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
@@ -223,7 +233,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                       if (q && !pn.toLowerCase().includes(q) && !file.fileName.toLowerCase().includes(q) && !file.contextName.toLowerCase().includes(q)) return null;
                       return (
                         <ListItemButton key={pn} sx={{
-                          pl: 7, py: 0.3,
+                          pl: 7, py: 0.4,
                           ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
                         }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
                           <ListItemIcon sx={{ minWidth: 18 }}>
@@ -280,13 +290,11 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <LayersRounded sx={{ fontSize: 36, color: '#D5D0CB', mb: 1.5 }} />
-            <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>Select a property</Typography>
-            <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
-              Context properties track state across the app lifecycle. Select operations and configure type.
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<LayersRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />}
+            title="Select a property"
+            description="Context properties track state across the app lifecycle. Select operations and configure type."
+          />
         )}
       </Box>
 

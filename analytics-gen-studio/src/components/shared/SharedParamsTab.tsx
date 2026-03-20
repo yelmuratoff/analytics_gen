@@ -28,6 +28,7 @@ import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
+import EmptyState from '../EmptyState.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
 
 interface SharedParamsTabProps {
@@ -169,11 +170,20 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         </Box>
         {files.length === 0 && (
           <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-            <ShareRounded sx={{ fontSize: 30, color: '#D5D0CB', mb: 0.5 }} />
-            <Typography sx={{ fontSize: '0.78rem', color: '#BCBCBC', mb: 0.5 }}>No files yet</Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#ddd', lineHeight: 1.5, px: 1 }}>
+            <Box sx={{
+              width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              bgcolor: 'rgba(0,0,0,0.02)', border: '2px dashed #E0DCD8',
+            }}>
+              <ShareRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />
+            </Box>
+            <Typography sx={{ fontSize: '0.82rem', color: '#999', mb: 0.5, fontWeight: 600 }}>No files yet</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#bbb', lineHeight: 1.5, px: 1, mb: 2 }}>
               Shared parameters can be referenced from any event across files.
             </Typography>
+            <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.75rem' }}>
+              Add your first file
+            </Button>
           </Box>
         )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
@@ -205,7 +215,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                       const uses = usageCounts[pn] ?? 0;
                       return (
                         <ListItemButton key={pn} sx={{
-                          pl: 5.5, py: 0.3,
+                          pl: 5.5, py: 0.4,
                           ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
                         }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
                           <ListItemIcon sx={{ minWidth: 18 }}>
@@ -276,13 +286,11 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         {selectedPath?.tab === 'shared' && selectedPath.parameter ? (
           <SharedParamEditor fileIndex={selectedPath.fileIndex} paramName={selectedPath.parameter} parameterSchema={parameterSchema} />
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <ShareRounded sx={{ fontSize: 36, color: '#D5D0CB', mb: 1.5 }} />
-            <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>Select a parameter</Typography>
-            <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
-              Shared parameters can be referenced from any event. Click one to edit.
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={<ShareRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />}
+            title="Select a parameter"
+            description="Shared parameters can be referenced from any event. Click one to edit."
+          />
         )}
       </Box>
       <AddItemDialog open={addFileOpen} title="Add File" label="File name" placeholder="shared_user.yaml"

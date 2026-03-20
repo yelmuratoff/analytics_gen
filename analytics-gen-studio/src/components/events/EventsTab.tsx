@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import type { RJSFSchema } from '@rjsf/utils';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import { useStore } from '../../state/store.ts';
+import EmptyState from '../EmptyState.tsx';
 import FileTree from './FileTree.tsx';
 import EventEditor from './EventEditor.tsx';
 import ParameterEditor from './ParameterEditor.tsx';
@@ -56,18 +57,11 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   const renderEditor = () => {
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) {
       return (
-        <Box sx={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', height: '100%',
-        }}>
-          <ElectricBoltRounded sx={{ fontSize: 36, color: '#D5D0CB', mb: 1.5 }} />
-          <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>
-            {selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
-          </Typography>
-          <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
-            Add a file, then create domains and events. Click any item to edit its properties.
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={<ElectricBoltRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />}
+          title={selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
+          description="Add a file, then create domains and events. Click any item to edit its properties."
+        />
       );
     }
 

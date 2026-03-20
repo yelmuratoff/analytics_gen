@@ -56,6 +56,10 @@ const theme = createTheme({
       styleOverrides: {
         '@import': "url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500&display=swap')",
         body: { overflow: 'hidden' },
+        '*, *::before, *::after': {
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(0,0,0,0.12) transparent',
+        },
       },
     },
     MuiButton: {
@@ -67,6 +71,7 @@ const theme = createTheme({
           boxShadow: 'none',
           fontSize: '0.82rem',
           '&:hover': { boxShadow: 'none' },
+          '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: 2 },
         },
         contained: {
           backgroundColor: '#DF4926',
@@ -85,7 +90,7 @@ const theme = createTheme({
     },
     MuiIconButton: {
       styleOverrides: {
-        root: { borderRadius: 8, transition: 'all 0.15s ease' },
+        root: { borderRadius: 8, transition: 'all 0.15s ease', '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: 2 } },
       },
     },
     MuiTab: {
@@ -95,6 +100,7 @@ const theme = createTheme({
           fontWeight: 600,
           fontSize: '0.84rem',
           minHeight: 44,
+          '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 6 },
         },
       },
     },
@@ -109,6 +115,7 @@ const theme = createTheme({
             '&:hover': { backgroundColor: alpha('#DF4926', 0.1) },
           },
           '&:hover': { backgroundColor: 'rgba(0,0,0,0.025)' },
+          '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2 },
         },
       },
     },

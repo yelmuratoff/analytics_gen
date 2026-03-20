@@ -82,6 +82,12 @@ export interface ValidationError {
   path: string;
   message: string;
   tab: TabId;
+  /** Navigation fields for click-to-navigate from error panel */
+  fileIndex?: number;
+  domain?: string;
+  event?: string;
+  parameter?: string;
+  contextProperty?: string;
 }
 
 export interface StudioState {

@@ -66,11 +66,16 @@ export default function Layout({ schemas }: LayoutProps) {
       <TabBar />
       <Box ref={containerRef} sx={{ display: 'flex', flex: 1, overflow: 'hidden', p: 2, gap: 0 }}>
         {/* Form panel */}
-        <Box sx={{
+        <Box key={activeTab} sx={{
           flex: `0 0 ${formWidth}%`, overflow: 'auto', p: 3,
           bgcolor: '#FCFDF7',
           borderRadius: 1.5,
           border: '1px solid #EEEBE8',
+          '@keyframes fadeSlideIn': {
+            from: { opacity: 0, transform: 'translateY(4px)' },
+            to: { opacity: 1, transform: 'translateY(0)' },
+          },
+          animation: 'fadeSlideIn 0.2s ease-out',
         }}>
           {renderTab()}
         </Box>

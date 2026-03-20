@@ -182,12 +182,18 @@ export default function FileTree() {
 
       {files.length === 0 && (
         <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-          <InsertDriveFileRounded sx={{ fontSize: 30, color: '#D5D0CB', mb: 1 }} />
-          <Typography sx={{ fontSize: '0.78rem', color: '#aaa', mb: 0.5 }}>No event files yet</Typography>
-          <Typography sx={{ fontSize: '0.75rem', color: '#ccc', mb: 1.5, lineHeight: 1.5, px: 1 }}>
+          <Box sx={{
+            width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            bgcolor: 'rgba(0,0,0,0.02)', border: '2px dashed #E0DCD8',
+          }}>
+            <InsertDriveFileRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />
+          </Box>
+          <Typography sx={{ fontSize: '0.82rem', color: '#999', mb: 0.5, fontWeight: 600 }}>No event files yet</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: '#bbb', mb: 2, lineHeight: 1.5, px: 1 }}>
             Create a YAML file, then add domains and events with parameters inside.
           </Typography>
-          <Button size="small" variant="outlined" onClick={() => setAddFileOpen(true)}
+          <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)}
             sx={{ fontSize: '0.75rem' }}>
             Create your first file
           </Button>
@@ -219,7 +225,7 @@ export default function FileTree() {
                 </IconButton>
               </ListItemButton>
               <Collapse in={isExpanded(fk) || !!q}>
-                <List dense disablePadding>
+                <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: '#EEEBE8' } }}>
                   {Object.entries(file.domains).map(([dn, events]) => {
                     if (!domainMatchesSearch(fi, dn)) return null;
                     const dk = `${fk}.d${dn}`;
@@ -244,7 +250,7 @@ export default function FileTree() {
                           </IconButton>
                         </ListItemButton>
                         <Collapse in={isExpanded(dk) || !!q}>
-                          <List dense disablePadding>
+                          <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: '#EEEBE8' } }}>
                             {Object.entries(events).map(([en, event]) => {
                               if (!eventMatchesSearch(fi, dn, en)) return null;
                               const ek = `${dk}.e${en}`;
@@ -252,7 +258,7 @@ export default function FileTree() {
                               return (
                                 <Box key={en}>
                                   <ListItemButton sx={{
-                                    pl: 6.5, py: 0.3,
+                                    pl: 6.5, py: 0.4,
                                     ...(isSel(fi, dn, en, undefined) && { bgcolor: alpha('#DF4926', 0.06) }),
                                   }} onClick={() => {
                                     toggle(ek);
@@ -275,12 +281,12 @@ export default function FileTree() {
                                     </IconButton>
                                   </ListItemButton>
                                   <Collapse in={isExpanded(ek) || !!q}>
-                                    <List dense disablePadding>
+                                    <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: '#EEEBE8' } }}>
                                       {Object.entries(event.parameters).map(([pn, pv]) => {
                                         if (!matchesSearch(pn)) return null;
                                         return (
                                           <ListItemButton key={pn} sx={{
-                                            pl: 9.5, py: 0.25,
+                                            pl: 9.5, py: 0.4,
                                             ...(isSel(fi, dn, en, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
                                           }} onClick={() => setSelectedPath({
                                             tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn,
