@@ -110,6 +110,11 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
             );
           })}
         </Box>
+        {currentOps.length === 0 && (
+          <Typography sx={{ fontSize: '0.72rem', color: '#bbb', mt: 1 }}>
+            Select operations this property supports
+          </Typography>
+        )}
       </Box>
 
       <Form

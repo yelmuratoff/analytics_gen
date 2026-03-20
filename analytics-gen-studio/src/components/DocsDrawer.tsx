@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
+import CircularProgress from '@mui/material/CircularProgress';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
 
@@ -14,6 +16,8 @@ interface DocsDrawerProps {
 const DOCS_PATH = `${import.meta.env.BASE_URL}docs/index.html`;
 
 export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
+  const [loading, setLoading] = useState(true);
+
   return (
     <Drawer
       anchor="right"
@@ -27,15 +31,19 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
             maxWidth: 1100,
             bgcolor: '#FCFDF7',
             borderLeft: '1px solid #EEEBE8',
+            display: 'flex',
+            flexDirection: 'column',
           },
         },
       }}
+      onTransitionExited={() => setLoading(true)}
     >
       <Box sx={{
         display: 'flex', alignItems: 'center', gap: 1,
         px: 2.5, py: 1.5,
         borderBottom: '1px solid #EEEBE8',
         bgcolor: '#FCFDF7',
+        flexShrink: 0,
       }}>
         <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', flex: 1 }}>
           API Documentation
@@ -55,14 +63,26 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
           </IconButton>
         </Tooltip>
       </Box>
-      <Box
-        component="iframe"
-        src={DOCS_PATH}
-        sx={{
-          flex: 1, border: 'none', width: '100%', height: '100%',
-          bgcolor: '#fff',
-        }}
-      />
+      <Box sx={{ flex: 1, position: 'relative' }}>
+        {loading && (
+          <Box sx={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            bgcolor: '#FCFDF7', zIndex: 1,
+          }}>
+            <CircularProgress size={28} thickness={4} sx={{ color: '#DF4926' }} />
+          </Box>
+        )}
+        <Box
+          component="iframe"
+          src={DOCS_PATH}
+          onLoad={() => setLoading(false)}
+          sx={{
+            width: '100%', height: '100%', border: 'none',
+            bgcolor: '#fff',
+          }}
+        />
+      </Box>
     </Drawer>
   );
 }

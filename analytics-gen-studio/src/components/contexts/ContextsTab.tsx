@@ -277,8 +277,11 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <LayersRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1 }} />
-            <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC' }}>Select a property</Typography>
+            <LayersRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1.5 }} />
+            <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>Select a property</Typography>
+            <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
+              Context properties track state across the app lifecycle. Select operations and configure type.
+            </Typography>
           </Box>
         )}
       </Box>

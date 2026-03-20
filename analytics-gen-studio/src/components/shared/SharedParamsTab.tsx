@@ -273,8 +273,11 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           <SharedParamEditor fileIndex={selectedPath.fileIndex} paramName={selectedPath.parameter} parameterSchema={parameterSchema} />
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <ShareRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1 }} />
-            <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC' }}>Select a parameter</Typography>
+            <ShareRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1.5 }} />
+            <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>Select a parameter</Typography>
+            <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
+              Shared parameters can be referenced from any event. Click one to edit.
+            </Typography>
           </Box>
         )}
       </Box>

@@ -17,11 +17,13 @@ interface LayoutProps {
 export default function Layout({ schemas }: LayoutProps) {
   const activeTab = useStore((s) => s.activeTab);
   const [formWidth, setFormWidth] = useState(57); // percentage
+  const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback(() => {
     isDragging.current = true;
+    setDragging(true);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
 
@@ -34,6 +36,7 @@ export default function Layout({ schemas }: LayoutProps) {
 
     const handleMouseUp = () => {
       isDragging.current = false;
+      setDragging(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
@@ -88,12 +91,12 @@ export default function Layout({ schemas }: LayoutProps) {
         >
           <Box className="resize-grip" sx={{
             display: 'flex', flexDirection: 'column', gap: '3px',
-            opacity: 0.25, transition: 'opacity 0.15s ease',
+            opacity: dragging ? 1 : 0.25, transition: 'opacity 0.15s ease',
           }}>
             {[0, 1, 2, 3, 4].map((i) => (
               <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
-                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
-                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
+                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: dragging ? '#DF4926' : '#999' }} />
+                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: dragging ? '#DF4926' : '#999' }} />
               </Box>
             ))}
           </Box>

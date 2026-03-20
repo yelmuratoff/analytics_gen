@@ -45,6 +45,8 @@ export default function Toolbar() {
   const [fileMenuAnchor, setFileMenuAnchor] = useState<HTMLElement | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const store = useStore();
 
@@ -58,6 +60,7 @@ export default function Toolbar() {
       const result = await saveProject(store);
       if (result.saved) {
         setFileName(result.fileName);
+        setLastSavedSnapshot(currentSnapshot);
         setSnackbar({ message: `Saved${result.fileName ? ` → ${result.fileName}` : ''}`, severity: 'success' });
       }
     } catch (err) {
@@ -70,6 +73,7 @@ export default function Toolbar() {
       const name = await saveProjectAs(store);
       if (name) {
         setFileName(name);
+        setLastSavedSnapshot(currentSnapshot);
         setSnackbar({ message: `Saved → ${name}`, severity: 'success' });
       }
     } catch (err) {
@@ -84,6 +88,13 @@ export default function Toolbar() {
         if (result) {
           store.loadProject(result.data);
           setFileName(result.fileName);
+          // Snapshot will update on next render via currentSnapshot
+          setTimeout(() => setLastSavedSnapshot(JSON.stringify({
+            config: useStore.getState().config,
+            eventFiles: useStore.getState().eventFiles,
+            sharedParamFiles: useStore.getState().sharedParamFiles,
+            contextFiles: useStore.getState().contextFiles,
+          })), 0);
           setSnackbar({ message: `Opened ${result.fileName}`, severity: 'success' });
         }
       } catch (err) {
@@ -101,6 +112,12 @@ export default function Toolbar() {
       const data = await loadProjectFile(file);
       store.loadProject(data);
       setFileName(file.name);
+      setTimeout(() => setLastSavedSnapshot(JSON.stringify({
+        config: useStore.getState().config,
+        eventFiles: useStore.getState().eventFiles,
+        sharedParamFiles: useStore.getState().sharedParamFiles,
+        contextFiles: useStore.getState().contextFiles,
+      })), 0);
       setSnackbar({ message: `Opened ${file.name}`, severity: 'success' });
     } catch (err) {
       setSnackbar({ message: `Failed to load: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
@@ -112,6 +129,7 @@ export default function Toolbar() {
     store.resetState();
     clearFileHandle();
     setFileName(null);
+    setLastSavedSnapshot(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
   };
@@ -121,6 +139,16 @@ export default function Toolbar() {
     const name = getCurrentFileName();
     if (name) setFileName(name);
   }, []);
+
+  // Track unsaved changes by comparing store data to last saved snapshot
+  const currentSnapshot = JSON.stringify({
+    config: store.config,
+    eventFiles: store.eventFiles,
+    sharedParamFiles: store.sharedParamFiles,
+    contextFiles: store.contextFiles,
+  });
+  const dirty = lastSavedSnapshot !== null && currentSnapshot !== lastSavedSnapshot;
+  if (dirty !== isDirty) setIsDirty(dirty);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -187,7 +215,7 @@ export default function Toolbar() {
               fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace',
               maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-              {fileName}
+              {fileName}{isDirty ? ' •' : ''}
             </Typography>
           </Box>
         )}
@@ -245,7 +273,8 @@ export default function Toolbar() {
                   ...actionBtnSx,
                   borderTopLeftRadius: 0,
                   borderBottomLeftRadius: 0,
-                  minWidth: 28,
+                  borderLeft: '1px solid #E0DCD8',
+                  minWidth: 32,
                   px: 0.5,
                 }}
               >

@@ -60,9 +60,12 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100%',
         }}>
-          <ElectricBoltRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1 }} />
-          <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC' }}>
+          <ElectricBoltRounded sx={{ fontSize: 36, color: '#E8E4E0', mb: 1.5 }} />
+          <Typography sx={{ fontSize: '0.82rem', color: '#BCBCBC', mb: 0.5 }}>
             {selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
+          </Typography>
+          <Typography sx={{ fontSize: '0.72rem', color: '#ddd', lineHeight: 1.6, textAlign: 'center', maxWidth: 260 }}>
+            Add a file, then create domains and events. Click any item to edit its properties.
           </Typography>
         </Box>
       );
