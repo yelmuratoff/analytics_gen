@@ -39,43 +39,68 @@
           "title": "Description",
           "description": "Human-readable description of the event's purpose and when it should be fired.",
           "default": "No description provided",
-          "examples": ["User successfully completed the login flow", "Item was added to the shopping cart"]
+          "examples": [
+            "User successfully completed the login flow",
+            "Item was added to the shopping cart"
+          ],
+          "x-ui": {
+            "widget": "textarea",
+            "options": {
+              "rows": 3
+            },
+            "placeholder": "Describe when this event should be fired"
+          }
         },
         "event_name": {
           "type": "string",
           "title": "Custom Event Name",
           "description": "Override the generated event name that gets logged. If not set, the name is generated from the naming strategy template (e.g., '{domain}: {event}'). When strict_event_names is enabled, must not contain '{' or '}' interpolation characters.",
-          "examples": ["user_login", "Purchase Completed"]
+          "examples": [
+            "user_login",
+            "Purchase Completed"
+          ]
         },
         "identifier": {
           "type": "string",
           "title": "Unique Identifier",
           "description": "Optional canonical identifier for the event, used for uniqueness checks. Generated from identifier_template if not set.",
-          "examples": ["auth_login", "purchase_checkout"]
+          "examples": [
+            "auth_login",
+            "purchase_checkout"
+          ]
         },
         "deprecated": {
           "type": "boolean",
           "title": "Deprecated",
           "description": "Marks the event as deprecated. Generates @Deprecated annotation in Dart code.",
-          "default": false
+          "default": false,
+          "x-ui": {
+            "widget": "checkbox"
+          }
         },
         "replacement": {
           "type": "string",
           "title": "Replacement Event",
           "description": "The name of the replacement event if this event is deprecated.",
-          "examples": ["login_v2"]
+          "examples": [
+            "login_v2"
+          ]
         },
         "added_in": {
           "type": "string",
           "title": "Added In Version",
           "description": "Version when this event was added.",
-          "examples": ["1.0.0"]
+          "examples": [
+            "1.0.0"
+          ]
         },
         "deprecated_in": {
           "type": "string",
           "title": "Deprecated In Version",
           "description": "Version when this event was deprecated.",
-          "examples": ["2.0.0"]
+          "examples": [
+            "2.0.0"
+          ]
         },
         "dual_write_to": {
           "type": "array",
@@ -84,7 +109,19 @@
           "items": {
             "type": "string"
           },
-          "examples": [["login_v2", "auth_login_legacy"]]
+          "examples": [
+            [
+              "login_v2",
+              "auth_login_legacy"
+            ]
+          ],
+          "x-ui": {
+            "options": {
+              "addable": true,
+              "orderable": false,
+              "removable": true
+            }
+          }
         },
         "meta": {
           "type": "object",
@@ -92,7 +129,19 @@
           "description": "Custom metadata for this event (e.g., ownership, Jira tickets, documentation links).",
           "additionalProperties": true,
           "default": {},
-          "examples": [{"owner": "auth-team", "jira": "AUTH-456"}]
+          "examples": [
+            {
+              "owner": "auth-team",
+              "jira": "AUTH-456"
+            }
+          ],
+          "x-ui": {
+            "widget": "textarea",
+            "options": {
+              "rows": 3
+            },
+            "placeholder": "{\"owner\": \"team\", \"jira\": \"PROJ-123\"}"
+          }
         },
         "parameters": {
           "type": "object",

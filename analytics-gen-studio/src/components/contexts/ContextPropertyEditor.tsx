@@ -9,7 +9,7 @@ import NavigateNextRounded from '@mui/icons-material/NavigateNextRounded';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import { DEFAULT_PARAM_TYPE, OPERATIONS_FIELD } from '../../schemas/constants.ts';
 import type { ParamDef } from '../../types/index.ts';
 
 interface ContextPropertyEditorProps {
@@ -32,12 +32,12 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
     ? { type: rawValue }
     : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
-  const currentOps = formData.operations ?? [];
+  const currentOps = (formData as Record<string, unknown>)[OPERATIONS_FIELD] as string[] ?? [];
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) {
       const data = e.formData as ParamDef;
-      updateContextProperty(fileIndex, propName, { ...data, operations: currentOps });
+      updateContextProperty(fileIndex, propName, { ...data, [OPERATIONS_FIELD]: currentOps } as unknown as ParamDef);
     }
   };
 
@@ -45,12 +45,12 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
     const newOps = currentOps.includes(op)
       ? currentOps.filter((o) => o !== op)
       : [...currentOps, op];
-    updateContextProperty(fileIndex, propName, { ...formData, operations: newOps });
+    updateContextProperty(fileIndex, propName, { ...formData, [OPERATIONS_FIELD]: newOps } as unknown as ParamDef);
   };
 
   const schemaWithoutOps = { ...parameterSchema };
-  if (schemaWithoutOps.properties) {
-    const { operations: _ops, ...restProps } = schemaWithoutOps.properties;
+  if (schemaWithoutOps.properties && OPERATIONS_FIELD in schemaWithoutOps.properties) {
+    const { [OPERATIONS_FIELD]: _ops, ...restProps } = schemaWithoutOps.properties;
     schemaWithoutOps.properties = restProps;
   }
 

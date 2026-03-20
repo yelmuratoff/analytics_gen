@@ -1,7 +1,14 @@
 import { useMemo } from 'react';
 import { useStore } from '../state/store.ts';
 import type { ValidationError, ParamDef } from '../types/index.ts';
-import { SNAKE_CASE_PARAM, SNAKE_CASE_DOMAIN, NON_NUMERIC_TYPES } from '../schemas/constants.ts';
+import {
+  SNAKE_CASE_PARAM,
+  SNAKE_CASE_DOMAIN,
+  NON_NUMERIC_TYPES,
+  PARAM_MUTUAL_EXCLUSIONS,
+  STRING_ONLY_FIELDS,
+  NUMERIC_ONLY_FIELDS,
+} from '../schemas/constants.ts';
 
 function validateParam(paramName: string, param: ParamDef | string | null, path: string, tab: 'events' | 'shared' | 'contexts', enforceSnakeParams: boolean): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -13,9 +20,15 @@ function validateParam(paramName: string, param: ParamDef | string | null, path:
 
   if (param === null || typeof param === 'string') return errors;
 
-  // dart_type vs allowed_values mutual exclusion
-  if (param.dart_type && param.allowed_values && param.allowed_values.length > 0) {
-    errors.push({ path, message: 'dart_type and allowed_values cannot be used together', tab });
+  // Mutual exclusion checks (from schema x-constraints)
+  for (const [fieldA, fieldB] of PARAM_MUTUAL_EXCLUSIONS) {
+    const valA = param[fieldA as keyof ParamDef];
+    const valB = param[fieldB as keyof ParamDef];
+    const hasA = valA !== undefined && valA !== '' && !(Array.isArray(valA) && valA.length === 0);
+    const hasB = valB !== undefined && valB !== '' && !(Array.isArray(valB) && valB.length === 0);
+    if (hasA && hasB) {
+      errors.push({ path, message: `${fieldA} and ${fieldB} cannot be used together`, tab });
+    }
   }
 
   // regex cannot contain triple quotes
@@ -23,26 +36,30 @@ function validateParam(paramName: string, param: ParamDef | string | null, path:
     errors.push({ path, message: "regex cannot contain triple quotes (''')", tab });
   }
 
-  // min_length / max_length only for string-like types
   const baseType = param.type?.replace(/\?$/, '');
   const isStringLike = baseType === 'string';
-  const isNumericLike = baseType && !NON_NUMERIC_TYPES.has(baseType);
+  const isNumericLike = baseType ? !NON_NUMERIC_TYPES.has(baseType) : false;
 
-  if ((param.min_length !== undefined || param.max_length !== undefined) && baseType && !isStringLike) {
-    errors.push({ path, message: 'min_length/max_length only apply to string type', tab });
+  // String-only fields check (from schema: fields with integer type + "length" in name)
+  for (const field of STRING_ONLY_FIELDS) {
+    if (param[field as keyof ParamDef] !== undefined && baseType && !isStringLike) {
+      errors.push({ path, message: `${field} only applies to string type`, tab });
+      break; // One message is enough for length fields
+    }
   }
 
-  // min / max only for numeric types (anything that's not string/bool/dynamic)
-  if ((param.min !== undefined || param.max !== undefined) && baseType && !isNumericLike) {
-    errors.push({ path, message: 'min/max only apply to numeric types', tab });
+  // Numeric-only fields check (from schema: fields with number type)
+  for (const field of NUMERIC_ONLY_FIELDS) {
+    if (param[field as keyof ParamDef] !== undefined && baseType && !isNumericLike) {
+      errors.push({ path, message: `${field} only applies to numeric types`, tab });
+      break;
+    }
   }
 
-  // max_length >= min_length
+  // Range consistency: max >= min for any paired numeric fields
   if (param.min_length !== undefined && param.max_length !== undefined && param.max_length < param.min_length) {
     errors.push({ path, message: 'max_length must be >= min_length', tab });
   }
-
-  // max >= min
   if (param.min !== undefined && param.max !== undefined && param.max < param.min) {
     errors.push({ path, message: 'max must be >= min', tab });
   }
@@ -63,13 +80,15 @@ export function useValidation(): ValidationError[] {
 
   return useMemo(() => {
     const errors: ValidationError[] = [];
-    const enforceSnakeDomains = config.naming.enforce_snake_case_domains;
-    const enforceSnakeParams = config.naming.enforce_snake_case_parameters;
+    const cfg = config as unknown as Record<string, Record<string, unknown>>;
+    const enforceSnakeDomains = cfg.naming?.enforce_snake_case_domains as boolean ?? false;
+    const enforceSnakeParams = cfg.naming?.enforce_snake_case_parameters as boolean ?? false;
 
-    // Config
-    if (!config.outputs.dart) {
+    // Config: dart output path required
+    if (!cfg.outputs?.dart) {
       errors.push({ path: 'config.outputs.dart', message: 'Dart output path is required', tab: 'config' });
     }
+
     // Events
     const evFileNames = new Set<string>();
     for (const file of eventFiles) {
@@ -95,13 +114,11 @@ export function useValidation(): ValidationError[] {
           const ePath = `events.${file.fileName}.${domainName}.${eventName}`;
 
           // strict_event_names: custom event_name must not have { }
-          const eventName_ = event.event_name as string | undefined;
-          if (config.rules.strict_event_names && eventName_ && (eventName_.includes('{') || eventName_.includes('}'))) {
+          const customEventName = event.event_name as string | undefined;
+          if (cfg.rules?.strict_event_names && customEventName && (customEventName.includes('{') || customEventName.includes('}'))) {
             errors.push({ path: ePath, message: 'event_name cannot contain { } when strict_event_names is enabled', tab: 'events' });
           }
 
-          // deprecated without replacement is a warning (not blocking, but useful)
-          // parameters validation
           for (const [paramName, paramVal] of Object.entries(event.parameters)) {
             errors.push(...validateParam(paramName, paramVal, `${ePath}.${paramName}`, 'events', enforceSnakeParams));
           }

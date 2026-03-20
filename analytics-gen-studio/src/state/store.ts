@@ -12,17 +12,23 @@ let schemaDefaultConfig: ConfigState | null = null;
 /** Called from App.tsx after schemas load to set the real defaults */
 export function setSchemaDefaultConfig(config: ConfigState) {
   schemaDefaultConfig = config;
-  // If store still has empty config (first visit), apply defaults
+  // If store still has empty/placeholder config (first visit), apply schema defaults
   const current = useStore.getState().config;
-  if (!current.outputs.dart) {
+  const cfg = current as unknown as Record<string, unknown>;
+  const hasData = Object.values(cfg).some((v) =>
+    typeof v === 'object' && v !== null && Object.values(v as Record<string, unknown>).some((fv) =>
+      fv !== '' && fv !== false && !(Array.isArray(fv) && fv.length === 0) && !(typeof fv === 'object' && fv !== null && Object.keys(fv).length === 0)
+    )
+  );
+  if (!hasData) {
     useStore.getState().setConfig(config);
   }
 }
 
 function getDefaultConfig(): ConfigState {
   if (schemaDefaultConfig) return schemaDefaultConfig;
-  // Minimal placeholder — will be overridden by schema defaults
-  return { inputs: { events: '', shared_parameters: [], contexts: [], imports: [] }, outputs: { dart: '' }, targets: {}, rules: {}, naming: { casing: '', enforce_snake_case_domains: false, enforce_snake_case_parameters: false, event_name_template: '', identifier_template: '', domain_aliases: {} }, meta: {} } as unknown as ConfigState;
+  // Empty placeholder — will be overridden by schema defaults after load
+  return {} as ConfigState;
 }
 
 const initialState = {

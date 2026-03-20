@@ -229,6 +229,11 @@ export default function App() {
           ...loaded,
           defaultParamType: loaded.parameterTypes[0] ?? 'string',
           parameterTypes: loaded.parameterTypes,
+          paramFieldNames: loaded.paramFieldNames,
+          paramMutualExclusions: loaded.paramMutualExclusions,
+          stringOnlyFields: loaded.stringOnlyFields,
+          numericOnlyFields: loaded.numericOnlyFields,
+          operationsField: loaded.operationsField,
         });
         setSchemaDefaultConfig(loaded.defaultConfig);
         setSchemas(loaded);

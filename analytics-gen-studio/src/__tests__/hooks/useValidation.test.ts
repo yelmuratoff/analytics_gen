@@ -9,10 +9,11 @@ function validate() {
   const errors: { path: string; message: string; tab: string }[] = [];
   const SNAKE_CASE = /^[a-z][a-z0-9_]*$/;
   const SNAKE_CASE_DOMAIN = /^[a-z0-9_]+$/;
-  const enforceSnakeDomains = config.naming.enforce_snake_case_domains;
-  const enforceSnakeParams = config.naming.enforce_snake_case_parameters;
+  const cfg = config as unknown as Record<string, Record<string, unknown>>;
+  const enforceSnakeDomains = cfg.naming?.enforce_snake_case_domains as boolean ?? false;
+  const enforceSnakeParams = cfg.naming?.enforce_snake_case_parameters as boolean ?? false;
 
-  if (!config.outputs.dart) {
+  if (!cfg.outputs?.dart) {
     errors.push({ path: 'config.outputs.dart', message: 'Dart output path is required', tab: 'config' });
   }
 

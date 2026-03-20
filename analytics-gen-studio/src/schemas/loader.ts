@@ -1,5 +1,6 @@
 import type { RJSFSchema } from '@rjsf/utils';
 import type { ConfigState } from '../types/index.ts';
+import { applyUiSchemas } from './ui-schemas.ts';
 
 export interface LoadedSchemas {
   configSchema: RJSFSchema;
@@ -24,6 +25,16 @@ export interface LoadedSchemas {
   snakeCaseDomainPattern: RegExp;
   /** Snake case regex pattern from config schema (for params/identifiers) */
   snakeCaseParamPattern: RegExp;
+  /** Parameter field names from schema */
+  paramFieldNames: string[];
+  /** Mutually exclusive field pairs from x-constraints */
+  paramMutualExclusions: Array<[string, string]>;
+  /** Fields that only apply to string type */
+  stringOnlyFields: string[];
+  /** Fields that only apply to numeric types */
+  numericOnlyFields: string[];
+  /** Operations field name */
+  operationsField: string;
 }
 
 const SCHEMA_BASE = `${import.meta.env.BASE_URL}schemas`;
@@ -142,6 +153,49 @@ function extractSnakeCasePatterns(configSchema: RJSFSchema): { domain: RegExp; p
   };
 }
 
+function extractParamConstraints(parameterSchema: RJSFSchema) {
+  const props = parameterSchema.properties ?? {};
+  const fieldNames = Object.keys(props);
+  const mutualExclusions: Array<[string, string]> = [];
+  const stringOnlyFields: string[] = [];
+  const numericOnlyFields: string[] = [];
+  let operationsField = 'operations';
+
+  for (const [key, fieldSchema] of Object.entries(props)) {
+    const field = fieldSchema as Record<string, unknown>;
+
+    // Detect mutually exclusive constraints
+    const constraints = field['x-constraints'] as Record<string, unknown> | undefined;
+    if (constraints?.mutually_exclusive_with) {
+      const other = constraints.mutually_exclusive_with as string;
+      // Avoid duplicates
+      if (!mutualExclusions.some(([a, b]) => (a === key && b === other) || (a === other && b === key))) {
+        mutualExclusions.push([key, other]);
+      }
+    }
+
+    // Detect string-only fields (integer type with "length" in name)
+    if (field.type === 'integer' && key.includes('length')) {
+      stringOnlyFields.push(key);
+    }
+
+    // Detect numeric-only fields (number type, name is 'min' or 'max' without 'length')
+    if (field.type === 'number' && !key.includes('length')) {
+      numericOnlyFields.push(key);
+    }
+
+    // Detect operations field (array with items.enum)
+    if (field.type === 'array') {
+      const items = field.items as Record<string, unknown> | undefined;
+      if (items?.enum) {
+        operationsField = key;
+      }
+    }
+  }
+
+  return { fieldNames, mutualExclusions, stringOnlyFields, numericOnlyFields, operationsField };
+}
+
 export async function loadSchemas(): Promise<LoadedSchemas> {
   const [rawConfig, events, parameter, sharedParameters, context] = await Promise.all([
     fetchSchema('analytics_gen.schema.json'),
@@ -152,6 +206,12 @@ export async function loadSchemas(): Promise<LoadedSchemas> {
   ]);
 
   const configSchema = prepareConfigSchema(rawConfig);
+  const eventEditorSchema = extractEventEditorSchema(events);
+
+  // Generate RJSF UI schemas from x-ui metadata in schemas
+  applyUiSchemas(eventEditorSchema, parameter);
+
+  const constraints = extractParamConstraints(parameter);
 
   return {
     configSchema,
@@ -160,12 +220,17 @@ export async function loadSchemas(): Promise<LoadedSchemas> {
     sharedParametersSchema: sharedParameters,
     contextSchema: context,
     rawConfigSchema: rawConfig,
-    eventEditorSchema: extractEventEditorSchema(events),
+    eventEditorSchema,
     parameterTypes: extractParameterTypes(parameter),
     operations: extractOperations(parameter),
     casingOptions: extractCasingOptions(configSchema),
     defaultConfig: extractDefaultConfig(configSchema),
     defaultEventDescription: extractDefaultEventDescription(events),
     ...(() => { const p = extractSnakeCasePatterns(configSchema); return { snakeCaseDomainPattern: p.domain, snakeCaseParamPattern: p.param }; })(),
+    paramFieldNames: constraints.fieldNames,
+    paramMutualExclusions: constraints.mutualExclusions,
+    stringOnlyFields: constraints.stringOnlyFields,
+    numericOnlyFields: constraints.numericOnlyFields,
+    operationsField: constraints.operationsField,
   };
 }

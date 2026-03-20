@@ -134,6 +134,9 @@ export default function YamlPreview() {
         }}>
           {currentFile.fileName}
         </Typography>
+        {tabErrors.length === 0 && (
+          <CheckCircleRounded sx={{ fontSize: 14, color: '#4CAF50', mr: 0.5 }} />
+        )}
         <Typography sx={{ fontSize: '0.75rem', color: '#3D3D3D', mr: 1.5 }}>
           {lineCount}L
         </Typography>
