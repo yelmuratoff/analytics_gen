@@ -87,8 +87,8 @@ export function loadProjectFile(file: File): Promise<Partial<StudioState>> {
     reader.onload = (e) => {
       try {
         resolve(parseProject(e.target?.result as string));
-      } catch {
-        reject(new Error('Failed to parse project file'));
+      } catch (err) {
+        reject(err instanceof SyntaxError ? new Error('Failed to parse project file') : err);
       }
     };
     reader.onerror = () => reject(new Error('Failed to read file'));
