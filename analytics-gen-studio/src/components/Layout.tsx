@@ -1,17 +1,19 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import Box from '@mui/material/Box';
-import { useMemo } from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
 import TabBar from './TabBar.tsx';
 import Toolbar from './Toolbar.tsx';
-import YamlPreview from './YamlPreview.tsx';
 import ResizeHandle from './ResizeHandle.tsx';
-import ConfigTab from './config/ConfigTab.tsx';
-import EventsTab from './events/EventsTab.tsx';
-import SharedParamsTab from './shared/SharedParamsTab.tsx';
-import ContextsTab from './contexts/ContextsTab.tsx';
 import { useStore } from '../state/store.ts';
 import type { LoadedSchemas } from '../schemas/loader.ts';
 import { extractImportHints } from '../utils/yaml-importer.ts';
+
+// Lazy-load heavy tab components — only loaded when first activated
+const ConfigTab = lazy(() => import('./config/ConfigTab.tsx'));
+const EventsTab = lazy(() => import('./events/EventsTab.tsx'));
+const SharedParamsTab = lazy(() => import('./shared/SharedParamsTab.tsx'));
+const ContextsTab = lazy(() => import('./contexts/ContextsTab.tsx'));
+const YamlPreview = lazy(() => import('./YamlPreview.tsx'));
 
 interface LayoutProps {
   schemas: LoadedSchemas;
@@ -84,7 +86,7 @@ export default function Layout({ schemas }: LayoutProps) {
           },
           animation: 'fadeSlideIn 0.2s ease-out',
         }}>
-          {renderTab()}
+          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={24} sx={{ color: '#DF4926' }} /></Box>}>{renderTab()}</Suspense>
         </Box>
         <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
         {/* YAML preview panel */}
@@ -94,7 +96,7 @@ export default function Layout({ schemas }: LayoutProps) {
           borderRadius: 1.5,
           display: 'flex', flexDirection: 'column',
         }}>
-          <YamlPreview />
+          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={20} sx={{ color: '#555' }} /></Box>}><YamlPreview /></Suspense>
         </Box>
       </Box>
     </Box>
