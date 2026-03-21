@@ -87,6 +87,12 @@ function getTheme(mode: ColorMode) {
           },
         },
       },
+      MuiButtonBase: {
+        defaultProps: { disableRipple: true },
+        styleOverrides: {
+          root: { '&:active': { transform: 'scale(0.97)' } },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
