@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import TabBar from './TabBar.tsx';
 import Toolbar from './Toolbar.tsx';
 import YamlPreview from './YamlPreview.tsx';
+import ResizeHandle from './ResizeHandle.tsx';
 import ConfigTab from './config/ConfigTab.tsx';
 import EventsTab from './events/EventsTab.tsx';
 import SharedParamsTab from './shared/SharedParamsTab.tsx';
@@ -79,30 +80,7 @@ export default function Layout({ schemas }: LayoutProps) {
         }}>
           {renderTab()}
         </Box>
-        {/* Resize handle */}
-        <Box
-          role="separator"
-          aria-label="Resize panels"
-          onMouseDown={handleMouseDown}
-          sx={{
-            width: 16,
-            cursor: 'col-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            '&:hover .resize-line': { opacity: 1, bgcolor: '#DF4926' },
-          }}
-        >
-          <Box className="resize-line" sx={{
-            width: 3,
-            height: 40,
-            borderRadius: 2,
-            bgcolor: dragging ? '#DF4926' : 'text.disabled',
-            opacity: dragging ? 1 : 0.4,
-            transition: 'all 0.15s ease',
-          }} />
-        </Box>
+        <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
         {/* YAML preview panel */}
         <Box sx={{
           flex: 1, overflow: 'hidden',

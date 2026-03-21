@@ -29,6 +29,7 @@ import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
+import ResizeHandle from '../ResizeHandle.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
 
 interface SharedParamsTabProps {
@@ -280,23 +281,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           </Typography>
         )}
       </Box>
-      {/* Resize handle */}
-      <Box
-        role="separator"
-        aria-label="Resize sidebar"
-        onMouseDown={handleMouseDown}
-        sx={{
-          width: 12, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          '&:hover .shared-line': { opacity: 1, bgcolor: '#DF4926' },
-        }}
-      >
-        <Box className="shared-line" sx={{
-          width: 3, height: 32, borderRadius: 2,
-          bgcolor: dragging ? '#DF4926' : 'text.disabled',
-          opacity: dragging ? 1 : 0.4,
-          transition: 'all 0.15s ease',
-        }} />
-      </Box>
+      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} width={12} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'shared' && selectedPath.parameter ? (
           <SharedParamEditor fileIndex={selectedPath.fileIndex} paramName={selectedPath.parameter} parameterSchema={parameterSchema} />

@@ -26,9 +26,12 @@ import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRound
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
 import KeyboardRounded from '@mui/icons-material/KeyboardRounded';
+import UndoRounded from '@mui/icons-material/UndoRounded';
+import RedoRounded from '@mui/icons-material/RedoRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import Divider from '@mui/material/Divider';
+import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
 import { useColorMode } from '../App.tsx';
 import {
@@ -52,12 +55,17 @@ const shortcuts = [
   { keys: `${mod}\u21E7S`, description: 'Save As...' },
   { keys: `${mod}O`, description: 'Open project' },
   { keys: `${mod}\u21E7E`, description: 'Export ZIP' },
+  { keys: `${mod}Z`, description: 'Undo' },
+  { keys: `${mod}\u21E7Z`, description: 'Redo' },
   { keys: `${mod}1\u20134`, description: 'Switch tabs' },
 ];
 
 export default function Toolbar() {
   const errors = useValidation();
   const hasErrors = errors.length > 0;
+  const canUndo = useStoreBase(useStore.temporal, (s) => s.pastStates.length > 0);
+  const canRedo = useStoreBase(useStore.temporal, (s) => s.futureStates.length > 0);
+  const { undo, redo } = useStore.temporal.getState();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -179,7 +187,16 @@ export default function Toolbar() {
     const handler = (e: KeyboardEvent) => {
       const isMod = e.metaKey || e.ctrlKey;
       if (!isMod) return;
-      if (e.key === 's' && e.shiftKey) {
+      // Skip undo/redo when a text input is focused (let browser handle it)
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
+      if (e.key === 'z' && e.shiftKey && !isInput) {
+        e.preventDefault();
+        redo();
+      } else if (e.key === 'z' && !e.shiftKey && !isInput) {
+        e.preventDefault();
+        undo();
+      } else if (e.key === 's' && e.shiftKey) {
         e.preventDefault();
         handleSaveAs();
       } else if (e.key === 's') {
@@ -195,7 +212,7 @@ export default function Toolbar() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleSave, handleSaveAs, handleExportZip, handleOpen]);
+  }, [handleSave, handleSaveAs, handleExportZip, handleOpen, undo, redo]);
 
   const actionBtnSx = {
     fontSize: '0.82rem',
@@ -244,6 +261,33 @@ export default function Toolbar() {
           </Box>
         )}
         {!fileName && <Box sx={{ flex: 1 }} />}
+
+        {/* Undo / Redo */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+          <Tooltip title={`Undo (${mod}Z)`} arrow>
+            <span>
+              <IconButton size="small" onClick={() => undo()} disabled={!canUndo} sx={{
+                color: 'text.secondary',
+                '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
+              }}>
+                <UndoRounded sx={{ fontSize: 20 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title={`Redo (${mod}\u21E7Z)`} arrow>
+            <span>
+              <IconButton size="small" onClick={() => redo()} disabled={!canRedo} sx={{
+                color: 'text.secondary',
+                '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
+              }}>
+                <RedoRounded sx={{ fontSize: 20 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Divider orientation="vertical" flexItem sx={{ ml: 0.5 }} />
+        </Box>
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

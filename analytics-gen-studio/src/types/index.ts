@@ -127,6 +127,9 @@ export interface StudioState {
   removeContextProperty: (fileIndex: number, propName: string) => void;
   updateContextProperty: (fileIndex: number, propName: string, value: ParamDef | string) => void;
 
+  duplicateEvent: (fileIndex: number, domain: string, eventName: string) => void;
+  duplicateParameter: (fileIndex: number, domain: string, eventName: string, paramName: string) => void;
+
   setSelectedPath: (path: SelectionPath | null) => void;
   resetState: () => void;
   loadProject: (state: Partial<StudioState>) => void;

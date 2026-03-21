@@ -20,6 +20,7 @@ import CircleRounded from '@mui/icons-material/CircleRounded';
 import LinkRounded from '@mui/icons-material/LinkRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
@@ -45,6 +46,8 @@ export default function FileTree() {
   const removeEvent = useStore((s) => s.removeEvent);
   const addParameter = useStore((s) => s.addParameter);
   const removeParameter = useStore((s) => s.removeParameter);
+  const duplicateEvent = useStore((s) => s.duplicateEvent);
+  const duplicateParameter = useStore((s) => s.duplicateParameter);
 
   const [search, setSearch] = useState('');
 
@@ -89,6 +92,13 @@ export default function FileTree() {
   const isSel = (fi: number, domain?: string, event?: string, param?: string) =>
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&
     selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param;
+
+  const hoverAction = {
+    opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
+    p: 0.5,
+    '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.06)', opacity: 1 },
+    '.MuiListItemButton-root:hover &': { opacity: 1 },
+  };
 
   const hoverDel = {
     opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
@@ -289,6 +299,11 @@ export default function FileTree() {
                                       primary={<>{en}{paramCount > 0 && countBadge(paramCount)}</>}
                                       primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
                                     />
+                                    <Tooltip title="Duplicate" arrow enterDelay={400}>
+                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateEvent(fi, dn, en); }} sx={hoverAction}>
+                                        <ContentCopyRounded sx={{ fontSize: 14 }} />
+                                      </IconButton>
+                                    </Tooltip>
                                     <IconButton size="small" onClick={confirmDel(
                                       `Delete event "${en}"?`,
                                       `This will remove the event and its ${paramCount} parameter(s).`,
@@ -330,6 +345,11 @@ export default function FileTree() {
                                               primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
                                               secondaryTypographyProps={{ fontSize: '0.78rem' }}
                                             />
+                                            <Tooltip title="Duplicate" arrow enterDelay={400}>
+                                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateParameter(fi, dn, en, pn); }} sx={hoverAction}>
+                                                <ContentCopyRounded sx={{ fontSize: 13 }} />
+                                              </IconButton>
+                                            </Tooltip>
                                             <IconButton size="small" onClick={confirmDel(
                                               `Delete parameter "${pn}"?`,
                                               `This will remove the parameter from event "${en}".`,

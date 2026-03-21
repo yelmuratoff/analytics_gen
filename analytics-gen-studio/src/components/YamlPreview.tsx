@@ -83,13 +83,20 @@ export default function YamlPreview() {
     return (
       <Box sx={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100%', gap: 1,
+        height: '100%', gap: 1.5,
       }}>
+        <Box sx={{
+          width: 48, height: 48, borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '2px dashed rgba(255,255,255,0.12)',
+        }}>
+          <Typography sx={{ fontSize: '1.2rem', color: '#555' }}>{'{ }'}</Typography>
+        </Box>
         <Typography sx={{ color: '#777', fontSize: '0.85rem', fontWeight: 600 }}>
-          No output yet
+          YAML Preview
         </Typography>
-        <Typography sx={{ color: '#555', fontSize: '0.78rem' }}>
-          Add events or parameters to see generated YAML
+        <Typography sx={{ color: '#555', fontSize: '0.78rem', textAlign: 'center', maxWidth: 220, lineHeight: 1.6 }}>
+          Start by adding events in the Events tab — generated YAML will appear here in real-time.
         </Typography>
       </Box>
     );

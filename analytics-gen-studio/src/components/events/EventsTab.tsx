@@ -4,6 +4,7 @@ import type { RJSFSchema } from '@rjsf/utils';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import { useStore } from '../../state/store.ts';
 import EmptyState from '../EmptyState.tsx';
+import ResizeHandle from '../ResizeHandle.tsx';
 import FileTree from './FileTree.tsx';
 import EventEditor from './EventEditor.tsx';
 import ParameterEditor from './ParameterEditor.tsx';
@@ -101,30 +102,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
       }}>
         <FileTree />
       </Box>
-      {/* Resize handle */}
-      <Box
-        role="separator"
-        aria-label="Resize sidebar"
-        onMouseDown={handleMouseDown}
-        sx={{
-          width: 12,
-          cursor: 'col-resize',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          '&:hover .sidebar-line': { opacity: 1, bgcolor: '#DF4926' },
-        }}
-      >
-        <Box className="sidebar-line" sx={{
-          width: 3,
-          height: 32,
-          borderRadius: 2,
-          bgcolor: dragging ? '#DF4926' : 'text.disabled',
-          opacity: dragging ? 1 : 0.4,
-          transition: 'all 0.15s ease',
-        }} />
-      </Box>
+      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} width={12} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {renderEditor()}
       </Box>

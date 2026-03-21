@@ -26,17 +26,29 @@ const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
 export default function TabBar() {
   const activeTab = useStore((s) => s.activeTab);
   const setActiveTab = useStore((s) => s.setActiveTab);
+  const config = useStore((s) => s.config);
   const eventFiles = useStore((s) => s.eventFiles);
   const sharedParamFiles = useStore((s) => s.sharedParamFiles);
   const contextFiles = useStore((s) => s.contextFiles);
   const errors = useValidation();
 
   const itemCounts = useMemo(() => {
+    const configCount = Object.values(config as unknown as Record<string, Record<string, unknown>>).reduce((sum, section) => {
+      if (typeof section !== 'object' || section === null) return sum;
+      return sum + Object.values(section).filter((v) => {
+        if (v == null) return false;
+        if (typeof v === 'boolean') return v === true;
+        if (typeof v === 'string') return v !== '';
+        if (Array.isArray(v)) return v.length > 0;
+        if (typeof v === 'object') return Object.keys(v as object).length > 0;
+        return true;
+      }).length;
+    }, 0);
     const eventsCount = eventFiles.reduce((sum, f) => sum + Object.values(f.domains).reduce((s, evts) => s + Object.keys(evts).length, 0), 0);
     const sharedCount = sharedParamFiles.reduce((sum, f) => sum + Object.keys(f.parameters).length, 0);
     const contextsCount = contextFiles.reduce((sum, f) => sum + Object.keys(f.properties).length, 0);
-    return { config: 0, events: eventsCount, shared: sharedCount, contexts: contextsCount } as Record<TabId, number>;
-  }, [eventFiles, sharedParamFiles, contextFiles]);
+    return { config: configCount, events: eventsCount, shared: sharedCount, contexts: contextsCount } as Record<TabId, number>;
+  }, [config, eventFiles, sharedParamFiles, contextFiles]);
 
   const errorCounts = tabs.reduce((acc, t) => {
     acc[t.id] = errors.filter((e) => e.tab === t.id).length;

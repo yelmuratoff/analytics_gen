@@ -33,6 +33,7 @@ import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
+import ResizeHandle from '../ResizeHandle.tsx';
 import ContextPropertyEditor from './ContextPropertyEditor.tsx';
 
 function deriveContextName(fileName: string): string {
@@ -285,23 +286,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
           </Typography>
         )}
       </Box>
-      {/* Resize handle */}
-      <Box
-        role="separator"
-        aria-label="Resize sidebar"
-        onMouseDown={handleMouseDown}
-        sx={{
-          width: 12, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          '&:hover .ctx-line': { opacity: 1, bgcolor: '#DF4926' },
-        }}
-      >
-        <Box className="ctx-line" sx={{
-          width: 3, height: 32, borderRadius: 2,
-          bgcolor: dragging ? '#DF4926' : 'text.disabled',
-          opacity: dragging ? 1 : 0.4,
-          transition: 'all 0.15s ease',
-        }} />
-      </Box>
+      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} width={12} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
