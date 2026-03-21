@@ -47,7 +47,9 @@ import {
   clearFileHandle,
   supportsFileSystemAccess,
 } from '../utils/export.ts';
+import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import { useValidation } from '../hooks/useValidation.ts';
+import { importYamlString, type ImportSchemaHints } from '../utils/yaml-importer.ts';
 import DocsDrawer from './DocsDrawer.tsx';
 
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
@@ -64,7 +66,11 @@ const shortcuts = [
   { keys: `${mod}1\u20134`, description: 'Switch tabs' },
 ];
 
-export default function Toolbar() {
+interface ToolbarProps {
+  importHints: ImportSchemaHints;
+}
+
+export default function Toolbar({ importHints }: ToolbarProps) {
   const errors = useValidation();
   const hasErrors = errors.length > 0;
   const canUndo = useStoreBase(useStore.temporal, (s) => s.pastStates.length > 0);
@@ -83,6 +89,7 @@ export default function Toolbar() {
   const [isDirty, setIsDirty] = useState(false);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const yamlInputRef = useRef<HTMLInputElement>(null);
   const store = useStore();
   const { mode, toggleColorMode } = useColorMode();
 
@@ -173,6 +180,52 @@ export default function Toolbar() {
     setLastSavedSnapshot(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
+  };
+
+  const handleImportYaml = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    let imported = 0;
+    let lastType = '';
+
+    for (const file of Array.from(files)) {
+      try {
+        const content = await file.text();
+        const result = importYamlString(content, file.name, importHints);
+        if (!result) {
+          setSnackbar({ message: `Could not detect type of "${file.name}"`, severity: 'error' });
+          continue;
+        }
+
+        switch (result.type) {
+          case 'events':
+            if (result.eventFile) store.importEventFile(result.eventFile);
+            lastType = 'events';
+            break;
+          case 'shared':
+            if (result.sharedFile) store.importSharedParamFile(result.sharedFile);
+            lastType = 'shared';
+            break;
+          case 'context':
+            if (result.contextFile) store.importContextFile(result.contextFile);
+            lastType = 'contexts';
+            break;
+          case 'config':
+            if (result.config) store.mergeConfig(result.config);
+            lastType = 'config';
+            break;
+        }
+        imported++;
+      } catch (err) {
+        setSnackbar({ message: `Failed to parse "${file.name}": ${err instanceof Error ? err.message : 'Invalid YAML'}`, severity: 'error' });
+      }
+    }
+
+    if (imported > 0) {
+      setSnackbar({ message: `Imported ${imported} file${imported > 1 ? 's' : ''}`, severity: 'success' });
+      if (lastType) store.setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
+    }
+    if (yamlInputRef.current) yamlInputRef.current.value = '';
   };
 
   useEffect(() => {
@@ -327,6 +380,7 @@ export default function Toolbar() {
             )}
           </Tooltip>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadFallback} />
+          <input ref={yamlInputRef} type="file" accept=".yaml,.yml" multiple style={{ display: 'none' }} onChange={handleImportYaml} />
 
           {/* Save button with dropdown for Save As */}
           <Box sx={{ display: 'flex' }}>
@@ -444,6 +498,10 @@ export default function Toolbar() {
             onClose={() => setMoreMenuAnchor(null)}
             slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}
           >
+            <MenuItem onClick={() => { setMoreMenuAnchor(null); yamlInputRef.current?.click(); }}>
+              <ListItemIcon><UploadFileRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+              <ListItemText primary="Import YAML..." primaryTypographyProps={{ fontSize: '0.85rem' }} />
+            </MenuItem>
             <MenuItem onClick={() => { setMoreMenuAnchor(null); setDocsOpen(true); }}>
               <ListItemIcon><MenuBookRounded sx={{ fontSize: 18 }} /></ListItemIcon>
               <ListItemText primary="API Docs" primaryTypographyProps={{ fontSize: '0.85rem' }} />

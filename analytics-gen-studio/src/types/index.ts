@@ -135,6 +135,11 @@ export interface StudioState {
   renameEvent: (fileIndex: number, domain: string, oldName: string, newName: string) => void;
   renameParameter: (fileIndex: number, domain: string, eventName: string, oldName: string, newName: string) => void;
 
+  importEventFile: (file: import('./index.ts').EventFile) => void;
+  importSharedParamFile: (file: import('./index.ts').SharedParamFile) => void;
+  importContextFile: (file: import('./index.ts').ContextFile) => void;
+  mergeConfig: (partial: Partial<ConfigState>) => void;
+
   setSelectedPath: (path: SelectionPath | null) => void;
   resetState: () => void;
   loadProject: (state: Partial<StudioState>) => void;

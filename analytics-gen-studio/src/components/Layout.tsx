@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
+import { useMemo } from 'react';
 import TabBar from './TabBar.tsx';
 import Toolbar from './Toolbar.tsx';
 import YamlPreview from './YamlPreview.tsx';
@@ -10,6 +11,7 @@ import SharedParamsTab from './shared/SharedParamsTab.tsx';
 import ContextsTab from './contexts/ContextsTab.tsx';
 import { useStore } from '../state/store.ts';
 import type { LoadedSchemas } from '../schemas/loader.ts';
+import { extractImportHints } from '../utils/yaml-importer.ts';
 
 interface LayoutProps {
   schemas: LoadedSchemas;
@@ -17,6 +19,10 @@ interface LayoutProps {
 
 export default function Layout({ schemas }: LayoutProps) {
   const activeTab = useStore((s) => s.activeTab);
+  const importHints = useMemo(
+    () => extractImportHints(schemas.rawConfigSchema, schemas.eventsSchema, schemas.sharedParametersSchema),
+    [schemas],
+  );
   const [formWidth, setFormWidth] = useState(57);
   const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
@@ -63,7 +69,7 @@ export default function Layout({ schemas }: LayoutProps) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
-      <Toolbar />
+      <Toolbar importHints={importHints} />
       <TabBar />
       <Box ref={containerRef} sx={{ display: 'flex', flex: 1, overflow: 'hidden', p: 2, gap: 0 }}>
         {/* Form panel */}

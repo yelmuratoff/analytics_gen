@@ -155,6 +155,45 @@ export const useStore = create<StudioState>()(
           s.selectedPath = { tab: 'events', fileIndex, domain, event: eventName, parameter: newName };
         }),
 
+        // Import actions
+        importEventFile: (file) => set((s) => {
+          const exists = s.eventFiles.findIndex((f) => f.fileName === file.fileName);
+          if (exists >= 0) {
+            // Merge domains into existing file
+            for (const [dn, events] of Object.entries(file.domains)) {
+              if (!s.eventFiles[exists].domains[dn]) s.eventFiles[exists].domains[dn] = {};
+              Object.assign(s.eventFiles[exists].domains[dn], events);
+            }
+          } else {
+            s.eventFiles.push(file);
+          }
+        }),
+        importSharedParamFile: (file) => set((s) => {
+          const exists = s.sharedParamFiles.findIndex((f) => f.fileName === file.fileName);
+          if (exists >= 0) {
+            Object.assign(s.sharedParamFiles[exists].parameters, file.parameters);
+          } else {
+            s.sharedParamFiles.push(file);
+          }
+        }),
+        importContextFile: (file) => set((s) => {
+          const exists = s.contextFiles.findIndex((f) => f.fileName === file.fileName);
+          if (exists >= 0) {
+            Object.assign(s.contextFiles[exists].properties, file.properties);
+          } else {
+            s.contextFiles.push(file);
+          }
+        }),
+        mergeConfig: (partial) => set((s) => {
+          for (const [section, values] of Object.entries(partial)) {
+            if (typeof values === 'object' && values !== null) {
+              const cfg = s.config as unknown as Record<string, Record<string, unknown>>;
+              if (!cfg[section]) cfg[section] = {};
+              Object.assign(cfg[section], values);
+            }
+          }
+        }),
+
         // Rename actions
         renameEventFile: (fileIndex, newName) => set((s) => {
           s.eventFiles[fileIndex].fileName = newName;
