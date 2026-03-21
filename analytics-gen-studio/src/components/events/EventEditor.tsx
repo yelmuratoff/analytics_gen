@@ -35,8 +35,9 @@ export default function EventEditor({ fileIndex, domain, eventName, eventEditorS
 
   const handleBreadcrumbClick = (index: number) => {
     if (!breadcrumb || index >= breadcrumb.length - 1) return;
-    if (index === 2 || index === 1) {
-      setSelectedPath({ tab: 'events', fileIndex, domain, event: eventName });
+    if (index === 1) {
+      // Domain click — show domain view
+      setSelectedPath({ tab: 'events', fileIndex, domain });
     }
   };
 

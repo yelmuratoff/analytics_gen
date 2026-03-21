@@ -154,10 +154,7 @@ export default function FileTree() {
   const files = useStore((s) => s.eventFiles);
   const sharedParamFiles = useStore((s) => s.sharedParamFiles);
   const selectedPath = useStore((s) => s.selectedPath);
-  const rawSetSelectedPath = useStore((s) => s.setSelectedPath);
-  const setSelectedPath = useCallback((...args: Parameters<typeof rawSetSelectedPath>) => {
-    startTransition(() => rawSetSelectedPath(...args));
-  }, [rawSetSelectedPath]);
+  const setSelectedPath = useStore((s) => s.setSelectedPath);
   const addEventFile = useStore((s) => s.addEventFile);
   const removeEventFile = useStore((s) => s.removeEventFile);
   const addDomain = useStore((s) => s.addDomain);
