@@ -247,7 +247,7 @@ export default function FileTree() {
 
   const allExpanded = allKeys.size > 0 && allKeys.size === expanded.size;
   const expandAll = useCallback(() => startTransition(() => setExpanded(new Set(allKeys))), [allKeys]);
-  const collapseAll = useCallback(() => startTransition(() => setExpanded(new Set())), []);
+  const collapseAll = useCallback(() => setExpanded(new Set()), []);
 
   const isSel = useCallback((fi: number, domain?: string, event?: string, param?: string) =>
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&
