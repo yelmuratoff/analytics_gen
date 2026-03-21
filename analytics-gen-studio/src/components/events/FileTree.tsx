@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -7,7 +7,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-// Collapse removed for performance — instant show/hide instead of animated transitions
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
@@ -32,15 +31,124 @@ import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
+import type { EventDef, ParamDef } from '../../types/index.ts';
 
-interface EditingItem {
-  type: 'file' | 'domain' | 'event' | 'param';
-  fi: number;
-  domain?: string;
-  event?: string;
-  param?: string;
-  original: string;
-}
+// ── Shared styles (static objects — no re-creation per render) ──
+
+const hoverAction = {
+  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
+  p: 0.5, flexShrink: 0,
+  '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.06)', opacity: 1 },
+  '.MuiListItemButton-root:hover &': { opacity: 1 },
+} as const;
+
+const hoverDel = {
+  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
+  p: 0.5, flexShrink: 0,
+  '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
+  '.MuiListItemButton-root:hover &': { opacity: 1 },
+} as const;
+
+const truncTextSx = { minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } } as const;
+const truncNameSx = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
+
+const addBtnSx = {
+  py: 0.3, opacity: 0.7,
+  borderTop: '1px dashed', borderColor: 'divider', borderRadius: 0, mx: 1, mt: 0.5,
+  '&:hover': { opacity: 1, bgcolor: 'rgba(223,73,38,0.04)' },
+} as const;
+
+const Arrow = ({ open }: { open: boolean }) => open
+  ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
+  : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: 'text.disabled' }} />;
+
+const Badge = memo(({ n }: { n: number }) => (
+  <Box component="span" sx={{
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    minWidth: 18, height: 16, px: 0.4, ml: 0.5, flexShrink: 0,
+    borderRadius: 1, bgcolor: 'action.hover',
+  }}>
+    <Typography component="span" sx={{ fontSize: '0.68rem', color: 'text.disabled', fontWeight: 600 }}>{n}</Typography>
+  </Box>
+));
+
+// ── Parameter Row ──
+
+const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, onSelect, onDuplicate, onDelete }: {
+  pn: string; pv: ParamDef | string | null; fi: number; dn: string; en: string;
+  isSelected: boolean;
+  onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
+}) => (
+  <ListItemButton sx={{
+    pl: 9.5, py: 0.4,
+    ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
+  }} onClick={onSelect} dense>
+    <ListItemIcon sx={{ minWidth: 18 }}>
+      {pv === null
+        ? <LinkRounded sx={{ fontSize: 14, color: '#6366F1' }} />
+        : <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />}
+    </ListItemIcon>
+    <ListItemText
+      sx={truncTextSx}
+      primary={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box component="span" sx={truncNameSx}>{pn}</Box>
+          {pv === null && (
+            <Chip label="shared" size="small" sx={{
+              height: 16, fontSize: '0.6rem', fontWeight: 600,
+              bgcolor: 'rgba(99,102,241,0.08)', color: '#6366F1',
+              '& .MuiChip-label': { px: 0.6 },
+            }} />
+          )}
+        </Box>
+      }
+      secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
+      primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
+      secondaryTypographyProps={{ fontSize: '0.78rem' }}
+    />
+    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
+      <ContentCopyRounded sx={{ fontSize: 13 }} />
+    </IconButton>
+    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
+      <DeleteOutlineRounded sx={{ fontSize: 14 }} />
+    </IconButton>
+  </ListItemButton>
+));
+
+// ── Event Row ──
+
+const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, onToggle, onSelect, onDuplicate, onDelete, children }: {
+  en: string; paramCount: number; fi: number; dn: string;
+  isSelected: boolean; isOpen: boolean;
+  onToggle: () => void; onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
+  children?: React.ReactNode;
+}) => (
+  <Box>
+    <ListItemButton sx={{
+      pl: 6.5, py: 0.4,
+      ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
+    }} onClick={() => { onToggle(); onSelect(); }} dense>
+      <Arrow open={isOpen} />
+      <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
+        <ElectricBoltRounded sx={{ fontSize: 15, color: '#E8A84E' }} />
+      </ListItemIcon>
+      <ListItemText
+        primary={<><Box component="span" sx={truncNameSx}>{en}</Box>{paramCount > 0 && <Badge n={paramCount} />}</>}
+        primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
+        sx={truncTextSx}
+      />
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
+        <ContentCopyRounded sx={{ fontSize: 14 }} />
+      </IconButton>
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
+        <DeleteOutlineRounded sx={{ fontSize: 15 }} />
+      </IconButton>
+    </ListItemButton>
+    {isOpen && children}
+  </Box>
+));
+
+// ── Main FileTree ──
 
 export default function FileTree() {
   const files = useStore((s) => s.eventFiles);
@@ -63,24 +171,11 @@ export default function FileTree() {
   const renameParameter = useStore((s) => s.renameParameter);
 
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState<EditingItem | null>(null);
+  const [editing, setEditing] = useState<{ type: string; fi: number; domain?: string; event?: string; original: string } | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  const allKeys = useMemo(() => {
-    const keys = new Set<string>();
-    files.forEach((file, fi) => {
-      const fk = `f${fi}`;
-      keys.add(fk);
-      Object.entries(file.domains).forEach(([dn, events]) => {
-        const dk = `${fk}.d${dn}`;
-        keys.add(dk);
-        Object.keys(events).forEach((en) => keys.add(`${dk}.e${en}`));
-      });
-    });
-    return keys;
-  }, [files]);
-
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Track expanded nodes — default ALL COLLAPSED for performance
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addDomainFor, setAddDomainFor] = useState<number | null>(null);
   const [addEventFor, setAddEventFor] = useState<{ fi: number; domain: string } | null>(null);
@@ -89,92 +184,66 @@ export default function FileTree() {
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
-  const startEditing = (item: EditingItem) => {
+  const startEditing = useCallback((item: typeof editing) => {
     setEditing(item);
-    setEditValue(item.original);
-  };
+    setEditValue(item!.original);
+  }, []);
 
-  const commitRename = () => {
+  const commitRename = useCallback(() => {
     if (!editing) return;
     const val = editValue.trim();
     if (!val || val === editing.original) { setEditing(null); return; }
     switch (editing.type) {
-      case 'file':
-        renameEventFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`);
-        break;
-      case 'domain':
-        renameDomain(editing.fi, editing.original, val);
-        break;
-      case 'event':
-        renameEvent(editing.fi, editing.domain!, editing.original, val);
-        break;
-      case 'param':
-        renameParameter(editing.fi, editing.domain!, editing.event!, editing.original, val);
-        break;
+      case 'file': renameEventFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`); break;
+      case 'domain': renameDomain(editing.fi, editing.original, val); break;
+      case 'event': renameEvent(editing.fi, editing.domain!, editing.original, val); break;
+      case 'param': renameParameter(editing.fi, editing.domain!, editing.event!, editing.original, val); break;
     }
     setEditing(null);
-  };
+  }, [editing, editValue, renameEventFile, renameDomain, renameEvent, renameParameter]);
 
   const allSharedParams = useMemo(() => sharedParamFiles.flatMap((f) => Object.keys(f.parameters)), [sharedParamFiles]);
   const q = search.toLowerCase();
 
-  const isExpanded = (key: string) => allKeys.has(key) && !collapsed.has(key);
-  const toggle = (key: string) => {
-    setCollapsed((prev) => {
+  const toggle = useCallback((key: string) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
-  };
-  const allExpanded = allKeys.size > 0 && collapsed.size === 0;
-  const expandAll = () => setCollapsed(new Set());
-  const collapseAll = () => setCollapsed(new Set(allKeys));
+  }, []);
 
-  const isSel = (fi: number, domain?: string, event?: string, param?: string) =>
+  const allKeys = useMemo(() => {
+    const keys = new Set<string>();
+    files.forEach((_, fi) => {
+      const fk = `f${fi}`;
+      keys.add(fk);
+      Object.entries(files[fi].domains).forEach(([dn, events]) => {
+        const dk = `${fk}.d${dn}`;
+        keys.add(dk);
+        Object.keys(events).forEach((en) => keys.add(`${dk}.e${en}`));
+      });
+    });
+    return keys;
+  }, [files]);
+
+  const allExpanded = allKeys.size > 0 && allKeys.size === expanded.size;
+  const expandAll = useCallback(() => setExpanded(new Set(allKeys)), [allKeys]);
+  const collapseAll = useCallback(() => setExpanded(new Set()), []);
+
+  const isSel = useCallback((fi: number, domain?: string, event?: string, param?: string) =>
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&
-    selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param;
+    selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param,
+  [selectedPath]);
 
-  const hoverAction = {
-    opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
-    p: 0.5, flexShrink: 0,
-    '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.06)', opacity: 1 },
-    '.MuiListItemButton-root:hover &': { opacity: 1 },
-  };
-
-  const hoverDel = {
-    opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
-    p: 0.5, flexShrink: 0,
-    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
-    '.MuiListItemButton-root:hover &': { opacity: 1 },
-  };
-
-  const arrow = (open: boolean) => open
-    ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
-    : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: 'text.disabled' }} />;
-
-  const countBadge = (n: number) => (
-    <Box component="span" sx={{
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      minWidth: 18, height: 16, px: 0.4, ml: 0.5, flexShrink: 0,
-      borderRadius: 1, bgcolor: 'action.hover',
-    }}>
-      <Typography component="span" sx={{ fontSize: '0.68rem', color: 'text.disabled', fontWeight: 600 }}>
-        {n}
-      </Typography>
-    </Box>
-  );
-
-  // Shared sx for ListItemText to prevent overflow
-  const truncatedTextSx = { minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } };
-  const truncatedNameSx = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
-
-  const confirmDel = (title: string, message: string, action: () => void) => (e: React.MouseEvent) => {
+  const confirmDel = useCallback((title: string, message: string, action: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
     setConfirmDelete({ title, message, action });
-  };
+  }, []);
 
+  // Search helpers
   const matchesSearch = (name: string) => !q || name.toLowerCase().includes(q);
-  const fileMatchesSearch = (fi: number) => {
+  const fileMatchesSearch = useCallback((fi: number) => {
     if (!q) return true;
     const file = files[fi];
     if (file.fileName.toLowerCase().includes(q)) return true;
@@ -185,8 +254,9 @@ export default function FileTree() {
         Object.keys(ev.parameters).some((pn) => pn.toLowerCase().includes(q))
       )
     );
-  };
-  const domainMatchesSearch = (fi: number, dn: string) => {
+  }, [files, q]);
+
+  const domainMatchesSearch = useCallback((fi: number, dn: string) => {
     if (!q) return true;
     if (dn.toLowerCase().includes(q)) return true;
     const events = files[fi].domains[dn];
@@ -194,33 +264,25 @@ export default function FileTree() {
       en.toLowerCase().includes(q) ||
       Object.keys(ev.parameters).some((pn) => pn.toLowerCase().includes(q))
     );
-  };
-  const eventMatchesSearch = (fi: number, dn: string, en: string) => {
+  }, [files, q]);
+
+  const eventMatchesSearch = useCallback((fi: number, dn: string, en: string) => {
     if (!q) return true;
     if (en.toLowerCase().includes(q)) return true;
     const event = files[fi].domains[dn]?.[en];
     return event ? Object.keys(event.parameters).some((pn) => pn.toLowerCase().includes(q)) : false;
-  };
+  }, [files, q]);
 
-  const itemEnterSx = {
-    '@keyframes itemEnter': {
-      from: { opacity: 0, transform: 'translateY(-4px)' },
-      to: { opacity: 1, transform: 'translateY(0)' },
-    },
-    animation: 'itemEnter 0.2s ease-out',
-  };
-
-  // "Add" button style — ghost with dashed underline to distinguish from real items
-  const addBtnSx = {
-    py: 0.3,
-    opacity: 0.7,
-    borderTop: '1px dashed',
-    borderColor: 'divider',
-    borderRadius: 0,
-    mx: 1,
-    mt: 0.5,
-    '&:hover': { opacity: 1, bgcolor: 'rgba(223,73,38,0.04)' },
-  };
+  const renderInlineEdit = (onCommit: () => void, fontSize = '0.78rem', height = 24, mono = false) => (
+    <TextField size="small" autoFocus value={editValue}
+      onChange={(e) => setEditValue(e.target.value)}
+      onBlur={onCommit}
+      onKeyDown={(e) => { if (e.key === 'Enter') onCommit(); if (e.key === 'Escape') setEditing(null); }}
+      onClick={(e) => e.stopPropagation()}
+      slotProps={{ input: { sx: { fontSize, py: 0, height, ...(mono ? { fontFamily: '"JetBrains Mono", monospace' } : {}) } } }}
+      sx={{ flex: 1 }}
+    />
+  );
 
   return (
     <>
@@ -242,22 +304,22 @@ export default function FileTree() {
           )}
         </Box>
         <TextField
-            size="small"
-            placeholder={files.length > 0 ? 'Search...' : 'Add a file to search'}
-            disabled={files.length === 0}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
-                  </InputAdornment>
-                ),
-                sx: { fontSize: '0.78rem', py: 0, height: 32 },
-              },
-            }}
-          />
+          size="small"
+          placeholder={files.length > 0 ? 'Search...' : 'Add a file to search'}
+          disabled={files.length === 0}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+              sx: { fontSize: '0.78rem', py: 0, height: 32 },
+            },
+          }}
+        />
       </Box>
 
       {files.length === 0 && (
@@ -273,8 +335,7 @@ export default function FileTree() {
           <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', mb: 2, lineHeight: 1.5, px: 1 }}>
             Create a YAML file, then add domains and events with parameters inside.
           </Typography>
-          <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)}
-            sx={{ fontSize: '0.78rem' }}>
+          <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
             Create your first file
           </Button>
         </Box>
@@ -284,31 +345,25 @@ export default function FileTree() {
         {files.map((file, fi) => {
           if (!fileMatchesSearch(fi)) return null;
           const fk = `f${fi}`;
+          const fileOpen = expanded.has(fk) || !!q;
           const totalEvents = Object.values(file.domains).reduce((sum, evts) => sum + Object.keys(evts).length, 0);
           return (
-            <Box key={fi} sx={itemEnterSx}>
+            <Box key={fi}>
               <ListItemButton onClick={() => toggle(fk)} dense sx={{ py: 0.4 }}>
-                {arrow(isExpanded(fk))}
+                <Arrow open={fileOpen} />
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: '#8B9DAF' }} />
                 </ListItemIcon>
-                {editing?.type === 'file' && editing.fi === fi ? (
-                  <TextField size="small" autoFocus value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onBlur={commitRename}
-                    onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-                    onClick={(e) => e.stopPropagation()}
-                    slotProps={{ input: { sx: { fontSize: '0.82rem', py: 0, height: 26 } } }}
-                    sx={{ flex: 1 }}
-                  />
-                ) : (
-                  <ListItemText
-                    primary={<><Box component="span" sx={truncatedNameSx}>{file.fileName}</Box>{totalEvents > 0 && countBadge(totalEvents)}</>}
-                    primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
-                    sx={truncatedTextSx}
-                    onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
-                  />
-                )}
+                {editing?.type === 'file' && editing.fi === fi
+                  ? renderInlineEdit(commitRename, '0.82rem', 26)
+                  : (
+                    <ListItemText
+                      primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}</>}
+                      primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                      sx={truncTextSx}
+                      onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
+                    />
+                  )}
                 <IconButton size="small" onClick={confirmDel(
                   `Delete ${file.fileName}?`,
                   `This will remove all domains, events and parameters in this file.`,
@@ -317,14 +372,16 @@ export default function FileTree() {
                   <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                 </IconButton>
               </ListItemButton>
-              {(isExpanded(fk) || !!q) && (
+
+              {fileOpen && (
                 <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                   {Object.entries(file.domains).map(([dn, events]) => {
-                    if (!domainMatchesSearch(fi, dn)) return null;
+                    if (q && !domainMatchesSearch(fi, dn)) return null;
                     const dk = `${fk}.d${dn}`;
+                    const domainOpen = expanded.has(dk) || !!q;
                     const eventCount = Object.keys(events).length;
                     return (
-                      <Box key={dn} sx={itemEnterSx}>
+                      <Box key={dn}>
                         <ListItemButton sx={{
                           pl: 4, py: 0.35,
                           ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: alpha('#DF4926', 0.06) }),
@@ -332,27 +389,20 @@ export default function FileTree() {
                           toggle(dk);
                           setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn });
                         }} dense>
-                          {arrow(isExpanded(dk))}
+                          <Arrow open={domainOpen} />
                           <ListItemIcon sx={{ minWidth: 24, ml: 0.2 }}>
                             <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
                           </ListItemIcon>
-                          {editing?.type === 'domain' && editing.fi === fi && editing.original === dn ? (
-                            <TextField size="small" autoFocus value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={commitRename}
-                              onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-                              onClick={(e) => e.stopPropagation()}
-                              slotProps={{ input: { sx: { fontSize: '0.78rem', py: 0, height: 24 } } }}
-                              sx={{ flex: 1 }}
-                            />
-                          ) : (
-                            <ListItemText
-                              primary={<><Box component="span" sx={truncatedNameSx}>{dn}</Box>{eventCount > 0 && countBadge(eventCount)}</>}
-                              primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
-                              sx={truncatedTextSx}
-                              onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
-                            />
-                          )}
+                          {editing?.type === 'domain' && editing.fi === fi && editing.original === dn
+                            ? renderInlineEdit(commitRename)
+                            : (
+                              <ListItemText
+                                primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}</>}
+                                primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
+                                sx={truncTextSx}
+                                onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
+                              />
+                            )}
                           <IconButton size="small" onClick={confirmDel(
                             `Delete domain "${dn}"?`,
                             `This will remove ${eventCount} event(s) and all their parameters.`,
@@ -361,141 +411,60 @@ export default function FileTree() {
                             <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
-                        {(isExpanded(dk) || !!q) && (
+
+                        {domainOpen && (
                           <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                             {Object.entries(events).map(([en, event]) => {
-                              if (!eventMatchesSearch(fi, dn, en)) return null;
+                              if (q && !eventMatchesSearch(fi, dn, en)) return null;
                               const ek = `${dk}.e${en}`;
+                              const eventOpen = expanded.has(ek) || !!q;
                               const paramCount = Object.keys(event.parameters).length;
                               return (
-                                <Box key={en} sx={itemEnterSx}>
-                                  <ListItemButton sx={{
-                                    pl: 6.5, py: 0.4,
-                                    ...(isSel(fi, dn, en, undefined) && { bgcolor: alpha('#DF4926', 0.06) }),
-                                  }} onClick={() => {
-                                    toggle(ek);
-                                    setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en });
-                                  }} dense>
-                                    {arrow(isExpanded(ek))}
-                                    <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
-                                      <ElectricBoltRounded sx={{ fontSize: 15, color: '#E8A84E' }} />
-                                    </ListItemIcon>
-                                    {editing?.type === 'event' && editing.fi === fi && editing.domain === dn && editing.original === en ? (
-                                      <TextField size="small" autoFocus value={editValue}
-                                        onChange={(e) => setEditValue(e.target.value)}
-                                        onBlur={commitRename}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        slotProps={{ input: { sx: { fontSize: '0.78rem', py: 0, height: 24 } } }}
-                                        sx={{ flex: 1 }}
-                                      />
-                                    ) : (
-                                      <ListItemText
-                                        primary={<><Box component="span" sx={truncatedNameSx}>{en}</Box>{paramCount > 0 && countBadge(paramCount)}</>}
-                                        primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
-                                        sx={truncatedTextSx}
-                                        onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'event', fi, domain: dn, original: en }); }}
-                                      />
+                                <EventRow key={en} en={en} paramCount={paramCount} fi={fi} dn={dn}
+                                  isSelected={isSel(fi, dn, en, undefined)}
+                                  isOpen={eventOpen}
+                                  onToggle={() => toggle(ek)}
+                                  onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en })}
+                                  onDuplicate={() => duplicateEvent(fi, dn, en)}
+                                  onDelete={() => setConfirmDelete({
+                                    title: `Delete event "${en}"?`,
+                                    message: `This will remove the event and its ${paramCount} parameter(s).`,
+                                    action: () => removeEvent(fi, dn, en),
+                                  })}
+                                >
+                                  <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
+                                    {Object.entries(event.parameters).map(([pn, pv]) => {
+                                      if (!matchesSearch(pn)) return null;
+                                      return (
+                                        <ParamRow key={pn} pn={pn} pv={pv} fi={fi} dn={dn} en={en}
+                                          isSelected={isSel(fi, dn, en, pn)}
+                                          onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })}
+                                          onDuplicate={() => duplicateParameter(fi, dn, en, pn)}
+                                          onDelete={() => setConfirmDelete({
+                                            title: `Delete parameter "${pn}"?`,
+                                            message: `This will remove the parameter from event "${en}".`,
+                                            action: () => removeParameter(fi, dn, en, pn),
+                                          })}
+                                        />
+                                      );
+                                    })}
+                                    {!q && (
+                                      <ListItemButton sx={{ pl: 9.5, ...addBtnSx }} onClick={(e) => {
+                                        setAddParamFor({ fi, domain: dn, event: en });
+                                        if (allSharedParams.length > 0) setAddMenuAnchor(e.currentTarget);
+                                      }} dense>
+                                        <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
+                                        <ListItemText primary="Add" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
+                                      </ListItemButton>
                                     )}
-                                    <Tooltip title="Duplicate" arrow enterDelay={400}>
-                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateEvent(fi, dn, en); }} sx={hoverAction}>
-                                        <ContentCopyRounded sx={{ fontSize: 14 }} />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <IconButton size="small" onClick={confirmDel(
-                                      `Delete event "${en}"?`,
-                                      `This will remove the event and its ${paramCount} parameter(s).`,
-                                      () => removeEvent(fi, dn, en),
-                                    )} sx={hoverDel}>
-                                      <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-                                    </IconButton>
-                                  </ListItemButton>
-                                  {(isExpanded(ek) || !!q) && (
-                                    <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
-                                      {Object.entries(event.parameters).map(([pn, pv]) => {
-                                        if (!matchesSearch(pn)) return null;
-                                        return (
-                                          <ListItemButton key={pn} sx={{
-                                            pl: 9.5, py: 0.4,
-                                            ...(isSel(fi, dn, en, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
-                                          }} onClick={() => setSelectedPath({
-                                            tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn,
-                                          })} dense>
-                                            <ListItemIcon sx={{ minWidth: 18 }}>
-                                              {pv === null
-                                                ? <LinkRounded sx={{ fontSize: 14, color: '#6366F1' }} />
-                                                : <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />}
-                                            </ListItemIcon>
-                                            {editing?.type === 'param' && editing.fi === fi && editing.domain === dn && editing.event === en && editing.original === pn ? (
-                                              <TextField size="small" autoFocus value={editValue}
-                                                onChange={(e) => setEditValue(e.target.value)}
-                                                onBlur={commitRename}
-                                                onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-                                                onClick={(e) => e.stopPropagation()}
-                                                slotProps={{ input: { sx: { fontSize: '0.75rem', py: 0, height: 22, fontFamily: '"JetBrains Mono", monospace' } } }}
-                                                sx={{ flex: 1 }}
-                                              />
-                                            ) : (
-                                              <ListItemText
-                                                sx={truncatedTextSx}
-                                                primary={
-                                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <Box component="span" sx={truncatedNameSx}>{pn}</Box>
-                                                    {pv === null && (
-                                                      <Chip label="shared" size="small" sx={{
-                                                        height: 16, fontSize: '0.6rem', fontWeight: 600,
-                                                        bgcolor: 'rgba(99,102,241,0.08)', color: '#6366F1',
-                                                        '& .MuiChip-label': { px: 0.6 },
-                                                      }} />
-                                                    )}
-                                                  </Box>
-                                                }
-                                                secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
-                                                primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
-                                                secondaryTypographyProps={{ fontSize: '0.78rem' }}
-                                                onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'param', fi, domain: dn, event: en, param: pn, original: pn }); }}
-                                              />
-                                            )}
-                                            <Tooltip title="Duplicate" arrow enterDelay={400}>
-                                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateParameter(fi, dn, en, pn); }} sx={hoverAction}>
-                                                <ContentCopyRounded sx={{ fontSize: 13 }} />
-                                              </IconButton>
-                                            </Tooltip>
-                                            <IconButton size="small" onClick={confirmDel(
-                                              `Delete parameter "${pn}"?`,
-                                              `This will remove the parameter from event "${en}".`,
-                                              () => removeParameter(fi, dn, en, pn),
-                                            )} sx={hoverDel}>
-                                              <DeleteOutlineRounded sx={{ fontSize: 14 }} />
-                                            </IconButton>
-                                          </ListItemButton>
-                                        );
-                                      })}
-                                      {!q && (
-                                        <ListItemButton sx={{ pl: 9.5, ...addBtnSx }} onClick={(e) => {
-                                          setAddParamFor({ fi, domain: dn, event: en });
-                                          if (allSharedParams.length > 0) {
-                                            setAddMenuAnchor(e.currentTarget);
-                                          }
-                                        }} dense>
-                                          <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
-                                          <ListItemText primary="Add" primaryTypographyProps={{
-                                            fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
-                                          }} />
-                                        </ListItemButton>
-                                      )}
-                                    </List>
-                                  )}
-                                </Box>
+                                  </List>
+                                </EventRow>
                               );
                             })}
                             {!q && (
-                              <ListItemButton sx={{ pl: 6.5, ...addBtnSx }}
-                                onClick={() => setAddEventFor({ fi, domain: dn })} dense>
+                              <ListItemButton sx={{ pl: 6.5, ...addBtnSx }} onClick={() => setAddEventFor({ fi, domain: dn })} dense>
                                 <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                                <ListItemText primary="Add Event" primaryTypographyProps={{
-                                  fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
-                                }} />
+                                <ListItemText primary="Add Event" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
                               </ListItemButton>
                             )}
                           </List>
@@ -506,9 +475,7 @@ export default function FileTree() {
                   {!q && (
                     <ListItemButton sx={{ pl: 4, ...addBtnSx }} onClick={() => setAddDomainFor(fi)} dense>
                       <AddRounded sx={{ fontSize: 16, color: '#DF4926', mr: 0.5 }} />
-                      <ListItemText primary="Add Domain" primaryTypographyProps={{
-                        fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
-                      }} />
+                      <ListItemText primary="Add Domain" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
                     </ListItemButton>
                   )}
                 </List>
@@ -518,20 +485,16 @@ export default function FileTree() {
         })}
       </List>
 
-      {/* No search results */}
       {q && files.length > 0 && files.every((_, fi) => !fileMatchesSearch(fi)) && (
         <Typography sx={{ px: 2, py: 3, textAlign: 'center', fontSize: '0.78rem', color: 'text.disabled' }}>
-          No matches for "{search}"
+          No matches for &quot;{search}&quot;
         </Typography>
       )}
 
-      {/* Add parameter menu (local + shared options) */}
       <Menu anchorEl={addMenuAnchor} open={!!addMenuAnchor}
         onClose={() => { setAddMenuAnchor(null); setAddParamFor(null); }}
         slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}>
-        <MenuItem onClick={() => {
-          setAddMenuAnchor(null);
-        }} sx={{ fontSize: '0.85rem' }}>
+        <MenuItem onClick={() => setAddMenuAnchor(null)} sx={{ fontSize: '0.85rem' }}>
           <AddRounded sx={{ fontSize: 15, mr: 1, color: '#DF4926' }} />
           New local parameter
         </MenuItem>
@@ -546,7 +509,6 @@ export default function FileTree() {
           </MenuItem>
         )}
       </Menu>
-      {/* Shared param picker */}
       <Menu anchorEl={sharedAnchorEl} open={!!sharedAnchorEl}
         onClose={() => { setSharedAnchorEl(null); setAddParamFor(null); }}
         slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}>
@@ -561,18 +523,12 @@ export default function FileTree() {
         ))}
       </Menu>
 
-      {/* Confirm delete */}
       {confirmDelete && (
-        <ConfirmDialog
-          open
-          title={confirmDelete.title}
-          message={confirmDelete.message}
+        <ConfirmDialog open title={confirmDelete.title} message={confirmDelete.message}
           onConfirm={() => { confirmDelete.action(); setConfirmDelete(null); }}
-          onCancel={() => setConfirmDelete(null)}
-        />
+          onCancel={() => setConfirmDelete(null)} />
       )}
 
-      {/* Add dialogs */}
       <AddItemDialog open={addFileOpen} title="Add Event File" label="File name" placeholder="auth.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
         onAdd={(n) => { addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`); setAddFileOpen(false); setAddDomainFor(files.length); }} />
