@@ -41,6 +41,7 @@ import {
   clearFileHandle,
   supportsFileSystemAccess,
 } from '../utils/export.ts';
+import { useValidation } from '../hooks/useValidation.ts';
 import DocsDrawer from './DocsDrawer.tsx';
 
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
@@ -55,6 +56,8 @@ const shortcuts = [
 ];
 
 export default function Toolbar() {
+  const errors = useValidation();
+  const hasErrors = errors.length > 0;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -315,16 +318,19 @@ export default function Toolbar() {
             </MenuItem>
           </Menu>
 
-          <Tooltip title={`Export ZIP (${mod}\u21E7E)`} arrow>
-            <Button
-              onClick={handleExportZip}
-              size="small"
-              variant="contained"
-              startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
-              sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
-            >
-              Export
-            </Button>
+          <Tooltip title={hasErrors ? `Fix ${errors.length} error${errors.length > 1 ? 's' : ''} before exporting` : `Export ZIP (${mod}\u21E7E)`} arrow>
+            <span>{/* span wrapper so Tooltip works on disabled button */}
+              <Button
+                onClick={handleExportZip}
+                disabled={hasErrors}
+                size="small"
+                variant="contained"
+                startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
+                sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
+              >
+                Export{hasErrors ? ` (${errors.length})` : ''}
+              </Button>
+            </span>
           </Tooltip>
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />

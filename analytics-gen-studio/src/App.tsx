@@ -80,7 +80,7 @@ function getTheme(mode: ColorMode) {
       MuiCssBaseline: {
         styleOverrides: {
           '@import': "url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500&display=swap')",
-          body: { overflow: 'hidden' },
+          body: { overflow: 'hidden', transition: 'background-color 0.2s ease, color 0.2s ease' },
           '*, *::before, *::after': {
             scrollbarWidth: 'thin',
             scrollbarColor: isLight ? 'rgba(0,0,0,0.12) transparent' : 'rgba(255,255,255,0.12) transparent',

@@ -97,7 +97,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
       <Box data-events-sidebar sx={{
         width: sidebarWidth, minWidth: 200, borderRight: 1, borderColor: 'divider', overflow: 'auto', flexShrink: 0,
         '&::-webkit-scrollbar': { width: 5 },
-        '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.08)', borderRadius: 3 },
+        '&::-webkit-scrollbar-thumb': { bgcolor: 'text.disabled', opacity: 0.5, borderRadius: 3 },
       }}>
         <FileTree />
       </Box>

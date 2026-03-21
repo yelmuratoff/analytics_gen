@@ -23,7 +23,7 @@ export default function CompactArrayTemplate(props: ArrayFieldTemplateProps) {
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
 
   return (
-    <Box sx={{ border: '1px solid #EEEBE8', borderRadius: 2.5, p: 2, mb: 1.5 }}>
+    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2.5, p: 2, mb: 1.5 }}>
       <ArrayFieldTitleTemplate
         fieldPathId={fieldPathId}
         title={uiOptions.title || title}

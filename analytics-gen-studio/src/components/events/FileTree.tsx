@@ -437,7 +437,7 @@ export default function FileTree() {
       {/* Add dialogs */}
       <AddItemDialog open={addFileOpen} title="Add Event File" label="File name" placeholder="auth.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
-        onAdd={(n) => { addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`); setAddFileOpen(false); }} />
+        onAdd={(n) => { addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`); setAddFileOpen(false); setAddDomainFor(files.length); }} />
       {addDomainFor !== null && !addEventFor && (
         <AddItemDialog open title="Add Domain" label="Domain name" placeholder="auth"
           validateSnakeCase existingNames={Object.keys(files[addDomainFor]?.domains ?? {})} onClose={() => setAddDomainFor(null)}
