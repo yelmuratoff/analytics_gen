@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo, startTransition, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo, useTransition, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -26,6 +26,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
+import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
@@ -184,6 +185,7 @@ export default function FileTree() {
   const [editValue, setEditValue] = useState('');
 
   // Track expanded nodes — default ALL COLLAPSED for performance
+  const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addDomainFor, setAddDomainFor] = useState<number | null>(null);
@@ -193,7 +195,7 @@ export default function FileTree() {
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   // Pagination: track visible limit per parent key, default PAGE_SIZE
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 10;
   const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({});
   const getLimit = (key: string) => visibleLimits[key] ?? PAGE_SIZE;
   const showMore = useCallback((key: string, total: number) => {
@@ -359,7 +361,18 @@ export default function FileTree() {
         </Box>
       )}
 
-      <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
+      <Box sx={{ position: 'relative' }}>
+        {isPending && (
+          <Box sx={{
+            position: 'absolute', inset: 0, zIndex: 2,
+            display: 'flex', justifyContent: 'center', pt: 4,
+            bgcolor: 'rgba(var(--mui-palette-background-paperChannel) / 0.6)',
+            backdropFilter: 'blur(1px)',
+          }}>
+            <CircularProgress size={20} sx={{ color: '#DF4926' }} />
+          </Box>
+        )}
+      <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isPending && { opacity: 0.4, pointerEvents: 'none' }) }}>
         {files.map((file, fi) => {
           if (!fileMatchesSearch(fi)) return null;
           const fk = `f${fi}`;
@@ -515,6 +528,7 @@ export default function FileTree() {
           );
         })}
       </List>
+      </Box>
 
       {q && files.length > 0 && files.every((_, fi) => !fileMatchesSearch(fi)) && (
         <Typography sx={{ px: 2, py: 3, textAlign: 'center', fontSize: '0.78rem', color: 'text.disabled' }}>
