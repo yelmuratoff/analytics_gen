@@ -61,10 +61,12 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
 
   const handleMouseDown = useCallback(() => {
     isDragging.current = true;
+    setDragging(true);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
 
@@ -79,6 +81,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
 
     const handleMouseUp = () => {
       isDragging.current = false;
+      setDragging(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
@@ -107,9 +110,20 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
     selectedPath?.tab === 'contexts' && selectedPath.fileIndex === fi && selectedPath.contextProperty === p;
 
   const hoverDel = {
-    opacity: 0.2, transition: 'opacity 0.15s', color: '#BCBCBC', p: 0.5,
+    opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled', p: 0.5,
     '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
+  };
+
+  const addBtnSx = {
+    py: 0.3,
+    opacity: 0.7,
+    borderTop: '1px dashed',
+    borderColor: 'divider',
+    borderRadius: 0,
+    mx: 1,
+    mt: 0.5,
+    '&:hover': { opacity: 1, bgcolor: 'rgba(223,73,38,0.04)' },
   };
 
   const [fileError, setFileError] = useState('');
@@ -140,20 +154,20 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
       <Box data-contexts-sidebar sx={{
-        width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0,
+        width: sidebarWidth, minWidth: 200, borderRight: 1, borderColor: 'divider', overflow: 'auto', flexShrink: 0,
         '&::-webkit-scrollbar': { width: 5 },
         '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.08)', borderRadius: 3 },
       }}>
         <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
-              fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
+              fullWidth variant="outlined" sx={{ fontSize: '0.82rem', py: 0.5 }}>
               Add Context
             </Button>
             {files.length > 0 && (
               <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
                 <IconButton size="small" onClick={allExpanded ? collapseAllFiles : expandAllFiles} sx={{
-                  color: '#999', flexShrink: 0,
+                  color: 'text.secondary', flexShrink: 0,
                   '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
                 }}>
                   {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
@@ -171,10 +185,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchRounded sx={{ fontSize: 16, color: '#bbb' }} />
+                      <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
                     </InputAdornment>
                   ),
-                  sx: { fontSize: '0.76rem', py: 0, height: 32 },
+                  sx: { fontSize: '0.78rem', py: 0, height: 32 },
                 },
               }}
             />
@@ -184,15 +198,15 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: 'rgba(0,0,0,0.02)', border: '2px dashed #E0DCD8',
+              bgcolor: 'rgba(99,102,241,0.06)', border: '2px dashed', borderColor: '#6366F1',
             }}>
-              <LayersRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />
+              <LayersRounded sx={{ fontSize: 28, color: '#6366F1' }} />
             </Box>
-            <Typography sx={{ fontSize: '0.82rem', color: '#999', mb: 0.5, fontWeight: 600 }}>No contexts yet</Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: '#bbb', lineHeight: 1.5, px: 1, mb: 2 }}>
+            <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 0.5, fontWeight: 600 }}>No contexts yet</Typography>
+            <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 2 }}>
               Contexts group properties that are set/updated during the app lifecycle.
             </Typography>
-            <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.75rem' }}>
+            <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
               Add your first context
             </Button>
           </Box>
@@ -203,14 +217,14 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             return (
               <Box key={fi}>
                 <ListItemButton onClick={() => toggleExpand(fi)} dense sx={{ py: 0.4 }}>
-                  {isFileExpanded(fi) ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: '#999' }} />
-                    : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: '#ccc' }} />}
+                  {isFileExpanded(fi) ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
+                    : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: 'text.disabled' }} />}
                   <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.75rem', color: '#bbb', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
-                    primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
+                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
+                    primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                   />
                   <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
@@ -226,7 +240,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                         <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
                       </ListItemIcon>
                       <ListItemText primary={file.contextName} primaryTypographyProps={{
-                        fontSize: '0.78rem', fontWeight: 600, color: '#DF4926',
+                        fontSize: '0.82rem', fontWeight: 600, color: '#DF4926',
                       }} />
                     </ListItemButton>
                     {Object.keys(file.properties).map((pn) => {
@@ -237,10 +251,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                           ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
                         }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
                           <ListItemIcon sx={{ minWidth: 18 }}>
-                            <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />
+                            <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
                           </ListItemIcon>
                           <ListItemText primary={pn} primaryTypographyProps={{
-                            fontSize: '0.76rem', fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
                           }} />
                           <IconButton size="small" onClick={(e) => {
                             e.stopPropagation();
@@ -252,10 +266,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                       );
                     })}
                     {!q && (
-                      <ListItemButton sx={{ pl: 7, py: 0.2 }} onClick={() => setAddPropOpen(fi)}>
+                      <ListItemButton sx={{ pl: 7, ...addBtnSx }} onClick={() => setAddPropOpen(fi)}>
                         <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
                         <ListItemText primary="Add Property" primaryTypographyProps={{
-                          fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
+                          fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
                         }} />
                       </ListItemButton>
                     )}
@@ -273,29 +287,25 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
         onMouseDown={handleMouseDown}
         sx={{
           width: 12, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          '&:hover .ctx-resize, &:active .ctx-resize': { opacity: 0.6 },
+          '&:hover .ctx-line': { opacity: 1, bgcolor: '#DF4926' },
         }}
       >
-        <Box className="ctx-resize" sx={{
-          display: 'flex', flexDirection: 'column', gap: '3px',
-          opacity: 0.35, transition: 'opacity 0.15s ease',
-        }}>
-          {[0, 1, 2, 3].map((i) => (
-            <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
-              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
-              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
-            </Box>
-          ))}
-        </Box>
+        <Box className="ctx-line" sx={{
+          width: 3, height: 32, borderRadius: 2,
+          bgcolor: dragging ? '#DF4926' : 'text.disabled',
+          opacity: dragging ? 1 : 0.4,
+          transition: 'all 0.15s ease',
+        }} />
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
         ) : (
           <EmptyState
-            icon={<LayersRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />}
+            icon={<LayersRounded sx={{ fontSize: 28, color: '#6366F1' }} />}
             title="Select a property"
             description="Context properties track state across the app lifecycle. Select operations and configure type."
+            accentColor="#6366F1"
           />
         )}
       </Box>

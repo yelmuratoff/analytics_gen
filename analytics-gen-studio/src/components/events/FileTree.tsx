@@ -91,20 +91,26 @@ export default function FileTree() {
     selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param;
 
   const hoverDel = {
-    opacity: 0.2, transition: 'opacity 0.15s', color: '#BCBCBC',
+    opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
     p: 0.5,
     '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
   const arrow = (open: boolean) => open
-    ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: '#999' }} />
-    : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: '#ccc' }} />;
+    ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
+    : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: 'text.disabled' }} />;
 
   const countBadge = (n: number) => (
-    <Typography component="span" sx={{ fontSize: '0.75rem', color: '#bbb', ml: 0.5, fontWeight: 500 }}>
-      {n}
-    </Typography>
+    <Box component="span" sx={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      minWidth: 18, height: 16, px: 0.4, ml: 0.5,
+      borderRadius: 1, bgcolor: 'action.hover',
+    }}>
+      <Typography component="span" sx={{ fontSize: '0.68rem', color: 'text.disabled', fontWeight: 600 }}>
+        {n}
+      </Typography>
+    </Box>
   );
 
   const confirmDel = (title: string, message: string, action: () => void) => (e: React.MouseEvent) => {
@@ -112,7 +118,6 @@ export default function FileTree() {
     setConfirmDelete({ title, message, action });
   };
 
-  // Check if an item matches the search (cascade: if a child matches, parents match)
   const matchesSearch = (name: string) => !q || name.toLowerCase().includes(q);
   const fileMatchesSearch = (fi: number) => {
     if (!q) return true;
@@ -142,18 +147,30 @@ export default function FileTree() {
     return event ? Object.keys(event.parameters).some((pn) => pn.toLowerCase().includes(q)) : false;
   };
 
+  // "Add" button style — ghost with dashed underline to distinguish from real items
+  const addBtnSx = {
+    py: 0.3,
+    opacity: 0.7,
+    borderTop: '1px dashed',
+    borderColor: 'divider',
+    borderRadius: 0,
+    mx: 1,
+    mt: 0.5,
+    '&:hover': { opacity: 1, bgcolor: 'rgba(223,73,38,0.04)' },
+  };
+
   return (
     <>
       <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Button startIcon={<AddRounded />} size="small" onClick={() => setAddFileOpen(true)}
-            fullWidth variant="outlined" sx={{ fontSize: '0.78rem', py: 0.5 }}>
+            fullWidth variant="outlined" sx={{ fontSize: '0.82rem', py: 0.5 }}>
             Add File
           </Button>
           {files.length > 0 && (
             <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
               <IconButton size="small" onClick={allExpanded ? collapseAll : expandAll} sx={{
-                color: '#999', flexShrink: 0,
+                color: 'text.secondary', flexShrink: 0,
                 '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
               }}>
                 {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
@@ -171,10 +188,10 @@ export default function FileTree() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchRounded sx={{ fontSize: 16, color: '#bbb' }} />
+                    <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
                   </InputAdornment>
                 ),
-                sx: { fontSize: '0.76rem', py: 0, height: 32 },
+                sx: { fontSize: '0.78rem', py: 0, height: 32 },
               },
             }}
           />
@@ -185,16 +202,16 @@ export default function FileTree() {
           <Box sx={{
             width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: 'rgba(0,0,0,0.02)', border: '2px dashed #E0DCD8',
+            bgcolor: 'action.hover', border: '2px dashed', borderColor: 'divider',
           }}>
-            <InsertDriveFileRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />
+            <InsertDriveFileRounded sx={{ fontSize: 28, color: 'text.disabled' }} />
           </Box>
-          <Typography sx={{ fontSize: '0.82rem', color: '#999', mb: 0.5, fontWeight: 600 }}>No event files yet</Typography>
-          <Typography sx={{ fontSize: '0.75rem', color: '#bbb', mb: 2, lineHeight: 1.5, px: 1 }}>
+          <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 0.5, fontWeight: 600 }}>No event files yet</Typography>
+          <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', mb: 2, lineHeight: 1.5, px: 1 }}>
             Create a YAML file, then add domains and events with parameters inside.
           </Typography>
           <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)}
-            sx={{ fontSize: '0.75rem' }}>
+            sx={{ fontSize: '0.78rem' }}>
             Create your first file
           </Button>
         </Box>
@@ -214,7 +231,7 @@ export default function FileTree() {
                 </ListItemIcon>
                 <ListItemText
                   primary={<>{file.fileName}{totalEvents > 0 && countBadge(totalEvents)}</>}
-                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600 }}
+                  primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                 />
                 <IconButton size="small" onClick={confirmDel(
                   `Delete ${file.fileName}?`,
@@ -225,7 +242,7 @@ export default function FileTree() {
                 </IconButton>
               </ListItemButton>
               <Collapse in={isExpanded(fk) || !!q}>
-                <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: '#EEEBE8' } }}>
+                <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                   {Object.entries(file.domains).map(([dn, events]) => {
                     if (!domainMatchesSearch(fi, dn)) return null;
                     const dk = `${fk}.d${dn}`;
@@ -239,7 +256,7 @@ export default function FileTree() {
                           </ListItemIcon>
                           <ListItemText
                             primary={<>{dn}{eventCount > 0 && countBadge(eventCount)}</>}
-                            primaryTypographyProps={{ fontSize: '0.8rem', fontWeight: 600, color: '#DF4926' }}
+                            primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
                           />
                           <IconButton size="small" onClick={confirmDel(
                             `Delete domain "${dn}"?`,
@@ -250,7 +267,7 @@ export default function FileTree() {
                           </IconButton>
                         </ListItemButton>
                         <Collapse in={isExpanded(dk) || !!q}>
-                          <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: '#EEEBE8' } }}>
+                          <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                             {Object.entries(events).map(([en, event]) => {
                               if (!eventMatchesSearch(fi, dn, en)) return null;
                               const ek = `${dk}.e${en}`;
@@ -270,7 +287,7 @@ export default function FileTree() {
                                     </ListItemIcon>
                                     <ListItemText
                                       primary={<>{en}{paramCount > 0 && countBadge(paramCount)}</>}
-                                      primaryTypographyProps={{ fontSize: '0.78rem', fontWeight: 500 }}
+                                      primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
                                     />
                                     <IconButton size="small" onClick={confirmDel(
                                       `Delete event "${en}"?`,
@@ -281,7 +298,7 @@ export default function FileTree() {
                                     </IconButton>
                                   </ListItemButton>
                                   <Collapse in={isExpanded(ek) || !!q}>
-                                    <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: '#EEEBE8' } }}>
+                                    <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                                       {Object.entries(event.parameters).map(([pn, pv]) => {
                                         if (!matchesSearch(pn)) return null;
                                         return (
@@ -294,7 +311,7 @@ export default function FileTree() {
                                             <ListItemIcon sx={{ minWidth: 18 }}>
                                               {pv === null
                                                 ? <LinkRounded sx={{ fontSize: 14, color: '#6366F1' }} />
-                                                : <CircleRounded sx={{ fontSize: 6, color: '#ccc' }} />}
+                                                : <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />}
                                             </ListItemIcon>
                                             <ListItemText
                                               primary={
@@ -310,8 +327,8 @@ export default function FileTree() {
                                                 </Box>
                                               }
                                               secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
-                                              primaryTypographyProps={{ fontSize: '0.75rem', fontFamily: '"JetBrains Mono", monospace' }}
-                                              secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                                              primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
+                                              secondaryTypographyProps={{ fontSize: '0.78rem' }}
                                             />
                                             <IconButton size="small" onClick={confirmDel(
                                               `Delete parameter "${pn}"?`,
@@ -324,18 +341,15 @@ export default function FileTree() {
                                         );
                                       })}
                                       {!q && (
-                                        <ListItemButton sx={{ pl: 9.5, py: 0.15 }} onClick={(e) => {
+                                        <ListItemButton sx={{ pl: 9.5, ...addBtnSx }} onClick={(e) => {
                                           setAddParamFor({ fi, domain: dn, event: en });
                                           if (allSharedParams.length > 0) {
                                             setAddMenuAnchor(e.currentTarget);
-                                          } else {
-                                            // No shared params — go straight to add local
-                                            setAddParamFor({ fi, domain: dn, event: en });
                                           }
                                         }} dense>
                                           <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
                                           <ListItemText primary="Add" primaryTypographyProps={{
-                                            fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
+                                            fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
                                           }} />
                                         </ListItemButton>
                                       )}
@@ -345,11 +359,11 @@ export default function FileTree() {
                               );
                             })}
                             {!q && (
-                              <ListItemButton sx={{ pl: 6.5, py: 0.2 }}
+                              <ListItemButton sx={{ pl: 6.5, ...addBtnSx }}
                                 onClick={() => setAddEventFor({ fi, domain: dn })} dense>
                                 <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
                                 <ListItemText primary="Add Event" primaryTypographyProps={{
-                                  fontSize: '0.75rem', color: '#DF4926', fontWeight: 600,
+                                  fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
                                 }} />
                               </ListItemButton>
                             )}
@@ -359,10 +373,10 @@ export default function FileTree() {
                     );
                   })}
                   {!q && (
-                    <ListItemButton sx={{ pl: 4, py: 0.2 }} onClick={() => setAddDomainFor(fi)} dense>
+                    <ListItemButton sx={{ pl: 4, ...addBtnSx }} onClick={() => setAddDomainFor(fi)} dense>
                       <AddRounded sx={{ fontSize: 16, color: '#DF4926', mr: 0.5 }} />
                       <ListItemText primary="Add Domain" primaryTypographyProps={{
-                        fontSize: '0.76rem', color: '#DF4926', fontWeight: 600,
+                        fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
                       }} />
                     </ListItemButton>
                   )}
@@ -379,8 +393,7 @@ export default function FileTree() {
         slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}>
         <MenuItem onClick={() => {
           setAddMenuAnchor(null);
-          // addParamFor stays set — AddItemDialog will open
-        }} sx={{ fontSize: '0.82rem' }}>
+        }} sx={{ fontSize: '0.85rem' }}>
           <AddRounded sx={{ fontSize: 15, mr: 1, color: '#DF4926' }} />
           New local parameter
         </MenuItem>
@@ -388,9 +401,8 @@ export default function FileTree() {
           <MenuItem onClick={() => {
             const anchor = addMenuAnchor;
             setAddMenuAnchor(null);
-            // Use the original "Add" button as anchor for the shared picker
             requestAnimationFrame(() => setSharedAnchorEl(anchor));
-          }} sx={{ fontSize: '0.82rem' }}>
+          }} sx={{ fontSize: '0.85rem' }}>
             <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#6366F1' }} />
             Link shared parameter
           </MenuItem>
@@ -404,7 +416,7 @@ export default function FileTree() {
           <MenuItem key={sp} onClick={() => {
             if (addParamFor) addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, sp, null);
             setSharedAnchorEl(null); setAddParamFor(null);
-          }} sx={{ fontSize: '0.82rem', fontFamily: '"JetBrains Mono", monospace' }}>
+          }} sx={{ fontSize: '0.85rem', fontFamily: '"JetBrains Mono", monospace' }}>
             <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#6366F1' }} />
             {sp}
           </MenuItem>

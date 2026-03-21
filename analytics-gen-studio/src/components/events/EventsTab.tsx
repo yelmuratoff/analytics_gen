@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import type { RJSFSchema } from '@rjsf/utils';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import { useStore } from '../../state/store.ts';
@@ -19,10 +18,12 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   const selectedPath = useStore((s) => s.selectedPath);
   const files = useStore((s) => s.eventFiles);
   const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
 
   const handleMouseDown = useCallback(() => {
     isDragging.current = true;
+    setDragging(true);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
 
@@ -34,6 +35,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
 
     const handleMouseUp = () => {
       isDragging.current = false;
+      setDragging(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
@@ -44,7 +46,6 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
     window.addEventListener('mouseup', handleMouseUp);
   }, []);
 
-  // Build breadcrumb from selectedPath
   const breadcrumb = (() => {
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) return null;
     const file = files[selectedPath.fileIndex];
@@ -58,9 +59,10 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) {
       return (
         <EmptyState
-          icon={<ElectricBoltRounded sx={{ fontSize: 28, color: '#D5D0CB' }} />}
+          icon={<ElectricBoltRounded sx={{ fontSize: 28, color: '#E8A84E' }} />}
           title={selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
           description="Add a file, then create domains and events. Click any item to edit its properties."
+          accentColor="#E8A84E"
         />
       );
     }
@@ -93,7 +95,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
       <Box data-events-sidebar sx={{
-        width: sidebarWidth, minWidth: 200, borderRight: '1px solid #EEEBE8', overflow: 'auto', flexShrink: 0,
+        width: sidebarWidth, minWidth: 200, borderRight: 1, borderColor: 'divider', overflow: 'auto', flexShrink: 0,
         '&::-webkit-scrollbar': { width: 5 },
         '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.08)', borderRadius: 3 },
       }}>
@@ -111,20 +113,17 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          '&:hover .sidebar-resize, &:active .sidebar-resize': { opacity: 0.6 },
+          '&:hover .sidebar-line': { opacity: 1, bgcolor: '#DF4926' },
         }}
       >
-        <Box className="sidebar-resize" sx={{
-          display: 'flex', flexDirection: 'column', gap: '3px',
-          opacity: 0.35, transition: 'opacity 0.15s ease',
-        }}>
-          {[0, 1, 2, 3].map((i) => (
-            <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
-              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
-              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: '#999' }} />
-            </Box>
-          ))}
-        </Box>
+        <Box className="sidebar-line" sx={{
+          width: 3,
+          height: 32,
+          borderRadius: 2,
+          bgcolor: dragging ? '#DF4926' : 'text.disabled',
+          opacity: dragging ? 1 : 0.4,
+          transition: 'all 0.15s ease',
+        }} />
       </Box>
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {renderEditor()}

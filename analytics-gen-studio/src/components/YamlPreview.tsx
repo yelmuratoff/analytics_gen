@@ -10,6 +10,7 @@ import FileDownloadRounded from '@mui/icons-material/FileDownloadRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import WrapTextRounded from '@mui/icons-material/WrapTextRounded';
+import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import { useYamlPreview } from '../hooks/useYamlPreview.ts';
 import { useValidation } from '../hooks/useValidation.ts';
 import { useStore } from '../state/store.ts';
@@ -84,10 +85,10 @@ export default function YamlPreview() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: '100%', gap: 1,
       }}>
-        <Typography sx={{ color: '#777', fontSize: '0.82rem', fontWeight: 600 }}>
+        <Typography sx={{ color: '#777', fontSize: '0.85rem', fontWeight: 600 }}>
           No output yet
         </Typography>
-        <Typography sx={{ color: '#555', fontSize: '0.75rem' }}>
+        <Typography sx={{ color: '#555', fontSize: '0.78rem' }}>
           Add events or parameters to see generated YAML
         </Typography>
       </Box>
@@ -104,27 +105,26 @@ export default function YamlPreview() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {files.length > 1 && (
-        <Tabs
-          value={safeIndex}
-          onChange={(_, v) => setActiveFileIndex(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            minHeight: 32,
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            '& .MuiTab-root': {
-              minHeight: 32, py: 0, fontSize: '0.75rem',
-              color: '#5C5C5C', fontFamily: '"JetBrains Mono", monospace',
-              fontWeight: 500,
-              '&.Mui-selected': { color: '#D4D4D4' },
-            },
-            '& .MuiTabs-indicator': { height: 2, bgcolor: '#DF4926' },
-          }}
-        >
-          {files.map((f, i) => <Tab key={i} label={f.fileName} disableRipple />)}
-        </Tabs>
-      )}
+      {/* Always show file tabs for consistency */}
+      <Tabs
+        value={safeIndex}
+        onChange={(_, v) => setActiveFileIndex(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          minHeight: 32,
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          '& .MuiTab-root': {
+            minHeight: 32, py: 0, fontSize: '0.78rem',
+            color: '#5C5C5C', fontFamily: '"JetBrains Mono", monospace',
+            fontWeight: 500,
+            '&.Mui-selected': { color: '#D4D4D4' },
+          },
+          '& .MuiTabs-indicator': { height: 2, bgcolor: '#DF4926' },
+        }}
+      >
+        {files.map((f, i) => <Tab key={i} label={f.fileName} disableRipple />)}
+      </Tabs>
 
       <Box sx={{
         display: 'flex', alignItems: 'center',
@@ -132,7 +132,7 @@ export default function YamlPreview() {
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
         <Typography sx={{
-          flex: 1, fontSize: '0.75rem', fontWeight: 600,
+          flex: 1, fontSize: '0.78rem', fontWeight: 600,
           color: '#B0B0B0', fontFamily: '"JetBrains Mono", monospace',
         }}>
           {currentFile.fileName}
@@ -140,7 +140,7 @@ export default function YamlPreview() {
         {tabErrors.length === 0 && (
           <CheckCircleRounded sx={{ fontSize: 14, color: '#4CAF50', mr: 0.5 }} />
         )}
-        <Typography sx={{ fontSize: '0.75rem', color: '#777', mr: 1.5 }}>
+        <Typography sx={{ fontSize: '0.78rem', color: '#777', mr: 1.5 }}>
           {lineCount}L
         </Typography>
         <Tooltip title={wordWrap ? 'No wrap' : 'Wrap lines'} arrow>
@@ -166,7 +166,7 @@ export default function YamlPreview() {
       <Box sx={{
         flex: 1, overflow: 'auto',
         fontFamily: '"JetBrains Mono", monospace',
-        fontSize: '0.76rem', lineHeight: 1.75,
+        fontSize: '0.78rem', lineHeight: 1.75,
         scrollbarColor: 'rgba(255,255,255,0.08) transparent',
         '&::-webkit-scrollbar': { width: 5 },
         '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
@@ -203,7 +203,7 @@ export default function YamlPreview() {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
             <ErrorOutlineRounded sx={{ fontSize: 16, color: '#FF8A80' }} />
-            <Typography sx={{ fontSize: '0.78rem', color: '#FF8A80', fontWeight: 700 }}>
+            <Typography sx={{ fontSize: '0.82rem', color: '#FF8A80', fontWeight: 700 }}>
               {tabErrors.length} issue{tabErrors.length > 1 ? 's' : ''}
             </Typography>
           </Box>
@@ -229,11 +229,19 @@ export default function YamlPreview() {
             } : undefined;
             return (
               <Box key={i} onClick={handleClick} sx={{
-                fontSize: '0.76rem', color: '#D4D4D4', lineHeight: 1.7,
+                display: 'flex', alignItems: 'center', gap: 0.75,
+                fontSize: '0.78rem', color: '#EEEEEE', lineHeight: 1.7,
                 fontFamily: '"JetBrains Mono", monospace',
-                pl: 3, py: 0.25, borderRadius: 0.5,
-                ...(hasNav && { cursor: 'pointer', '&:hover': { bgcolor: 'rgba(223,73,38,0.12)' } }),
+                pl: 3, py: 0.4, borderRadius: 0.5,
+                ...(hasNav && {
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textDecorationColor: 'rgba(255,138,128,0.3)',
+                  textUnderlineOffset: '2px',
+                  '&:hover': { bgcolor: 'rgba(223,73,38,0.12)', textDecorationColor: '#FF8A80' },
+                }),
               }}>
+                {hasNav && <ArrowForwardRounded sx={{ fontSize: 12, color: '#FF8A80', flexShrink: 0 }} />}
                 {err.message}
               </Box>
             );

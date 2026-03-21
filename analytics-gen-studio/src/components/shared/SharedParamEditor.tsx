@@ -10,7 +10,6 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Collapse from '@mui/material/Collapse';
-import NavigateNextRounded from '@mui/icons-material/NavigateNextRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
@@ -53,12 +52,12 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'wrap' }}>
-          <Typography sx={{ fontSize: '0.75rem', color: '#999', fontFamily: '"JetBrains Mono", monospace' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+          <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary', fontFamily: '"JetBrains Mono", monospace' }}>
             {file.fileName}
           </Typography>
-          <NavigateNextRounded sx={{ fontSize: 16, color: '#ccc' }} />
-          <Typography sx={{ fontSize: '1.05rem', color: '#1A1A1A', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace' }}>
+          <Typography sx={{ fontSize: '0.82rem', color: 'text.disabled', mx: 0.2 }}>/</Typography>
+          <Typography sx={{ fontSize: '1.05rem', color: 'text.primary', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace' }}>
             {paramName}
           </Typography>
         </Box>
@@ -71,7 +70,6 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
           label="Type"
           onChange={(e) => {
             const newType = e.target.value;
-            // If only type is set, store as simple string; otherwise preserve other fields
             const hasAdvanced = Object.keys(formData).some((k) => k !== 'type' && formData[k as keyof ParamDef] != null && formData[k as keyof ParamDef] !== '');
             if (hasAdvanced) {
               updateSharedParam(fileIndex, paramName, { ...formData, type: newType });
@@ -82,32 +80,36 @@ export default function SharedParamEditor({ fileIndex, paramName, parameterSchem
         >
           {PARAMETER_TYPES.map((t) => (
             <MenuItem key={t} value={t}>
-              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>{t}</Typography>
+              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' }}>{t}</Typography>
             </MenuItem>
           ))}
         </Select>
       </FormControl>
 
-      <Box sx={{ borderRadius: 2, border: '1px solid #EEEBE8', overflow: 'hidden' }}>
+      <Box sx={{ borderRadius: 2, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
         <Box
+          role="button"
+          tabIndex={0}
           onClick={() => setAdvanced(!advanced)}
+          onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAdvanced(!advanced); } }}
           sx={{
             display: 'flex', alignItems: 'center', gap: 1, py: 1, px: 2,
             cursor: 'pointer', userSelect: 'none',
             bgcolor: advanced ? 'rgba(223,73,38,0.02)' : 'transparent',
             '&:hover': { bgcolor: 'rgba(223,73,38,0.04)' },
+            '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 2 },
           }}
         >
           {advanced
             ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
-            : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: '#999' }} />}
-          <TuneRounded sx={{ fontSize: 16, color: advanced ? '#DF4926' : '#999' }} />
-          <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#555', flex: 1 }}>
+            : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: 'text.secondary' }} />}
+          <TuneRounded sx={{ fontSize: 16, color: advanced ? '#DF4926' : 'text.secondary' }} />
+          <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.secondary', flex: 1 }}>
             Advanced Options
           </Typography>
           {advancedSetCount > 0 && !advanced && (
             <Box sx={{ px: 0.8, py: 0.15, borderRadius: 1, bgcolor: 'rgba(46,125,50,0.08)' }}>
-              <Typography sx={{ fontSize: '0.68rem', fontWeight: 600, color: '#2E7D32' }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: 'success.main' }}>
                 {advancedSetCount} set
               </Typography>
             </Box>

@@ -11,7 +11,6 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Collapse from '@mui/material/Collapse';
 import Button from '@mui/material/Button';
-import NavigateNextRounded from '@mui/icons-material/NavigateNextRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
@@ -28,7 +27,6 @@ interface ParameterEditorProps {
   eventName: string;
   paramName: string;
   parameterSchema: RJSFSchema;
-  /** Types extracted from parameter.schema.json at load time */
   parameterTypes: string[];
   breadcrumb?: string[] | null;
 }
@@ -47,29 +45,30 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   const rawValue = event.parameters[paramName];
 
   const handleBreadcrumbClick = (index: number) => {
-    if (!breadcrumb || index >= breadcrumb.length - 1) return; // Don't navigate on last item (current)
-    // index 0 = file, 1 = domain, 2 = event — navigate to event
+    if (!breadcrumb || index >= breadcrumb.length - 1) return;
     if (index === 2 || index === 1) {
       setSelectedPath({ tab: 'events', fileIndex, domain, event: eventName });
     }
   };
 
   const breadcrumbEl = breadcrumb && breadcrumb.length > 1 ? (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'nowrap', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'nowrap', overflow: 'hidden' }}>
       {breadcrumb.map((part, i) => {
         const isLast = i === breadcrumb.length - 1;
         const isClickable = !isLast && i >= 1;
         return (
-          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-            {i > 0 && <NavigateNextRounded sx={{ fontSize: isLast ? 16 : 14, color: '#ccc' }} />}
+          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {i > 0 && (
+              <Typography sx={{ fontSize: isLast ? '0.85rem' : '0.78rem', color: 'text.disabled', mx: 0.2 }}>/</Typography>
+            )}
             <Typography
               component={isClickable ? 'button' : 'span'}
               onClick={isClickable ? () => handleBreadcrumbClick(i) : undefined}
               onKeyDown={isClickable ? (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBreadcrumbClick(i); } } : undefined}
               tabIndex={isClickable ? 0 : undefined}
               sx={{
-                fontSize: isLast ? '1.05rem' : '0.75rem',
-                color: isLast ? '#1A1A1A' : '#999',
+                fontSize: isLast ? '1.05rem' : '0.82rem',
+                color: isLast ? 'text.primary' : 'text.secondary',
                 fontWeight: isLast ? 700 : 400,
                 fontFamily: '"JetBrains Mono", monospace',
                 background: 'none', border: 'none', p: 0, borderRadius: 0.5,
@@ -114,7 +113,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
               setActiveTab('shared');
               setSelectedPath(null);
             }}
-            sx={{ fontSize: '0.75rem' }}
+            sx={{ fontSize: '0.78rem' }}
           >
             Go to Shared Params
           </Button>
@@ -127,7 +126,6 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
     ? { type: rawValue }
     : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
-  // Count filled advanced fields (everything except 'type')
   const advancedSetCount = Object.entries(formData).filter(([k, v]) => {
     if (k === 'type') return false;
     if (v == null || v === '') return false;
@@ -157,15 +155,14 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
         >
           {parameterTypes.map((t) => (
             <MenuItem key={t} value={t}>
-              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>{t}</Typography>
+              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' }}>{t}</Typography>
             </MenuItem>
           ))}
         </Select>
       </FormControl>
 
-      {/* Advanced options - collapsible section */}
       <Box sx={{
-        borderRadius: 2, border: '1px solid #EEEBE8', overflow: 'hidden',
+        borderRadius: 2, border: 1, borderColor: 'divider', overflow: 'hidden',
       }}>
         <Box
           role="button"
@@ -182,9 +179,9 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
         >
           {advanced
             ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
-            : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: '#999' }} />}
-          <TuneRounded sx={{ fontSize: 16, color: advanced ? '#DF4926' : '#999' }} />
-          <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#555', flex: 1 }}>
+            : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: 'text.secondary' }} />}
+          <TuneRounded sx={{ fontSize: 16, color: advanced ? '#DF4926' : 'text.secondary' }} />
+          <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.secondary', flex: 1 }}>
             Advanced Options
           </Typography>
           {advancedSetCount > 0 && !advanced && (
@@ -192,7 +189,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
               px: 0.8, py: 0.15, borderRadius: 1,
               bgcolor: 'rgba(46,125,50,0.08)',
             }}>
-              <Typography sx={{ fontSize: '0.68rem', fontWeight: 600, color: '#2E7D32' }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: 'success.main' }}>
                 {advancedSetCount} set
               </Typography>
             </Box>

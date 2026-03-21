@@ -16,7 +16,7 @@ interface LayoutProps {
 
 export default function Layout({ schemas }: LayoutProps) {
   const activeTab = useStore((s) => s.activeTab);
-  const [formWidth, setFormWidth] = useState(57); // percentage
+  const [formWidth, setFormWidth] = useState(57);
   const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,9 +68,9 @@ export default function Layout({ schemas }: LayoutProps) {
         {/* Form panel */}
         <Box key={activeTab} sx={{
           flex: `0 0 ${formWidth}%`, overflow: 'auto', p: 3,
-          bgcolor: '#FCFDF7',
+          bgcolor: 'background.paper',
           borderRadius: 1.5,
-          border: '1px solid #EEEBE8',
+          border: 1, borderColor: 'divider',
           '@keyframes fadeSlideIn': {
             from: { opacity: 0, transform: 'translateY(4px)' },
             to: { opacity: 1, transform: 'translateY(0)' },
@@ -91,22 +91,17 @@ export default function Layout({ schemas }: LayoutProps) {
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            '&:hover .resize-grip, &:active .resize-grip': {
-              opacity: 0.6,
-            },
+            '&:hover .resize-line': { opacity: 1, bgcolor: '#DF4926' },
           }}
         >
-          <Box className="resize-grip" sx={{
-            display: 'flex', flexDirection: 'column', gap: '3px',
-            opacity: dragging ? 1 : 0.35, transition: 'opacity 0.15s ease',
-          }}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <Box key={i} sx={{ display: 'flex', gap: '3px' }}>
-                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: dragging ? '#DF4926' : '#999' }} />
-                <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: dragging ? '#DF4926' : '#999' }} />
-              </Box>
-            ))}
-          </Box>
+          <Box className="resize-line" sx={{
+            width: 3,
+            height: 40,
+            borderRadius: 2,
+            bgcolor: dragging ? '#DF4926' : 'text.disabled',
+            opacity: dragging ? 1 : 0.4,
+            transition: 'all 0.15s ease',
+          }} />
         </Box>
         {/* YAML preview panel */}
         <Box sx={{

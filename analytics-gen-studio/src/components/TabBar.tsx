@@ -43,7 +43,6 @@ export default function TabBar() {
     return acc;
   }, {} as Record<TabId, number>);
 
-  // Keyboard shortcuts: Ctrl+1-4 to switch tabs
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -59,7 +58,7 @@ export default function TabBar() {
   }, [setActiveTab]);
 
   return (
-    <Box sx={{ px: 2, bgcolor: '#FCFDF7', borderBottom: '1px solid #EEEBE8' }}>
+    <Box sx={{ px: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v as TabId)}
@@ -68,8 +67,8 @@ export default function TabBar() {
           '& .MuiTabs-indicator': { height: 2.5, borderRadius: '2px 2px 0 0', bgcolor: '#DF4926' },
           '& .MuiTab-root': {
             minHeight: 44, py: 0, px: 2, gap: 0.7,
-            color: '#999', fontSize: '0.84rem',
-            '&.Mui-selected': { color: '#1A1A1A' },
+            color: 'text.secondary', fontSize: '0.86rem',
+            '&.Mui-selected': { color: 'text.primary' },
           },
         }}
       >
@@ -89,12 +88,22 @@ export default function TabBar() {
                     },
                   }}
                 >
-                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.7 }}>
                     {t.label}
                     {itemCounts[t.id] > 0 && (
-                      <Typography component="span" sx={{ fontSize: '0.65rem', color: '#bbb', fontWeight: 500 }}>
-                        {itemCounts[t.id]}
-                      </Typography>
+                      <Box component="span" sx={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        minWidth: 20, height: 18, px: 0.5,
+                        borderRadius: 2,
+                        bgcolor: activeTab === t.id ? 'rgba(223,73,38,0.1)' : 'action.hover',
+                      }}>
+                        <Typography component="span" sx={{
+                          fontSize: '0.68rem', fontWeight: 600,
+                          color: activeTab === t.id ? '#DF4926' : 'text.disabled',
+                        }}>
+                          {itemCounts[t.id]}
+                        </Typography>
+                      </Box>
                     )}
                   </Box>
                 </Badge>

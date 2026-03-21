@@ -29,8 +29,9 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
             width: '65vw',
             minWidth: 480,
             maxWidth: 1100,
-            bgcolor: '#FCFDF7',
-            borderLeft: '1px solid #EEEBE8',
+            bgcolor: 'background.paper',
+            borderLeft: 1,
+            borderColor: 'divider',
             display: 'flex',
             flexDirection: 'column',
           },
@@ -41,8 +42,9 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
       <Box sx={{
         display: 'flex', alignItems: 'center', gap: 1,
         px: 2.5, py: 1.5,
-        borderBottom: '1px solid #EEEBE8',
-        bgcolor: '#FCFDF7',
+        borderBottom: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
         flexShrink: 0,
       }}>
         <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', flex: 1 }}>
@@ -50,14 +52,14 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
         </Typography>
         <Tooltip title="Open in new tab" arrow>
           <IconButton size="small" onClick={() => window.open(DOCS_PATH, '_blank')} sx={{
-            color: '#999', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+            color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
           }}>
             <OpenInNewRounded sx={{ fontSize: 18 }} />
           </IconButton>
         </Tooltip>
         <Tooltip title="Close" arrow>
           <IconButton size="small" onClick={onClose} sx={{
-            color: '#999', '&:hover': { color: '#1A1A1A', bgcolor: 'rgba(0,0,0,0.04)' },
+            color: 'text.secondary', '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
           }}>
             <CloseRounded sx={{ fontSize: 20 }} />
           </IconButton>
@@ -68,7 +70,7 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
           <Box sx={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: '#FCFDF7', zIndex: 1,
+            bgcolor: 'background.paper', zIndex: 1,
           }}>
             <CircularProgress size={28} thickness={4} sx={{ color: '#DF4926' }} />
           </Box>
