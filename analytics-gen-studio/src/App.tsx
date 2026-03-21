@@ -75,7 +75,7 @@ function getTheme(mode: ColorMode) {
       caption: { fontFamily: '"DM Sans", sans-serif', fontWeight: 500, fontSize: '0.75rem', color: palette.text.secondary },
       overline: { fontFamily: '"DM Sans", sans-serif', fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.04em' },
     },
-    shape: { borderRadius: 10 },
+    shape: { borderRadius: 8 },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
