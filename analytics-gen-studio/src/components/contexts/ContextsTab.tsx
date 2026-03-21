@@ -224,8 +224,9 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5 }}>{Object.keys(file.properties).length || ''}</Typography></>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography></>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                    sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
                   <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
@@ -234,7 +235,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
-                <Collapse in={isFileExpanded(fi) || !!q}>
+                <Collapse in={isFileExpanded(fi) || !!q} unmountOnExit>
                   <List dense disablePadding>
                     <ListItemButton sx={{ pl: 5, py: 0.3 }} dense>
                       <ListItemIcon sx={{ minWidth: 20 }}>

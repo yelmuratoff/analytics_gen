@@ -212,8 +212,9 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#22A06B' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<>{file.fileName}<Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5 }}>{Object.keys(file.parameters).length || ''}</Typography></>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography></>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                    sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
                   <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
@@ -222,7 +223,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                     <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
-                <Collapse in={isFileExpanded(fi) || !!q}>
+                <Collapse in={isFileExpanded(fi) || !!q} unmountOnExit>
                   <List dense disablePadding>
                     {Object.keys(file.parameters).map((pn) => {
                       if (q && !pn.toLowerCase().includes(q) && !file.fileName.toLowerCase().includes(q)) return null;

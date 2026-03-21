@@ -115,7 +115,7 @@ export default function FileTree() {
     setEditing(null);
   };
 
-  const allSharedParams = sharedParamFiles.flatMap((f) => Object.keys(f.parameters));
+  const allSharedParams = useMemo(() => sharedParamFiles.flatMap((f) => Object.keys(f.parameters)), [sharedParamFiles]);
   const q = search.toLowerCase();
 
   const isExpanded = (key: string) => allKeys.has(key) && !collapsed.has(key);
@@ -136,14 +136,14 @@ export default function FileTree() {
 
   const hoverAction = {
     opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
-    p: 0.5,
+    p: 0.5, flexShrink: 0,
     '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.06)', opacity: 1 },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
 
   const hoverDel = {
     opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled',
-    p: 0.5,
+    p: 0.5, flexShrink: 0,
     '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
     '.MuiListItemButton-root:hover &': { opacity: 1 },
   };
@@ -155,7 +155,7 @@ export default function FileTree() {
   const countBadge = (n: number) => (
     <Box component="span" sx={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      minWidth: 18, height: 16, px: 0.4, ml: 0.5,
+      minWidth: 18, height: 16, px: 0.4, ml: 0.5, flexShrink: 0,
       borderRadius: 1, bgcolor: 'action.hover',
     }}>
       <Typography component="span" sx={{ fontSize: '0.68rem', color: 'text.disabled', fontWeight: 600 }}>
@@ -163,6 +163,10 @@ export default function FileTree() {
       </Typography>
     </Box>
   );
+
+  // Shared sx for ListItemText to prevent overflow
+  const truncatedTextSx = { minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } };
+  const truncatedNameSx = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
 
   const confirmDel = (title: string, message: string, action: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -299,8 +303,9 @@ export default function FileTree() {
                   />
                 ) : (
                   <ListItemText
-                    primary={<>{file.fileName}{totalEvents > 0 && countBadge(totalEvents)}</>}
+                    primary={<><Box component="span" sx={truncatedNameSx}>{file.fileName}</Box>{totalEvents > 0 && countBadge(totalEvents)}</>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                    sx={truncatedTextSx}
                     onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
                   />
                 )}
@@ -312,7 +317,7 @@ export default function FileTree() {
                   <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                 </IconButton>
               </ListItemButton>
-              <Collapse in={isExpanded(fk) || !!q}>
+              <Collapse in={isExpanded(fk) || !!q} unmountOnExit>
                 <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                   {Object.entries(file.domains).map(([dn, events]) => {
                     if (!domainMatchesSearch(fi, dn)) return null;
@@ -342,8 +347,9 @@ export default function FileTree() {
                             />
                           ) : (
                             <ListItemText
-                              primary={<>{dn}{eventCount > 0 && countBadge(eventCount)}</>}
+                              primary={<><Box component="span" sx={truncatedNameSx}>{dn}</Box>{eventCount > 0 && countBadge(eventCount)}</>}
                               primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
+                              sx={truncatedTextSx}
                               onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
                             />
                           )}
@@ -355,7 +361,7 @@ export default function FileTree() {
                             <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
-                        <Collapse in={isExpanded(dk) || !!q}>
+                        <Collapse in={isExpanded(dk) || !!q} unmountOnExit>
                           <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                             {Object.entries(events).map(([en, event]) => {
                               if (!eventMatchesSearch(fi, dn, en)) return null;
@@ -385,8 +391,9 @@ export default function FileTree() {
                                       />
                                     ) : (
                                       <ListItemText
-                                        primary={<>{en}{paramCount > 0 && countBadge(paramCount)}</>}
+                                        primary={<><Box component="span" sx={truncatedNameSx}>{en}</Box>{paramCount > 0 && countBadge(paramCount)}</>}
                                         primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
+                                        sx={truncatedTextSx}
                                         onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'event', fi, domain: dn, original: en }); }}
                                       />
                                     )}
@@ -403,7 +410,7 @@ export default function FileTree() {
                                       <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                                     </IconButton>
                                   </ListItemButton>
-                                  <Collapse in={isExpanded(ek) || !!q}>
+                                  <Collapse in={isExpanded(ek) || !!q} unmountOnExit>
                                     <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                                       {Object.entries(event.parameters).map(([pn, pv]) => {
                                         if (!matchesSearch(pn)) return null;
@@ -430,9 +437,10 @@ export default function FileTree() {
                                               />
                                             ) : (
                                               <ListItemText
+                                                sx={truncatedTextSx}
                                                 primary={
                                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <span>{pn}</span>
+                                                    <Box component="span" sx={truncatedNameSx}>{pn}</Box>
                                                     {pv === null && (
                                                       <Chip label="shared" size="small" sx={{
                                                         height: 16, fontSize: '0.6rem', fontWeight: 600,
