@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useTransition, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -7,7 +7,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Collapse from '@mui/material/Collapse';
+import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -54,7 +54,16 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const addContextProperty = useStore((s) => s.addContextProperty);
   const removeContextProperty = useStore((s) => s.removeContextProperty);
 
+  const [isPending, startTransition] = useTransition();
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const handleSearchChange = useCallback((val: string) => {
+    setSearchInput(val);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => startTransition(() => setSearch(val)), 200);
+  }, [startTransition]);
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [fileNameInput, setFileNameInput] = useState('');
   const [contextNameInput, setContextNameInput] = useState('');
@@ -97,15 +106,17 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
 
   const isFileExpanded = (i: number) => !collapsedFiles.has(i);
   const toggleExpand = (i: number) => {
-    setCollapsedFiles((prev) => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i); else next.add(i);
-      return next;
+    startTransition(() => {
+      setCollapsedFiles((prev) => {
+        const next = new Set(prev);
+        if (next.has(i)) next.delete(i); else next.add(i);
+        return next;
+      });
     });
   };
   const allExpanded = files.length > 0 && collapsedFiles.size === 0;
-  const expandAllFiles = () => setCollapsedFiles(new Set());
-  const collapseAllFiles = () => setCollapsedFiles(new Set(files.map((_, i) => i)));
+  const expandAllFiles = () => startTransition(() => setCollapsedFiles(new Set()));
+  const collapseAllFiles = () => startTransition(() => setCollapsedFiles(new Set(files.map((_, i) => i))));
 
   const isSel = (fi: number, p?: string) =>
     selectedPath?.tab === 'contexts' && selectedPath.fileIndex === fi && selectedPath.contextProperty === p;
@@ -180,8 +191,8 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
               size="small"
               placeholder={files.length > 0 ? 'Search...' : 'Add a context to search'}
               disabled={files.length === 0}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -212,7 +223,13 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             </Button>
           </Box>
         )}
-        <List dense disablePadding sx={{ px: 0.5, pb: 1 }}>
+        <Box sx={{ position: 'relative' }}>
+          {isPending && (
+            <Box sx={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', justifyContent: 'center', pt: 4 }}>
+              <CircularProgress size={20} sx={{ color: '#DF4926' }} />
+            </Box>
+          )}
+        <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isPending && { opacity: 0.4, pointerEvents: 'none' }) }}>
           {files.map((file, fi) => {
             if (!fileMatchesSearch(fi)) return null;
             return (
@@ -235,7 +252,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
-                <Collapse in={isFileExpanded(fi) || !!q} unmountOnExit>
+                {(isFileExpanded(fi) || !!q) && (
                   <List dense disablePadding>
                     <ListItemButton sx={{ pl: 5, py: 0.3 }} dense>
                       <ListItemIcon sx={{ minWidth: 20 }}>
@@ -276,14 +293,15 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                       </ListItemButton>
                     )}
                   </List>
-                </Collapse>
+                )}
               </Box>
             );
           })}
         </List>
+        </Box>
         {q && files.length > 0 && files.every((_, fi) => !fileMatchesSearch(fi)) && (
           <Typography sx={{ px: 2, py: 3, textAlign: 'center', fontSize: '0.78rem', color: 'text.disabled' }}>
-            No matches for "{search}"
+            No matches for "{searchInput}"
           </Typography>
         )}
       </Box>
