@@ -55,7 +55,7 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
   };
 
   const breadcrumbEl = breadcrumb && breadcrumb.length > 1 ? (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'wrap' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexWrap: 'nowrap', overflow: 'hidden' }}>
       {breadcrumb.map((part, i) => {
         const isLast = i === breadcrumb.length - 1;
         const isClickable = !isLast && i >= 1;
@@ -73,6 +73,8 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
                 fontWeight: isLast ? 700 : 400,
                 fontFamily: '"JetBrains Mono", monospace',
                 background: 'none', border: 'none', p: 0, borderRadius: 0.5,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                maxWidth: isLast ? 'none' : 120, flexShrink: isLast ? 0 : 1,
                 ...(isClickable && {
                   cursor: 'pointer',
                   '&:hover': { color: '#DF4926' },
@@ -166,12 +168,16 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
         borderRadius: 2, border: '1px solid #EEEBE8', overflow: 'hidden',
       }}>
         <Box
+          role="button"
+          tabIndex={0}
           onClick={() => setAdvanced(!advanced)}
+          onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAdvanced(!advanced); } }}
           sx={{
             display: 'flex', alignItems: 'center', gap: 1, py: 1, px: 2,
             cursor: 'pointer', userSelect: 'none',
             bgcolor: advanced ? 'rgba(223,73,38,0.02)' : 'transparent',
             '&:hover': { bgcolor: 'rgba(223,73,38,0.04)' },
+            '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 2 },
           }}
         >
           {advanced

@@ -192,7 +192,7 @@ export default function YamlPreview() {
 
       {/* Validation errors */}
       {tabErrors.length > 0 && (
-        <Box sx={{
+        <Box role="status" aria-live="polite" aria-label={`${tabErrors.length} validation error${tabErrors.length > 1 ? 's' : ''}`} sx={{
           borderTop: '1px solid rgba(255,255,255,0.08)',
           maxHeight: 160, overflow: 'auto',
           px: 2, py: 1.5,

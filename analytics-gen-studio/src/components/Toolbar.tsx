@@ -13,6 +13,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
+import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import FolderZipRounded from '@mui/icons-material/FolderZipRounded';
@@ -47,6 +48,7 @@ export default function Toolbar() {
   const [fileMenuAnchor, setFileMenuAnchor] = useState<HTMLElement | null>(null);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  const [saving, setSaving] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export default function Toolbar() {
   }, [store]);
 
   const handleSave = useCallback(async () => {
+    setSaving(true);
     try {
       const result = await saveProject(store);
       if (result.saved) {
@@ -68,10 +71,13 @@ export default function Toolbar() {
       }
     } catch (err) {
       setSnackbar({ message: `Save failed: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+    } finally {
+      setSaving(false);
     }
   }, [store]);
 
   const handleSaveAs = useCallback(async () => {
+    setSaving(true);
     try {
       const name = await saveProjectAs(store);
       if (name) {
@@ -81,6 +87,8 @@ export default function Toolbar() {
       }
     } catch (err) {
       setSnackbar({ message: `Save failed: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+    } finally {
+      setSaving(false);
     }
   }, [store]);
 
@@ -244,9 +252,10 @@ export default function Toolbar() {
             <Tooltip title={`Save${fileName ? ` → ${fileName}` : ''} (${mod}S)`} arrow>
               <Button
                 onClick={handleSave}
+                disabled={saving}
                 size="small"
                 variant="outlined"
-                startIcon={<SaveRounded sx={{ fontSize: 18 }} />}
+                startIcon={saving ? <CircularProgress size={14} sx={{ color: '#999' }} /> : <SaveRounded sx={{ fontSize: 18 }} />}
                 sx={{
                   ...actionBtnSx,
                   borderTopRightRadius: 0,
@@ -254,7 +263,7 @@ export default function Toolbar() {
                   pr: 1,
                 }}
               >
-                Save
+                {saving ? 'Saving...' : 'Save'}
               </Button>
             </Tooltip>
             <Tooltip title="Save options" arrow>

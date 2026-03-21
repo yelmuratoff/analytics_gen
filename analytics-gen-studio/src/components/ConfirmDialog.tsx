@@ -21,12 +21,12 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'De
     <Dialog open={open} onClose={onCancel} maxWidth="xs">
       <DialogTitle sx={{ fontWeight: 700, pb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box sx={{
-          width: 36, height: 36, borderRadius: '50%',
-          bgcolor: 'rgba(211,47,47,0.08)',
+          width: 40, height: 40, borderRadius: '50%',
+          bgcolor: 'rgba(211,47,47,0.12)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
-          <WarningAmberRounded sx={{ fontSize: 20, color: '#D32F2F' }} />
+          <WarningAmberRounded sx={{ fontSize: 22, color: '#D32F2F' }} />
         </Box>
         {title}
       </DialogTitle>

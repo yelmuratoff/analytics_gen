@@ -52,12 +52,16 @@ function Section({ title, icon, open, onToggle, filledCount, children }: {
   return (
     <Box sx={{ mb: 1, borderRadius: 2.5, border: '1px solid #EEEBE8', overflow: 'hidden' }}>
       <Box
+        role="button"
+        tabIndex={0}
         onClick={onToggle}
+        onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
         sx={{
           display: 'flex', alignItems: 'center', gap: 1, py: 1.2, px: 2,
           cursor: 'pointer', userSelect: 'none',
           bgcolor: open ? 'rgba(223,73,38,0.02)' : 'transparent',
           '&:hover': { bgcolor: 'rgba(223,73,38,0.04)' },
+          '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 2 },
         }}
       >
         {open

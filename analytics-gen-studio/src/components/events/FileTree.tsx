@@ -210,7 +210,7 @@ export default function FileTree() {
               <ListItemButton onClick={() => toggle(fk)} dense sx={{ py: 0.4 }}>
                 {arrow(isExpanded(fk))}
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
-                  <InsertDriveFileRounded sx={{ fontSize: 17, color: '#E8A84E' }} />
+                  <InsertDriveFileRounded sx={{ fontSize: 17, color: '#8B9DAF' }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={<>{file.fileName}{totalEvents > 0 && countBadge(totalEvents)}</>}
