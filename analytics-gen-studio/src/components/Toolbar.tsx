@@ -90,21 +90,28 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const yamlInputRef = useRef<HTMLInputElement>(null);
-  const store = useStore();
+  // Only subscribe to actions — NOT the full store, to avoid re-renders on data changes
+  const loadProject = useStore((s) => s.loadProject);
+  const resetState = useStore((s) => s.resetState);
+  const setActiveTab = useStore((s) => s.setActiveTab);
+  const importEventFile = useStore((s) => s.importEventFile);
+  const importSharedParamFile = useStore((s) => s.importSharedParamFile);
+  const importContextFile = useStore((s) => s.importContextFile);
+  const mergeConfig = useStore((s) => s.mergeConfig);
   const { mode, toggleColorMode } = useColorMode();
 
   const handleExportZip = useCallback(() => {
-    exportAllAsZip(store);
+    exportAllAsZip(useStore.getState());
     setSnackbar({ message: 'ZIP exported', severity: 'success' });
-  }, [store]);
+  }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const result = await saveProject(store);
+      const result = await saveProject(useStore.getState());
       if (result.saved) {
         setFileName(result.fileName);
-        setLastSavedSnapshot(currentSnapshot);
+        setLastSavedSnapshot(snapshotRef.current);
         setSnackbar({ message: `Saved${result.fileName ? ` \u2192 ${result.fileName}` : ''}`, severity: 'success' });
       }
     } catch (err) {
@@ -112,15 +119,15 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, [store]);
+  }, []);
 
   const handleSaveAs = useCallback(async () => {
     setSaving(true);
     try {
-      const name = await saveProjectAs(store);
+      const name = await saveProjectAs(useStore.getState());
       if (name) {
         setFileName(name);
-        setLastSavedSnapshot(currentSnapshot);
+        setLastSavedSnapshot(snapshotRef.current);
         setSnackbar({ message: `Saved \u2192 ${name}`, severity: 'success' });
       }
     } catch (err) {
@@ -128,14 +135,14 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, [store]);
+  }, []);
 
   const handleOpen = useCallback(async () => {
     if (supportsFileSystemAccess) {
       try {
         const result = await openProject();
         if (result) {
-          store.loadProject(result.data);
+          loadProject(result.data);
           setFileName(result.fileName);
           setTimeout(() => setLastSavedSnapshot(JSON.stringify({
             config: useStore.getState().config,
@@ -151,14 +158,14 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } else {
       fileInputRef.current?.click();
     }
-  }, [store]);
+  }, [loadProject]);
 
   const handleLoadFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const data = await loadProjectFile(file);
-      store.loadProject(data);
+      loadProject(data);
       setFileName(file.name);
       setTimeout(() => setLastSavedSnapshot(JSON.stringify({
         config: useStore.getState().config,
@@ -174,7 +181,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   };
 
   const handleReset = () => {
-    store.resetState();
+    resetState();
     clearFileHandle();
     setFileName(null);
     setLastSavedSnapshot(null);
@@ -199,19 +206,19 @@ export default function Toolbar({ importHints }: ToolbarProps) {
 
         switch (result.type) {
           case 'events':
-            if (result.eventFile) store.importEventFile(result.eventFile);
+            if (result.eventFile) importEventFile(result.eventFile);
             lastType = 'events';
             break;
           case 'shared':
-            if (result.sharedFile) store.importSharedParamFile(result.sharedFile);
+            if (result.sharedFile) importSharedParamFile(result.sharedFile);
             lastType = 'shared';
             break;
           case 'context':
-            if (result.contextFile) store.importContextFile(result.contextFile);
+            if (result.contextFile) importContextFile(result.contextFile);
             lastType = 'contexts';
             break;
           case 'config':
-            if (result.config) store.mergeConfig(result.config);
+            if (result.config) mergeConfig(result.config);
             lastType = 'config';
             break;
         }
@@ -223,24 +230,32 @@ export default function Toolbar({ importHints }: ToolbarProps) {
 
     if (imported > 0) {
       setSnackbar({ message: `Imported ${imported} file${imported > 1 ? 's' : ''}`, severity: 'success' });
-      if (lastType) store.setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
+      if (lastType) setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
     }
     if (yamlInputRef.current) yamlInputRef.current.value = '';
   };
+
+  const snapshotRef = useRef<string>('');
 
   useEffect(() => {
     const name = getCurrentFileName();
     if (name) setFileName(name);
   }, []);
 
-  const currentSnapshot = JSON.stringify({
-    config: store.config,
-    eventFiles: store.eventFiles,
-    sharedParamFiles: store.sharedParamFiles,
-    contextFiles: store.contextFiles,
-  });
-  const dirty = lastSavedSnapshot !== null && currentSnapshot !== lastSavedSnapshot;
-  if (dirty !== isDirty) setIsDirty(dirty);
+  // Debounced dirty check — subscribe to store outside render cycle
+  useEffect(() => {
+    const unsub = useStore.subscribe((state) => {
+      const snap = JSON.stringify({
+        config: state.config,
+        eventFiles: state.eventFiles,
+        sharedParamFiles: state.sharedParamFiles,
+        contextFiles: state.contextFiles,
+      });
+      snapshotRef.current = snap;
+      setIsDirty(lastSavedSnapshot !== null && snap !== lastSavedSnapshot);
+    });
+    return unsub;
+  }, [lastSavedSnapshot]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

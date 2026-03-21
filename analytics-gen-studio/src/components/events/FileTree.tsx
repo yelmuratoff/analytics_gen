@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, startTransition, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -170,7 +170,16 @@ export default function FileTree() {
   const renameEvent = useStore((s) => s.renameEvent);
   const renameParameter = useStore((s) => s.renameParameter);
 
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const handleSearchChange = useCallback((val: string) => {
+    setSearchInput(val);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => startTransition(() => setSearch(val)), 200);
+  }, []);
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+
   const [editing, setEditing] = useState<{ type: string; fi: number; domain?: string; event?: string; original: string } | null>(null);
   const [editValue, setEditValue] = useState('');
 
@@ -183,6 +192,13 @@ export default function FileTree() {
   const [sharedAnchorEl, setSharedAnchorEl] = useState<HTMLElement | null>(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
+  // Pagination: track visible limit per parent key, default PAGE_SIZE
+  const PAGE_SIZE = 20;
+  const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({});
+  const getLimit = (key: string) => visibleLimits[key] ?? PAGE_SIZE;
+  const showMore = useCallback((key: string, total: number) => {
+    setVisibleLimits((prev) => ({ ...prev, [key]: Math.min((prev[key] ?? PAGE_SIZE) + PAGE_SIZE, total) }));
+  }, []);
 
   const startEditing = useCallback((item: typeof editing) => {
     setEditing(item);
@@ -206,10 +222,12 @@ export default function FileTree() {
   const q = search.toLowerCase();
 
   const toggle = useCallback((key: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
+    startTransition(() => {
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        return next;
+      });
     });
   }, []);
 
@@ -228,8 +246,8 @@ export default function FileTree() {
   }, [files]);
 
   const allExpanded = allKeys.size > 0 && allKeys.size === expanded.size;
-  const expandAll = useCallback(() => setExpanded(new Set(allKeys)), [allKeys]);
-  const collapseAll = useCallback(() => setExpanded(new Set()), []);
+  const expandAll = useCallback(() => startTransition(() => setExpanded(new Set(allKeys))), [allKeys]);
+  const collapseAll = useCallback(() => startTransition(() => setExpanded(new Set())), []);
 
   const isSel = useCallback((fi: number, domain?: string, event?: string, param?: string) =>
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&
@@ -307,8 +325,8 @@ export default function FileTree() {
           size="small"
           placeholder={files.length > 0 ? 'Search...' : 'Add a file to search'}
           disabled={files.length === 0}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => handleSearchChange(e.target.value)}
           slotProps={{
             input: {
               startAdornment: (
@@ -412,63 +430,76 @@ export default function FileTree() {
                           </IconButton>
                         </ListItemButton>
 
-                        {domainOpen && (
-                          <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
-                            {Object.entries(events).map(([en, event]) => {
-                              if (q && !eventMatchesSearch(fi, dn, en)) return null;
-                              const ek = `${dk}.e${en}`;
-                              const eventOpen = expanded.has(ek) || !!q;
-                              const paramCount = Object.keys(event.parameters).length;
-                              return (
-                                <EventRow key={en} en={en} paramCount={paramCount} fi={fi} dn={dn}
-                                  isSelected={isSel(fi, dn, en, undefined)}
-                                  isOpen={eventOpen}
-                                  onToggle={() => toggle(ek)}
-                                  onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en })}
-                                  onDuplicate={() => duplicateEvent(fi, dn, en)}
-                                  onDelete={() => setConfirmDelete({
-                                    title: `Delete event "${en}"?`,
-                                    message: `This will remove the event and its ${paramCount} parameter(s).`,
-                                    action: () => removeEvent(fi, dn, en),
-                                  })}
-                                >
-                                  <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
-                                    {Object.entries(event.parameters).map(([pn, pv]) => {
-                                      if (!matchesSearch(pn)) return null;
-                                      return (
-                                        <ParamRow key={pn} pn={pn} pv={pv} fi={fi} dn={dn} en={en}
-                                          isSelected={isSel(fi, dn, en, pn)}
-                                          onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })}
-                                          onDuplicate={() => duplicateParameter(fi, dn, en, pn)}
-                                          onDelete={() => setConfirmDelete({
-                                            title: `Delete parameter "${pn}"?`,
-                                            message: `This will remove the parameter from event "${en}".`,
-                                            action: () => removeParameter(fi, dn, en, pn),
-                                          })}
-                                        />
-                                      );
+                        {domainOpen && (() => {
+                          const eventEntries = Object.entries(events).filter(([en]) => !q || eventMatchesSearch(fi, dn, en));
+                          const limit = q ? eventEntries.length : getLimit(dk);
+                          const visible = eventEntries.slice(0, limit);
+                          const remaining = eventEntries.length - limit;
+                          return (
+                            <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
+                              {visible.map(([en, event]) => {
+                                const ek = `${dk}.e${en}`;
+                                const eventOpen = expanded.has(ek) || !!q;
+                                const paramCount = Object.keys(event.parameters).length;
+                                return (
+                                  <EventRow key={en} en={en} paramCount={paramCount} fi={fi} dn={dn}
+                                    isSelected={isSel(fi, dn, en, undefined)}
+                                    isOpen={eventOpen}
+                                    onToggle={() => toggle(ek)}
+                                    onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en })}
+                                    onDuplicate={() => duplicateEvent(fi, dn, en)}
+                                    onDelete={() => setConfirmDelete({
+                                      title: `Delete event "${en}"?`,
+                                      message: `This will remove the event and its ${paramCount} parameter(s).`,
+                                      action: () => removeEvent(fi, dn, en),
                                     })}
-                                    {!q && (
-                                      <ListItemButton sx={{ pl: 9.5, ...addBtnSx }} onClick={(e) => {
-                                        setAddParamFor({ fi, domain: dn, event: en });
-                                        if (allSharedParams.length > 0) setAddMenuAnchor(e.currentTarget);
-                                      }} dense>
-                                        <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
-                                        <ListItemText primary="Add" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
-                                      </ListItemButton>
-                                    )}
-                                  </List>
-                                </EventRow>
-                              );
-                            })}
-                            {!q && (
-                              <ListItemButton sx={{ pl: 6.5, ...addBtnSx }} onClick={() => setAddEventFor({ fi, domain: dn })} dense>
-                                <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                                <ListItemText primary="Add Event" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
-                              </ListItemButton>
-                            )}
-                          </List>
-                        )}
+                                  >
+                                    <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
+                                      {Object.entries(event.parameters).map(([pn, pv]) => {
+                                        if (!matchesSearch(pn)) return null;
+                                        return (
+                                          <ParamRow key={pn} pn={pn} pv={pv} fi={fi} dn={dn} en={en}
+                                            isSelected={isSel(fi, dn, en, pn)}
+                                            onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })}
+                                            onDuplicate={() => duplicateParameter(fi, dn, en, pn)}
+                                            onDelete={() => setConfirmDelete({
+                                              title: `Delete parameter "${pn}"?`,
+                                              message: `This will remove the parameter from event "${en}".`,
+                                              action: () => removeParameter(fi, dn, en, pn),
+                                            })}
+                                          />
+                                        );
+                                      })}
+                                      {!q && (
+                                        <ListItemButton sx={{ pl: 9.5, ...addBtnSx }} onClick={(e) => {
+                                          setAddParamFor({ fi, domain: dn, event: en });
+                                          if (allSharedParams.length > 0) setAddMenuAnchor(e.currentTarget);
+                                        }} dense>
+                                          <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
+                                          <ListItemText primary="Add" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
+                                        </ListItemButton>
+                                      )}
+                                    </List>
+                                  </EventRow>
+                                );
+                              })}
+                              {remaining > 0 && (
+                                <ListItemButton sx={{ pl: 6.5, py: 0.5, justifyContent: 'center' }}
+                                  onClick={() => showMore(dk, eventEntries.length)} dense>
+                                  <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
+                                    Show {remaining} more event{remaining > 1 ? 's' : ''}...
+                                  </Typography>
+                                </ListItemButton>
+                              )}
+                              {!q && (
+                                <ListItemButton sx={{ pl: 6.5, ...addBtnSx }} onClick={() => setAddEventFor({ fi, domain: dn })} dense>
+                                  <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                                  <ListItemText primary="Add Event" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
+                                </ListItemButton>
+                              )}
+                            </List>
+                          );
+                        })()}
                       </Box>
                     );
                   })}
@@ -487,7 +518,7 @@ export default function FileTree() {
 
       {q && files.length > 0 && files.every((_, fi) => !fileMatchesSearch(fi)) && (
         <Typography sx={{ px: 2, py: 3, textAlign: 'center', fontSize: '0.78rem', color: 'text.disabled' }}>
-          No matches for &quot;{search}&quot;
+          No matches for &quot;{searchInput}&quot;
         </Typography>
       )}
 
