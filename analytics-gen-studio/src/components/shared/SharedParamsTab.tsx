@@ -274,6 +274,11 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             );
           })}
         </List>
+        {q && files.length > 0 && files.every((_, fi) => !fileMatchesSearch(fi)) && (
+          <Typography sx={{ px: 2, py: 3, textAlign: 'center', fontSize: '0.78rem', color: 'text.disabled' }}>
+            No matches for "{search}"
+          </Typography>
+        )}
       </Box>
       {/* Resize handle */}
       <Box

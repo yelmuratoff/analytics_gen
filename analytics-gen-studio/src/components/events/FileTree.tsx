@@ -387,6 +387,13 @@ export default function FileTree() {
         })}
       </List>
 
+      {/* No search results */}
+      {q && files.length > 0 && files.every((_, fi) => !fileMatchesSearch(fi)) && (
+        <Typography sx={{ px: 2, py: 3, textAlign: 'center', fontSize: '0.78rem', color: 'text.disabled' }}>
+          No matches for "{search}"
+        </Typography>
+      )}
+
       {/* Add parameter menu (local + shared options) */}
       <Menu anchorEl={addMenuAnchor} open={!!addMenuAnchor}
         onClose={() => { setAddMenuAnchor(null); setAddParamFor(null); }}

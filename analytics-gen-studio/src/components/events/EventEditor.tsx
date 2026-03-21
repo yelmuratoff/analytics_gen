@@ -44,7 +44,7 @@ export default function EventEditor({ fileIndex, domain, eventName, eventEditorS
     <Box>
       <Box sx={{ mb: 3 }}>
         {breadcrumb && breadcrumb.length > 1 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'nowrap', overflow: 'hidden' }}>
             {breadcrumb.map((part, i) => {
               const isLast = i === breadcrumb.length - 1;
               const isClickable = !isLast && i >= 1;
