@@ -7,7 +7,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Collapse from '@mui/material/Collapse';
+// Collapse removed for performance — instant show/hide instead of animated transitions
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
@@ -317,7 +317,7 @@ export default function FileTree() {
                   <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                 </IconButton>
               </ListItemButton>
-              <Collapse in={isExpanded(fk) || !!q} unmountOnExit>
+              {(isExpanded(fk) || !!q) && (
                 <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                   {Object.entries(file.domains).map(([dn, events]) => {
                     if (!domainMatchesSearch(fi, dn)) return null;
@@ -361,7 +361,7 @@ export default function FileTree() {
                             <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
-                        <Collapse in={isExpanded(dk) || !!q} unmountOnExit>
+                        {(isExpanded(dk) || !!q) && (
                           <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 44, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                             {Object.entries(events).map(([en, event]) => {
                               if (!eventMatchesSearch(fi, dn, en)) return null;
@@ -410,7 +410,7 @@ export default function FileTree() {
                                       <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                                     </IconButton>
                                   </ListItemButton>
-                                  <Collapse in={isExpanded(ek) || !!q} unmountOnExit>
+                                  {(isExpanded(ek) || !!q) && (
                                     <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 68, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                                       {Object.entries(event.parameters).map(([pn, pv]) => {
                                         if (!matchesSearch(pn)) return null;
@@ -485,7 +485,7 @@ export default function FileTree() {
                                         </ListItemButton>
                                       )}
                                     </List>
-                                  </Collapse>
+                                  )}
                                 </Box>
                               );
                             })}
@@ -499,7 +499,7 @@ export default function FileTree() {
                               </ListItemButton>
                             )}
                           </List>
-                        </Collapse>
+                        )}
                       </Box>
                     );
                   })}
@@ -512,7 +512,7 @@ export default function FileTree() {
                     </ListItemButton>
                   )}
                 </List>
-              </Collapse>
+              )}
             </Box>
           );
         })}

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../state/store.ts';
-import type { ValidationError, ParamDef } from '../types/index.ts';
+import type { ValidationError, ParamDef, ConfigState, EventFile, SharedParamFile, ContextFile } from '../types/index.ts';
 import {
   SNAKE_CASE_PARAM,
   SNAKE_CASE_DOMAIN,
@@ -72,13 +72,7 @@ function validateParam(paramName: string, param: ParamDef | string | null, path:
   return errors;
 }
 
-export function useValidation(): ValidationError[] {
-  const config = useStore((s) => s.config);
-  const eventFiles = useStore((s) => s.eventFiles);
-  const sharedParamFiles = useStore((s) => s.sharedParamFiles);
-  const contextFiles = useStore((s) => s.contextFiles);
-
-  return useMemo(() => {
+function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedParamFiles: SharedParamFile[], contextFiles: ContextFile[]): ValidationError[] {
     const errors: ValidationError[] = [];
     const cfg = config as unknown as Record<string, Record<string, unknown>>;
     const enforceSnakeDomains = cfg.naming?.enforce_snake_case_domains as boolean ?? false;
@@ -168,5 +162,25 @@ export function useValidation(): ValidationError[] {
     }
 
     return errors;
+}
+
+/** Debounced validation — runs 200ms after last state change */
+export function useValidation(): ValidationError[] {
+  const config = useStore((s) => s.config);
+  const eventFiles = useStore((s) => s.eventFiles);
+  const sharedParamFiles = useStore((s) => s.sharedParamFiles);
+  const contextFiles = useStore((s) => s.contextFiles);
+
+  const [errors, setErrors] = useState(() => computeValidation(config, eventFiles, sharedParamFiles, contextFiles));
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setErrors(computeValidation(config, eventFiles, sharedParamFiles, contextFiles));
+    }, 200);
+    return () => clearTimeout(timerRef.current);
   }, [config, eventFiles, sharedParamFiles, contextFiles]);
+
+  return errors;
 }
