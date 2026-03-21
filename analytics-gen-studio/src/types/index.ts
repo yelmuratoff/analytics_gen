@@ -130,6 +130,11 @@ export interface StudioState {
   duplicateEvent: (fileIndex: number, domain: string, eventName: string) => void;
   duplicateParameter: (fileIndex: number, domain: string, eventName: string, paramName: string) => void;
 
+  renameEventFile: (fileIndex: number, newName: string) => void;
+  renameDomain: (fileIndex: number, oldName: string, newName: string) => void;
+  renameEvent: (fileIndex: number, domain: string, oldName: string, newName: string) => void;
+  renameParameter: (fileIndex: number, domain: string, eventName: string, oldName: string, newName: string) => void;
+
   setSelectedPath: (path: SelectionPath | null) => void;
   resetState: () => void;
   loadProject: (state: Partial<StudioState>) => void;

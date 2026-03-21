@@ -155,6 +155,45 @@ export const useStore = create<StudioState>()(
           s.selectedPath = { tab: 'events', fileIndex, domain, event: eventName, parameter: newName };
         }),
 
+        // Rename actions
+        renameEventFile: (fileIndex, newName) => set((s) => {
+          s.eventFiles[fileIndex].fileName = newName;
+        }),
+        renameDomain: (fileIndex, oldName, newName) => set((s) => {
+          const domains = s.eventFiles[fileIndex].domains;
+          if (oldName === newName || !domains[oldName]) return;
+          // Preserve key order: rebuild object
+          const entries = Object.entries(domains);
+          const rebuilt: typeof domains = {};
+          for (const [k, v] of entries) {
+            rebuilt[k === oldName ? newName : k] = v;
+          }
+          s.eventFiles[fileIndex].domains = rebuilt;
+          if (s.selectedPath?.domain === oldName) s.selectedPath.domain = newName;
+        }),
+        renameEvent: (fileIndex, domain, oldName, newName) => set((s) => {
+          const events = s.eventFiles[fileIndex].domains[domain];
+          if (oldName === newName || !events[oldName]) return;
+          const entries = Object.entries(events);
+          const rebuilt: typeof events = {};
+          for (const [k, v] of entries) {
+            rebuilt[k === oldName ? newName : k] = v;
+          }
+          s.eventFiles[fileIndex].domains[domain] = rebuilt;
+          if (s.selectedPath?.event === oldName) s.selectedPath.event = newName;
+        }),
+        renameParameter: (fileIndex, domain, eventName, oldName, newName) => set((s) => {
+          const params = s.eventFiles[fileIndex].domains[domain][eventName].parameters;
+          if (oldName === newName || !(oldName in params)) return;
+          const entries = Object.entries(params);
+          const rebuilt: typeof params = {};
+          for (const [k, v] of entries) {
+            rebuilt[k === oldName ? newName : k] = v;
+          }
+          s.eventFiles[fileIndex].domains[domain][eventName].parameters = rebuilt;
+          if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
+        }),
+
         setSelectedPath: (path) => set((s) => { s.selectedPath = path; }),
 
         resetState: () => set(() => ({ ...initialState, config: getDefaultConfig() })),

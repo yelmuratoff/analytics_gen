@@ -31,9 +31,12 @@ import RedoRounded from '@mui/icons-material/RedoRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import Divider from '@mui/material/Divider';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import SearchRounded from '@mui/icons-material/SearchRounded';
 import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
 import { useColorMode } from '../App.tsx';
+import CommandPalette from './CommandPalette.tsx';
 import {
   exportAllAsZip,
   saveProject,
@@ -57,6 +60,7 @@ const shortcuts = [
   { keys: `${mod}\u21E7E`, description: 'Export ZIP' },
   { keys: `${mod}Z`, description: 'Undo' },
   { keys: `${mod}\u21E7Z`, description: 'Redo' },
+  { keys: `${mod}K`, description: 'Command palette' },
   { keys: `${mod}1\u20134`, description: 'Switch tabs' },
 ];
 
@@ -66,8 +70,10 @@ export default function Toolbar() {
   const canUndo = useStoreBase(useStore.temporal, (s) => s.pastStates.length > 0);
   const canRedo = useStoreBase(useStore.temporal, (s) => s.futureStates.length > 0);
   const { undo, redo } = useStore.temporal.getState();
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
+  const isCompact = useMediaQuery('(max-width:900px)');
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [fileMenuAnchor, setFileMenuAnchor] = useState<HTMLElement | null>(null);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
@@ -205,6 +211,9 @@ export default function Toolbar() {
       } else if (e.key === 'e' && e.shiftKey) {
         e.preventDefault();
         handleExportZip();
+      } else if (e.key === 'k') {
+        e.preventDefault();
+        setPaletteOpen(true);
       } else if (e.key === 'o') {
         e.preventDefault();
         handleOpen();
@@ -291,56 +300,81 @@ export default function Toolbar() {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title={`Search (${mod}K)`} arrow>
+            <IconButton size="small" onClick={() => setPaletteOpen(true)} sx={{
+              color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+            }}>
+              <SearchRounded sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={`Open Project (${mod}O)`} arrow>
-            <Button
-              onClick={handleOpen}
-              size="small"
-              variant="outlined"
-              startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
-              sx={actionBtnSx}
-            >
-              Open
-            </Button>
+            {isCompact ? (
+              <IconButton onClick={handleOpen} size="small" sx={{
+                color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+              }}>
+                <FileOpenRounded sx={{ fontSize: 20 }} />
+              </IconButton>
+            ) : (
+              <Button
+                onClick={handleOpen}
+                size="small"
+                variant="outlined"
+                startIcon={<FileOpenRounded sx={{ fontSize: 18 }} />}
+                sx={actionBtnSx}
+              >
+                Open
+              </Button>
+            )}
           </Tooltip>
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadFallback} />
 
           {/* Save button with dropdown for Save As */}
           <Box sx={{ display: 'flex' }}>
             <Tooltip title={`Save${fileName ? ` \u2192 ${fileName}` : ''} (${mod}S)`} arrow>
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                size="small"
-                variant="outlined"
-                startIcon={saving ? <CircularProgress size={14} sx={{ color: 'text.secondary' }} /> : <SaveRounded sx={{ fontSize: 18 }} />}
-                sx={{
-                  ...actionBtnSx,
-                  borderTopRightRadius: 0,
-                  borderBottomRightRadius: 0,
-                  pr: 1,
-                }}
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
+              {isCompact ? (
+                <IconButton onClick={handleSave} disabled={saving} size="small" sx={{
+                  color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                }}>
+                  {saving ? <CircularProgress size={14} /> : <SaveRounded sx={{ fontSize: 20 }} />}
+                </IconButton>
+              ) : (
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  size="small"
+                  variant="outlined"
+                  startIcon={saving ? <CircularProgress size={14} sx={{ color: 'text.secondary' }} /> : <SaveRounded sx={{ fontSize: 18 }} />}
+                  sx={{
+                    ...actionBtnSx,
+                    borderTopRightRadius: 0,
+                    borderBottomRightRadius: 0,
+                    pr: 1,
+                  }}
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </Button>
+              )}
             </Tooltip>
-            <Tooltip title="Save options" arrow>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => setFileMenuAnchor(e.currentTarget)}
-                sx={{
-                  ...actionBtnSx,
-                  borderTopLeftRadius: 0,
-                  borderBottomLeftRadius: 0,
-                  borderLeft: 1,
-                  borderLeftColor: 'divider',
-                  minWidth: 32,
-                  px: 0.5,
-                }}
-              >
-                <KeyboardArrowDownRounded sx={{ fontSize: 18 }} />
-              </Button>
-            </Tooltip>
+            {!isCompact && (
+              <Tooltip title="Save options" arrow>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={(e) => setFileMenuAnchor(e.currentTarget)}
+                  sx={{
+                    ...actionBtnSx,
+                    borderTopLeftRadius: 0,
+                    borderBottomLeftRadius: 0,
+                    borderLeft: 1,
+                    borderLeftColor: 'divider',
+                    minWidth: 32,
+                    px: 0.5,
+                  }}
+                >
+                  <KeyboardArrowDownRounded sx={{ fontSize: 18 }} />
+                </Button>
+              </Tooltip>
+            )}
           </Box>
           <Menu
             anchorEl={fileMenuAnchor}
@@ -363,17 +397,27 @@ export default function Toolbar() {
           </Menu>
 
           <Tooltip title={hasErrors ? `Fix ${errors.length} error${errors.length > 1 ? 's' : ''} before exporting` : `Export ZIP (${mod}\u21E7E)`} arrow>
-            <span>{/* span wrapper so Tooltip works on disabled button */}
-              <Button
-                onClick={handleExportZip}
-                disabled={hasErrors}
-                size="small"
-                variant="contained"
-                startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
-                sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
-              >
-                Export{hasErrors ? ` (${errors.length})` : ''}
-              </Button>
+            <span>
+              {isCompact ? (
+                <IconButton onClick={handleExportZip} disabled={hasErrors} size="small" sx={{
+                  color: '#DF4926',
+                  '&:hover': { bgcolor: 'rgba(223,73,38,0.08)' },
+                  '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
+                }}>
+                  <FolderZipRounded sx={{ fontSize: 20 }} />
+                </IconButton>
+              ) : (
+                <Button
+                  onClick={handleExportZip}
+                  disabled={hasErrors}
+                  size="small"
+                  variant="contained"
+                  startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
+                  sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
+                >
+                  Export{hasErrors ? ` (${errors.length})` : ''}
+                </Button>
+              )}
             </span>
           </Tooltip>
 
@@ -462,6 +506,7 @@ export default function Toolbar() {
         </DialogActions>
       </Dialog>
 
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <DocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />
 
       <Snackbar

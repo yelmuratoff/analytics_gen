@@ -33,6 +33,15 @@ import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 
+interface EditingItem {
+  type: 'file' | 'domain' | 'event' | 'param';
+  fi: number;
+  domain?: string;
+  event?: string;
+  param?: string;
+  original: string;
+}
+
 export default function FileTree() {
   const files = useStore((s) => s.eventFiles);
   const sharedParamFiles = useStore((s) => s.sharedParamFiles);
@@ -48,8 +57,14 @@ export default function FileTree() {
   const removeParameter = useStore((s) => s.removeParameter);
   const duplicateEvent = useStore((s) => s.duplicateEvent);
   const duplicateParameter = useStore((s) => s.duplicateParameter);
+  const renameEventFile = useStore((s) => s.renameEventFile);
+  const renameDomain = useStore((s) => s.renameDomain);
+  const renameEvent = useStore((s) => s.renameEvent);
+  const renameParameter = useStore((s) => s.renameParameter);
 
   const [search, setSearch] = useState('');
+  const [editing, setEditing] = useState<EditingItem | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   const allKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -73,6 +88,32 @@ export default function FileTree() {
   const [sharedAnchorEl, setSharedAnchorEl] = useState<HTMLElement | null>(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
+
+  const startEditing = (item: EditingItem) => {
+    setEditing(item);
+    setEditValue(item.original);
+  };
+
+  const commitRename = () => {
+    if (!editing) return;
+    const val = editValue.trim();
+    if (!val || val === editing.original) { setEditing(null); return; }
+    switch (editing.type) {
+      case 'file':
+        renameEventFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`);
+        break;
+      case 'domain':
+        renameDomain(editing.fi, editing.original, val);
+        break;
+      case 'event':
+        renameEvent(editing.fi, editing.domain!, editing.original, val);
+        break;
+      case 'param':
+        renameParameter(editing.fi, editing.domain!, editing.event!, editing.original, val);
+        break;
+    }
+    setEditing(null);
+  };
 
   const allSharedParams = sharedParamFiles.flatMap((f) => Object.keys(f.parameters));
   const q = search.toLowerCase();
@@ -157,6 +198,14 @@ export default function FileTree() {
     return event ? Object.keys(event.parameters).some((pn) => pn.toLowerCase().includes(q)) : false;
   };
 
+  const itemEnterSx = {
+    '@keyframes itemEnter': {
+      from: { opacity: 0, transform: 'translateY(-4px)' },
+      to: { opacity: 1, transform: 'translateY(0)' },
+    },
+    animation: 'itemEnter 0.2s ease-out',
+  };
+
   // "Add" button style — ghost with dashed underline to distinguish from real items
   const addBtnSx = {
     py: 0.3,
@@ -233,16 +282,28 @@ export default function FileTree() {
           const fk = `f${fi}`;
           const totalEvents = Object.values(file.domains).reduce((sum, evts) => sum + Object.keys(evts).length, 0);
           return (
-            <Box key={fi}>
+            <Box key={fi} sx={itemEnterSx}>
               <ListItemButton onClick={() => toggle(fk)} dense sx={{ py: 0.4 }}>
                 {arrow(isExpanded(fk))}
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: '#8B9DAF' }} />
                 </ListItemIcon>
-                <ListItemText
-                  primary={<>{file.fileName}{totalEvents > 0 && countBadge(totalEvents)}</>}
-                  primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
-                />
+                {editing?.type === 'file' && editing.fi === fi ? (
+                  <TextField size="small" autoFocus value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
+                    onClick={(e) => e.stopPropagation()}
+                    slotProps={{ input: { sx: { fontSize: '0.82rem', py: 0, height: 26 } } }}
+                    sx={{ flex: 1 }}
+                  />
+                ) : (
+                  <ListItemText
+                    primary={<>{file.fileName}{totalEvents > 0 && countBadge(totalEvents)}</>}
+                    primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                    onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
+                  />
+                )}
                 <IconButton size="small" onClick={confirmDel(
                   `Delete ${file.fileName}?`,
                   `This will remove all domains, events and parameters in this file.`,
@@ -258,16 +319,34 @@ export default function FileTree() {
                     const dk = `${fk}.d${dn}`;
                     const eventCount = Object.keys(events).length;
                     return (
-                      <Box key={dn}>
-                        <ListItemButton sx={{ pl: 4, py: 0.35 }} onClick={() => toggle(dk)} dense>
+                      <Box key={dn} sx={itemEnterSx}>
+                        <ListItemButton sx={{
+                          pl: 4, py: 0.35,
+                          ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: alpha('#DF4926', 0.06) }),
+                        }} onClick={() => {
+                          toggle(dk);
+                          setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn });
+                        }} dense>
                           {arrow(isExpanded(dk))}
                           <ListItemIcon sx={{ minWidth: 24, ml: 0.2 }}>
                             <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
                           </ListItemIcon>
-                          <ListItemText
-                            primary={<>{dn}{eventCount > 0 && countBadge(eventCount)}</>}
-                            primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
-                          />
+                          {editing?.type === 'domain' && editing.fi === fi && editing.original === dn ? (
+                            <TextField size="small" autoFocus value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={commitRename}
+                              onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
+                              onClick={(e) => e.stopPropagation()}
+                              slotProps={{ input: { sx: { fontSize: '0.78rem', py: 0, height: 24 } } }}
+                              sx={{ flex: 1 }}
+                            />
+                          ) : (
+                            <ListItemText
+                              primary={<>{dn}{eventCount > 0 && countBadge(eventCount)}</>}
+                              primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
+                              onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
+                            />
+                          )}
                           <IconButton size="small" onClick={confirmDel(
                             `Delete domain "${dn}"?`,
                             `This will remove ${eventCount} event(s) and all their parameters.`,
@@ -283,7 +362,7 @@ export default function FileTree() {
                               const ek = `${dk}.e${en}`;
                               const paramCount = Object.keys(event.parameters).length;
                               return (
-                                <Box key={en}>
+                                <Box key={en} sx={itemEnterSx}>
                                   <ListItemButton sx={{
                                     pl: 6.5, py: 0.4,
                                     ...(isSel(fi, dn, en, undefined) && { bgcolor: alpha('#DF4926', 0.06) }),
@@ -295,10 +374,22 @@ export default function FileTree() {
                                     <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
                                       <ElectricBoltRounded sx={{ fontSize: 15, color: '#E8A84E' }} />
                                     </ListItemIcon>
-                                    <ListItemText
-                                      primary={<>{en}{paramCount > 0 && countBadge(paramCount)}</>}
-                                      primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
-                                    />
+                                    {editing?.type === 'event' && editing.fi === fi && editing.domain === dn && editing.original === en ? (
+                                      <TextField size="small" autoFocus value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        onBlur={commitRename}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        slotProps={{ input: { sx: { fontSize: '0.78rem', py: 0, height: 24 } } }}
+                                        sx={{ flex: 1 }}
+                                      />
+                                    ) : (
+                                      <ListItemText
+                                        primary={<>{en}{paramCount > 0 && countBadge(paramCount)}</>}
+                                        primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
+                                        onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'event', fi, domain: dn, original: en }); }}
+                                      />
+                                    )}
                                     <Tooltip title="Duplicate" arrow enterDelay={400}>
                                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateEvent(fi, dn, en); }} sx={hoverAction}>
                                         <ContentCopyRounded sx={{ fontSize: 14 }} />
@@ -328,23 +419,35 @@ export default function FileTree() {
                                                 ? <LinkRounded sx={{ fontSize: 14, color: '#6366F1' }} />
                                                 : <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />}
                                             </ListItemIcon>
-                                            <ListItemText
-                                              primary={
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                  <span>{pn}</span>
-                                                  {pv === null && (
-                                                    <Chip label="shared" size="small" sx={{
-                                                      height: 16, fontSize: '0.6rem', fontWeight: 600,
-                                                      bgcolor: 'rgba(99,102,241,0.08)', color: '#6366F1',
-                                                      '& .MuiChip-label': { px: 0.6 },
-                                                    }} />
-                                                  )}
-                                                </Box>
-                                              }
-                                              secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
-                                              primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
-                                              secondaryTypographyProps={{ fontSize: '0.78rem' }}
-                                            />
+                                            {editing?.type === 'param' && editing.fi === fi && editing.domain === dn && editing.event === en && editing.original === pn ? (
+                                              <TextField size="small" autoFocus value={editValue}
+                                                onChange={(e) => setEditValue(e.target.value)}
+                                                onBlur={commitRename}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
+                                                onClick={(e) => e.stopPropagation()}
+                                                slotProps={{ input: { sx: { fontSize: '0.75rem', py: 0, height: 22, fontFamily: '"JetBrains Mono", monospace' } } }}
+                                                sx={{ flex: 1 }}
+                                              />
+                                            ) : (
+                                              <ListItemText
+                                                primary={
+                                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                    <span>{pn}</span>
+                                                    {pv === null && (
+                                                      <Chip label="shared" size="small" sx={{
+                                                        height: 16, fontSize: '0.6rem', fontWeight: 600,
+                                                        bgcolor: 'rgba(99,102,241,0.08)', color: '#6366F1',
+                                                        '& .MuiChip-label': { px: 0.6 },
+                                                      }} />
+                                                    )}
+                                                  </Box>
+                                                }
+                                                secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
+                                                primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
+                                                secondaryTypographyProps={{ fontSize: '0.78rem' }}
+                                                onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'param', fi, domain: dn, event: en, param: pn, original: pn }); }}
+                                              />
+                                            )}
                                             <Tooltip title="Duplicate" arrow enterDelay={400}>
                                               <IconButton size="small" onClick={(e) => { e.stopPropagation(); duplicateParameter(fi, dn, en, pn); }} sx={hoverAction}>
                                                 <ContentCopyRounded sx={{ fontSize: 13 }} />

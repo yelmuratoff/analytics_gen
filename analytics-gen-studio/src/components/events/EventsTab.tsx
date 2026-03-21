@@ -1,7 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 import type { RJSFSchema } from '@rjsf/utils';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
+import FolderRounded from '@mui/icons-material/FolderRounded';
 import { useStore } from '../../state/store.ts';
 import EmptyState from '../EmptyState.tsx';
 import ResizeHandle from '../ResizeHandle.tsx';
@@ -17,6 +20,7 @@ interface EventsTabProps {
 
 export default function EventsTab({ parameterSchema, eventEditorSchema, parameterTypes }: EventsTabProps) {
   const selectedPath = useStore((s) => s.selectedPath);
+  const setSelectedPath = useStore((s) => s.setSelectedPath);
   const files = useStore((s) => s.eventFiles);
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [dragging, setDragging] = useState(false);
@@ -57,6 +61,52 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   })();
 
   const renderEditor = () => {
+    // Domain selected (no event)
+    if (selectedPath?.tab === 'events' && selectedPath.domain && !selectedPath.event) {
+      const file = files[selectedPath.fileIndex];
+      const events = file?.domains[selectedPath.domain];
+      const eventNames = events ? Object.keys(events) : [];
+      return (
+        <Box>
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FolderRounded sx={{ fontSize: 20, color: '#DF4926' }} />
+              <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace', color: '#DF4926' }}>
+                {selectedPath.domain}
+              </Typography>
+            </Box>
+            <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', mt: 0.5 }}>
+              {file?.fileName}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, borderRadius: 2, border: 1, borderColor: 'divider', bgcolor: 'action.hover' }}>
+            <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: 'text.secondary', mb: 1.5 }}>
+              Events ({eventNames.length})
+            </Typography>
+            {eventNames.length === 0 ? (
+              <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', fontStyle: 'italic' }}>
+                No events yet. Use the sidebar to add events to this domain.
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                {eventNames.map((en) => (
+                  <Chip key={en} label={en} size="small"
+                    onClick={() => setSelectedPath({ tab: 'events', fileIndex: selectedPath.fileIndex, domain: selectedPath.domain, event: en })}
+                    sx={{
+                      fontFamily: '"JetBrains Mono", monospace', fontSize: '0.78rem',
+                      cursor: 'pointer', fontWeight: 500,
+                      bgcolor: 'transparent', border: '1px solid', borderColor: 'divider',
+                      '&:hover': { borderColor: '#DF4926', color: '#DF4926' },
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        </Box>
+      );
+    }
+
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) {
       return (
         <EmptyState
