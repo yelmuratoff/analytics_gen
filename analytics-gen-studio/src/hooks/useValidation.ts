@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useStore } from '../state/store.ts';
 import type { ValidationError, ParamDef, ConfigState, EventFile, SharedParamFile, ContextFile } from '../types/index.ts';
 import {
@@ -164,23 +164,50 @@ function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedP
     return errors;
 }
 
-/** Debounced validation — runs 200ms after last state change */
+// ── Singleton validation store ──
+// Validation is computed once and shared across all consumers (TabBar, Toolbar, YamlPreview).
+// Debounced at 200ms — recomputes only when store data actually changes.
+
+let cachedErrors: ValidationError[] = [];
+const listeners = new Set<() => void>();
+
+function emitChange() {
+  for (const listener of listeners) listener();
+}
+
+let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+// Subscribe to the main store once (module-level side effect)
+useStore.subscribe((state) => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const next = computeValidation(state.config, state.eventFiles, state.sharedParamFiles, state.contextFiles);
+    // Only update if errors actually changed (avoid unnecessary re-renders)
+    if (next.length !== cachedErrors.length || JSON.stringify(next) !== JSON.stringify(cachedErrors)) {
+      cachedErrors = next;
+      emitChange();
+    }
+  }, 200);
+});
+
+// Compute initial errors synchronously
+cachedErrors = computeValidation(
+  useStore.getState().config,
+  useStore.getState().eventFiles,
+  useStore.getState().sharedParamFiles,
+  useStore.getState().contextFiles,
+);
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot() {
+  return cachedErrors;
+}
+
+/** Shared validation hook — all consumers share one computation */
 export function useValidation(): ValidationError[] {
-  const config = useStore((s) => s.config);
-  const eventFiles = useStore((s) => s.eventFiles);
-  const sharedParamFiles = useStore((s) => s.sharedParamFiles);
-  const contextFiles = useStore((s) => s.contextFiles);
-
-  const [errors, setErrors] = useState(() => computeValidation(config, eventFiles, sharedParamFiles, contextFiles));
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setErrors(computeValidation(config, eventFiles, sharedParamFiles, contextFiles));
-    }, 200);
-    return () => clearTimeout(timerRef.current);
-  }, [config, eventFiles, sharedParamFiles, contextFiles]);
-
-  return errors;
+  return useSyncExternalStore(subscribe, getSnapshot);
 }

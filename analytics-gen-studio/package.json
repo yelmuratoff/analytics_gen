@@ -23,7 +23,6 @@
     "@rjsf/mui": "^6.4.1",
     "@rjsf/utils": "^6.4.1",
     "@rjsf/validator-ajv8": "^6.4.1",
-    "@tanstack/react-virtual": "^3.13.23",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
     "file-saver": "^2.0.5",

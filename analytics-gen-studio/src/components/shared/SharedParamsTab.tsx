@@ -26,6 +26,7 @@ import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
@@ -63,6 +64,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback(() => {
     isDragging.current = true;
@@ -71,12 +73,9 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     document.body.style.userSelect = 'none';
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const sidebar = document.querySelector('[data-shared-sidebar]') as HTMLElement;
-      if (sidebar) {
-        const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
-        setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
-      }
+      if (!isDragging.current || !sidebarRef.current) return;
+      const newWidth = e.clientX - sidebarRef.current.getBoundingClientRect().left;
+      setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
     };
 
     const handleMouseUp = () => {
@@ -127,23 +126,6 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const isSel = (fi: number, p?: string) =>
     selectedPath?.tab === 'shared' && selectedPath.fileIndex === fi && selectedPath.parameter === p;
 
-  const hoverDel = {
-    opacity: 0.2, transition: 'opacity 0.15s', color: 'text.disabled', p: 0.5,
-    '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
-    '.MuiListItemButton-root:hover &': { opacity: 1 },
-  };
-
-  const addBtnSx = {
-    py: 0.3,
-    opacity: 0.7,
-    borderTop: '1px dashed',
-    borderColor: 'divider',
-    borderRadius: 0,
-    mx: 1,
-    mt: 0.5,
-    '&:hover': { opacity: 1, bgcolor: 'rgba(223,73,38,0.04)' },
-  };
-
   const fileMatchesSearch = (fi: number) => {
     if (!q) return true;
     const file = files[fi];
@@ -153,10 +135,9 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box data-shared-sidebar sx={{
+      <Box ref={sidebarRef} sx={{
         width: sidebarWidth, minWidth: 200, borderRight: 1, borderColor: 'divider', overflow: 'auto', flexShrink: 0,
-        '&::-webkit-scrollbar': { width: 5 },
-        '&::-webkit-scrollbar-thumb': { bgcolor: 'text.disabled', opacity: 0.5, borderRadius: 3 },
+        ...sidebarScroll,
       }}>
         <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -236,7 +217,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                   <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
                     setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) });
-                  }} sx={hoverDel}>
+                  }} sx={hoverDelete}>
                     <DeleteOutlineRounded sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
@@ -273,14 +254,14 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                           <IconButton size="small" onClick={(e) => {
                             e.stopPropagation();
                             setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the shared parameter "${pn}".`, action: () => removeSharedParam(fi, pn) });
-                          }} sx={hoverDel}>
+                          }} sx={hoverDelete}>
                             <DeleteOutlineRounded sx={{ fontSize: 15 }} />
                           </IconButton>
                         </ListItemButton>
                       );
                     })}
                     {!q && (
-                      <ListItemButton sx={{ pl: 5.5, ...addBtnSx }} onClick={() => setAddParamOpen(fi)}>
+                      <ListItemButton sx={{ pl: 5.5, ...addItemButton }} onClick={() => setAddParamOpen(fi)}>
                         <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
                         <ListItemText primary="Add Parameter" primaryTypographyProps={{
                           fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,

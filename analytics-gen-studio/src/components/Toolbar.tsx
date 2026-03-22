@@ -87,7 +87,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const [saving, setSaving] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string | null>(null);
+  const [lastSavedVersion, setLastSavedVersion] = useState<number | null>(null);
+  const changeVersion = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const yamlInputRef = useRef<HTMLInputElement>(null);
   // Only subscribe to actions — NOT the full store, to avoid re-renders on data changes
@@ -111,7 +112,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       const result = await saveProject(useStore.getState());
       if (result.saved) {
         setFileName(result.fileName);
-        setLastSavedSnapshot(snapshotRef.current);
+        setLastSavedVersion(changeVersion.current);
         setSnackbar({ message: `Saved${result.fileName ? ` \u2192 ${result.fileName}` : ''}`, severity: 'success' });
       }
     } catch (err) {
@@ -127,7 +128,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       const name = await saveProjectAs(useStore.getState());
       if (name) {
         setFileName(name);
-        setLastSavedSnapshot(snapshotRef.current);
+        setLastSavedVersion(changeVersion.current);
         setSnackbar({ message: `Saved \u2192 ${name}`, severity: 'success' });
       }
     } catch (err) {
@@ -144,12 +145,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         if (result) {
           loadProject(result.data);
           setFileName(result.fileName);
-          setTimeout(() => setLastSavedSnapshot(JSON.stringify({
-            config: useStore.getState().config,
-            eventFiles: useStore.getState().eventFiles,
-            sharedParamFiles: useStore.getState().sharedParamFiles,
-            contextFiles: useStore.getState().contextFiles,
-          })), 0);
+          setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
           setSnackbar({ message: `Opened ${result.fileName}`, severity: 'success' });
         }
       } catch (err) {
@@ -167,12 +163,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       const data = await loadProjectFile(file);
       loadProject(data);
       setFileName(file.name);
-      setTimeout(() => setLastSavedSnapshot(JSON.stringify({
-        config: useStore.getState().config,
-        eventFiles: useStore.getState().eventFiles,
-        sharedParamFiles: useStore.getState().sharedParamFiles,
-        contextFiles: useStore.getState().contextFiles,
-      })), 0);
+      setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
       setSnackbar({ message: `Opened ${file.name}`, severity: 'success' });
     } catch (err) {
       setSnackbar({ message: `Failed to load: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
@@ -184,7 +175,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     resetState();
     clearFileHandle();
     setFileName(null);
-    setLastSavedSnapshot(null);
+    setLastSavedVersion(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
   };
@@ -235,27 +226,19 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     if (yamlInputRef.current) yamlInputRef.current.value = '';
   };
 
-  const snapshotRef = useRef<string>('');
-
   useEffect(() => {
     const name = getCurrentFileName();
     if (name) setFileName(name);
   }, []);
 
-  // Debounced dirty check — subscribe to store outside render cycle
+  // Lightweight dirty check — increment counter on any data change
   useEffect(() => {
-    const unsub = useStore.subscribe((state) => {
-      const snap = JSON.stringify({
-        config: state.config,
-        eventFiles: state.eventFiles,
-        sharedParamFiles: state.sharedParamFiles,
-        contextFiles: state.contextFiles,
-      });
-      snapshotRef.current = snap;
-      setIsDirty(lastSavedSnapshot !== null && snap !== lastSavedSnapshot);
+    const unsub = useStore.subscribe(() => {
+      changeVersion.current++;
+      setIsDirty(lastSavedVersion !== null && changeVersion.current !== lastSavedVersion);
     });
     return unsub;
-  }, [lastSavedSnapshot]);
+  }, [lastSavedVersion]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

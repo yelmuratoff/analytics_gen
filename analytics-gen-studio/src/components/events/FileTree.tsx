@@ -30,34 +30,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import { hoverAction, hoverDelete as hoverDel, addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import type { EventDef, ParamDef } from '../../types/index.ts';
-
-// ── Shared styles (static objects — no re-creation per render) ──
-
-const hoverAction = {
-  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
-  p: 0.5, flexShrink: 0,
-  '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.06)', opacity: 1 },
-  '.MuiListItemButton-root:hover &': { opacity: 1 },
-} as const;
-
-const hoverDel = {
-  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
-  p: 0.5, flexShrink: 0,
-  '&:hover': { color: '#D32F2F', bgcolor: 'rgba(211,47,47,0.06)', opacity: 1 },
-  '.MuiListItemButton-root:hover &': { opacity: 1 },
-} as const;
-
-const truncTextSx = { minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } } as const;
-const truncNameSx = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
-
-const addBtnSx = {
-  py: 0.3, opacity: 0.7,
-  borderTop: '1px dashed', borderColor: 'divider', borderRadius: 0, mx: 1, mt: 0.5,
-  '&:hover': { opacity: 1, bgcolor: 'rgba(223,73,38,0.04)' },
-} as const;
 
 const Arrow = ({ open }: { open: boolean }) => open
   ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
