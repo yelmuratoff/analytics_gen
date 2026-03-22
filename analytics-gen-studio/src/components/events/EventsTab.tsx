@@ -1,4 +1,3 @@
-import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
@@ -7,6 +6,7 @@ import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import FolderRounded from '@mui/icons-material/FolderRounded';
 import { useStore } from '../../state/store.ts';
 import { sidebarScroll } from '../../styles/tree-shared.ts';
+import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import EmptyState from '../EmptyState.tsx';
 import ResizeHandle from '../ResizeHandle.tsx';
 import FileTree from './FileTree.tsx';
@@ -23,35 +23,9 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   const selectedPath = useStore((s) => s.selectedPath);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
   const files = useStore((s) => s.eventFiles);
-  const [sidebarWidth, setSidebarWidth] = useState(260);
-  const [dragging, setDragging] = useState(false);
-  const isDragging = useRef(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseDown = useCallback(() => {
-    isDragging.current = true;
-    setDragging(true);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !sidebarRef.current) return;
-      const newWidth = e.clientX - sidebarRef.current.getBoundingClientRect().left;
-      setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      setDragging(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  }, []);
+  const { width: sidebarWidth, dragging, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
+    initialWidth: 260, storageKey: 'studio-sidebar-events',
+  });
 
   const breadcrumb = (() => {
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) return null;

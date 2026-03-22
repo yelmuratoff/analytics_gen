@@ -27,26 +27,30 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
   render() {
     if (this.state.error) {
+      const isDark = localStorage.getItem('studio-theme') === 'dark';
       return (
         <Box sx={{
           display: 'flex', justifyContent: 'center', alignItems: 'center',
-          height: '100vh', flexDirection: 'column', gap: 2, bgcolor: '#F5F3F0',
+          height: '100vh', flexDirection: 'column', gap: 2,
+          bgcolor: isDark ? '#121212' : '#F5F3F0',
         }}>
           <Box sx={{
-            p: 5, borderRadius: 3, bgcolor: '#FCFDF7', textAlign: 'center',
-            border: '1px solid #EEEBE8', maxWidth: 420,
+            p: 5, borderRadius: 3, textAlign: 'center',
+            bgcolor: isDark ? '#1E1E1E' : '#FCFDF7',
+            border: '1px solid', borderColor: isDark ? '#333' : '#EEEBE8',
+            maxWidth: 420,
           }}>
             <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#D32F2F', mb: 1 }}>
               Something went wrong
             </Typography>
-            <Typography sx={{ fontSize: '0.85rem', color: '#888', mb: 2, fontFamily: '"JetBrains Mono", monospace', wordBreak: 'break-word' }}>
+            <Typography sx={{ fontSize: '0.85rem', color: isDark ? '#aaa' : '#888', mb: 2, fontFamily: '"JetBrains Mono", monospace', wordBreak: 'break-word' }}>
               {this.state.error.message}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
               <Button size="small" variant="outlined" onClick={() => {
                 localStorage.removeItem('analytics-gen-studio');
                 window.location.reload();
-              }} sx={{ fontSize: '0.82rem', borderColor: '#EEEBE8', color: '#888' }}>
+              }} sx={{ fontSize: '0.82rem', borderColor: isDark ? '#333' : '#EEEBE8', color: isDark ? '#aaa' : '#888' }}>
                 Reset &amp; Reload
               </Button>
               <Button size="small" variant="contained" onClick={() => window.location.reload()}

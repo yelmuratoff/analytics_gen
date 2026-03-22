@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -8,6 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Collapse from '@mui/material/Collapse';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -32,6 +33,7 @@ import { useStore } from '../../state/store.ts';
 import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
+import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
@@ -65,35 +67,11 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const [addPropOpen, setAddPropOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(240);
-  const [dragging, setDragging] = useState(false);
-  const isDragging = useRef(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseDown = useCallback(() => {
-    isDragging.current = true;
-    setDragging(true);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !sidebarRef.current) return;
-      const newWidth = e.clientX - sidebarRef.current.getBoundingClientRect().left;
-      setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      setDragging(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  }, []);
+  const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
+  const PAGE_SIZE = 20;
+  const { width: sidebarWidth, dragging, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
+    initialWidth: 240, storageKey: 'studio-sidebar-contexts',
+  });
 
   const q = search.toLowerCase();
 
@@ -220,14 +198,16 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
-                  <IconButton size="small" onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All properties in this context will be removed.', action: () => removeContextFile(fi) });
-                  }} sx={hoverDelete}>
-                    <DeleteOutlineRounded sx={{ fontSize: 16 }} />
-                  </IconButton>
+                  <Tooltip title="Delete file" arrow enterDelay={400}>
+                    <IconButton size="small" onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All properties in this context will be removed.', action: () => removeContextFile(fi) });
+                    }} sx={hoverDelete}>
+                      <DeleteOutlineRounded sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
                 </ListItemButton>
-                {(isFileExpanded(fi) || !!q) && (
+                <Collapse in={isFileExpanded(fi) || !!q} timeout={150} unmountOnExit>
                   <List dense disablePadding>
                     <ListItemButton sx={{ pl: 5, py: 0.3 }} dense>
                       <ListItemIcon sx={{ minWidth: 20 }}>
@@ -237,38 +217,57 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                         fontSize: '0.82rem', fontWeight: 600, color: '#DF4926',
                       }} />
                     </ListItemButton>
-                    {Object.keys(file.properties).map((pn) => {
-                      if (q && !pn.toLowerCase().includes(q) && !file.fileName.toLowerCase().includes(q) && !file.contextName.toLowerCase().includes(q)) return null;
-                      return (
-                        <ListItemButton key={pn} sx={{
-                          pl: 7, py: 0.4,
-                          ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
-                        }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
-                          <ListItemIcon sx={{ minWidth: 18 }}>
-                            <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
-                          </ListItemIcon>
-                          <ListItemText primary={pn} primaryTypographyProps={{
-                            fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
-                          }} />
-                          <IconButton size="small" onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the property "${pn}" from context "${file.contextName}".`, action: () => removeContextProperty(fi, pn) });
-                          }} sx={hoverDelete}>
-                            <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-                          </IconButton>
-                        </ListItemButton>
+                    {(() => {
+                      const propKeys = Object.keys(file.properties).filter((pn) =>
+                        !q || pn.toLowerCase().includes(q) || file.fileName.toLowerCase().includes(q) || file.contextName.toLowerCase().includes(q)
                       );
-                    })}
-                    {!q && (
-                      <ListItemButton sx={{ pl: 7, ...addItemButton }} onClick={() => setAddPropOpen(fi)}>
-                        <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                        <ListItemText primary="Add Property" primaryTypographyProps={{
-                          fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
-                        }} />
-                      </ListItemButton>
-                    )}
+                      const limit = q ? propKeys.length : (visibleLimits[fi] ?? PAGE_SIZE);
+                      const visible = propKeys.slice(0, limit);
+                      const remaining = propKeys.length - limit;
+                      return (
+                        <>
+                          {visible.map((pn) => (
+                            <ListItemButton key={pn} sx={{
+                              pl: 7, py: 0.4,
+                              ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
+                            }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
+                              <ListItemIcon sx={{ minWidth: 18 }}>
+                                <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
+                              </ListItemIcon>
+                              <ListItemText primary={pn} primaryTypographyProps={{
+                                fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
+                              }} />
+                              <Tooltip title="Delete" arrow enterDelay={400}>
+                                <IconButton size="small" onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the property "${pn}" from context "${file.contextName}".`, action: () => removeContextProperty(fi, pn) });
+                                }} sx={hoverDelete}>
+                                  <DeleteOutlineRounded sx={{ fontSize: 15 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </ListItemButton>
+                          ))}
+                          {remaining > 0 && (
+                            <ListItemButton sx={{ pl: 7, py: 0.5, justifyContent: 'center' }}
+                              onClick={() => setVisibleLimits((prev) => ({ ...prev, [fi]: Math.min((prev[fi] ?? PAGE_SIZE) + PAGE_SIZE, propKeys.length) }))} dense>
+                              <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
+                                Show {remaining} more propert{remaining > 1 ? 'ies' : 'y'}...
+                              </Typography>
+                            </ListItemButton>
+                          )}
+                          {!q && (
+                            <ListItemButton sx={{ pl: 7, ...addItemButton }} onClick={() => setAddPropOpen(fi)}>
+                              <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                              <ListItemText primary="Add Property" primaryTypographyProps={{
+                                fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
+                              }} />
+                            </ListItemButton>
+                          )}
+                        </>
+                      );
+                    })()}
                   </List>
-                )}
+                </Collapse>
               </Box>
             );
           })}

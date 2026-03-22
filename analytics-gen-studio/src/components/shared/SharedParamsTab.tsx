@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useTransition } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -8,6 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Collapse from '@mui/material/Collapse';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Chip from '@mui/material/Chip';
@@ -28,11 +29,14 @@ import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
+import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
 import ResizeHandle from '../ResizeHandle.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
+
+const PAGE_SIZE = 20;
 
 interface SharedParamsTabProps {
   parameterSchema: RJSFSchema;
@@ -55,35 +59,10 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const [addParamOpen, setAddParamOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(240);
-  const [dragging, setDragging] = useState(false);
-  const isDragging = useRef(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseDown = useCallback(() => {
-    isDragging.current = true;
-    setDragging(true);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !sidebarRef.current) return;
-      const newWidth = e.clientX - sidebarRef.current.getBoundingClientRect().left;
-      setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      setDragging(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  }, []);
+  const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
+  const { width: sidebarWidth, dragging, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
+    initialWidth: 240, storageKey: 'studio-sidebar-shared',
+  });
 
   const usageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -208,62 +187,85 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
-                  <IconButton size="small" onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) });
-                  }} sx={hoverDelete}>
-                    <DeleteOutlineRounded sx={{ fontSize: 16 }} />
-                  </IconButton>
+                  <Tooltip title="Delete file" arrow enterDelay={400}>
+                    <IconButton size="small" onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) });
+                    }} sx={hoverDelete}>
+                      <DeleteOutlineRounded sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
                 </ListItemButton>
-                {(isFileExpanded(fi) || !!q) && (
+                <Collapse in={isFileExpanded(fi) || !!q} timeout={150} unmountOnExit>
                   <List dense disablePadding>
-                    {Object.keys(file.parameters).map((pn) => {
-                      if (q && !pn.toLowerCase().includes(q) && !file.fileName.toLowerCase().includes(q)) return null;
-                      const uses = usageCounts[pn] ?? 0;
-                      return (
-                        <ListItemButton key={pn} sx={{
-                          pl: 5.5, py: 0.4,
-                          ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
-                        }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
-                          <ListItemIcon sx={{ minWidth: 18 }}>
-                            <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <span>{pn}</span>
-                                {uses > 0 && (
-                                  <Chip label={`${uses} use${uses > 1 ? 's' : ''}`} size="small" sx={{
-                                    height: 16, fontSize: '0.6rem', fontWeight: 600,
-                                    bgcolor: 'rgba(46,125,50,0.08)', color: 'success.main',
-                                    '& .MuiChip-label': { px: 0.6 },
-                                  }} />
-                                )}
-                              </Box>
-                            }
-                            primaryTypographyProps={{
-                              fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
-                            }}
-                          />
-                          <IconButton size="small" onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the shared parameter "${pn}".`, action: () => removeSharedParam(fi, pn) });
-                          }} sx={hoverDelete}>
-                            <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-                          </IconButton>
-                        </ListItemButton>
+                    {(() => {
+                      const paramKeys = Object.keys(file.parameters).filter((pn) =>
+                        !q || pn.toLowerCase().includes(q) || file.fileName.toLowerCase().includes(q)
                       );
-                    })}
-                    {!q && (
-                      <ListItemButton sx={{ pl: 5.5, ...addItemButton }} onClick={() => setAddParamOpen(fi)}>
-                        <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                        <ListItemText primary="Add Parameter" primaryTypographyProps={{
-                          fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
-                        }} />
-                      </ListItemButton>
-                    )}
+                      const limit = q ? paramKeys.length : (visibleLimits[fi] ?? PAGE_SIZE);
+                      const visible = paramKeys.slice(0, limit);
+                      const remaining = paramKeys.length - limit;
+                      return (
+                        <>
+                          {visible.map((pn) => {
+                            const uses = usageCounts[pn] ?? 0;
+                            return (
+                              <ListItemButton key={pn} sx={{
+                                pl: 5.5, py: 0.4,
+                                ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
+                              }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
+                                <ListItemIcon sx={{ minWidth: 18 }}>
+                                  <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                      <span>{pn}</span>
+                                      {uses > 0 && (
+                                        <Chip label={`${uses} use${uses > 1 ? 's' : ''}`} size="small" sx={{
+                                          height: 16, fontSize: '0.6rem', fontWeight: 600,
+                                          bgcolor: 'rgba(46,125,50,0.08)', color: 'success.main',
+                                          '& .MuiChip-label': { px: 0.6 },
+                                        }} />
+                                      )}
+                                    </Box>
+                                  }
+                                  primaryTypographyProps={{
+                                    fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
+                                  }}
+                                />
+                                <Tooltip title="Delete" arrow enterDelay={400}>
+                                  <IconButton size="small" onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the shared parameter "${pn}".`, action: () => removeSharedParam(fi, pn) });
+                                  }} sx={hoverDelete}>
+                                    <DeleteOutlineRounded sx={{ fontSize: 15 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              </ListItemButton>
+                            );
+                          })}
+                          {remaining > 0 && (
+                            <ListItemButton sx={{ pl: 5.5, py: 0.5, justifyContent: 'center' }}
+                              onClick={() => setVisibleLimits((prev) => ({ ...prev, [fi]: Math.min((prev[fi] ?? PAGE_SIZE) + PAGE_SIZE, paramKeys.length) }))} dense>
+                              <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
+                                Show {remaining} more parameter{remaining > 1 ? 's' : ''}...
+                              </Typography>
+                            </ListItemButton>
+                          )}
+                          {!q && (
+                            <ListItemButton sx={{ pl: 5.5, ...addItemButton }} onClick={() => setAddParamOpen(fi)}>
+                              <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                              <ListItemText primary="Add Parameter" primaryTypographyProps={{
+                                fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
+                              }} />
+                            </ListItemButton>
+                          )}
+                        </>
+                      );
+                    })()}
                   </List>
-                )}
+                </Collapse>
               </Box>
             );
           })}

@@ -91,10 +91,13 @@ function Section({ title, icon, open, onToggle, filledCount, children }: {
   );
 }
 
-function FieldLabel({ label, hint }: { label: string; hint?: string }) {
+function FieldLabel({ label, hint, required }: { label: string; hint?: string; required?: boolean }) {
   return (
     <Box>
-      <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.primary', mb: 0.3 }}>{label}</Typography>
+      <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.primary', mb: 0.3 }}>
+        {label}
+        {required && <Box component="span" sx={{ color: '#DF4926', ml: 0.5, fontSize: '0.9em' }}>*</Box>}
+      </Typography>
       {hint && <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', mb: 0.5, lineHeight: 1.4 }}>{hint}</Typography>}
     </Box>
   );
@@ -236,11 +239,12 @@ function KeyValueEditor({ entries, placeholder, onChange }: {
 
 // ── Dynamic field renderer ──
 
-function DynamicField({ fieldKey, schema, value, onChange }: {
+function DynamicField({ fieldKey, schema, value, onChange, required }: {
   fieldKey: string;
   schema: Record<string, unknown>;
   value: unknown;
   onChange: (value: unknown) => void;
+  required?: boolean;
 }) {
   const type = schema.type as string;
   const title = (schema.title as string) ?? fieldKey;
@@ -264,7 +268,7 @@ function DynamicField({ fieldKey, schema, value, onChange }: {
   if (type === 'string' && enumValues) {
     return (
       <Box>
-        <FieldLabel label={title} hint={description} />
+        <FieldLabel label={title} hint={description} required={required} />
         <FormControl size="small" fullWidth>
           <InputLabel>{title}</InputLabel>
           <Select value={value as string ?? ''} label={title}
@@ -282,7 +286,7 @@ function DynamicField({ fieldKey, schema, value, onChange }: {
     const isTemplate = fieldKey.includes('template');
     return (
       <Box>
-        <FieldLabel label={title} hint={description} />
+        <FieldLabel label={title} hint={description} required={required} />
         <TextField size="small" fullWidth placeholder={placeholder}
           value={value as string ?? ''}
           onChange={(e) => onChange(e.target.value || undefined)}
@@ -325,7 +329,7 @@ function DynamicField({ fieldKey, schema, value, onChange }: {
     }
     return (
       <Box>
-        <FieldLabel label={title} hint={description} />
+        <FieldLabel label={title} hint={description} required={required} />
         <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', fontStyle: 'italic' }}>
           Complex object \u2014 edit via YAML preview
         </Typography>
@@ -402,6 +406,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
                 fieldKey={fieldKey}
                 schema={fieldSchema}
                 value={sectionConfig[fieldKey]}
+                required={Array.isArray(sec.required) && (sec.required as string[]).includes(fieldKey)}
                 onChange={(v) => {
                   updateConfig((c) => {
                     (c as unknown as Record<string, Record<string, unknown>>)[sectionKey][fieldKey] = v;

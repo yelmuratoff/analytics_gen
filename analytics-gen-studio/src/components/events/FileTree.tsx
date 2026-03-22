@@ -26,6 +26,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
+import Collapse from '@mui/material/Collapse';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
@@ -84,12 +85,16 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, onSelect, onDuplicate, 
       primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
       secondaryTypographyProps={{ fontSize: '0.78rem' }}
     />
-    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
-      <ContentCopyRounded sx={{ fontSize: 13 }} />
-    </IconButton>
-    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
-      <DeleteOutlineRounded sx={{ fontSize: 14 }} />
-    </IconButton>
+    <Tooltip title="Duplicate" arrow enterDelay={400}>
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
+        <ContentCopyRounded sx={{ fontSize: 13 }} />
+      </IconButton>
+    </Tooltip>
+    <Tooltip title="Delete" arrow enterDelay={400}>
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
+        <DeleteOutlineRounded sx={{ fontSize: 14 }} />
+      </IconButton>
+    </Tooltip>
   </ListItemButton>
 ));
 
@@ -115,12 +120,16 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, onToggle, o
         primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
         sx={truncTextSx}
       />
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
-        <ContentCopyRounded sx={{ fontSize: 14 }} />
-      </IconButton>
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
-        <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-      </IconButton>
+      <Tooltip title="Duplicate" arrow enterDelay={400}>
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
+          <ContentCopyRounded sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Delete" arrow enterDelay={400}>
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
+          <DeleteOutlineRounded sx={{ fontSize: 15 }} />
+        </IconButton>
+      </Tooltip>
     </ListItemButton>
     {isOpen && children}
   </Box>
@@ -358,23 +367,27 @@ export default function FileTree() {
                 {editing?.type === 'file' && editing.fi === fi
                   ? renderInlineEdit(commitRename, '0.82rem', 26)
                   : (
-                    <ListItemText
-                      primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}</>}
-                      primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
-                      sx={truncTextSx}
-                      onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
-                    />
+                    <Tooltip title="Double-click to rename" arrow enterDelay={800} placement="right">
+                      <ListItemText
+                        primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}</>}
+                        primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                        sx={truncTextSx}
+                        onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
+                      />
+                    </Tooltip>
                   )}
-                <IconButton size="small" onClick={confirmDel(
-                  `Delete ${file.fileName}?`,
-                  `This will remove all domains, events and parameters in this file.`,
-                  () => removeEventFile(fi),
-                )} sx={hoverDel}>
-                  <DeleteOutlineRounded sx={{ fontSize: 16 }} />
-                </IconButton>
+                <Tooltip title="Delete file" arrow enterDelay={400}>
+                  <IconButton size="small" onClick={confirmDel(
+                    `Delete ${file.fileName}?`,
+                    `This will remove all domains, events and parameters in this file.`,
+                    () => removeEventFile(fi),
+                  )} sx={hoverDel}>
+                    <DeleteOutlineRounded sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
               </ListItemButton>
 
-              {fileOpen && (
+              <Collapse in={fileOpen} timeout={150} unmountOnExit>
                 <List dense disablePadding sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: 24, top: 0, bottom: 0, width: '1px', bgcolor: 'divider' } }}>
                   {Object.entries(file.domains).map(([dn, events]) => {
                     if (q && !domainMatchesSearch(fi, dn)) return null;
@@ -397,20 +410,24 @@ export default function FileTree() {
                           {editing?.type === 'domain' && editing.fi === fi && editing.original === dn
                             ? renderInlineEdit(commitRename)
                             : (
-                              <ListItemText
-                                primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}</>}
-                                primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
-                                sx={truncTextSx}
-                                onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
-                              />
+                              <Tooltip title="Double-click to rename" arrow enterDelay={800} placement="right">
+                                <ListItemText
+                                  primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}</>}
+                                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
+                                  sx={truncTextSx}
+                                  onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
+                                />
+                              </Tooltip>
                             )}
-                          <IconButton size="small" onClick={confirmDel(
-                            `Delete domain "${dn}"?`,
-                            `This will remove ${eventCount} event(s) and all their parameters.`,
-                            () => removeDomain(fi, dn),
-                          )} sx={hoverDel}>
-                            <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-                          </IconButton>
+                          <Tooltip title="Delete domain" arrow enterDelay={400}>
+                            <IconButton size="small" onClick={confirmDel(
+                              `Delete domain "${dn}"?`,
+                              `This will remove ${eventCount} event(s) and all their parameters.`,
+                              () => removeDomain(fi, dn),
+                            )} sx={hoverDel}>
+                              <DeleteOutlineRounded sx={{ fontSize: 15 }} />
+                            </IconButton>
+                          </Tooltip>
                         </ListItemButton>
 
                         {domainOpen && (() => {
@@ -493,7 +510,7 @@ export default function FileTree() {
                     </ListItemButton>
                   )}
                 </List>
-              )}
+              </Collapse>
             </Box>
           );
         })}
@@ -546,11 +563,20 @@ export default function FileTree() {
 
       <AddItemDialog open={addFileOpen} title="Add Event File" label="File name" placeholder="auth.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
-        onAdd={(n) => { addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`); setAddFileOpen(false); setAddDomainFor(files.length); }} />
+        onAdd={(n) => {
+          addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`);
+          setExpanded((prev) => new Set(prev).add(`f${files.length}`));
+          setAddFileOpen(false);
+          setAddDomainFor(files.length);
+        }} />
       {addDomainFor !== null && !addEventFor && (
         <AddItemDialog open title="Add Domain" label="Domain name" placeholder="auth"
           validateSnakeCase existingNames={Object.keys(files[addDomainFor]?.domains ?? {})} onClose={() => setAddDomainFor(null)}
-          onAdd={(n) => { addDomain(addDomainFor, n); setAddDomainFor(null); }} />
+          onAdd={(n) => {
+            addDomain(addDomainFor, n);
+            setExpanded((prev) => { const next = new Set(prev); next.add(`f${addDomainFor}`); next.add(`f${addDomainFor}.d${n}`); return next; });
+            setAddDomainFor(null);
+          }} />
       )}
       {addEventFor && !sharedAnchorEl && (
         <AddItemDialog open title="Add Event" label="Event name" placeholder="login"
@@ -558,6 +584,7 @@ export default function FileTree() {
           onClose={() => setAddEventFor(null)}
           onAdd={(n) => {
             addEvent(addEventFor.fi, addEventFor.domain, n);
+            setExpanded((prev) => { const next = new Set(prev); next.add(`f${addEventFor.fi}`); next.add(`f${addEventFor.fi}.d${addEventFor.domain}`); next.add(`f${addEventFor.fi}.d${addEventFor.domain}.e${n}`); return next; });
             setSelectedPath({ tab: 'events', fileIndex: addEventFor.fi, domain: addEventFor.domain, event: n });
             setAddEventFor(null);
           }} />
@@ -568,6 +595,7 @@ export default function FileTree() {
           onClose={() => setAddParamFor(null)}
           onAdd={(n) => {
             addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, n, { type: DEFAULT_PARAM_TYPE });
+            setExpanded((prev) => { const next = new Set(prev); next.add(`f${addParamFor.fi}`); next.add(`f${addParamFor.fi}.d${addParamFor.domain}`); next.add(`f${addParamFor.fi}.d${addParamFor.domain}.e${addParamFor.event}`); return next; });
             setSelectedPath({ tab: 'events', fileIndex: addParamFor.fi, domain: addParamFor.domain, event: addParamFor.event, parameter: n });
             setAddParamFor(null);
           }} />

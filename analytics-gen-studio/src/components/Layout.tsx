@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect, lazy, Suspense } from 'react';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import TabBar from './TabBar.tsx';
@@ -15,6 +15,8 @@ const SharedParamsTab = lazy(() => import('./shared/SharedParamsTab.tsx'));
 const ContextsTab = lazy(() => import('./contexts/ContextsTab.tsx'));
 const YamlPreview = lazy(() => import('./YamlPreview.tsx'));
 
+const STORAGE_KEY = 'studio-form-width';
+
 interface LayoutProps {
   schemas: LoadedSchemas;
 }
@@ -25,10 +27,15 @@ export default function Layout({ schemas }: LayoutProps) {
     () => extractImportHints(schemas.rawConfigSchema, schemas.eventsSchema, schemas.sharedParametersSchema),
     [schemas],
   );
-  const [formWidth, setFormWidth] = useState(57);
+  const [formWidth, setFormWidth] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) { const n = Number(stored); if (!isNaN(n) && n >= 30 && n <= 75) return n; }
+    return 57;
+  });
   const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef(0);
 
   const handleMouseDown = useCallback(() => {
     isDragging.current = true;
@@ -38,14 +45,19 @@ export default function Layout({ schemas }: LayoutProps) {
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const pct = ((e.clientX - rect.left) / rect.width) * 100;
-      setFormWidth(Math.max(30, Math.min(75, pct)));
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const pct = ((e.clientX - rect.left) / rect.width) * 100;
+        setFormWidth(Math.max(30, Math.min(75, pct)));
+      });
     };
 
     const handleMouseUp = () => {
       isDragging.current = false;
       setDragging(false);
+      cancelAnimationFrame(rafRef.current);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
@@ -55,6 +67,11 @@ export default function Layout({ schemas }: LayoutProps) {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   }, []);
+
+  // Persist form width on drag end
+  useEffect(() => {
+    if (!dragging) localStorage.setItem(STORAGE_KEY, String(formWidth));
+  }, [dragging, formWidth]);
 
   const renderTab = () => {
     switch (activeTab) {

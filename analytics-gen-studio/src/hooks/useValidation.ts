@@ -164,6 +164,14 @@ function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedP
     return errors;
 }
 
+function errorsEqual(a: ValidationError[], b: ValidationError[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].path !== b[i].path || a[i].message !== b[i].message || a[i].tab !== b[i].tab) return false;
+  }
+  return true;
+}
+
 // ── Singleton validation store ──
 // Validation is computed once and shared across all consumers (TabBar, Toolbar, YamlPreview).
 // Debounced at 200ms — recomputes only when store data actually changes.
@@ -183,7 +191,7 @@ useStore.subscribe((state) => {
   debounceTimer = setTimeout(() => {
     const next = computeValidation(state.config, state.eventFiles, state.sharedParamFiles, state.contextFiles);
     // Only update if errors actually changed (avoid unnecessary re-renders)
-    if (next.length !== cachedErrors.length || JSON.stringify(next) !== JSON.stringify(cachedErrors)) {
+    if (!errorsEqual(next, cachedErrors)) {
       cachedErrors = next;
       emitChange();
     }
