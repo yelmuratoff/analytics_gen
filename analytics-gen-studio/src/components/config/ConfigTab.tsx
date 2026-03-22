@@ -54,6 +54,7 @@ function Section({ title, icon, open, onToggle, filledCount, children }: {
       <Box
         role="button"
         tabIndex={0}
+        aria-expanded={open}
         onClick={onToggle}
         onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
         sx={{

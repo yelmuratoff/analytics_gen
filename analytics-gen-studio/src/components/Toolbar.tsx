@@ -294,7 +294,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mr: 2 }}>
           <Box
             component="img"
-            src={`${import.meta.env.BASE_URL}logo.png`}
+            src={`${import.meta.env.BASE_URL}${mode === 'dark' ? 'logo_dark' : 'logo'}.png`}
             alt="AnalyticsGen"
             sx={{ height: 38 }}
           />

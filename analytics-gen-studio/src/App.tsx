@@ -1,14 +1,66 @@
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { Component, createContext, useContext, useEffect, useState, useMemo } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import Fade from '@mui/material/Fade';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import Layout from './components/Layout.tsx';
 import { loadSchemas, type LoadedSchemas } from './schemas/loader.ts';
 import { applySchemaConstants } from './schemas/constants.ts';
 import { setSchemaDefaultConfig } from './state/store.ts';
+
+// ── Error Boundary ──
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('Studio crashed:', error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <Box sx={{
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          height: '100vh', flexDirection: 'column', gap: 2, bgcolor: '#F5F3F0',
+        }}>
+          <Box sx={{
+            p: 5, borderRadius: 3, bgcolor: '#FCFDF7', textAlign: 'center',
+            border: '1px solid #EEEBE8', maxWidth: 420,
+          }}>
+            <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#D32F2F', mb: 1 }}>
+              Something went wrong
+            </Typography>
+            <Typography sx={{ fontSize: '0.85rem', color: '#888', mb: 2, fontFamily: '"JetBrains Mono", monospace', wordBreak: 'break-word' }}>
+              {this.state.error.message}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+              <Button size="small" variant="outlined" onClick={() => {
+                localStorage.removeItem('analytics-gen-studio');
+                window.location.reload();
+              }} sx={{ fontSize: '0.82rem', borderColor: '#EEEBE8', color: '#888' }}>
+                Reset &amp; Reload
+              </Button>
+              <Button size="small" variant="contained" onClick={() => window.location.reload()}
+                sx={{ fontSize: '0.82rem', bgcolor: '#DF4926', '&:hover': { bgcolor: '#C03A1C' } }}>
+                Reload
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ── Color mode context ──
 
@@ -328,11 +380,13 @@ export default function App() {
             </Fade>
           </Box>
         ) : (
-          <Fade in timeout={300}>
-            <Box sx={{ height: '100vh' }}>
-              <Layout schemas={schemas} />
-            </Box>
-          </Fade>
+          <ErrorBoundary>
+            <Fade in timeout={300}>
+              <Box sx={{ height: '100vh' }}>
+                <Layout schemas={schemas} />
+              </Box>
+            </Fade>
+          </ErrorBoundary>
         )}
       </ThemeProvider>
     </ColorModeContext.Provider>

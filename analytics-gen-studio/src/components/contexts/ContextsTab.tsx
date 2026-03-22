@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useTransition, useEffect } from 'react';
+import { useState, useCallback, useRef, useTransition } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -31,6 +31,7 @@ import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
+import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
@@ -55,16 +56,9 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const addContextProperty = useStore((s) => s.addContextProperty);
   const removeContextProperty = useStore((s) => s.removeContextProperty);
 
-  const [isPending, startTransition] = useTransition();
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const handleSearchChange = useCallback((val: string) => {
-    setSearchInput(val);
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => startTransition(() => setSearch(val)), 200);
-  }, [startTransition]);
-  useEffect(() => () => clearTimeout(searchTimer.current), []);
+  const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
+  const [isExpandPending, startTransition] = useTransition();
+  const isPending = isSearchPending || isExpandPending;
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [fileNameInput, setFileNameInput] = useState('');
   const [contextNameInput, setContextNameInput] = useState('');

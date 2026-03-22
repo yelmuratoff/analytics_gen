@@ -20,6 +20,7 @@ export default function AdvancedSection({ setCount, children, defaultOpen = fals
       <Box
         role="button"
         tabIndex={0}
+        aria-expanded={open}
         onClick={() => setOpen(!open)}
         onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(!open); } }}
         sx={{

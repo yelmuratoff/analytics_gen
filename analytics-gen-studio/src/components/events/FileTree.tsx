@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo, useTransition, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo, useTransition, useRef } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -31,6 +31,7 @@ import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { hoverAction, hoverDelete as hoverDel, addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
+import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import type { EventDef, ParamDef } from '../../types/index.ts';
@@ -147,21 +148,14 @@ export default function FileTree() {
   const renameEvent = useStore((s) => s.renameEvent);
   const renameParameter = useStore((s) => s.renameParameter);
 
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const handleSearchChange = useCallback((val: string) => {
-    setSearchInput(val);
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => startTransition(() => setSearch(val)), 200);
-  }, []);
-  useEffect(() => () => clearTimeout(searchTimer.current), []);
+  const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
 
   const [editing, setEditing] = useState<{ type: string; fi: number; domain?: string; event?: string; original: string } | null>(null);
   const [editValue, setEditValue] = useState('');
 
   // Track expanded nodes — default ALL COLLAPSED for performance
-  const [isPending, startTransition] = useTransition();
+  const [isExpandPending, startTransition] = useTransition();
+  const isTreePending = isSearchPending || isExpandPending;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addDomainFor, setAddDomainFor] = useState<number | null>(null);
@@ -338,7 +332,7 @@ export default function FileTree() {
       )}
 
       <Box sx={{ position: 'relative' }}>
-        {isPending && (
+        {isTreePending && (
           <Box sx={{
             position: 'absolute', inset: 0, zIndex: 2,
             display: 'flex', justifyContent: 'center', pt: 4,
@@ -348,7 +342,7 @@ export default function FileTree() {
             <CircularProgress size={20} sx={{ color: '#DF4926' }} />
           </Box>
         )}
-      <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isPending && { opacity: 0.4, pointerEvents: 'none' }) }}>
+      <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isTreePending && { opacity: 0.4, pointerEvents: 'none' }) }}>
         {files.map((file, fi) => {
           if (!fileMatchesSearch(fi)) return null;
           const fk = `f${fi}`;

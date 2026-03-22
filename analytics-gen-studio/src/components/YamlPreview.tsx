@@ -11,10 +11,12 @@ import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import WrapTextRounded from '@mui/icons-material/WrapTextRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
+import CodeRounded from '@mui/icons-material/CodeRounded';
 import { useYamlPreview } from '../hooks/useYamlPreview.ts';
 import { useValidation } from '../hooks/useValidation.ts';
 import { useStore } from '../state/store.ts';
 import { copyToClipboard, exportSingleFile } from '../utils/export.ts';
+import EmptyState from './EmptyState.tsx';
 import type { SelectionPath } from '../types/index.ts';
 
 function highlightYaml(content: string): React.ReactNode[] {
@@ -81,24 +83,12 @@ export default function YamlPreview() {
 
   if (!currentFile) {
     return (
-      <Box sx={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100%', gap: 1.5,
-      }}>
-        <Box sx={{
-          width: 48, height: 48, borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: '2px dashed rgba(255,255,255,0.12)',
-        }}>
-          <Typography sx={{ fontSize: '1.2rem', color: '#555' }}>{'{ }'}</Typography>
-        </Box>
-        <Typography sx={{ color: '#777', fontSize: '0.85rem', fontWeight: 600 }}>
-          YAML Preview
-        </Typography>
-        <Typography sx={{ color: '#555', fontSize: '0.78rem', textAlign: 'center', maxWidth: 220, lineHeight: 1.6 }}>
-          Start by adding events in the Events tab — generated YAML will appear here in real-time.
-        </Typography>
-      </Box>
+      <EmptyState
+        icon={<CodeRounded sx={{ fontSize: 28, color: '#777' }} />}
+        title="YAML Preview"
+        description="Start by adding events in the Events tab — generated YAML will appear here in real-time."
+        accentColor="rgba(255,255,255,0.12)"
+      />
     );
   }
 
