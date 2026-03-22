@@ -6,6 +6,7 @@ import type { RJSFSchema } from '@rjsf/utils';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import FolderRounded from '@mui/icons-material/FolderRounded';
 import { useStore } from '../../state/store.ts';
+import { sidebarScroll } from '../../styles/tree-shared.ts';
 import EmptyState from '../EmptyState.tsx';
 import ResizeHandle from '../ResizeHandle.tsx';
 import FileTree from './FileTree.tsx';
@@ -25,6 +26,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [dragging, setDragging] = useState(false);
   const isDragging = useRef(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback(() => {
     isDragging.current = true;
@@ -33,9 +35,9 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
     document.body.style.userSelect = 'none';
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const newWidth = e.clientX - (document.querySelector('[data-events-sidebar]') as HTMLElement)?.getBoundingClientRect().left;
-      if (newWidth) setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
+      if (!isDragging.current || !sidebarRef.current) return;
+      const newWidth = e.clientX - sidebarRef.current.getBoundingClientRect().left;
+      setSidebarWidth(Math.max(200, Math.min(400, newWidth)));
     };
 
     const handleMouseUp = () => {
@@ -145,10 +147,9 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
-      <Box data-events-sidebar sx={{
+      <Box ref={sidebarRef} sx={{
         width: sidebarWidth, minWidth: 200, borderRight: 1, borderColor: 'divider', overflow: 'auto', flexShrink: 0,
-        '&::-webkit-scrollbar': { width: 5 },
-        '&::-webkit-scrollbar-thumb': { bgcolor: 'text.disabled', opacity: 0.5, borderRadius: 3 },
+        ...sidebarScroll,
       }}>
         <FileTree />
       </Box>

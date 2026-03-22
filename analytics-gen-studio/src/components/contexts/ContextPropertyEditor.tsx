@@ -4,11 +4,17 @@ import type { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 import Chip from '@mui/material/Chip';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE, OPERATIONS_FIELD } from '../../schemas/constants.ts';
+import { DEFAULT_PARAM_TYPE, PARAMETER_TYPES, OPERATIONS_FIELD } from '../../schemas/constants.ts';
+import Breadcrumb from '../Breadcrumb.tsx';
+import AdvancedSection from '../AdvancedSection.tsx';
 import type { ParamDef } from '../../types/index.ts';
 
 interface ContextPropertyEditorProps {
@@ -31,6 +37,13 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
     : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
 
   const currentOps = (formData as Record<string, unknown>)[OPERATIONS_FIELD] as string[] ?? [];
+
+  const advancedSetCount = Object.entries(formData).filter(([k, v]) => {
+    if (k === 'type' || k === OPERATIONS_FIELD) return false;
+    if (v == null || v === '') return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    return true;
+  }).length;
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) {
@@ -55,23 +68,11 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-          <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary', fontFamily: '"JetBrains Mono", monospace' }}>
-            {file.fileName}
-          </Typography>
-          <Typography sx={{ fontSize: '0.82rem', color: 'text.disabled', mx: 0.2 }}>/</Typography>
-          <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary', fontFamily: '"JetBrains Mono", monospace' }}>
-            {file.contextName}
-          </Typography>
-          <Typography sx={{ fontSize: '0.85rem', color: 'text.disabled', mx: 0.2 }}>/</Typography>
-          <Typography sx={{ fontSize: '1.05rem', color: 'text.primary', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace' }}>
-            {propName}
-          </Typography>
-        </Box>
+        <Breadcrumb parts={[file.fileName, file.contextName, propName]} />
       </Box>
 
       <Box sx={{
-        p: 2, mb: 3, borderRadius: 2.5,
+        p: 2, mb: 2.5, borderRadius: 2.5,
         bgcolor: 'action.hover',
         border: 1, borderColor: 'divider',
       }}>
@@ -115,18 +116,37 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
         )}
       </Box>
 
-      <Form
-        schema={schemaWithoutOps}
-        uiSchema={parameterEditorUiSchema}
-        formData={formData}
-        validator={validator}
-        onChange={handleChange}
-        templates={compactTemplates}
-        liveValidate
-        showErrorList={false}
-      >
-        <div />
-      </Form>
+      <FormControl fullWidth size="small" sx={{ mb: 2.5 }}>
+        <InputLabel>Type</InputLabel>
+        <Select
+          value={PARAMETER_TYPES.includes(formData.type ?? '') ? formData.type : (PARAMETER_TYPES.find((t) => t.toLowerCase() === (formData.type ?? '').toLowerCase()) ?? DEFAULT_PARAM_TYPE)}
+          label="Type"
+          onChange={(e) => {
+            updateContextProperty(fileIndex, propName, { ...formData, type: e.target.value, [OPERATIONS_FIELD]: currentOps } as unknown as ParamDef);
+          }}
+        >
+          {PARAMETER_TYPES.map((t) => (
+            <MenuItem key={t} value={t}>
+              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' }}>{t}</Typography>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <AdvancedSection setCount={advancedSetCount}>
+        <Form
+          schema={schemaWithoutOps}
+          uiSchema={parameterEditorUiSchema}
+          formData={formData}
+          validator={validator}
+          onChange={handleChange}
+          templates={compactTemplates}
+          liveValidate
+          showErrorList={false}
+        >
+          <div />
+        </Form>
+      </AdvancedSection>
     </Box>
   );
 }

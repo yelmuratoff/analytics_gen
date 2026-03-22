@@ -81,7 +81,7 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
           onLoad={() => setLoading(false)}
           sx={{
             width: '100%', height: '100%', border: 'none',
-            bgcolor: '#fff',
+            bgcolor: 'background.paper',
           }}
         />
       </Box>
