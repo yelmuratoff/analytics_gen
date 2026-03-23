@@ -127,7 +127,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
       }}>
         <FileTree />
       </Box>
-      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} width={12} />
+      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {renderEditor()}
       </Box>

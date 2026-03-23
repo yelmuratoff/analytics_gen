@@ -31,28 +31,40 @@ import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 
-const iconMap: Record<string, React.ReactNode> = {
-  input: <InputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  output: <OutputRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  target: <TrackChangesRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  rule: <GavelRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  text_fields: <TextFieldsRounded sx={{ fontSize: 18, color: '#DF4926' }} />,
-  info: <InfoOutlined sx={{ fontSize: 18, color: '#DF4926' }} />,
+const sectionColors: Record<string, string> = {
+  input: '#DF4926',
+  output: '#2E7D32',
+  target: '#6366F1',
+  rule: '#E8A84E',
+  text_fields: '#0288D1',
+  info: '#888',
 };
 
-function getSectionIcon(schema: Record<string, unknown>) {
+const iconMap: Record<string, (color: string) => React.ReactNode> = {
+  input: (c) => <InputRounded sx={{ fontSize: 18, color: c }} />,
+  output: (c) => <OutputRounded sx={{ fontSize: 18, color: c }} />,
+  target: (c) => <TrackChangesRounded sx={{ fontSize: 18, color: c }} />,
+  rule: (c) => <GavelRounded sx={{ fontSize: 18, color: c }} />,
+  text_fields: (c) => <TextFieldsRounded sx={{ fontSize: 18, color: c }} />,
+  info: (c) => <InfoOutlined sx={{ fontSize: 18, color: c }} />,
+};
+
+function getSectionMeta(schema: Record<string, unknown>): { icon: React.ReactNode; color: string } {
   const xui = schema['x-ui'] as Record<string, string> | undefined;
   const iconName = xui?.icon;
-  return (iconName && iconMap[iconName]) ?? <SettingsRounded sx={{ fontSize: 18, color: '#DF4926' }} />;
+  const color = (iconName && sectionColors[iconName]) ?? '#DF4926';
+  const icon = (iconName && iconMap[iconName]?.(color)) ?? <SettingsRounded sx={{ fontSize: 18, color }} />;
+  return { icon, color };
 }
 
 // ── Reusable pieces ──
 
-function Section({ title, icon, open, onToggle, filledCount, children }: {
-  title: string; icon: React.ReactNode; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
+function Section({ title, icon, accentColor, open, onToggle, filledCount, children }: {
+  title: string; icon: React.ReactNode; accentColor?: string; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
 }) {
+  const accent = accentColor ?? '#DF4926';
   return (
-    <Box sx={{ mb: 1, borderRadius: 2.5, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
+    <Box sx={{ mb: 1, borderRadius: 2.5, border: 1, borderColor: 'divider', overflow: 'hidden', borderLeft: '3px solid', borderLeftColor: open ? accent : 'divider', transition: 'border-left-color 0.2s ease' }}>
       <Box
         role="button"
         tabIndex={0}
@@ -62,13 +74,13 @@ function Section({ title, icon, open, onToggle, filledCount, children }: {
         sx={{
           display: 'flex', alignItems: 'center', gap: 1, py: 1.2, px: 2,
           cursor: 'pointer', userSelect: 'none',
-          bgcolor: open ? 'rgba(223,73,38,0.02)' : 'transparent',
-          '&:hover': { bgcolor: 'rgba(223,73,38,0.04)' },
-          '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 2 },
+          bgcolor: open ? `${accent}08` : 'transparent',
+          '&:hover': { bgcolor: `${accent}0A` },
+          '&:focus-visible': { outline: `2px solid ${accent}`, outlineOffset: -2, borderRadius: 2 },
         }}
       >
         {open
-          ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
+          ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: accent }} />
           : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: 'text.secondary' }} />}
         {icon}
         <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary', flex: 1 }}>{title}</Typography>
@@ -448,7 +460,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
         }).length;
 
         return (
-          <Section key={sectionKey} title={sectionTitle} icon={getSectionIcon(sec)} open={!!q || openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
+          <Section key={sectionKey} title={sectionTitle} icon={getSectionMeta(sec).icon} accentColor={getSectionMeta(sec).color} open={!!q || openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
             {Object.entries(fields).filter(([fk, fs]) => fieldMatchesSearch(fk, fs)).map(([fieldKey, fieldSchema]) => (
               <DynamicField
                 key={fieldKey}

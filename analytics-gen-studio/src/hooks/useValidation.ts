@@ -177,9 +177,38 @@ function errorsEqual(a: ValidationError[], b: ValidationError[]): boolean {
 // Debounced at 200ms — recomputes only when store data actually changes.
 
 let cachedErrors: ValidationError[] = [];
+let cachedErrorKeys: Set<string> = new Set();
 const listeners = new Set<() => void>();
 
+// Builds hierarchical keys so parents show errors from children.
+// Keys: "events:0", "events:0:auth", "events:0:auth:login", "events:0:auth:login:user_id"
+function buildErrorKeys(errors: ValidationError[]): Set<string> {
+  const keys = new Set<string>();
+  for (const err of errors) {
+    if (err.fileIndex === undefined) continue;
+    const tab = err.tab;
+    keys.add(`${tab}:${err.fileIndex}`);
+    if (tab === 'events') {
+      if (err.domain) {
+        keys.add(`${tab}:${err.fileIndex}:${err.domain}`);
+        if (err.event) {
+          keys.add(`${tab}:${err.fileIndex}:${err.domain}:${err.event}`);
+          if (err.parameter) {
+            keys.add(`${tab}:${err.fileIndex}:${err.domain}:${err.event}:${err.parameter}`);
+          }
+        }
+      }
+    } else if (tab === 'shared') {
+      if (err.parameter) keys.add(`${tab}:${err.fileIndex}:${err.parameter}`);
+    } else if (tab === 'contexts') {
+      if (err.contextProperty) keys.add(`${tab}:${err.fileIndex}:${err.contextProperty}`);
+    }
+  }
+  return keys;
+}
+
 function emitChange() {
+  cachedErrorKeys = buildErrorKeys(cachedErrors);
   for (const listener of listeners) listener();
 }
 
@@ -190,7 +219,6 @@ useStore.subscribe((state) => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     const next = computeValidation(state.config, state.eventFiles, state.sharedParamFiles, state.contextFiles);
-    // Only update if errors actually changed (avoid unnecessary re-renders)
     if (!errorsEqual(next, cachedErrors)) {
       cachedErrors = next;
       emitChange();
@@ -205,6 +233,7 @@ cachedErrors = computeValidation(
   useStore.getState().sharedParamFiles,
   useStore.getState().contextFiles,
 );
+cachedErrorKeys = buildErrorKeys(cachedErrors);
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
@@ -215,7 +244,16 @@ function getSnapshot() {
   return cachedErrors;
 }
 
+function getErrorKeysSnapshot() {
+  return cachedErrorKeys;
+}
+
 /** Shared validation hook — all consumers share one computation */
 export function useValidation(): ValidationError[] {
   return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+/** Hook that returns a Set of error keys for tree indicators */
+export function useErrorKeys(): Set<string> {
+  return useSyncExternalStore(subscribe, getErrorKeysSnapshot);
 }

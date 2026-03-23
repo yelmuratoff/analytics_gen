@@ -1,11 +1,11 @@
 import { Component, createContext, useContext, useEffect, useState, useMemo } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
-import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Fade from '@mui/material/Fade';
+import Skeleton from '@mui/material/Skeleton';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import Layout from './components/Layout.tsx';
 import { loadSchemas, type LoadedSchemas } from './schemas/loader.ts';
@@ -138,7 +138,7 @@ function getTheme(mode: ColorMode) {
           body: { overflow: 'hidden', transition: 'background-color 0.2s ease, color 0.2s ease' },
           '*, *::before, *::after': {
             scrollbarWidth: 'thin',
-            scrollbarColor: isLight ? 'rgba(0,0,0,0.12) transparent' : 'rgba(255,255,255,0.12) transparent',
+            scrollbarColor: isLight ? 'rgba(0,0,0,0.18) transparent' : 'rgba(255,255,255,0.15) transparent',
           },
         },
       },
@@ -264,6 +264,7 @@ function getTheme(mode: ColorMode) {
         },
       },
       MuiTooltip: {
+        defaultProps: { enterDelay: 300, enterNextDelay: 100 },
         styleOverrides: {
           tooltip: {
             borderRadius: 8,
@@ -370,19 +371,42 @@ export default function App() {
             </Box>
           </Box>
         ) : !schemas ? (
-          <Box sx={{
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            height: '100vh', flexDirection: 'column', gap: 3, bgcolor: 'background.default',
-          }}>
-            <Fade in timeout={600}>
-              <Box sx={{ textAlign: 'center' }}>
-                <CircularProgress size={32} thickness={4} sx={{ color: '#DF4926' }} />
-                <Typography sx={{ mt: 2.5, fontWeight: 500, fontSize: '0.85rem', color: 'text.secondary' }}>
-                  Loading schemas...
-                </Typography>
+          <Fade in timeout={400}>
+            <Box sx={{ height: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+              {/* Toolbar skeleton */}
+              <Box sx={{ px: 3, py: 1.2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Skeleton variant="rounded" width={120} height={32} />
+                <Skeleton variant="rounded" width={48} height={20} sx={{ borderRadius: 1.5 }} />
+                <Box sx={{ flex: 1 }} />
+                {[60, 60, 80].map((w, i) => <Skeleton key={i} variant="rounded" width={w} height={28} />)}
               </Box>
-            </Fade>
-          </Box>
+              {/* TabBar skeleton */}
+              <Box sx={{ px: 2, py: 0.8, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
+                {[80, 70, 110, 80].map((w, i) => <Skeleton key={i} variant="rounded" width={w} height={32} />)}
+              </Box>
+              {/* Content skeleton */}
+              <Box sx={{ flex: 1, display: 'flex', p: 2, gap: 0 }}>
+                <Box sx={{ flex: '0 0 57%', bgcolor: 'background.paper', borderRadius: 1.5, border: 1, borderColor: 'divider', p: 3 }}>
+                  <Skeleton variant="rounded" width={180} height={24} sx={{ mb: 1 }} />
+                  <Skeleton variant="rounded" width={120} height={14} sx={{ mb: 3 }} />
+                  {[1, 2, 3].map((i) => (
+                    <Box key={i} sx={{ mb: 1.5, borderRadius: 2.5, border: 1, borderColor: 'divider', p: 2 }}>
+                      <Skeleton variant="rounded" width={140} height={18} sx={{ mb: 1.5 }} />
+                      <Skeleton variant="rounded" height={36} sx={{ mb: 1 }} />
+                      <Skeleton variant="rounded" height={36} />
+                    </Box>
+                  ))}
+                </Box>
+                <Box sx={{ width: 12 }} />
+                <Box sx={{ flex: 1, bgcolor: '#1E1E1E', borderRadius: 1.5, p: 2 }}>
+                  <Skeleton variant="rounded" width={140} height={20} sx={{ mb: 2, bgcolor: 'rgba(255,255,255,0.06)' }} />
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <Skeleton key={i} variant="rounded" height={14} sx={{ mb: 1, bgcolor: 'rgba(255,255,255,0.04)', width: `${50 + Math.random() * 40}%` }} />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          </Fade>
         ) : (
           <ErrorBoundary>
             <Fade in timeout={300}>

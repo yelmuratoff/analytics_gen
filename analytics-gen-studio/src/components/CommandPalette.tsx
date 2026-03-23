@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
+import Divider from '@mui/material/Divider';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
@@ -11,6 +12,13 @@ import FolderRounded from '@mui/icons-material/FolderRounded';
 import CircleRounded from '@mui/icons-material/CircleRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
 import LayersRounded from '@mui/icons-material/LayersRounded';
+import FolderZipRounded from '@mui/icons-material/FolderZipRounded';
+import UndoRounded from '@mui/icons-material/UndoRounded';
+import RedoRounded from '@mui/icons-material/RedoRounded';
+import SaveRounded from '@mui/icons-material/SaveRounded';
+import FileOpenRounded from '@mui/icons-material/FileOpenRounded';
+import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
+import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import { useStore } from '../state/store.ts';
 import type { SelectionPath, TabId } from '../types/index.ts';
 
@@ -18,16 +26,29 @@ interface PaletteItem {
   label: string;
   secondary: string;
   icon: React.ReactNode;
-  tab: TabId;
-  path: SelectionPath | null;
+  kind: 'action' | 'navigation';
+  tab?: TabId;
+  path?: SelectionPath | null;
+  action?: () => void;
+}
+
+export interface CommandPaletteActions {
+  onSave?: () => void;
+  onOpen?: () => void;
+  onExportZip?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onToggleTheme?: () => void;
+  isDarkMode?: boolean;
 }
 
 interface CommandPaletteProps {
   open: boolean;
   onClose: () => void;
+  actions?: CommandPaletteActions;
 }
 
-export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
+export default function CommandPalette({ open, onClose, actions }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -39,53 +60,64 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const setActiveTab = useStore((s) => s.setActiveTab);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
 
-  const allItems = useMemo((): PaletteItem[] => {
+  const actionItems = useMemo((): PaletteItem[] => {
+    const items: PaletteItem[] = [];
+    if (actions?.onSave) items.push({ label: 'Save Project', secondary: 'Action', icon: <SaveRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onSave });
+    if (actions?.onOpen) items.push({ label: 'Open Project', secondary: 'Action', icon: <FileOpenRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onOpen });
+    if (actions?.onExportZip) items.push({ label: 'Export ZIP', secondary: 'Action', icon: <FolderZipRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: actions.onExportZip });
+    if (actions?.onUndo) items.push({ label: 'Undo', secondary: 'Action', icon: <UndoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onUndo });
+    if (actions?.onRedo) items.push({ label: 'Redo', secondary: 'Action', icon: <RedoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onRedo });
+    if (actions?.onToggleTheme) items.push({
+      label: actions.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+      secondary: 'Action',
+      icon: actions.isDarkMode ? <LightModeRounded sx={{ fontSize: 16, color: '#E8A84E' }} /> : <DarkModeRounded sx={{ fontSize: 16, color: '#6366F1' }} />,
+      kind: 'action', action: actions.onToggleTheme,
+    });
+    // Tab navigation
+    items.push({ label: 'Config', secondary: 'Go to tab', icon: <SettingsRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: () => setActiveTab('config') });
+    items.push({ label: 'Events', secondary: 'Go to tab', icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />, kind: 'action', action: () => setActiveTab('events') });
+    items.push({ label: 'Shared Params', secondary: 'Go to tab', icon: <ShareRounded sx={{ fontSize: 16, color: '#22A06B' }} />, kind: 'action', action: () => setActiveTab('shared') });
+    items.push({ label: 'Contexts', secondary: 'Go to tab', icon: <LayersRounded sx={{ fontSize: 16, color: '#6366F1' }} />, kind: 'action', action: () => setActiveTab('contexts') });
+    return items;
+  }, [actions, setActiveTab]);
+
+  const navItems = useMemo((): PaletteItem[] => {
     const items: PaletteItem[] = [];
 
     // Config sections
     const configSections = Object.keys(config as unknown as Record<string, unknown>);
     configSections.forEach((section) => {
       items.push({
-        label: section,
-        secondary: 'Config',
+        label: section, secondary: 'Config',
         icon: <SettingsRounded sx={{ fontSize: 16, color: '#DF4926' }} />,
-        tab: 'config',
-        path: null,
+        kind: 'navigation', tab: 'config', path: null,
       });
     });
 
     // Events
     eventFiles.forEach((file, fi) => {
       items.push({
-        label: file.fileName,
-        secondary: 'Event file',
+        label: file.fileName, secondary: 'Event file',
         icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />,
-        tab: 'events',
-        path: { tab: 'events', fileIndex: fi },
+        kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi },
       });
       Object.entries(file.domains).forEach(([dn, events]) => {
         items.push({
-          label: dn,
-          secondary: `Domain \u2022 ${file.fileName}`,
+          label: dn, secondary: `Domain \u2022 ${file.fileName}`,
           icon: <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />,
-          tab: 'events',
-          path: { tab: 'events', fileIndex: fi, domain: dn },
+          kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi, domain: dn },
         });
         Object.entries(events).forEach(([en, event]) => {
           items.push({
-            label: en,
-            secondary: `Event \u2022 ${dn}`,
+            label: en, secondary: `Event \u2022 ${dn}`,
             icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />,
-            tab: 'events',
-            path: { tab: 'events', fileIndex: fi, domain: dn, event: en },
+            kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi, domain: dn, event: en },
           });
           Object.keys(event.parameters).forEach((pn) => {
             items.push({
-              label: pn,
-              secondary: `Param \u2022 ${dn}/${en}`,
+              label: pn, secondary: `Param \u2022 ${dn}/${en}`,
               icon: <CircleRounded sx={{ fontSize: 8, color: 'text.disabled' }} />,
-              tab: 'events',
-              path: { tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn },
+              kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn },
             });
           });
         });
@@ -96,11 +128,9 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
     sharedParamFiles.forEach((file, fi) => {
       Object.keys(file.parameters).forEach((pn) => {
         items.push({
-          label: pn,
-          secondary: `Shared \u2022 ${file.fileName}`,
+          label: pn, secondary: `Shared \u2022 ${file.fileName}`,
           icon: <ShareRounded sx={{ fontSize: 16, color: '#22A06B' }} />,
-          tab: 'shared',
-          path: { tab: 'shared', fileIndex: fi, parameter: pn },
+          kind: 'navigation', tab: 'shared', path: { tab: 'shared', fileIndex: fi, parameter: pn },
         });
       });
     });
@@ -109,11 +139,9 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
     contextFiles.forEach((file, fi) => {
       Object.keys(file.properties).forEach((pn) => {
         items.push({
-          label: pn,
-          secondary: `Context \u2022 ${file.contextName}`,
+          label: pn, secondary: `Context \u2022 ${file.contextName}`,
           icon: <LayersRounded sx={{ fontSize: 16, color: '#6366F1' }} />,
-          tab: 'contexts',
-          path: { tab: 'contexts', fileIndex: fi, contextProperty: pn },
+          kind: 'navigation', tab: 'contexts', path: { tab: 'contexts', fileIndex: fi, contextProperty: pn },
         });
       });
     });
@@ -122,13 +150,19 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }, [config, eventFiles, sharedParamFiles, contextFiles]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return allItems.slice(0, 50);
-    const q = query.toLowerCase();
-    return allItems.filter((item) =>
-      item.label.toLowerCase().includes(q) ||
-      item.secondary.toLowerCase().includes(q)
-    ).slice(0, 50);
-  }, [allItems, query]);
+    const q = query.toLowerCase().trim();
+    if (!q) {
+      // Show actions first, then first 30 nav items
+      return [...actionItems, ...navItems.slice(0, 30)];
+    }
+    const matchedActions = actionItems.filter((item) => item.label.toLowerCase().includes(q));
+    const matchedNav = navItems.filter((item) =>
+      item.label.toLowerCase().includes(q) || item.secondary.toLowerCase().includes(q)
+    ).slice(0, 40);
+    return [...matchedActions, ...matchedNav];
+  }, [actionItems, navItems, query]);
+
+  const actionCount = useMemo(() => filtered.filter((i) => i.kind === 'action').length, [filtered]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -144,13 +178,17 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
   // Scroll selected item into view
   useEffect(() => {
     if (!listRef.current) return;
-    const el = listRef.current.children[selectedIndex] as HTMLElement;
+    const el = listRef.current.querySelector(`[data-index="${selectedIndex}"]`) as HTMLElement;
     el?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
   const handleSelect = (item: PaletteItem) => {
-    setActiveTab(item.tab);
-    if (item.path) setSelectedPath(item.path);
+    if (item.action) {
+      item.action();
+    } else if (item.tab) {
+      setActiveTab(item.tab);
+      if (item.path) setSelectedPath(item.path);
+    }
     onClose();
   };
 
@@ -166,6 +204,8 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
       if (filtered[selectedIndex]) handleSelect(filtered[selectedIndex]);
     }
   };
+
+  let renderedIndex = 0;
 
   return (
     <Dialog
@@ -187,7 +227,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
       <TextField
         autoFocus
         fullWidth
-        placeholder="Search events, parameters, config..."
+        placeholder="Search actions, events, parameters..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -212,35 +252,48 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
             No results for &quot;{query}&quot;
           </Typography>
         )}
-        {filtered.map((item, i) => (
-          <Box
-            key={`${item.tab}-${item.label}-${i}`}
-            onClick={() => handleSelect(item)}
-            sx={{
-              display: 'flex', alignItems: 'center', gap: 1.5,
-              px: 2.5, py: 1,
-              cursor: 'pointer',
-              bgcolor: i === selectedIndex ? 'action.selected' : 'transparent',
-              '&:hover': { bgcolor: 'action.hover' },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24 }}>
-              {item.icon}
+        {filtered.map((item, i) => {
+          const idx = renderedIndex++;
+          const showSectionDivider = i === actionCount && actionCount > 0 && filtered.length > actionCount;
+          return (
+            <Box key={`${item.kind}-${item.label}-${i}`}>
+              {showSectionDivider && (
+                <Divider sx={{ my: 0.5 }}>
+                  <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Navigate
+                  </Typography>
+                </Divider>
+              )}
+              <Box
+                data-index={idx}
+                onClick={() => handleSelect(item)}
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: 1.5,
+                  px: 2.5, py: 0.8,
+                  cursor: 'pointer',
+                  bgcolor: i === selectedIndex ? 'action.selected' : 'transparent',
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24 }}>
+                  {item.icon}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{
+                    fontSize: '0.85rem', fontWeight: 500,
+                    fontFamily: item.kind === 'navigation' ? '"JetBrains Mono", monospace' : '"DM Sans", sans-serif',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {item.label}
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {item.secondary}
+                </Typography>
+              </Box>
             </Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{
-                fontSize: '0.85rem', fontWeight: 500,
-                fontFamily: '"JetBrains Mono", monospace',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {item.label}
-              </Typography>
-            </Box>
-            <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {item.secondary}
-            </Typography>
-          </Box>
-        ))}
+          );
+        })}
       </Box>
       <Box sx={{
         borderTop: 1, borderColor: 'divider',

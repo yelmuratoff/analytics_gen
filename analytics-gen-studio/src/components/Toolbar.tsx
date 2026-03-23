@@ -37,6 +37,7 @@ import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
 import { useColorMode } from '../App.tsx';
 import CommandPalette from './CommandPalette.tsx';
+import type { CommandPaletteActions } from './CommandPalette.tsx';
 import {
   exportAllAsZip,
   saveProject,
@@ -389,98 +390,102 @@ export default function Toolbar({ importHints }: ToolbarProps) {
           <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoadFallback} />
           <input ref={yamlInputRef} type="file" accept=".yaml,.yml" multiple style={{ display: 'none' }} onChange={handleImportYaml} />
 
-          {/* Save button with dropdown for Save As */}
-          <Box sx={{ display: 'flex' }}>
-            <Tooltip title={`Save${fileName ? ` \u2192 ${fileName}` : ''} (${mod}S)`} arrow>
-              {isCompact ? (
+          {/* Save + Export — compact: icons only, wide: split button + export */}
+          {isCompact ? (
+            <>
+              <Tooltip title={`Save (${mod}S)`} arrow>
                 <IconButton onClick={handleSave} disabled={saving} size="small" sx={{
                   color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
                 }}>
                   {saving ? <CircularProgress size={14} /> : <SaveRounded sx={{ fontSize: 20 }} />}
                 </IconButton>
-              ) : (
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  size="small"
-                  variant="outlined"
-                  startIcon={saving ? <CircularProgress size={14} sx={{ color: 'text.secondary' }} /> : <SaveRounded sx={{ fontSize: 18 }} />}
-                  sx={{
-                    ...actionBtnSx,
-                    borderTopRightRadius: 0,
-                    borderBottomRightRadius: 0,
-                    pr: 1,
-                  }}
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </Button>
-              )}
-            </Tooltip>
-            {!isCompact && (
-              <Tooltip title="Save options" arrow>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={(e) => setFileMenuAnchor(e.currentTarget)}
-                  sx={{
-                    ...actionBtnSx,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                    borderLeft: 1,
-                    borderLeftColor: 'divider',
-                    minWidth: 32,
-                    px: 0.5,
-                  }}
-                >
-                  <KeyboardArrowDownRounded sx={{ fontSize: 18 }} />
-                </Button>
               </Tooltip>
-            )}
-          </Box>
-          <Menu
-            anchorEl={fileMenuAnchor}
-            open={!!fileMenuAnchor}
-            onClose={() => setFileMenuAnchor(null)}
-            slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 200 } } }}
-          >
-            <MenuItem onClick={() => { setFileMenuAnchor(null); handleSave(); }}>
-              <ListItemIcon><SaveRounded sx={{ fontSize: 18 }} /></ListItemIcon>
-              <ListItemText primary="Save" secondary={`${mod}S`}
-                primaryTypographyProps={{ fontSize: '0.85rem' }}
-                secondaryTypographyProps={{ fontSize: '0.72rem' }} />
-            </MenuItem>
-            <MenuItem onClick={() => { setFileMenuAnchor(null); handleSaveAs(); }}>
-              <ListItemIcon><SaveAsRounded sx={{ fontSize: 18 }} /></ListItemIcon>
-              <ListItemText primary="Save As..." secondary={`${mod}\u21E7S`}
-                primaryTypographyProps={{ fontSize: '0.85rem' }}
-                secondaryTypographyProps={{ fontSize: '0.72rem' }} />
-            </MenuItem>
-          </Menu>
-
-          <Tooltip title={hasErrors ? `Fix ${errors.length} error${errors.length > 1 ? 's' : ''} before exporting` : `Export ZIP (${mod}\u21E7E)`} arrow>
-            <span>
-              {isCompact ? (
-                <IconButton onClick={handleExportZip} disabled={hasErrors} size="small" sx={{
-                  color: '#DF4926',
-                  '&:hover': { bgcolor: 'rgba(223,73,38,0.08)' },
-                  '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
-                }}>
-                  <FolderZipRounded sx={{ fontSize: 20 }} />
-                </IconButton>
-              ) : (
-                <Button
-                  onClick={handleExportZip}
-                  disabled={hasErrors}
-                  size="small"
-                  variant="contained"
-                  startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
-                  sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
-                >
-                  Export{hasErrors ? ` (${errors.length})` : ''}
-                </Button>
-              )}
-            </span>
-          </Tooltip>
+              <Tooltip title={hasErrors ? `Fix ${errors.length} error${errors.length > 1 ? 's' : ''} before exporting` : `Export ZIP (${mod}\u21E7E)`} arrow>
+                <span>
+                  <IconButton onClick={handleExportZip} disabled={hasErrors} size="small" sx={{
+                    color: '#DF4926',
+                    '&:hover': { bgcolor: 'rgba(223,73,38,0.08)' },
+                    '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
+                  }}>
+                    <FolderZipRounded sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          ) : (
+            <>
+              <Box sx={{ display: 'flex' }}>
+                <Tooltip title={`Save${fileName ? ` \u2192 ${fileName}` : ''} (${mod}S)`} arrow>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    size="small"
+                    variant="outlined"
+                    startIcon={saving ? <CircularProgress size={14} sx={{ color: 'text.secondary' }} /> : <SaveRounded sx={{ fontSize: 18 }} />}
+                    sx={{
+                      ...actionBtnSx,
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                      pr: 1,
+                    }}
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Save options" arrow>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={(e) => setFileMenuAnchor(e.currentTarget)}
+                    sx={{
+                      ...actionBtnSx,
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      borderLeft: 1,
+                      borderLeftColor: 'divider',
+                      minWidth: 32,
+                      px: 0.5,
+                    }}
+                  >
+                    <KeyboardArrowDownRounded sx={{ fontSize: 18 }} />
+                  </Button>
+                </Tooltip>
+              </Box>
+              <Menu
+                anchorEl={fileMenuAnchor}
+                open={!!fileMenuAnchor}
+                onClose={() => setFileMenuAnchor(null)}
+                slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 200 } } }}
+              >
+                <MenuItem onClick={() => { setFileMenuAnchor(null); handleSave(); }}>
+                  <ListItemIcon><SaveRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+                  <ListItemText primary="Save" secondary={`${mod}S`}
+                    primaryTypographyProps={{ fontSize: '0.85rem' }}
+                    secondaryTypographyProps={{ fontSize: '0.72rem' }} />
+                </MenuItem>
+                <MenuItem onClick={() => { setFileMenuAnchor(null); handleSaveAs(); }}>
+                  <ListItemIcon><SaveAsRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+                  <ListItemText primary="Save As..." secondary={`${mod}\u21E7S`}
+                    primaryTypographyProps={{ fontSize: '0.85rem' }}
+                    secondaryTypographyProps={{ fontSize: '0.72rem' }} />
+                </MenuItem>
+              </Menu>
+              <Tooltip title={hasErrors ? `Fix ${errors.length} error${errors.length > 1 ? 's' : ''} before exporting` : `Export ZIP (${mod}\u21E7E)`} arrow>
+                <span>
+                  <Button
+                    onClick={handleExportZip}
+                    disabled={hasErrors}
+                    size="small"
+                    variant="contained"
+                    startIcon={<FolderZipRounded sx={{ fontSize: 18 }} />}
+                    sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap', px: 2, py: 0.6 }}
+                  >
+                    Export{hasErrors ? ` (${errors.length})` : ''}
+                  </Button>
+                </span>
+              </Tooltip>
+            </>
+          )}
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
@@ -571,7 +576,15 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         </DialogActions>
       </Dialog>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} actions={{
+        onSave: handleSave,
+        onOpen: handleOpen,
+        onExportZip: handleExportZip,
+        onUndo: () => undo(),
+        onRedo: () => redo(),
+        onToggleTheme: toggleColorMode,
+        isDarkMode: mode === 'dark',
+      } satisfies CommandPaletteActions} />
       <DocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />
 
       <Snackbar

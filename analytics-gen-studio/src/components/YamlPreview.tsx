@@ -19,46 +19,40 @@ import { copyToClipboard, exportSingleFile } from '../utils/export.ts';
 import EmptyState from './EmptyState.tsx';
 import type { SelectionPath } from '../types/index.ts';
 
-function highlightYaml(content: string): React.ReactNode[] {
-  return content.split('\n').map((line, i) => {
-    const parts: React.ReactNode[] = [];
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightYamlToHtml(content: string): string {
+  return content.split('\n').map((line) => {
     if (line.trimStart().startsWith('#')) {
-      parts.push(<span key={i} style={{ color: '#5C5C5C' }}>{line}</span>);
-    } else {
-      const match = line.match(/^(\s*)([\w_.-]+)(:)(.*)/);
-      if (match) {
-        const [, indent, key, colon, rest] = match;
-        parts.push(<span key={`${i}i`}>{indent}</span>);
-        parts.push(<span key={`${i}k`} style={{ color: '#DF4926' }}>{key}</span>);
-        parts.push(<span key={`${i}c`} style={{ color: '#5C5C5C' }}>{colon}</span>);
-        const val = rest.trim();
-        if (!val) {
-          parts.push(<span key={`${i}v`}>{rest}</span>);
-        } else if (val === 'true' || val === 'false') {
-          parts.push(<span key={`${i}v`} style={{ color: '#E8A84E' }}> {val}</span>);
-        } else if (/^-?\d+(\.\d+)?$/.test(val)) {
-          parts.push(<span key={`${i}v`} style={{ color: '#B8D97A' }}> {val}</span>);
-        } else if (val.startsWith('"') || val.startsWith("'")) {
-          parts.push(<span key={`${i}v`} style={{ color: '#B8D97A' }}> {val}</span>);
-        } else {
-          parts.push(<span key={`${i}v`} style={{ color: '#D4D4D4' }}> {val}</span>);
-        }
-      } else if (line.trimStart().startsWith('- ')) {
-        const m2 = line.match(/^(\s*)(- )(.*)/);
-        if (m2) {
-          const [, indent, dash, val] = m2;
-          parts.push(<span key={`${i}i`}>{indent}</span>);
-          parts.push(<span key={`${i}d`} style={{ color: '#5C5C5C' }}>{dash}</span>);
-          parts.push(<span key={`${i}v`} style={{ color: '#D4D4D4' }}>{val}</span>);
-        } else {
-          parts.push(<span key={i} style={{ color: '#D4D4D4' }}>{line}</span>);
-        }
-      } else {
-        parts.push(<span key={i} style={{ color: '#D4D4D4' }}>{line}</span>);
-      }
+      return `<div><span style="color:#5C5C5C">${escapeHtml(line)}</span></div>`;
     }
-    return <div key={i}>{parts.length > 0 ? parts : ' '}</div>;
-  });
+    const match = line.match(/^(\s*)([\w_.-]+)(:)(.*)/);
+    if (match) {
+      const [, indent, key, colon, rest] = match;
+      const val = rest.trim();
+      let valHtml: string;
+      if (!val) {
+        valHtml = escapeHtml(rest);
+      } else if (val === 'true' || val === 'false') {
+        valHtml = `<span style="color:#E8A84E"> ${escapeHtml(val)}</span>`;
+      } else if (/^-?\d+(\.\d+)?$/.test(val)) {
+        valHtml = `<span style="color:#B8D97A"> ${escapeHtml(val)}</span>`;
+      } else if (val.startsWith('"') || val.startsWith("'")) {
+        valHtml = `<span style="color:#B8D97A"> ${escapeHtml(val)}</span>`;
+      } else {
+        valHtml = `<span style="color:#D4D4D4"> ${escapeHtml(val)}</span>`;
+      }
+      return `<div>${escapeHtml(indent)}<span style="color:#DF4926">${escapeHtml(key)}</span><span style="color:#5C5C5C">${colon}</span>${valHtml}</div>`;
+    }
+    const m2 = line.match(/^(\s*)(- )(.*)/);
+    if (m2) {
+      const [, indent, dash, val] = m2;
+      return `<div>${escapeHtml(indent)}<span style="color:#5C5C5C">${escapeHtml(dash)}</span><span style="color:#D4D4D4">${escapeHtml(val)}</span></div>`;
+    }
+    return `<div><span style="color:#D4D4D4">${escapeHtml(line) || ' '}</span></div>`;
+  }).join('');
 }
 
 export default function YamlPreview() {
@@ -80,8 +74,8 @@ export default function YamlPreview() {
   const safeIndex = Math.min(activeFileIndex, Math.max(0, files.length - 1));
   const currentFile = files[safeIndex];
 
-  const highlighted = useMemo(
-    () => currentFile ? highlightYaml(currentFile.content) : [],
+  const highlightedHtml = useMemo(
+    () => currentFile ? highlightYamlToHtml(currentFile.content) : '',
     [currentFile],
   );
   const lineCount = currentFile ? currentFile.content.split('\n').length : 0;
@@ -206,9 +200,7 @@ export default function YamlPreview() {
           <Box component="code" sx={{
             flex: 1, whiteSpace: wordWrap ? 'pre-wrap' : 'pre', wordBreak: wordWrap ? 'break-all' : 'normal', pl: 2.5, pr: 2,
             '& > div:hover': { bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 0.5 },
-          }}>
-            {highlighted}
-          </Box>
+          }} dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
         </Box>
       </Box>
 

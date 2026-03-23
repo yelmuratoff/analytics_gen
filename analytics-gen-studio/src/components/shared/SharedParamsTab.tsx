@@ -30,6 +30,7 @@ import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
+import { useErrorKeys } from '../../hooks/useValidation.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
@@ -52,6 +53,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const addSharedParam = useStore((s) => s.addSharedParam);
   const removeSharedParam = useStore((s) => s.removeSharedParam);
 
+  const errorKeys = useErrorKeys();
   const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
   const [isExpandPending, startTransition] = useTransition();
   const isPending = isSearchPending || isExpandPending;
@@ -157,9 +159,18 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
               <ShareRounded sx={{ fontSize: 28, color: '#22A06B' }} />
             </Box>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 0.5, fontWeight: 600 }}>No files yet</Typography>
-            <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 2 }}>
-              Shared parameters can be referenced from any event across files.
+            <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 1.5 }}>
+              Define once, reference from any event. Use <code>null</code> in events to link.
             </Typography>
+            <Box sx={{
+              mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: '#1E1E1E', textAlign: 'left',
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: '#D4D4D4',
+            }}>
+              <Box><Box component="span" sx={{ color: '#5C5C5C' }}># shared_user.yaml</Box></Box>
+              <Box><Box component="span" sx={{ color: '#DF4926' }}>session_id</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box></Box>
+              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>type</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> string</Box></Box>
+              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>required</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#E8A84E' }}> true</Box></Box>
+            </Box>
             <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
               Add your first file
             </Button>
@@ -183,7 +194,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#22A06B' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography></>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0, ml: 0.5 }} />}</>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
@@ -209,13 +220,14 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                         <>
                           {visible.map((pn) => {
                             const uses = usageCounts[pn] ?? 0;
+                            const hasErr = errorKeys.has(`shared:${fi}:${pn}`);
                             return (
                               <ListItemButton key={pn} sx={{
                                 pl: 5.5, py: 0.4,
                                 ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
                               }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
                                 <ListItemIcon sx={{ minWidth: 18 }}>
-                                  <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
+                                  <CircleRounded sx={{ fontSize: 6, color: hasErr ? '#D32F2F' : 'text.disabled' }} />
                                 </ListItemIcon>
                                 <ListItemText
                                   primary={
@@ -228,6 +240,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                                           '& .MuiChip-label': { px: 0.6 },
                                         }} />
                                       )}
+                                      {hasErr && <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0 }} />}
                                     </Box>
                                   }
                                   primaryTypographyProps={{
@@ -277,7 +290,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           </Typography>
         )}
       </Box>
-      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} width={12} />
+      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'shared' && selectedPath.parameter ? (
           <SharedParamEditor fileIndex={selectedPath.fileIndex} paramName={selectedPath.parameter} parameterSchema={parameterSchema} />

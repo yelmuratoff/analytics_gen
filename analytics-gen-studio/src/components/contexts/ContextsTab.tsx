@@ -34,6 +34,7 @@ import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts
 import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
+import { useErrorKeys } from '../../hooks/useValidation.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
@@ -58,6 +59,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const addContextProperty = useStore((s) => s.addContextProperty);
   const removeContextProperty = useStore((s) => s.removeContextProperty);
 
+  const errorKeys = useErrorKeys();
   const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
   const [isExpandPending, startTransition] = useTransition();
   const isPending = isSearchPending || isExpandPending;
@@ -168,9 +170,18 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
               <LayersRounded sx={{ fontSize: 28, color: '#6366F1' }} />
             </Box>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 0.5, fontWeight: 600 }}>No contexts yet</Typography>
-            <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 2 }}>
-              Contexts group properties that are set/updated during the app lifecycle.
+            <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 1.5 }}>
+              Contexts track state across the app lifecycle with set/update operations.
             </Typography>
+            <Box sx={{
+              mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: '#1E1E1E', textAlign: 'left',
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: '#D4D4D4',
+            }}>
+              <Box><Box component="span" sx={{ color: '#5C5C5C' }}># user_properties.yaml</Box></Box>
+              <Box><Box component="span" sx={{ color: '#DF4926' }}>user_id</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box></Box>
+              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>type</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> string</Box></Box>
+              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>operations</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> [set]</Box></Box>
+            </Box>
             <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
               Add your first context
             </Button>
@@ -194,7 +205,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography></>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0, ml: 0.5 }} />}</>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
@@ -226,15 +237,17 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                       const remaining = propKeys.length - limit;
                       return (
                         <>
-                          {visible.map((pn) => (
+                          {visible.map((pn) => {
+                            const hasErr = errorKeys.has(`contexts:${fi}:${pn}`);
+                            return (
                             <ListItemButton key={pn} sx={{
                               pl: 7, py: 0.4,
                               ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
                             }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
                               <ListItemIcon sx={{ minWidth: 18 }}>
-                                <CircleRounded sx={{ fontSize: 6, color: 'text.disabled' }} />
+                                <CircleRounded sx={{ fontSize: 6, color: hasErr ? '#D32F2F' : 'text.disabled' }} />
                               </ListItemIcon>
-                              <ListItemText primary={pn} primaryTypographyProps={{
+                              <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0 }} />}</Box>} primaryTypographyProps={{
                                 fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
                               }} />
                               <Tooltip title="Delete" arrow enterDelay={400}>
@@ -246,7 +259,8 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                                 </IconButton>
                               </Tooltip>
                             </ListItemButton>
-                          ))}
+                            );
+                          })}
                           {remaining > 0 && (
                             <ListItemButton sx={{ pl: 7, py: 0.5, justifyContent: 'center' }}
                               onClick={() => setVisibleLimits((prev) => ({ ...prev, [fi]: Math.min((prev[fi] ?? PAGE_SIZE) + PAGE_SIZE, propKeys.length) }))} dense>
@@ -279,7 +293,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
           </Typography>
         )}
       </Box>
-      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} width={12} />
+      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
