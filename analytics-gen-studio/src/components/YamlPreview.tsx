@@ -174,8 +174,8 @@ export default function YamlPreview() {
     number: theme.palette.yaml.number,
     string: theme.palette.yaml.string,
     null: theme.palette.yaml.null,
-    errorBg: 'rgba(211,47,47,0.12)',
-  }), [theme.palette.yaml]);
+    errorBg: `${theme.palette.error.main}1F`,
+  }), [theme.palette.yaml, theme.palette.error.main]);
 
   const highlightedHtml = useMemo(
     () => {

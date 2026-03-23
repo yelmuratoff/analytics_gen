@@ -40,14 +40,15 @@ import ConfirmDialog from '../ConfirmDialog.tsx';
 import type { EventDef, ParamDef } from '../../types/index.ts';
 
 const ErrorDot = ({ messages }: { messages?: string[] }) => {
+  const label = messages?.length ? messages.join('; ') : 'Validation error';
   const dot = (
-    <Box component="span" sx={{
+    <Box component="span" role="img" aria-label={label} sx={{
       width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main',
       display: 'inline-block', flexShrink: 0, ml: 0.5,
     }} />
   );
   if (!messages?.length) return dot;
-  return <Tooltip title={messages.join('; ')} arrow enterDelay={200} placement="right">{dot}</Tooltip>;
+  return <Tooltip title={label} arrow enterDelay={200} placement="right">{dot}</Tooltip>;
 };
 
 const Arrow = ({ open }: { open: boolean }) => open
@@ -66,16 +67,23 @@ const Badge = memo(({ n }: { n: number }) => (
 
 // ── Parameter Row ──
 
-const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, onSelect, onDuplicate, onDelete }: {
+interface ParamRowActions {
+  select: (path: { tab: 'events'; fileIndex: number; domain: string; event: string; parameter: string }) => void;
+  duplicate: (fi: number, dn: string, en: string, pn: string) => void;
+  confirmDelete: (opts: { title: string; message: string; action: () => void }) => void;
+  remove: (fi: number, dn: string, en: string, pn: string) => void;
+}
+
+const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, actions }: {
   pn: string; pv: ParamDef | string | null; fi: number; dn: string; en: string;
   isSelected: boolean; hasError?: boolean; errorMsgs?: string[];
-  onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
+  actions: ParamRowActions;
 }) => (
   <ListItemButton data-selected={isSelected || undefined} sx={{
     pl: 9.5, py: 0.4,
     ...(isSelected && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
     ...(hasError && !isSelected && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.03)) }),
-  }} onClick={onSelect} dense>
+  }} onClick={() => actions.select({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })} dense>
     <ListItemIcon sx={{ minWidth: 18 }}>
       {pv === null
         ? <LinkRounded sx={{ fontSize: 14, color: 'brand.contexts' }} />
@@ -101,12 +109,19 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, on
       secondaryTypographyProps={{ fontSize: '0.78rem' }}
     />
     <Tooltip title="Duplicate" arrow enterDelay={400}>
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
+      <IconButton size="small" onClick={(e) => { e.stopPropagation(); actions.duplicate(fi, dn, en, pn); }} sx={hoverAction}>
         <ContentCopyRounded sx={{ fontSize: 13 }} />
       </IconButton>
     </Tooltip>
     <Tooltip title="Delete" arrow enterDelay={400}>
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
+      <IconButton size="small" onClick={(e) => {
+        e.stopPropagation();
+        actions.confirmDelete({
+          title: `Delete parameter "${pn}"?`,
+          message: `This will remove the parameter from event "${en}".`,
+          action: () => actions.remove(fi, dn, en, pn),
+        });
+      }} sx={hoverDel}>
         <DeleteOutlineRounded sx={{ fontSize: 14 }} />
       </IconButton>
     </Tooltip>
@@ -191,6 +206,15 @@ export default function FileTree() {
   const [sharedAnchorEl, setSharedAnchorEl] = useState<HTMLElement | null>(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
+
+  // Stable action refs for memoized ParamRow — store selectors are already stable
+  const paramActions = useMemo((): ParamRowActions => ({
+    select: setSelectedPath,
+    duplicate: duplicateParameter,
+    confirmDelete: setConfirmDelete,
+    remove: removeParameter,
+  }), [setSelectedPath, duplicateParameter, removeParameter]);
+
   // Pagination: track visible limit per parent key, default PAGE_SIZE
   const PAGE_SIZE = 10;
   const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({});
@@ -540,13 +564,7 @@ export default function FileTree() {
                                             isSelected={isSel(fi, dn, en, pn)}
                                             hasError={errorKeys.has(`events:${fi}:${dn}:${en}:${pn}`)}
                                             errorMsgs={errorMessages.get(`events:${fi}:${dn}:${en}:${pn}`)}
-                                            onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })}
-                                            onDuplicate={() => duplicateParameter(fi, dn, en, pn)}
-                                            onDelete={() => setConfirmDelete({
-                                              title: `Delete parameter "${pn}"?`,
-                                              message: `This will remove the parameter from event "${en}".`,
-                                              action: () => removeParameter(fi, dn, en, pn),
-                                            })}
+                                            actions={paramActions}
                                           />
                                         );
                                       })}

@@ -266,7 +266,7 @@ export default function Layout({ schemas }: LayoutProps) {
           }}>
             <UploadFileRounded sx={{ fontSize: 36, color: 'primary.main' }} />
           </Box>
-          <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '1rem' }}>
+          <Typography sx={{ color: 'common.white', fontWeight: 600, fontSize: '1rem' }}>
             Drop YAML files to import
           </Typography>
           <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>

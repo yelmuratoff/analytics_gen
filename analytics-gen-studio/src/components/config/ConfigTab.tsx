@@ -27,6 +27,7 @@ import GavelRounded from '@mui/icons-material/GavelRounded';
 import TextFieldsRounded from '@mui/icons-material/TextFieldsRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
+import { useTheme } from '@mui/material/styles';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
@@ -54,7 +55,8 @@ function getSectionMeta(schema: Record<string, unknown>): { icon: React.ReactNod
 function Section({ title, icon, accentColor, open, onToggle, filledCount, children }: {
   title: string; icon: React.ReactNode; accentColor?: string; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
 }) {
-  const accent = accentColor ?? '#DF4926'; // fallback needed for template literal hex ops
+  const { palette } = useTheme();
+  const accent = accentColor ?? palette.primary.main;
   return (
     <Box sx={{ mb: 1, borderRadius: 2.5, border: 1, borderColor: 'divider', overflow: 'hidden', borderLeft: '3px solid', borderLeftColor: open ? accent : 'divider', transition: 'border-left-color 0.2s ease' }}>
       <Box

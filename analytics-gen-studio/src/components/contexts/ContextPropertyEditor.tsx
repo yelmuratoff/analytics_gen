@@ -108,13 +108,13 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
                   cursor: 'pointer',
                   transition: 'all 0.1s ease',
                   bgcolor: active ? 'primary.main' : 'transparent',
-                  color: active ? '#fff' : 'text.secondary',
+                  color: active ? 'primary.contrastText' : 'text.secondary',
                   border: '1.5px solid',
                   borderColor: active ? 'primary.main' : 'divider',
                   '&:hover': {
                     bgcolor: active ? 'primary.dark' : (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}14`,
                     borderColor: 'primary.main',
-                    color: active ? '#fff' : 'primary.main',
+                    color: active ? 'primary.contrastText' : 'primary.main',
                   },
                 }}
               />

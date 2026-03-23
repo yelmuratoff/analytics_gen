@@ -255,7 +255,7 @@ function getTheme(mode: ColorMode) {
           root: {
             borderRadius: 10,
             '& .MuiOutlinedInput-notchedOutline': { borderColor: palette.divider },
-            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: isLight ? '#CCC' : '#555' },
+            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: palette.text.disabled },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: palette.primary.main, borderWidth: 1.5 },
           },
         },
