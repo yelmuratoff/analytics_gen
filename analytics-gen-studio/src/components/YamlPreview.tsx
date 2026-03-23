@@ -160,7 +160,7 @@ export default function YamlPreview() {
           {lineCount}L
         </Typography>
         <Tooltip title={wordWrap ? 'No wrap' : 'Wrap lines'} arrow>
-          <IconButton size="small" onClick={() => setWordWrap(!wordWrap)} sx={{
+          <IconButton size="small" aria-label={wordWrap ? 'Disable word wrap' : 'Enable word wrap'} onClick={() => setWordWrap(!wordWrap)} sx={{
             ...previewBtn,
             ...(wordWrap && { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.1)' }),
           }}>
@@ -168,12 +168,12 @@ export default function YamlPreview() {
           </IconButton>
         </Tooltip>
         <Tooltip title={copied ? 'Copied!' : 'Copy'} arrow>
-          <IconButton size="small" onClick={handleCopy} sx={previewBtn}>
+          <IconButton size="small" aria-label="Copy to clipboard" onClick={handleCopy} sx={previewBtn}>
             {copied ? <CheckCircleRounded sx={{ fontSize: 16, color: '#4CAF50' }} /> : <ContentCopyRounded sx={{ fontSize: 16 }} />}
           </IconButton>
         </Tooltip>
         <Tooltip title="Download" arrow>
-          <IconButton size="small" onClick={() => exportSingleFile(currentFile.content, currentFile.fileName)} sx={previewBtn}>
+          <IconButton size="small" aria-label="Download file" onClick={() => exportSingleFile(currentFile.content, currentFile.fileName)} sx={previewBtn}>
             <FileDownloadRounded sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>

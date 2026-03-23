@@ -362,7 +362,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title={`Search (${mod}K)`} arrow>
-            <IconButton size="small" onClick={() => setPaletteOpen(true)} sx={{
+            <IconButton size="small" aria-label="Search" onClick={() => setPaletteOpen(true)} sx={{
               color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
             }}>
               <SearchRounded sx={{ fontSize: 20 }} />

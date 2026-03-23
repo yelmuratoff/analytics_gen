@@ -265,7 +265,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                             <ListItemButton sx={{ pl: 7, py: 0.5, justifyContent: 'center' }}
                               onClick={() => setVisibleLimits((prev) => ({ ...prev, [fi]: Math.min((prev[fi] ?? PAGE_SIZE) + PAGE_SIZE, propKeys.length) }))} dense>
                               <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
-                                Show {remaining} more propert{remaining > 1 ? 'ies' : 'y'}...
+                                Show {remaining} more {remaining > 1 ? 'properties' : 'property'}...
                               </Typography>
                             </ListItemButton>
                           )}
