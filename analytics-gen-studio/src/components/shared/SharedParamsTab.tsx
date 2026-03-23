@@ -17,6 +17,7 @@ import CircleRounded from '@mui/icons-material/CircleRounded';
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
+import EditRounded from '@mui/icons-material/EditRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
@@ -27,13 +28,14 @@ import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
-import { hoverDelete, addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-shared.ts';
+import { addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
+import ItemMenu from '../ItemMenu.tsx';
 import ResizeHandle from '../ResizeHandle.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
 
@@ -50,6 +52,8 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const removeSharedParamFile = useStore((s) => s.removeSharedParamFile);
   const addSharedParam = useStore((s) => s.addSharedParam);
   const removeSharedParam = useStore((s) => s.removeSharedParam);
+  const renameSharedParamFile = useStore((s) => s.renameSharedParamFile);
+  const renameSharedParam = useStore((s) => s.renameSharedParam);
 
   const errorKeys = useErrorKeys();
   const errorMessages = useErrorMessages();
@@ -58,6 +62,8 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const isPending = isSearchPending || isExpandPending;
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addParamOpen, setAddParamOpen] = useState<number | null>(null);
+  const [editing, setEditing] = useState<{ type: 'file' | 'param'; fi: number; original: string } | null>(null);
+  const [editValue, setEditValue] = useState('');
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
@@ -106,6 +112,37 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     if (file.fileName.toLowerCase().includes(q)) return true;
     return Object.keys(file.parameters).some((pn) => pn.toLowerCase().includes(q));
   };
+
+  const startEditing = (type: 'file' | 'param', fi: number, original: string) => {
+    setEditing({ type, fi, original });
+    setEditValue(original);
+  };
+
+  const commitRename = () => {
+    if (!editing) return;
+    const val = editValue.trim();
+    if (!val || val === editing.original) { setEditing(null); return; }
+    if (editing.type === 'file') {
+      renameSharedParamFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`);
+    } else {
+      renameSharedParam(editing.fi, editing.original, val);
+    }
+    setEditing(null);
+  };
+
+  const renderInlineEdit = (fontSize = '0.82rem', height = 24) => (
+    <TextField size="small" autoFocus value={editValue}
+      onChange={(e) => setEditValue(e.target.value)}
+      onBlur={commitRename}
+      onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
+      onClick={(e) => e.stopPropagation()}
+      slotProps={{
+        htmlInput: { 'aria-label': 'Rename' },
+        input: { sx: { fontSize, py: 0, height, fontFamily: '"JetBrains Mono", monospace' } },
+      }}
+      sx={{ flex: 1 }}
+    />
+  );
 
   return (
     <Box sx={{ display: 'flex', height: '100%', mx: -3, mt: -1 }}>
@@ -193,19 +230,19 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                   <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: 'brand.shared' }} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <Tooltip title={errorMessages.get(`shared:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
-                    primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
-                    sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
-                  />
-                  <Tooltip title="Delete file" arrow enterDelay={400}>
-                    <IconButton size="small" onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) });
-                    }} sx={hoverDelete}>
-                      <DeleteOutlineRounded sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  </Tooltip>
+                  {editing?.type === 'file' && editing.fi === fi
+                    ? renderInlineEdit('0.85rem', 26)
+                    : (
+                      <ListItemText
+                        primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <Tooltip title={errorMessages.get(`shared:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
+                        primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                        sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
+                      />
+                    )}
+                  <ItemMenu actions={[
+                    { label: 'Rename', icon: <EditRounded sx={{ fontSize: 16 }} />, onClick: () => startEditing('file', fi, file.fileName) },
+                    { label: 'Delete', icon: <DeleteOutlineRounded sx={{ fontSize: 16 }} />, onClick: () => setConfirmDelete({ title: `Delete ${file.fileName}?`, message: 'All parameters in this file will be removed.', action: () => removeSharedParamFile(fi) }), danger: true, dividerBefore: true },
+                  ]} />
                 </ListItemButton>
                 <Collapse in={isFileExpanded(fi) || !!q} timeout={150} unmountOnExit>
                   <List dense disablePadding>
@@ -229,32 +266,32 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                                 <ListItemIcon sx={{ minWidth: 18 }}>
                                   <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />
                                 </ListItemIcon>
-                                <ListItemText
-                                  primary={
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                      <span>{pn}</span>
-                                      {uses > 0 && (
-                                        <Chip label={`${uses} use${uses > 1 ? 's' : ''}`} size="small" sx={{
-                                          height: 16, fontSize: '0.6rem', fontWeight: 600,
-                                          bgcolor: 'rgba(46,125,50,0.08)', color: 'success.main',
-                                          '& .MuiChip-label': { px: 0.6 },
-                                        }} />
-                                      )}
-                                      {hasErr && <Tooltip title={errorMessages.get(`shared:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}
-                                    </Box>
-                                  }
-                                  primaryTypographyProps={{
-                                    fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
-                                  }}
-                                />
-                                <Tooltip title="Delete" arrow enterDelay={400}>
-                                  <IconButton size="small" onClick={(e) => {
-                                    e.stopPropagation();
-                                    setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the shared parameter "${pn}".`, action: () => removeSharedParam(fi, pn) });
-                                  }} sx={hoverDelete}>
-                                    <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-                                  </IconButton>
-                                </Tooltip>
+                                {editing?.type === 'param' && editing.fi === fi && editing.original === pn
+                                  ? renderInlineEdit('0.78rem', 24)
+                                  : (
+                                    <ListItemText
+                                      primary={
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                          <span>{pn}</span>
+                                          {uses > 0 && (
+                                            <Chip label={`${uses} use${uses > 1 ? 's' : ''}`} size="small" sx={{
+                                              height: 16, fontSize: '0.6rem', fontWeight: 600,
+                                              bgcolor: 'rgba(46,125,50,0.08)', color: 'success.main',
+                                              '& .MuiChip-label': { px: 0.6 },
+                                            }} />
+                                          )}
+                                          {hasErr && <Tooltip title={errorMessages.get(`shared:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}
+                                        </Box>
+                                      }
+                                      primaryTypographyProps={{
+                                        fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
+                                      }}
+                                    />
+                                  )}
+                                <ItemMenu actions={[
+                                  { label: 'Rename', icon: <EditRounded sx={{ fontSize: 16 }} />, onClick: () => startEditing('param', fi, pn) },
+                                  { label: 'Delete', icon: <DeleteOutlineRounded sx={{ fontSize: 16 }} />, onClick: () => setConfirmDelete({ title: `Delete "${pn}"?`, message: `This will remove the shared parameter "${pn}".`, action: () => removeSharedParam(fi, pn) }), danger: true, dividerBefore: true },
+                                ]} />
                               </ListItemButton>
                             );
                           })}

@@ -134,6 +134,11 @@ export interface StudioState {
   renameDomain: (fileIndex: number, oldName: string, newName: string) => void;
   renameEvent: (fileIndex: number, domain: string, oldName: string, newName: string) => void;
   renameParameter: (fileIndex: number, domain: string, eventName: string, oldName: string, newName: string) => void;
+  renameSharedParamFile: (fileIndex: number, newName: string) => void;
+  renameSharedParam: (fileIndex: number, oldName: string, newName: string) => void;
+  renameContextFile: (fileIndex: number, newName: string) => void;
+  renameContextName: (fileIndex: number, newName: string) => void;
+  renameContextProperty: (fileIndex: number, oldName: string, newName: string) => void;
 
   importEventFile: (file: import('./index.ts').EventFile) => void;
   importSharedParamFile: (file: import('./index.ts').SharedParamFile) => void;

@@ -32,11 +32,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
-import { hoverAction, hoverEdit, hoverDelete as hoverDel, addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
+import { addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
+import ItemMenu from '../ItemMenu.tsx';
 import type { EventDef, ParamDef } from '../../types/index.ts';
 
 const ErrorDot = ({ messages }: { messages?: string[] }) => {
@@ -72,12 +73,14 @@ interface ParamRowActions {
   duplicate: (fi: number, dn: string, en: string, pn: string) => void;
   confirmDelete: (opts: { title: string; message: string; action: () => void }) => void;
   remove: (fi: number, dn: string, en: string, pn: string) => void;
+  startEdit: (item: { type: string; fi: number; domain: string; event: string; original: string }) => void;
 }
 
-const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, actions }: {
+const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, actions, editNode }: {
   pn: string; pv: ParamDef | string | null; fi: number; dn: string; en: string;
   isSelected: boolean; hasError?: boolean; errorMsgs?: string[];
   actions: ParamRowActions;
+  editNode?: React.ReactNode;
 }) => (
   <ListItemButton data-selected={isSelected || undefined} sx={{
     pl: 9.5, py: 0.4,
@@ -89,51 +92,44 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, ac
         ? <LinkRounded sx={{ fontSize: 14, color: 'brand.contexts' }} />
         : <CircleRounded sx={{ fontSize: 6, color: hasError ? 'error.main' : 'text.disabled' }} />}
     </ListItemIcon>
-    <ListItemText
-      sx={truncTextSx}
-      primary={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box component="span" sx={truncNameSx}>{pn}</Box>
-          {pv === null && (
-            <Chip label="shared" size="small" sx={{
-              height: 16, fontSize: '0.6rem', fontWeight: 600,
-              bgcolor: (t: any) => `${t.palette.brand.contexts}14`, color: 'brand.contexts',
-              '& .MuiChip-label': { px: 0.6 },
-            }} />
-          )}
-          {hasError && <ErrorDot messages={errorMsgs} />}
-        </Box>
-      }
-      secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
-      primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
-      secondaryTypographyProps={{ fontSize: '0.78rem' }}
-    />
-    <Tooltip title="Duplicate" arrow enterDelay={400}>
-      <IconButton size="small" onClick={(e) => { e.stopPropagation(); actions.duplicate(fi, dn, en, pn); }} sx={hoverAction}>
-        <ContentCopyRounded sx={{ fontSize: 13 }} />
-      </IconButton>
-    </Tooltip>
-    <Tooltip title="Delete" arrow enterDelay={400}>
-      <IconButton size="small" onClick={(e) => {
-        e.stopPropagation();
-        actions.confirmDelete({
-          title: `Delete parameter "${pn}"?`,
-          message: `This will remove the parameter from event "${en}".`,
-          action: () => actions.remove(fi, dn, en, pn),
-        });
-      }} sx={hoverDel}>
-        <DeleteOutlineRounded sx={{ fontSize: 14 }} />
-      </IconButton>
-    </Tooltip>
+    {editNode || (
+      <>
+        <ListItemText
+          sx={truncTextSx}
+          primary={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box component="span" sx={truncNameSx}>{pn}</Box>
+              {pv === null && (
+                <Chip label="shared" size="small" sx={{
+                  height: 16, fontSize: '0.6rem', fontWeight: 600,
+                  bgcolor: (t: any) => `${t.palette.brand.contexts}14`, color: 'brand.contexts',
+                  '& .MuiChip-label': { px: 0.6 },
+                }} />
+              )}
+              {hasError && <ErrorDot messages={errorMsgs} />}
+            </Box>
+          }
+          secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
+          primaryTypographyProps={{ fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace' }}
+          secondaryTypographyProps={{ fontSize: '0.78rem' }}
+        />
+        <ItemMenu actions={[
+          { label: 'Rename', icon: <EditRounded sx={{ fontSize: 16 }} />, onClick: () => actions.startEdit({ type: 'param', fi, domain: dn, event: en, original: pn }) },
+          { label: 'Duplicate', icon: <ContentCopyRounded sx={{ fontSize: 16 }} />, onClick: () => actions.duplicate(fi, dn, en, pn) },
+          { label: 'Delete', icon: <DeleteOutlineRounded sx={{ fontSize: 16 }} />, onClick: () => actions.confirmDelete({ title: `Delete parameter "${pn}"?`, message: `This will remove the parameter from event "${en}".`, action: () => actions.remove(fi, dn, en, pn) }), danger: true, dividerBefore: true },
+        ]} />
+      </>
+    )}
   </ListItemButton>
 ));
 
 // ── Event Row ──
 
-const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, errorMsgs, onToggle, onSelect, onDuplicate, onDelete, children }: {
+const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, errorMsgs, onToggle, onSelect, onDuplicate, onDelete, onRename, editNode, children }: {
   en: string; paramCount: number; fi: number; dn: string;
   isSelected: boolean; isOpen: boolean; hasError?: boolean; errorMsgs?: string[];
   onToggle: () => void; onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
+  onRename: () => void; editNode?: React.ReactNode;
   children?: React.ReactNode;
 }) => (
   <Box>
@@ -146,21 +142,20 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, e
       <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
         <ElectricBoltRounded sx={{ fontSize: 15, color: 'brand.events' }} />
       </ListItemIcon>
-      <ListItemText
-        primary={<><Box component="span" sx={truncNameSx}>{en}</Box>{paramCount > 0 && <Badge n={paramCount} />}{hasError && <ErrorDot messages={errorMsgs} />}</>}
-        primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
-        sx={truncTextSx}
-      />
-      <Tooltip title="Duplicate" arrow enterDelay={400}>
-        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} sx={hoverAction}>
-          <ContentCopyRounded sx={{ fontSize: 14 }} />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Delete" arrow enterDelay={400}>
-        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }} sx={hoverDel}>
-          <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-        </IconButton>
-      </Tooltip>
+      {editNode || (
+        <>
+          <ListItemText
+            primary={<><Box component="span" sx={truncNameSx}>{en}</Box>{paramCount > 0 && <Badge n={paramCount} />}{hasError && <ErrorDot messages={errorMsgs} />}</>}
+            primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
+            sx={truncTextSx}
+          />
+          <ItemMenu actions={[
+            { label: 'Rename', icon: <EditRounded sx={{ fontSize: 16 }} />, onClick: onRename },
+            { label: 'Duplicate', icon: <ContentCopyRounded sx={{ fontSize: 16 }} />, onClick: onDuplicate },
+            { label: 'Delete', icon: <DeleteOutlineRounded sx={{ fontSize: 16 }} />, onClick: onDelete, danger: true, dividerBefore: true },
+          ]} />
+        </>
+      )}
     </ListItemButton>
     {isOpen && children}
   </Box>
@@ -207,14 +202,6 @@ export default function FileTree() {
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
 
-  // Stable action refs for memoized ParamRow — store selectors are already stable
-  const paramActions = useMemo((): ParamRowActions => ({
-    select: setSelectedPath,
-    duplicate: duplicateParameter,
-    confirmDelete: setConfirmDelete,
-    remove: removeParameter,
-  }), [setSelectedPath, duplicateParameter, removeParameter]);
-
   // Pagination: track visible limit per parent key, default PAGE_SIZE
   const PAGE_SIZE = 10;
   const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({});
@@ -227,6 +214,15 @@ export default function FileTree() {
     setEditing(item);
     setEditValue(item!.original);
   }, []);
+
+  // Stable action refs for memoized ParamRow — store selectors are already stable
+  const paramActions = useMemo((): ParamRowActions => ({
+    select: setSelectedPath,
+    duplicate: duplicateParameter,
+    confirmDelete: setConfirmDelete,
+    remove: removeParameter,
+    startEdit: startEditing,
+  }), [setSelectedPath, duplicateParameter, removeParameter, startEditing]);
 
   const commitRename = useCallback(() => {
     if (!editing) return;
@@ -307,11 +303,6 @@ export default function FileTree() {
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&
     selectedPath.domain === domain && selectedPath.event === event && selectedPath.parameter === param,
   [selectedPath]);
-
-  const confirmDel = useCallback((title: string, message: string, action: () => void) => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setConfirmDelete({ title, message, action });
-  }, []);
 
   // Search helpers
   const matchesSearch = (name: string) => !q || name.toLowerCase().includes(q);
@@ -461,24 +452,13 @@ export default function FileTree() {
                         primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}{errorKeys.has(`events:${fi}`) && <ErrorDot messages={errorMessages.get(`events:${fi}`)} />}</>}
                         primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                         sx={truncTextSx}
-                        onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
                       />
-                      <Tooltip title="Rename" arrow enterDelay={400}>
-                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }} sx={hoverEdit}>
-                          <EditRounded sx={{ fontSize: 13 }} />
-                        </IconButton>
-                      </Tooltip>
+                      <ItemMenu actions={[
+                        { label: 'Rename', icon: <EditRounded sx={{ fontSize: 16 }} />, onClick: () => startEditing({ type: 'file', fi, original: file.fileName }) },
+                        { label: 'Delete', icon: <DeleteOutlineRounded sx={{ fontSize: 16 }} />, onClick: () => setConfirmDelete({ title: `Delete ${file.fileName}?`, message: `This will remove all domains, events and parameters in this file.`, action: () => removeEventFile(fi) }), danger: true, dividerBefore: true },
+                      ]} />
                     </>
                   )}
-                <Tooltip title="Delete file" arrow enterDelay={400}>
-                  <IconButton size="small" onClick={confirmDel(
-                    `Delete ${file.fileName}?`,
-                    `This will remove all domains, events and parameters in this file.`,
-                    () => removeEventFile(fi),
-                  )} sx={hoverDel}>
-                    <DeleteOutlineRounded sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Tooltip>
               </ListItemButton>
 
               <Collapse in={fileOpen} timeout={150} unmountOnExit>
@@ -510,24 +490,13 @@ export default function FileTree() {
                                   primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}{errorKeys.has(`events:${fi}:${dn}`) && <ErrorDot messages={errorMessages.get(`events:${fi}:${dn}`)} />}</>}
                                   primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: 'primary.main' }}
                                   sx={truncTextSx}
-                                  onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
                                 />
-                                <Tooltip title="Rename" arrow enterDelay={400}>
-                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }} sx={hoverEdit}>
-                                    <EditRounded sx={{ fontSize: 12 }} />
-                                  </IconButton>
-                                </Tooltip>
+                                <ItemMenu actions={[
+                                  { label: 'Rename', icon: <EditRounded sx={{ fontSize: 16 }} />, onClick: () => startEditing({ type: 'domain', fi, original: dn }) },
+                                  { label: 'Delete', icon: <DeleteOutlineRounded sx={{ fontSize: 16 }} />, onClick: () => setConfirmDelete({ title: `Delete domain "${dn}"?`, message: `This will remove ${eventCount} event(s) and all their parameters.`, action: () => removeDomain(fi, dn) }), danger: true, dividerBefore: true },
+                                ]} />
                               </>
                             )}
-                          <Tooltip title="Delete domain" arrow enterDelay={400}>
-                            <IconButton size="small" onClick={confirmDel(
-                              `Delete domain "${dn}"?`,
-                              `This will remove ${eventCount} event(s) and all their parameters.`,
-                              () => removeDomain(fi, dn),
-                            )} sx={hoverDel}>
-                              <DeleteOutlineRounded sx={{ fontSize: 15 }} />
-                            </IconButton>
-                          </Tooltip>
                         </ListItemButton>
 
                         {domainOpen && (() => {
@@ -550,6 +519,8 @@ export default function FileTree() {
                                     onToggle={() => toggle(ek)}
                                     onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en })}
                                     onDuplicate={() => duplicateEvent(fi, dn, en)}
+                                    onRename={() => startEditing({ type: 'event', fi, domain: dn, original: en })}
+                                    editNode={editing?.type === 'event' && editing.fi === fi && editing.domain === dn && editing.original === en ? renderInlineEdit(commitRename, '0.82rem', 26) : undefined}
                                     onDelete={() => setConfirmDelete({
                                       title: `Delete event "${en}"?`,
                                       message: `This will remove the event and its ${paramCount} parameter(s).`,
@@ -565,6 +536,7 @@ export default function FileTree() {
                                             hasError={errorKeys.has(`events:${fi}:${dn}:${en}:${pn}`)}
                                             errorMsgs={errorMessages.get(`events:${fi}:${dn}:${en}:${pn}`)}
                                             actions={paramActions}
+                                            editNode={editing?.type === 'param' && editing.fi === fi && editing.domain === dn && editing.event === en && editing.original === pn ? renderInlineEdit(commitRename, '0.78rem', 24, true) : undefined}
                                           />
                                         );
                                       })}

@@ -232,6 +232,37 @@ export const useStore = create<StudioState>()(
           s.eventFiles[fileIndex].domains[domain][eventName].parameters = rebuilt;
           if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
         }),
+        renameSharedParamFile: (fileIndex, newName) => set((s) => {
+          s.sharedParamFiles[fileIndex].fileName = newName;
+        }),
+        renameSharedParam: (fileIndex, oldName, newName) => set((s) => {
+          const params = s.sharedParamFiles[fileIndex].parameters;
+          if (oldName === newName || !(oldName in params)) return;
+          const entries = Object.entries(params);
+          const rebuilt: typeof params = {};
+          for (const [k, v] of entries) {
+            rebuilt[k === oldName ? newName : k] = v;
+          }
+          s.sharedParamFiles[fileIndex].parameters = rebuilt;
+          if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
+        }),
+        renameContextFile: (fileIndex, newName) => set((s) => {
+          s.contextFiles[fileIndex].fileName = newName;
+        }),
+        renameContextName: (fileIndex, newName) => set((s) => {
+          s.contextFiles[fileIndex].contextName = newName;
+        }),
+        renameContextProperty: (fileIndex, oldName, newName) => set((s) => {
+          const props = s.contextFiles[fileIndex].properties;
+          if (oldName === newName || !(oldName in props)) return;
+          const entries = Object.entries(props);
+          const rebuilt: typeof props = {};
+          for (const [k, v] of entries) {
+            rebuilt[k === oldName ? newName : k] = v;
+          }
+          s.contextFiles[fileIndex].properties = rebuilt;
+          if (s.selectedPath?.contextProperty === oldName) s.selectedPath.contextProperty = newName;
+        }),
 
         setSelectedPath: (path) => set((s) => { s.selectedPath = path; }),
 
