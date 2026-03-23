@@ -155,10 +155,29 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
       // Show actions first, then first 30 nav items
       return [...actionItems, ...navItems.slice(0, 30)];
     }
-    const matchedActions = actionItems.filter((item) => item.label.toLowerCase().includes(q));
-    const matchedNav = navItems.filter((item) =>
-      item.label.toLowerCase().includes(q) || item.secondary.toLowerCase().includes(q)
-    ).slice(0, 40);
+    // Fuzzy match: check if all characters of query appear in order in the target
+    const fuzzyMatch = (text: string, pattern: string): boolean => {
+      let pi = 0;
+      for (let i = 0; i < text.length && pi < pattern.length; i++) {
+        if (text[i] === pattern[pi]) pi++;
+      }
+      return pi === pattern.length;
+    };
+    // Score: exact includes > starts with > fuzzy
+    const score = (text: string): number => {
+      const lower = text.toLowerCase();
+      if (lower.includes(q)) return 3;
+      if (fuzzyMatch(lower, q)) return 1;
+      return 0;
+    };
+    const matchAndSort = (items: PaletteItem[]) =>
+      items
+        .map((item) => ({ item, s: Math.max(score(item.label), score(item.secondary)) }))
+        .filter(({ s }) => s > 0)
+        .sort((a, b) => b.s - a.s)
+        .map(({ item }) => item);
+    const matchedActions = matchAndSort(actionItems);
+    const matchedNav = matchAndSort(navItems).slice(0, 40);
     return [...matchedActions, ...matchedNav];
   }, [actionItems, navItems, query]);
 

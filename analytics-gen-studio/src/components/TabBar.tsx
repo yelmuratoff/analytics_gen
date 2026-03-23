@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
@@ -35,6 +36,7 @@ export default function TabBar({ children }: TabBarProps) {
   const sharedParamFiles = useStore((s) => s.sharedParamFiles);
   const contextFiles = useStore((s) => s.contextFiles);
   const errors = useValidation();
+  const isCompact = useMediaQuery('(max-width:768px)');
 
   const itemCounts = useMemo(() => {
     const configCount = Object.values(config as unknown as Record<string, Record<string, unknown>>).reduce((sum, section) => {
@@ -54,10 +56,12 @@ export default function TabBar({ children }: TabBarProps) {
     return { config: configCount, events: eventsCount, shared: sharedCount, contexts: contextsCount } as Record<TabId, number>;
   }, [config, eventFiles, sharedParamFiles, contextFiles]);
 
-  const errorCounts = tabs.reduce((acc, t) => {
-    acc[t.id] = errors.filter((e) => e.tab === t.id).length;
-    return acc;
-  }, {} as Record<TabId, number>);
+  const errorCounts = useMemo(() =>
+    tabs.reduce((acc, t) => {
+      acc[t.id] = errors.filter((e) => e.tab === t.id).length;
+      return acc;
+    }, {} as Record<TabId, number>),
+  [errors]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -87,12 +91,14 @@ export default function TabBar({ children }: TabBarProps) {
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v as TabId)}
+        variant={isCompact ? 'fullWidth' : 'standard'}
         sx={{
           minHeight: 44,
           '& .MuiTabs-indicator': { height: 2.5, borderRadius: '2px 2px 0 0', bgcolor: '#DF4926' },
           '& .MuiTab-root': {
-            minHeight: 44, py: 0, px: 2, gap: 0.7,
+            minHeight: 44, py: 0, px: isCompact ? 1 : 2, gap: 0.7,
             color: 'text.secondary', fontSize: '0.86rem',
+            minWidth: isCompact ? 44 : undefined,
             '&.Mui-selected': { color: 'text.primary' },
           },
         }}
@@ -102,7 +108,7 @@ export default function TabBar({ children }: TabBarProps) {
             key={t.id}
             value={t.id}
             label={
-              <Tooltip title={`${modKey}${i + 1}`} arrow enterDelay={600} placement="bottom">
+              <Tooltip title={`${isCompact ? `${t.label} \u2022 ` : ''}${modKey}${i + 1}`} arrow enterDelay={600} placement="bottom">
                 <Badge
                   badgeContent={errorCounts[t.id]}
                   color="error"
@@ -114,8 +120,8 @@ export default function TabBar({ children }: TabBarProps) {
                   }}
                 >
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.7 }}>
-                    {t.label}
-                    {itemCounts[t.id] > 0 && (
+                    {!isCompact && t.label}
+                    {!isCompact && itemCounts[t.id] > 0 && (
                       <Tooltip title={countLabel(t.id, itemCounts[t.id])} arrow enterDelay={400} placement="top">
                         <Box component="span" sx={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

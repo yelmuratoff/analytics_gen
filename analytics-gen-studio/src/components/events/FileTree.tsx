@@ -70,6 +70,7 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, onSelect, onD
   <ListItemButton sx={{
     pl: 9.5, py: 0.4,
     ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
+    ...(hasError && !isSelected && { bgcolor: alpha('#D32F2F', 0.03) }),
   }} onClick={onSelect} dense>
     <ListItemIcon sx={{ minWidth: 18 }}>
       {pv === null
@@ -120,6 +121,7 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, o
     <ListItemButton sx={{
       pl: 6.5, py: 0.4,
       ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
+      ...(hasError && !isSelected && { bgcolor: alpha('#D32F2F', 0.03) }),
     }} onClick={() => { onToggle(); onSelect(); }} dense>
       <Arrow open={isOpen} />
       <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
@@ -379,7 +381,10 @@ export default function FileTree() {
           const totalEvents = Object.values(file.domains).reduce((sum, evts) => sum + Object.keys(evts).length, 0);
           return (
             <Box key={fi}>
-              <ListItemButton onClick={() => toggle(fk)} dense sx={{ py: 0.4 }}>
+              <ListItemButton onClick={() => toggle(fk)} dense sx={{
+                py: 0.4,
+                ...(errorKeys.has(`events:${fi}`) && { bgcolor: alpha('#D32F2F', 0.02) }),
+              }}>
                 <Arrow open={fileOpen} />
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: '#8B9DAF' }} />
@@ -424,6 +429,7 @@ export default function FileTree() {
                         <ListItemButton sx={{
                           pl: 4, py: 0.35,
                           ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: alpha('#DF4926', 0.06) }),
+                          ...(errorKeys.has(`events:${fi}:${dn}`) && !isSel(fi, dn, undefined, undefined) && { bgcolor: alpha('#D32F2F', 0.02) }),
                         }} onClick={() => {
                           toggle(dk);
                           setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn });
