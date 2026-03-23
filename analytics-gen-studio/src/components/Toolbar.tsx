@@ -68,6 +68,14 @@ const shortcuts = [
   { keys: `${mod}1\u20134`, description: 'Switch tabs' },
 ];
 
+const actionBtnSx = {
+  fontSize: '0.82rem',
+  color: 'text.secondary',
+  borderColor: 'transparent',
+  whiteSpace: 'nowrap',
+  '&:hover': { color: 'primary.main', bgcolor: 'action.hover', borderColor: 'transparent' },
+} as const;
+
 interface ToolbarProps {
   importHints: ImportSchemaHints;
 }
@@ -285,14 +293,6 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [handleSave, handleSaveAs, handleExportZip, handleOpen, undo, redo]);
-
-  const actionBtnSx = {
-    fontSize: '0.82rem',
-    color: 'text.secondary',
-    borderColor: 'transparent',
-    whiteSpace: 'nowrap',
-    '&:hover': { color: 'primary.main', bgcolor: 'action.hover', borderColor: 'transparent' },
-  };
 
   return (
     <>

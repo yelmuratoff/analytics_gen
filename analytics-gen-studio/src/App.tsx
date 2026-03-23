@@ -117,6 +117,7 @@ function getTheme(mode: ColorMode) {
       fileIcon: '#8B9DAF',
     },
     yaml: {
+      bg: '#1E1E1E',
       key: '#DF4926',
       comment: '#5C5C5C',
       text: '#D4D4D4',

@@ -9,6 +9,7 @@ declare module '@mui/material/styles' {
       fileIcon: string;
     };
     yaml: {
+      bg: string;
       key: string;
       comment: string;
       text: string;
@@ -30,6 +31,7 @@ declare module '@mui/material/styles' {
       fileIcon?: string;
     };
     yaml?: {
+      bg?: string;
       key?: string;
       comment?: string;
       text?: string;

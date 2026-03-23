@@ -127,6 +127,8 @@ function highlightYamlToHtml(content: string, colors: YamlColors, errorLines?: S
   }).join('');
 }
 
+const previewBtnSx = { color: 'yaml.comment', '&:hover': { color: 'yaml.text', bgcolor: 'yaml.border' } } as const;
+
 export default function YamlPreview() {
   const files = useYamlPreview();
   const activeTab = useStore((s) => s.activeTab);
@@ -184,6 +186,10 @@ export default function YamlPreview() {
     [currentFile, currentFileErrors, yamlColors],
   );
   const lineCount = currentFile ? currentFile.content.split('\n').length : 0;
+  const lineNumbers = useMemo(
+    () => Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>),
+    [lineCount],
+  );
 
   if (!currentFile) {
     return (
@@ -202,7 +208,7 @@ export default function YamlPreview() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const previewBtn = { color: 'yaml.comment', '&:hover': { color: 'yaml.text', bgcolor: 'yaml.border' } };
+  const previewBtn = previewBtnSx;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -300,7 +306,7 @@ export default function YamlPreview() {
               color: 'rgba(255,255,255,0.15)', userSelect: 'none',
               textAlign: 'right', minWidth: '3em', fontSize: '0.75rem',
             }}>
-              {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
+              {lineNumbers}
             </Box>
           )}
           <Box component="code" sx={{

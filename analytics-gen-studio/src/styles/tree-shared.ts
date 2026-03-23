@@ -1,4 +1,7 @@
-/** Shared style constants for tree sidebars (Events, Shared Params, Contexts) */
+/** Shared constants for tree sidebars (Events, Shared Params, Contexts) */
+
+/** Number of items shown before "Show more" pagination button */
+export const PAGE_SIZE = 20;
 
 export const hoverAction = {
   opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',

@@ -31,7 +31,7 @@ import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
-import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
+import { hoverDelete, addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
@@ -71,7 +71,6 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
-  const PAGE_SIZE = 20;
   const { width: sidebarWidth, dragging, atLimit, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
     initialWidth: 240, storageKey: 'studio-sidebar-contexts',
   });

@@ -77,6 +77,7 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
         )}
         <Box
           component="iframe"
+          title="API Documentation"
           src={DOCS_PATH}
           onLoad={() => setLoading(false)}
           sx={{

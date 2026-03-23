@@ -242,7 +242,7 @@ export default function Layout({ schemas }: LayoutProps) {
         {previewVisible && (
           <Box sx={{
             flex: 1, overflow: 'hidden',
-            bgcolor: '#1E1E1E',
+            bgcolor: 'yaml.bg',
             borderRadius: 1.5,
             display: 'flex', flexDirection: 'column',
           }}>

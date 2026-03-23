@@ -27,7 +27,7 @@ import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
-import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
+import { hoverDelete, addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
@@ -36,8 +36,6 @@ import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
 import ResizeHandle from '../ResizeHandle.tsx';
 import SharedParamEditor from './SharedParamEditor.tsx';
-
-const PAGE_SIZE = 20;
 
 interface SharedParamsTabProps {
   parameterSchema: RJSFSchema;

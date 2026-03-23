@@ -1,10 +1,14 @@
 import Box from '@mui/material/Box';
+import type { Theme } from '@mui/material/styles';
 
 interface ResizeHandleProps {
   dragging: boolean;
   atLimit?: boolean;
   onMouseDown: () => void;
 }
+
+const primaryAlpha = (t: Theme) => `${t.palette.primary.main}0F`;
+const errorAlpha = (t: Theme) => `${t.palette.error.main}14`;
 
 export default function ResizeHandle({ dragging, atLimit, onMouseDown }: ResizeHandleProps) {
   return (
@@ -23,10 +27,10 @@ export default function ResizeHandle({ dragging, atLimit, onMouseDown }: ResizeH
         transition: 'background-color 0.15s',
         borderRadius: 1,
         mx: -0.25,
-        '&:hover': { bgcolor: (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}0F` },
+        '&:hover': { bgcolor: primaryAlpha },
         '&:hover .dot': { bgcolor: 'primary.main', opacity: 0.8 },
-        ...(dragging && !atLimit && { bgcolor: (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}0F` }),
-        ...(dragging && atLimit && { bgcolor: (t: { palette: { error: { main: string } } }) => `${t.palette.error.main}14` }),
+        ...(dragging && !atLimit && { bgcolor: primaryAlpha }),
+        ...(dragging && atLimit && { bgcolor: errorAlpha }),
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
