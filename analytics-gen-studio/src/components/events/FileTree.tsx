@@ -42,7 +42,7 @@ import type { EventDef, ParamDef } from '../../types/index.ts';
 const ErrorDot = ({ messages }: { messages?: string[] }) => {
   const dot = (
     <Box component="span" sx={{
-      width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F',
+      width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main',
       display: 'inline-block', flexShrink: 0, ml: 0.5,
     }} />
   );
@@ -73,13 +73,13 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, on
 }) => (
   <ListItemButton data-selected={isSelected || undefined} sx={{
     pl: 9.5, py: 0.4,
-    ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
-    ...(hasError && !isSelected && { bgcolor: alpha('#D32F2F', 0.03) }),
+    ...(isSelected && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
+    ...(hasError && !isSelected && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.03)) }),
   }} onClick={onSelect} dense>
     <ListItemIcon sx={{ minWidth: 18 }}>
       {pv === null
-        ? <LinkRounded sx={{ fontSize: 14, color: '#6366F1' }} />
-        : <CircleRounded sx={{ fontSize: 6, color: hasError ? '#D32F2F' : 'text.disabled' }} />}
+        ? <LinkRounded sx={{ fontSize: 14, color: 'brand.contexts' }} />
+        : <CircleRounded sx={{ fontSize: 6, color: hasError ? 'error.main' : 'text.disabled' }} />}
     </ListItemIcon>
     <ListItemText
       sx={truncTextSx}
@@ -89,7 +89,7 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, on
           {pv === null && (
             <Chip label="shared" size="small" sx={{
               height: 16, fontSize: '0.6rem', fontWeight: 600,
-              bgcolor: 'rgba(99,102,241,0.08)', color: '#6366F1',
+              bgcolor: (t: any) => `${t.palette.brand.contexts}14`, color: 'brand.contexts',
               '& .MuiChip-label': { px: 0.6 },
             }} />
           )}
@@ -124,12 +124,12 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, e
   <Box>
     <ListItemButton data-selected={isSelected || undefined} sx={{
       pl: 6.5, py: 0.4,
-      ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
-      ...(hasError && !isSelected && { bgcolor: alpha('#D32F2F', 0.03) }),
+      ...(isSelected && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
+      ...(hasError && !isSelected && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.03)) }),
     }} onClick={() => { onToggle(); onSelect(); }} dense>
       <Arrow open={isOpen} />
       <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
-        <ElectricBoltRounded sx={{ fontSize: 15, color: '#E8A84E' }} />
+        <ElectricBoltRounded sx={{ fontSize: 15, color: 'brand.events' }} />
       </ListItemIcon>
       <ListItemText
         primary={<><Box component="span" sx={truncNameSx}>{en}</Box>{paramCount > 0 && <Badge n={paramCount} />}{hasError && <ErrorDot messages={errorMsgs} />}</>}
@@ -329,7 +329,7 @@ export default function FileTree() {
       onClick={(e) => e.stopPropagation()}
       slotProps={{
         htmlInput: { 'aria-label': 'Rename' },
-        input: { sx: { fontSize, py: 0, height, ...(mono ? { fontFamily: '"JetBrains Mono", monospace' } : {}), '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#DF4926', borderWidth: 2 } } },
+        input: { sx: { fontSize, py: 0, height, ...(mono ? { fontFamily: '"JetBrains Mono", monospace' } : {}), '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main', borderWidth: 2 } } },
       }}
       sx={{ flex: 1 }}
     />
@@ -347,7 +347,7 @@ export default function FileTree() {
             <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
               <IconButton size="small" onClick={allExpanded ? collapseAll : expandAll} sx={{
                 color: 'text.secondary', flexShrink: 0,
-                '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
               }}>
                 {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
               </IconButton>
@@ -389,12 +389,12 @@ export default function FileTree() {
           </Typography>
           <Box sx={{
             mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: '#1E1E1E', textAlign: 'left',
-            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: '#D4D4D4',
+            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: 'text.primary',
           }}>
-            <Box><Box component="span" sx={{ color: '#5C5C5C' }}># auth.yaml</Box></Box>
-            <Box><Box component="span" sx={{ color: '#DF4926' }}>auth</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box></Box>
-            <Box>  <Box component="span" sx={{ color: '#DF4926' }}>login</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box></Box>
-            <Box>    <Box component="span" sx={{ color: '#DF4926' }}>method</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> string</Box></Box>
+            <Box><Box component="span" sx={{ color: 'text.disabled' }}># auth.yaml</Box></Box>
+            <Box><Box component="span" sx={{ color: 'primary.main' }}>auth</Box><Box component="span" sx={{ color: 'text.disabled' }}>:</Box></Box>
+            <Box>  <Box component="span" sx={{ color: 'primary.main' }}>login</Box><Box component="span" sx={{ color: 'text.disabled' }}>:</Box></Box>
+            <Box>    <Box component="span" sx={{ color: 'primary.main' }}>method</Box><Box component="span" sx={{ color: 'text.disabled' }}>:</Box><Box component="span" sx={{ color: 'text.primary' }}> string</Box></Box>
           </Box>
           <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
             Create your first file
@@ -410,7 +410,7 @@ export default function FileTree() {
             bgcolor: 'rgba(var(--mui-palette-background-paperChannel) / 0.6)',
             backdropFilter: 'blur(1px)',
           }}>
-            <CircularProgress size={20} sx={{ color: '#DF4926' }} />
+            <CircularProgress size={20} sx={{ color: 'primary.main' }} />
           </Box>
         )}
       <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isTreePending && { opacity: 0.4, pointerEvents: 'none' }) }}>
@@ -423,11 +423,11 @@ export default function FileTree() {
             <Box key={fi}>
               <ListItemButton onClick={() => toggle(fk)} dense sx={{
                 py: 0.4,
-                ...(errorKeys.has(`events:${fi}`) && { bgcolor: alpha('#D32F2F', 0.02) }),
+                ...(errorKeys.has(`events:${fi}`) && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.02)) }),
               }}>
                 <Arrow open={fileOpen} />
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
-                  <InsertDriveFileRounded sx={{ fontSize: 17, color: '#8B9DAF' }} />
+                  <InsertDriveFileRounded sx={{ fontSize: 17, color: 'brand.fileIcon' }} />
                 </ListItemIcon>
                 {editing?.type === 'file' && editing.fi === fi
                   ? renderInlineEdit(commitRename, '0.82rem', 26)
@@ -468,15 +468,15 @@ export default function FileTree() {
                       <Box key={dn}>
                         <ListItemButton sx={{
                           pl: 4, py: 0.35,
-                          ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: alpha('#DF4926', 0.06) }),
-                          ...(errorKeys.has(`events:${fi}:${dn}`) && !isSel(fi, dn, undefined, undefined) && { bgcolor: alpha('#D32F2F', 0.02) }),
+                          ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
+                          ...(errorKeys.has(`events:${fi}:${dn}`) && !isSel(fi, dn, undefined, undefined) && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.02)) }),
                         }} onClick={() => {
                           toggle(dk);
                           setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn });
                         }} dense>
                           <Arrow open={domainOpen} />
                           <ListItemIcon sx={{ minWidth: 24, ml: 0.2 }}>
-                            <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
+                            <FolderRounded sx={{ fontSize: 16, color: 'primary.main' }} />
                           </ListItemIcon>
                           {editing?.type === 'domain' && editing.fi === fi && editing.original === dn
                             ? renderInlineEdit(commitRename)
@@ -484,7 +484,7 @@ export default function FileTree() {
                               <>
                                 <ListItemText
                                   primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}{errorKeys.has(`events:${fi}:${dn}`) && <ErrorDot messages={errorMessages.get(`events:${fi}:${dn}`)} />}</>}
-                                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
+                                  primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: 'primary.main' }}
                                   sx={truncTextSx}
                                   onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
                                 />
@@ -555,8 +555,8 @@ export default function FileTree() {
                                           setAddParamFor({ fi, domain: dn, event: en });
                                           if (allSharedParams.length > 0) setAddMenuAnchor(e.currentTarget);
                                         }} dense>
-                                          <AddRounded sx={{ fontSize: 14, color: '#DF4926', mr: 0.5 }} />
-                                          <ListItemText primary="Add" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
+                                          <AddRounded sx={{ fontSize: 14, color: 'primary.main', mr: 0.5 }} />
+                                          <ListItemText primary="Add" primaryTypographyProps={{ fontSize: '0.78rem', color: 'primary.main', fontWeight: 600 }} />
                                         </ListItemButton>
                                       )}
                                     </List>
@@ -566,15 +566,15 @@ export default function FileTree() {
                               {remaining > 0 && (
                                 <ListItemButton sx={{ pl: 6.5, py: 0.5, justifyContent: 'center' }}
                                   onClick={() => showMore(dk, eventEntries.length)} dense>
-                                  <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
+                                  <Typography sx={{ fontSize: '0.75rem', color: 'primary.main', fontWeight: 600 }}>
                                     Show {remaining} more event{remaining > 1 ? 's' : ''}...
                                   </Typography>
                                 </ListItemButton>
                               )}
                               {!q && (
                                 <ListItemButton sx={{ pl: 6.5, ...addBtnSx }} onClick={() => setAddEventFor({ fi, domain: dn })} dense>
-                                  <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
-                                  <ListItemText primary="Add Event" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
+                                  <AddRounded sx={{ fontSize: 15, color: 'primary.main', mr: 0.5 }} />
+                                  <ListItemText primary="Add Event" primaryTypographyProps={{ fontSize: '0.78rem', color: 'primary.main', fontWeight: 600 }} />
                                 </ListItemButton>
                               )}
                             </List>
@@ -585,8 +585,8 @@ export default function FileTree() {
                   })}
                   {!q && (
                     <ListItemButton sx={{ pl: 4, ...addBtnSx }} onClick={() => setAddDomainFor(fi)} dense>
-                      <AddRounded sx={{ fontSize: 16, color: '#DF4926', mr: 0.5 }} />
-                      <ListItemText primary="Add Domain" primaryTypographyProps={{ fontSize: '0.78rem', color: '#DF4926', fontWeight: 600 }} />
+                      <AddRounded sx={{ fontSize: 16, color: 'primary.main', mr: 0.5 }} />
+                      <ListItemText primary="Add Domain" primaryTypographyProps={{ fontSize: '0.78rem', color: 'primary.main', fontWeight: 600 }} />
                     </ListItemButton>
                   )}
                 </List>
@@ -607,7 +607,7 @@ export default function FileTree() {
         onClose={() => { setAddMenuAnchor(null); setAddParamFor(null); }}
         slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}>
         <MenuItem onClick={() => setAddMenuAnchor(null)} sx={{ fontSize: '0.85rem' }}>
-          <AddRounded sx={{ fontSize: 15, mr: 1, color: '#DF4926' }} />
+          <AddRounded sx={{ fontSize: 15, mr: 1, color: 'primary.main' }} />
           New local parameter
         </MenuItem>
         {allSharedParams.length > 0 && (
@@ -616,7 +616,7 @@ export default function FileTree() {
             setAddMenuAnchor(null);
             requestAnimationFrame(() => setSharedAnchorEl(anchor));
           }} sx={{ fontSize: '0.85rem' }}>
-            <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#6366F1' }} />
+            <LinkRounded sx={{ fontSize: 15, mr: 1, color: 'brand.contexts' }} />
             Link shared parameter
           </MenuItem>
         )}
@@ -629,7 +629,7 @@ export default function FileTree() {
             if (addParamFor) addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, sp, null);
             setSharedAnchorEl(null); setAddParamFor(null);
           }} sx={{ fontSize: '0.85rem', fontFamily: '"JetBrains Mono", monospace' }}>
-            <LinkRounded sx={{ fontSize: 15, mr: 1, color: '#6366F1' }} />
+            <LinkRounded sx={{ fontSize: 15, mr: 1, color: 'brand.contexts' }} />
             {sp}
           </MenuItem>
         ))}

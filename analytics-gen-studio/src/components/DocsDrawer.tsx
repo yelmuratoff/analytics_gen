@@ -52,7 +52,7 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
         </Typography>
         <Tooltip title="Open in new tab" arrow>
           <IconButton size="small" onClick={() => window.open(DOCS_PATH, '_blank')} sx={{
-            color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+            color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
           }}>
             <OpenInNewRounded sx={{ fontSize: 18 }} />
           </IconButton>
@@ -72,7 +72,7 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             bgcolor: 'background.paper', zIndex: 1, pointerEvents: 'none',
           }}>
-            <CircularProgress size={28} thickness={4} sx={{ color: '#DF4926' }} />
+            <CircularProgress size={28} thickness={4} sx={{ color: 'primary.main' }} />
           </Box>
         )}
         <Box

@@ -50,9 +50,9 @@ export default function CompactArrayTemplate(props: ArrayFieldTemplateProps) {
           size="small"
           sx={{
             mt: 1.5,
-            color: '#DF4926', fontWeight: 600, fontSize: '0.74rem',
+            color: 'primary.main', fontWeight: 600, fontSize: '0.74rem',
             textTransform: 'none', px: 1,
-            '&:hover': { bgcolor: 'rgba(223,73,38,0.06)' },
+            '&:hover': { bgcolor: 'action.hover' },
           }}
         >
           Add item
@@ -96,9 +96,9 @@ export function CompactAddButton(props: IconButtonProps) {
       startIcon={<AddRounded sx={{ fontSize: 16 }} />}
       size="small"
       sx={{
-        color: '#DF4926', fontWeight: 600, fontSize: '0.74rem',
+        color: 'primary.main', fontWeight: 600, fontSize: '0.74rem',
         textTransform: 'none', px: 1.5, mt: 0.5,
-        '&:hover': { bgcolor: 'rgba(223,73,38,0.06)' },
+        '&:hover': { bgcolor: 'action.hover' },
       }}
     >
       {translateString(TranslatableString.AddItemButton)}

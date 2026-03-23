@@ -44,7 +44,7 @@ const iconMap: Record<string, (color: string) => React.ReactNode> = {
 function getSectionMeta(schema: Record<string, unknown>): { icon: React.ReactNode; color: string } {
   const xui = schema['x-ui'] as Record<string, string> | undefined;
   const iconName = xui?.icon;
-  const color = xui?.color ?? '#DF4926';
+  const color = xui?.color ?? 'currentColor';
   const icon = (iconName && iconMap[iconName]?.(color)) ?? <SettingsRounded sx={{ fontSize: 18, color }} />;
   return { icon, color };
 }
@@ -54,7 +54,7 @@ function getSectionMeta(schema: Record<string, unknown>): { icon: React.ReactNod
 function Section({ title, icon, accentColor, open, onToggle, filledCount, children }: {
   title: string; icon: React.ReactNode; accentColor?: string; open: boolean; onToggle: () => void; filledCount?: number; children: React.ReactNode;
 }) {
-  const accent = accentColor ?? '#DF4926';
+  const accent = accentColor ?? '#DF4926'; // fallback needed for template literal hex ops
   return (
     <Box sx={{ mb: 1, borderRadius: 2.5, border: 1, borderColor: 'divider', overflow: 'hidden', borderLeft: '3px solid', borderLeftColor: open ? accent : 'divider', transition: 'border-left-color 0.2s ease' }}>
       <Box
@@ -103,7 +103,7 @@ function FieldLabel({ label, hint, required }: { label: string; hint?: string; r
     <Box>
       <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.primary', mb: 0.3 }}>
         {label}
-        {required && <Box component="span" sx={{ color: '#DF4926', ml: 0.5, fontSize: '0.9em' }}>*</Box>}
+        {required && <Box component="span" sx={{ color: 'primary.main', ml: 0.5, fontSize: '0.9em' }}>*</Box>}
       </Typography>
       {hint && <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', mb: 0.5, lineHeight: 1.4 }}>{hint}</Typography>}
     </Box>
@@ -125,8 +125,8 @@ function Toggle({ label, hint, checked, onChange }: {
       <Switch
         checked={checked} size="small"
         sx={{
-          '& .MuiSwitch-switchBase.Mui-checked': { color: '#DF4926' },
-          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#DF4926' },
+          '& .MuiSwitch-switchBase.Mui-checked': { color: 'primary.main' },
+          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: 'primary.main' },
         }}
       />
       <Box sx={{ flex: 1 }}>
@@ -154,8 +154,8 @@ function PathList({ items, placeholder, onChange }: {
             onDelete={() => onChange(items.filter((_, j) => j !== i))}
             sx={{
               fontFamily: '"JetBrains Mono", monospace', fontSize: '0.78rem', height: 28,
-              bgcolor: 'rgba(223,73,38,0.06)', color: 'text.primary',
-              '& .MuiChip-deleteIcon': { color: 'text.disabled', '&:hover': { color: '#D32F2F' } },
+              bgcolor: (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}0F`, color: 'text.primary',
+              '& .MuiChip-deleteIcon': { color: 'text.disabled', '&:hover': { color: 'error.main' } },
             }}
           />
         ))}
@@ -167,7 +167,7 @@ function PathList({ items, placeholder, onChange }: {
           input: {
             endAdornment: draft.trim() ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={add} sx={{ color: '#DF4926' }}>
+                <IconButton size="small" onClick={add} sx={{ color: 'primary.main' }}>
                   <AddRounded sx={{ fontSize: 18 }} />
                 </IconButton>
               </InputAdornment>
@@ -215,7 +215,7 @@ function KeyValueEditor({ entries, placeholder, onChange }: {
                 const next = { ...entries };
                 delete next[k];
                 onChange(next);
-              }} sx={{ p: 0.3, color: 'text.disabled', '&:hover': { color: '#D32F2F' } }}>
+              }} sx={{ p: 0.3, color: 'text.disabled', '&:hover': { color: 'error.main' } }}>
                 <DeleteOutlineRounded sx={{ fontSize: 14 }} />
               </IconButton>
             </Box>
@@ -236,7 +236,7 @@ function KeyValueEditor({ entries, placeholder, onChange }: {
           sx={{ flex: 1 }}
         />
         <IconButton size="small" onClick={add} disabled={!draftKey.trim() || !draftValue.trim()}
-          sx={{ color: '#DF4926', '&.Mui-disabled': { color: 'text.disabled' } }}>
+          sx={{ color: 'primary.main', '&.Mui-disabled': { color: 'text.disabled' } }}>
           <AddRounded sx={{ fontSize: 18 }} />
         </IconButton>
       </Box>
@@ -416,7 +416,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
             {sectionKeys.length > 1 && (
               <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
                 <IconButton size="small" onClick={() => setOpenSections(allExpanded ? new Set() : new Set(sectionKeys))} sx={{
-                  color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                  color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                 }}>
                   {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 20 }} /> : <UnfoldMoreRounded sx={{ fontSize: 20 }} />}
                 </IconButton>

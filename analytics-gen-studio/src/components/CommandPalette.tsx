@@ -68,20 +68,20 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
     const items: PaletteItem[] = [];
     if (actions?.onSave) items.push({ label: 'Save Project', secondary: 'Action', shortcut: `${mod}S`, icon: <SaveRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onSave });
     if (actions?.onOpen) items.push({ label: 'Open Project', secondary: 'Action', shortcut: `${mod}O`, icon: <FileOpenRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onOpen });
-    if (actions?.onExportZip) items.push({ label: 'Export ZIP', secondary: 'Action', shortcut: `${mod}\u21E7E`, icon: <FolderZipRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: actions.onExportZip });
+    if (actions?.onExportZip) items.push({ label: 'Export ZIP', secondary: 'Action', shortcut: `${mod}\u21E7E`, icon: <FolderZipRounded sx={{ fontSize: 16, color: 'primary.main' }} />, kind: 'action', action: actions.onExportZip });
     if (actions?.onUndo) items.push({ label: 'Undo', secondary: 'Action', shortcut: `${mod}Z`, icon: <UndoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onUndo });
     if (actions?.onRedo) items.push({ label: 'Redo', secondary: 'Action', shortcut: `${mod}\u21E7Z`, icon: <RedoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onRedo });
     if (actions?.onToggleTheme) items.push({
       label: actions.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
       secondary: 'Action',
-      icon: actions.isDarkMode ? <LightModeRounded sx={{ fontSize: 16, color: '#E8A84E' }} /> : <DarkModeRounded sx={{ fontSize: 16, color: '#6366F1' }} />,
+      icon: actions.isDarkMode ? <LightModeRounded sx={{ fontSize: 16, color: 'brand.events' }} /> : <DarkModeRounded sx={{ fontSize: 16, color: 'brand.contexts' }} />,
       kind: 'action', action: actions.onToggleTheme,
     });
     // Tab navigation
-    items.push({ label: 'Config', secondary: 'Go to tab', shortcut: `${mod}1`, icon: <SettingsRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: () => setActiveTab('config') });
-    items.push({ label: 'Events', secondary: 'Go to tab', shortcut: `${mod}2`, icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />, kind: 'action', action: () => setActiveTab('events') });
-    items.push({ label: 'Shared Params', secondary: 'Go to tab', shortcut: `${mod}3`, icon: <ShareRounded sx={{ fontSize: 16, color: '#22A06B' }} />, kind: 'action', action: () => setActiveTab('shared') });
-    items.push({ label: 'Contexts', secondary: 'Go to tab', shortcut: `${mod}4`, icon: <LayersRounded sx={{ fontSize: 16, color: '#6366F1' }} />, kind: 'action', action: () => setActiveTab('contexts') });
+    items.push({ label: 'Config', secondary: 'Go to tab', shortcut: `${mod}1`, icon: <SettingsRounded sx={{ fontSize: 16, color: 'primary.main' }} />, kind: 'action', action: () => setActiveTab('config') });
+    items.push({ label: 'Events', secondary: 'Go to tab', shortcut: `${mod}2`, icon: <ElectricBoltRounded sx={{ fontSize: 16, color: 'brand.events' }} />, kind: 'action', action: () => setActiveTab('events') });
+    items.push({ label: 'Shared Params', secondary: 'Go to tab', shortcut: `${mod}3`, icon: <ShareRounded sx={{ fontSize: 16, color: 'brand.shared' }} />, kind: 'action', action: () => setActiveTab('shared') });
+    items.push({ label: 'Contexts', secondary: 'Go to tab', shortcut: `${mod}4`, icon: <LayersRounded sx={{ fontSize: 16, color: 'brand.contexts' }} />, kind: 'action', action: () => setActiveTab('contexts') });
     return items;
   }, [actions, setActiveTab]);
 
@@ -93,7 +93,7 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
     configSections.forEach((section) => {
       items.push({
         label: section, secondary: 'Config',
-        icon: <SettingsRounded sx={{ fontSize: 16, color: '#DF4926' }} />,
+        icon: <SettingsRounded sx={{ fontSize: 16, color: 'primary.main' }} />,
         kind: 'navigation', tab: 'config', path: null,
       });
     });
@@ -102,19 +102,19 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
     eventFiles.forEach((file, fi) => {
       items.push({
         label: file.fileName, secondary: 'Event file',
-        icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />,
+        icon: <ElectricBoltRounded sx={{ fontSize: 16, color: 'brand.events' }} />,
         kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi },
       });
       Object.entries(file.domains).forEach(([dn, events]) => {
         items.push({
           label: dn, secondary: `Domain \u2022 ${file.fileName}`,
-          icon: <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />,
+          icon: <FolderRounded sx={{ fontSize: 16, color: 'primary.main' }} />,
           kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi, domain: dn },
         });
         Object.entries(events).forEach(([en, event]) => {
           items.push({
             label: en, secondary: `Event \u2022 ${dn}`,
-            icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />,
+            icon: <ElectricBoltRounded sx={{ fontSize: 16, color: 'brand.events' }} />,
             kind: 'navigation', tab: 'events', path: { tab: 'events', fileIndex: fi, domain: dn, event: en },
           });
           Object.keys(event.parameters).forEach((pn) => {
@@ -133,7 +133,7 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
       Object.keys(file.parameters).forEach((pn) => {
         items.push({
           label: pn, secondary: `Shared \u2022 ${file.fileName}`,
-          icon: <ShareRounded sx={{ fontSize: 16, color: '#22A06B' }} />,
+          icon: <ShareRounded sx={{ fontSize: 16, color: 'brand.shared' }} />,
           kind: 'navigation', tab: 'shared', path: { tab: 'shared', fileIndex: fi, parameter: pn },
         });
       });
@@ -144,7 +144,7 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
       Object.keys(file.properties).forEach((pn) => {
         items.push({
           label: pn, secondary: `Context \u2022 ${file.contextName}`,
-          icon: <LayersRounded sx={{ fontSize: 16, color: '#6366F1' }} />,
+          icon: <LayersRounded sx={{ fontSize: 16, color: 'brand.contexts' }} />,
           kind: 'navigation', tab: 'contexts', path: { tab: 'contexts', fileIndex: fi, contextProperty: pn },
         });
       });

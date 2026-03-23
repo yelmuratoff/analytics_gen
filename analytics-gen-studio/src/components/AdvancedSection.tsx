@@ -26,15 +26,15 @@ export default function AdvancedSection({ setCount, children, defaultOpen = fals
         sx={{
           display: 'flex', alignItems: 'center', gap: 1, py: 1, px: 2,
           cursor: 'pointer', userSelect: 'none',
-          bgcolor: open ? 'rgba(223,73,38,0.02)' : 'transparent',
-          '&:hover': { bgcolor: 'rgba(223,73,38,0.04)' },
-          '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 2 },
+          bgcolor: open ? (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}05` : 'transparent',
+          '&:hover': { bgcolor: (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}0A` },
+          '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2, borderRadius: 2 },
         }}
       >
         {open
-          ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: '#DF4926' }} />
+          ? <KeyboardArrowDownRounded sx={{ fontSize: 20, color: 'primary.main' }} />
           : <KeyboardArrowRightRounded sx={{ fontSize: 20, color: 'text.secondary' }} />}
-        <TuneRounded sx={{ fontSize: 16, color: open ? '#DF4926' : 'text.secondary' }} />
+        <TuneRounded sx={{ fontSize: 16, color: open ? 'primary.main' : 'text.secondary' }} />
         <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.secondary', flex: 1 }}>
           Advanced Options
         </Typography>

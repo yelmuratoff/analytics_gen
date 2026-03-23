@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
 import Form from '@rjsf/mui';
-import type { RJSFSchema, FormValidation } from '@rjsf/utils';
+import type { RJSFSchema } from '@rjsf/utils';
 import type { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
@@ -14,10 +13,8 @@ import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
-import {
-  DEFAULT_PARAM_TYPE, PARAMETER_TYPES, OPERATIONS_FIELD, SNAKE_CASE_PARAM,
-  NON_NUMERIC_TYPES, PARAM_MUTUAL_EXCLUSIONS, STRING_ONLY_FIELDS, NUMERIC_ONLY_FIELDS,
-} from '../../schemas/constants.ts';
+import { DEFAULT_PARAM_TYPE, PARAMETER_TYPES, OPERATIONS_FIELD, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
+import { useParameterValidation, countAdvancedFields } from '../../hooks/useParameterValidation.ts';
 import Breadcrumb from '../Breadcrumb.tsx';
 import AdvancedSection from '../AdvancedSection.tsx';
 import type { ParamDef } from '../../types/index.ts';
@@ -47,33 +44,8 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
   const nameError = enforceSnakeParams && !SNAKE_CASE_PARAM.test(propName)
     ? `"${propName}" must be snake_case (a-z, 0-9, _)` : null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const customValidate = useCallback((data: any, errors: FormValidation) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = errors as any;
-    const baseType = data.type?.replace(/\?$/, '');
-    const isStringLike = baseType === 'string';
-    const isNumericLike = baseType ? !NON_NUMERIC_TYPES.has(baseType) : false;
-    for (const [a, b] of PARAM_MUTUAL_EXCLUSIONS) {
-      const valA = data[a as keyof ParamDef], valB = data[b as keyof ParamDef];
-      const hasA = valA !== undefined && valA !== '' && !(Array.isArray(valA) && valA.length === 0);
-      const hasB = valB !== undefined && valB !== '' && !(Array.isArray(valB) && valB.length === 0);
-      if (hasA && hasB) e[b]?.addError(`${a} and ${b} cannot be used together`);
-    }
-    if (data.regex && data.regex.includes("'''")) e.regex?.addError("regex cannot contain triple quotes (''')");
-    for (const f of STRING_ONLY_FIELDS) { if (data[f as keyof ParamDef] !== undefined && baseType && !isStringLike) e[f]?.addError(`${f} only applies to string type`); }
-    for (const f of NUMERIC_ONLY_FIELDS) { if (data[f as keyof ParamDef] !== undefined && baseType && !isNumericLike) e[f]?.addError(`${f} only applies to numeric types`); }
-    if (data.min_length !== undefined && data.max_length !== undefined && data.max_length < data.min_length) e.max_length?.addError('max_length must be >= min_length');
-    if (data.min !== undefined && data.max !== undefined && data.max < data.min) e.max?.addError('max must be >= min');
-    return errors;
-  }, []);
-
-  const advancedSetCount = Object.entries(formData).filter(([k, v]) => {
-    if (k === 'type' || k === OPERATIONS_FIELD) return false;
-    if (v == null || v === '') return false;
-    if (Array.isArray(v) && v.length === 0) return false;
-    return true;
-  }).length;
+  const customValidate = useParameterValidation();
+  const advancedSetCount = countAdvancedFields(formData, [OPERATIONS_FIELD]);
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) {
@@ -105,8 +77,8 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
             bgcolor: 'rgba(211,47,47,0.06)', border: '1px solid rgba(211,47,47,0.2)',
             display: 'flex', alignItems: 'center', gap: 0.75,
           }}>
-            <ErrorOutlineRounded sx={{ fontSize: 14, color: '#D32F2F', flexShrink: 0 }} />
-            <Typography sx={{ fontSize: '0.78rem', color: '#D32F2F', fontWeight: 500 }}>{nameError}</Typography>
+            <ErrorOutlineRounded sx={{ fontSize: 14, color: 'error.main', flexShrink: 0 }} />
+            <Typography sx={{ fontSize: '0.78rem', color: 'error.main', fontWeight: 500 }}>{nameError}</Typography>
           </Box>
         )}
       </Box>
@@ -135,14 +107,14 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
                   fontSize: '0.78rem',
                   cursor: 'pointer',
                   transition: 'all 0.1s ease',
-                  bgcolor: active ? '#DF4926' : 'transparent',
+                  bgcolor: active ? 'primary.main' : 'transparent',
                   color: active ? '#fff' : 'text.secondary',
                   border: '1.5px solid',
-                  borderColor: active ? '#DF4926' : 'divider',
+                  borderColor: active ? 'primary.main' : 'divider',
                   '&:hover': {
-                    bgcolor: active ? '#C03A1C' : 'rgba(223,73,38,0.08)',
-                    borderColor: '#DF4926',
-                    color: active ? '#fff' : '#DF4926',
+                    bgcolor: active ? 'primary.dark' : (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}14`,
+                    borderColor: 'primary.main',
+                    color: active ? '#fff' : 'primary.main',
                   },
                 }}
               />

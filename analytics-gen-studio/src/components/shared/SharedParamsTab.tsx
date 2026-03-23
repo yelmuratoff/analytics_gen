@@ -125,7 +125,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
               <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
                 <IconButton size="small" onClick={allExpanded ? collapseAllFiles : expandAllFiles} sx={{
                   color: 'text.secondary', flexShrink: 0,
-                  '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                  '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                 }}>
                   {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
                 </IconButton>
@@ -156,9 +156,9 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: 'rgba(34,160,107,0.06)', border: '2px dashed', borderColor: '#22A06B',
+              bgcolor: (t: any) => `${t.palette.brand.shared}0F`, border: '2px dashed', borderColor: 'brand.shared',
             }}>
-              <ShareRounded sx={{ fontSize: 28, color: '#22A06B' }} />
+              <ShareRounded sx={{ fontSize: 28, color: 'brand.shared' }} />
             </Box>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 0.5, fontWeight: 600 }}>No files yet</Typography>
             <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 1.5 }}>
@@ -181,7 +181,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         <Box sx={{ position: 'relative' }}>
           {isPending && (
             <Box sx={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', justifyContent: 'center', pt: 4 }}>
-              <CircularProgress size={20} sx={{ color: '#DF4926' }} />
+              <CircularProgress size={20} sx={{ color: 'primary.main' }} />
             </Box>
           )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isPending && { opacity: 0.4, pointerEvents: 'none' }) }}>
@@ -193,10 +193,10 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                   {isFileExpanded(fi) ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
                     : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: 'text.disabled' }} />}
                   <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
-                    <InsertDriveFileRounded sx={{ fontSize: 17, color: '#22A06B' }} />
+                    <InsertDriveFileRounded sx={{ fontSize: 17, color: 'brand.shared' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <Tooltip title={errorMessages.get(`shared:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <Tooltip title={errorMessages.get(`shared:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
@@ -226,10 +226,10 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                             return (
                               <ListItemButton key={pn} sx={{
                                 pl: 5.5, py: 0.4,
-                                ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
+                                ...(isSel(fi, pn) && { bgcolor: (t: any) => alpha(t.palette.primary.main, 0.06) }),
                               }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
                                 <ListItemIcon sx={{ minWidth: 18 }}>
-                                  <CircleRounded sx={{ fontSize: 6, color: hasErr ? '#D32F2F' : 'text.disabled' }} />
+                                  <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />
                                 </ListItemIcon>
                                 <ListItemText
                                   primary={
@@ -242,7 +242,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                                           '& .MuiChip-label': { px: 0.6 },
                                         }} />
                                       )}
-                                      {hasErr && <Tooltip title={errorMessages.get(`shared:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}
+                                      {hasErr && <Tooltip title={errorMessages.get(`shared:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}
                                     </Box>
                                   }
                                   primaryTypographyProps={{
@@ -263,16 +263,16 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                           {remaining > 0 && (
                             <ListItemButton sx={{ pl: 5.5, py: 0.5, justifyContent: 'center' }}
                               onClick={() => setVisibleLimits((prev) => ({ ...prev, [fi]: Math.min((prev[fi] ?? PAGE_SIZE) + PAGE_SIZE, paramKeys.length) }))} dense>
-                              <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
+                              <Typography sx={{ fontSize: '0.75rem', color: 'primary.main', fontWeight: 600 }}>
                                 Show {remaining} more parameter{remaining > 1 ? 's' : ''}...
                               </Typography>
                             </ListItemButton>
                           )}
                           {!q && (
                             <ListItemButton sx={{ pl: 5.5, ...addItemButton }} onClick={() => setAddParamOpen(fi)}>
-                              <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                              <AddRounded sx={{ fontSize: 15, color: 'primary.main', mr: 0.5 }} />
                               <ListItemText primary="Add Parameter" primaryTypographyProps={{
-                                fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
+                                fontSize: '0.78rem', color: 'primary.main', fontWeight: 600,
                               }} />
                             </ListItemButton>
                           )}
@@ -298,7 +298,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
           <SharedParamEditor fileIndex={selectedPath.fileIndex} paramName={selectedPath.parameter} parameterSchema={parameterSchema} />
         ) : (
           <EmptyState
-            icon={<ShareRounded sx={{ fontSize: 28, color: '#22A06B' }} />}
+            icon={<ShareRounded sx={{ fontSize: 28, color: 'brand.shared' }} />}
             title="Select a parameter"
             description="Shared parameters can be referenced from any event. Click one to edit."
             accentColor="#22A06B"

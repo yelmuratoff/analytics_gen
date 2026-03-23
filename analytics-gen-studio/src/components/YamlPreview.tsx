@@ -5,6 +5,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import { useTheme } from '@mui/material/styles';
 import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import FileDownloadRounded from '@mui/icons-material/FileDownloadRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
@@ -85,12 +86,17 @@ function buildErrorLineSet(content: string, errors: ValidationError[]): Set<numb
   return errorLines;
 }
 
-function highlightYamlToHtml(content: string, errorLines?: Set<number>): string {
+interface YamlColors {
+  key: string; comment: string; text: string; boolean: string;
+  number: string; string: string; null: string; errorBg: string;
+}
+
+function highlightYamlToHtml(content: string, colors: YamlColors, errorLines?: Set<number>): string {
   return content.split('\n').map((line, lineIndex) => {
     const hasError = errorLines?.has(lineIndex);
-    const errorBg = hasError ? ' style="background:rgba(211,47,47,0.12);border-radius:2px"' : '';
+    const errorBg = hasError ? ` style="background:${colors.errorBg};border-radius:2px"` : '';
     if (line.trimStart().startsWith('#')) {
-      return `<div${errorBg}><span style="color:#5C5C5C">${escapeHtml(line)}</span></div>`;
+      return `<div${errorBg}><span style="color:${colors.comment}">${escapeHtml(line)}</span></div>`;
     }
     const match = line.match(/^(\s*)([\w_.-]+)(:)(.*)/);
     if (match) {
@@ -100,24 +106,24 @@ function highlightYamlToHtml(content: string, errorLines?: Set<number>): string 
       if (!val) {
         valHtml = escapeHtml(rest);
       } else if (val === 'null' || val === '~') {
-        valHtml = `<span style="color:#7C8CFF"> ${escapeHtml(val)}</span>`;
+        valHtml = `<span style="color:${colors.null}"> ${escapeHtml(val)}</span>`;
       } else if (val === 'true' || val === 'false') {
-        valHtml = `<span style="color:#E8A84E"> ${escapeHtml(val)}</span>`;
+        valHtml = `<span style="color:${colors.boolean}"> ${escapeHtml(val)}</span>`;
       } else if (/^-?\d+(\.\d+)?$/.test(val)) {
-        valHtml = `<span style="color:#B8D97A"> ${escapeHtml(val)}</span>`;
+        valHtml = `<span style="color:${colors.number}"> ${escapeHtml(val)}</span>`;
       } else if (val.startsWith('"') || val.startsWith("'")) {
-        valHtml = `<span style="color:#B8D97A"> ${escapeHtml(val)}</span>`;
+        valHtml = `<span style="color:${colors.string}"> ${escapeHtml(val)}</span>`;
       } else {
-        valHtml = `<span style="color:#D4D4D4"> ${escapeHtml(val)}</span>`;
+        valHtml = `<span style="color:${colors.text}"> ${escapeHtml(val)}</span>`;
       }
-      return `<div${errorBg}>${escapeHtml(indent)}<span style="color:#DF4926">${escapeHtml(key)}</span><span style="color:#5C5C5C">${colon}</span>${valHtml}</div>`;
+      return `<div${errorBg}>${escapeHtml(indent)}<span style="color:${colors.key}">${escapeHtml(key)}</span><span style="color:${colors.comment}">${colon}</span>${valHtml}</div>`;
     }
     const m2 = line.match(/^(\s*)(- )(.*)/);
     if (m2) {
       const [, indent, dash, val] = m2;
-      return `<div${errorBg}>${escapeHtml(indent)}<span style="color:#5C5C5C">${escapeHtml(dash)}</span><span style="color:#D4D4D4">${escapeHtml(val)}</span></div>`;
+      return `<div${errorBg}>${escapeHtml(indent)}<span style="color:${colors.comment}">${escapeHtml(dash)}</span><span style="color:${colors.text}">${escapeHtml(val)}</span></div>`;
     }
-    return `<div${errorBg}><span style="color:#D4D4D4">${escapeHtml(line) || ' '}</span></div>`;
+    return `<div${errorBg}><span style="color:${colors.text}">${escapeHtml(line) || ' '}</span></div>`;
   }).join('');
 }
 
@@ -157,20 +163,32 @@ export default function YamlPreview() {
     });
   }, [tabErrors, activeTab, safeIndex, currentFile]);
 
+  const theme = useTheme();
+  const yamlColors = useMemo((): YamlColors => ({
+    key: theme.palette.yaml.key,
+    comment: theme.palette.yaml.comment,
+    text: theme.palette.yaml.text,
+    boolean: theme.palette.yaml.boolean,
+    number: theme.palette.yaml.number,
+    string: theme.palette.yaml.string,
+    null: theme.palette.yaml.null,
+    errorBg: 'rgba(211,47,47,0.12)',
+  }), [theme.palette.yaml]);
+
   const highlightedHtml = useMemo(
     () => {
       if (!currentFile) return '';
       const errorLines = buildErrorLineSet(currentFile.content, currentFileErrors);
-      return highlightYamlToHtml(currentFile.content, errorLines);
+      return highlightYamlToHtml(currentFile.content, yamlColors, errorLines);
     },
-    [currentFile, currentFileErrors],
+    [currentFile, currentFileErrors, yamlColors],
   );
   const lineCount = currentFile ? currentFile.content.split('\n').length : 0;
 
   if (!currentFile) {
     return (
       <EmptyState
-        icon={<CodeRounded sx={{ fontSize: 28, color: '#777' }} />}
+        icon={<CodeRounded sx={{ fontSize: 28, color: 'yaml.comment' }} />}
         title="YAML Preview"
         description="Add configuration, events, or parameters — generated YAML will appear here in real-time."
         accentColor="rgba(255,255,255,0.12)"
@@ -184,7 +202,7 @@ export default function YamlPreview() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const previewBtn = { color: '#5C5C5C', '&:hover': { color: '#D4D4D4', bgcolor: 'rgba(255,255,255,0.06)' } };
+  const previewBtn = { color: 'yaml.comment', '&:hover': { color: 'yaml.text', bgcolor: 'yaml.border' } };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -199,11 +217,11 @@ export default function YamlPreview() {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           '& .MuiTab-root': {
             minHeight: 32, py: 0, fontSize: '0.78rem',
-            color: '#5C5C5C', fontFamily: '"JetBrains Mono", monospace',
+            color: 'yaml.comment', fontFamily: '"JetBrains Mono", monospace',
             fontWeight: 500,
-            '&.Mui-selected': { color: '#D4D4D4' },
+            '&.Mui-selected': { color: 'yaml.text' },
           },
-          '& .MuiTabs-indicator': { height: 2, bgcolor: '#DF4926' },
+          '& .MuiTabs-indicator': { height: 2, bgcolor: 'primary.main' },
         }}
       >
         {files.map((f, i) => <Tab key={i} label={f.fileName} disableRipple />)}
@@ -216,12 +234,12 @@ export default function YamlPreview() {
       }}>
         <Typography sx={{
           flex: 1, fontSize: '0.78rem', fontWeight: 600,
-          color: '#B0B0B0', fontFamily: '"JetBrains Mono", monospace',
+          color: 'yaml.muted', fontFamily: '"JetBrains Mono", monospace',
         }}>
           {currentFile.fileName}
         </Typography>
         {tabErrors.length === 0 ? (
-          <CheckCircleRounded sx={{ fontSize: 14, color: '#4CAF50', mr: 0.5 }} />
+          <CheckCircleRounded sx={{ fontSize: 14, color: 'success.main', mr: 0.5 }} />
         ) : (
           <Tooltip title={`${tabErrors.length} issue${tabErrors.length > 1 ? 's' : ''} — click to scroll`} arrow>
             <Box
@@ -232,31 +250,31 @@ export default function YamlPreview() {
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 0.5,
                 px: 1, py: 0.2, mr: 0.5, borderRadius: 1.5,
-                bgcolor: 'rgba(211,47,47,0.15)', cursor: 'pointer',
-                '&:hover': { bgcolor: 'rgba(211,47,47,0.25)' },
+                bgcolor: (t: any) => `${t.palette.error.main}26`, cursor: 'pointer',
+                '&:hover': { bgcolor: (t: any) => `${t.palette.error.main}40` },
               }}
             >
-              <ErrorOutlineRounded sx={{ fontSize: 13, color: '#FF8A80' }} />
-              <Typography sx={{ fontSize: '0.72rem', color: '#FF8A80', fontWeight: 700 }}>
+              <ErrorOutlineRounded sx={{ fontSize: 13, color: 'yaml.errorBadge' }} />
+              <Typography sx={{ fontSize: '0.72rem', color: 'yaml.errorBadge', fontWeight: 700 }}>
                 {tabErrors.length}
               </Typography>
             </Box>
           </Tooltip>
         )}
-        <Typography sx={{ fontSize: '0.78rem', color: '#777', mr: 1.5 }}>
+        <Typography sx={{ fontSize: '0.78rem', color: 'yaml.comment', mr: 1.5 }}>
           {lineCount}L
         </Typography>
         <Tooltip title={wordWrap ? 'No wrap' : 'Wrap lines'} arrow>
           <IconButton size="small" aria-label={wordWrap ? 'Disable word wrap' : 'Enable word wrap'} onClick={() => setWordWrap(!wordWrap)} sx={{
             ...previewBtn,
-            ...(wordWrap && { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.1)' }),
+            ...(wordWrap && { color: 'primary.main', bgcolor: 'action.selected' }),
           }}>
             <WrapTextRounded sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
         <Tooltip title={copied ? 'Copied!' : 'Copy'} arrow>
           <IconButton size="small" aria-label="Copy to clipboard" onClick={handleCopy} sx={previewBtn}>
-            {copied ? <CheckCircleRounded sx={{ fontSize: 16, color: '#4CAF50' }} /> : <ContentCopyRounded sx={{ fontSize: 16 }} />}
+            {copied ? <CheckCircleRounded sx={{ fontSize: 16, color: 'success.main' }} /> : <ContentCopyRounded sx={{ fontSize: 16 }} />}
           </IconButton>
         </Tooltip>
         <Tooltip title="Download" arrow>
@@ -270,6 +288,7 @@ export default function YamlPreview() {
         flex: 1, overflow: 'auto',
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '0.78rem', lineHeight: 1.75,
+        scrollbarWidth: 'thin' as const,
         scrollbarColor: 'rgba(255,255,255,0.08) transparent',
         '&::-webkit-scrollbar': { width: 5 },
         '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
@@ -297,14 +316,15 @@ export default function YamlPreview() {
           borderTop: '1px solid rgba(255,255,255,0.08)',
           maxHeight: 160, overflow: 'auto',
           px: 2, py: 1.5,
-          bgcolor: 'rgba(211,47,47,0.08)',
+          bgcolor: (t: any) => `${t.palette.error.main}14`,
+          scrollbarWidth: 'thin' as const,
           scrollbarColor: 'rgba(255,255,255,0.08) transparent',
           '&::-webkit-scrollbar': { width: 4 },
           '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3 },
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
-            <ErrorOutlineRounded sx={{ fontSize: 16, color: '#FF8A80' }} />
-            <Typography sx={{ fontSize: '0.82rem', color: '#FF8A80', fontWeight: 700 }}>
+            <ErrorOutlineRounded sx={{ fontSize: 16, color: 'yaml.errorBadge' }} />
+            <Typography sx={{ fontSize: '0.82rem', color: 'yaml.errorBadge', fontWeight: 700 }}>
               {tabErrors.length} issue{tabErrors.length > 1 ? 's' : ''}
             </Typography>
           </Box>
@@ -331,18 +351,18 @@ export default function YamlPreview() {
             return (
               <Box key={i} onClick={handleClick} sx={{
                 display: 'flex', alignItems: 'center', gap: 0.75,
-                fontSize: '0.78rem', color: '#EEEEEE', lineHeight: 1.7,
+                fontSize: '0.78rem', color: 'yaml.text', lineHeight: 1.7,
                 fontFamily: '"JetBrains Mono", monospace',
                 pl: 3, py: 0.4, borderRadius: 0.5,
                 ...(hasNav && {
                   cursor: 'pointer',
                   textDecoration: 'underline',
-                  textDecorationColor: 'rgba(255,138,128,0.3)',
+                  textDecorationColor: 'yaml.errorBadge',
                   textUnderlineOffset: '2px',
-                  '&:hover': { bgcolor: 'rgba(223,73,38,0.12)', textDecorationColor: '#FF8A80' },
+                  '&:hover': { bgcolor: (t: any) => `${t.palette.primary.main}1F`, textDecorationColor: 'yaml.errorBadge' },
                 }),
               }}>
-                {hasNav && <ArrowForwardRounded sx={{ fontSize: 12, color: '#FF8A80', flexShrink: 0 }} />}
+                {hasNav && <ArrowForwardRounded sx={{ fontSize: 12, color: 'yaml.errorBadge', flexShrink: 0 }} />}
                 {err.message}
               </Box>
             );

@@ -36,8 +36,8 @@ export default function Breadcrumb({ parts, onPartClick }: BreadcrumbProps) {
                   maxWidth: isLast ? 'none' : 120, flexShrink: isLast ? 0 : 1,
                   ...(isClickable && {
                     cursor: 'pointer',
-                    '&:hover': { color: '#DF4926' },
-                    '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: 2 },
+                    '&:hover': { color: 'primary.main' },
+                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                   }),
                 }}>
                 {part}

@@ -40,21 +40,21 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
             border: '1px solid', borderColor: isDark ? '#333' : '#EEEBE8',
             maxWidth: 420,
           }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#D32F2F', mb: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: 'error.main', mb: 1 }}>
               Something went wrong
             </Typography>
-            <Typography sx={{ fontSize: '0.85rem', color: isDark ? '#aaa' : '#888', mb: 2, fontFamily: '"JetBrains Mono", monospace', wordBreak: 'break-word' }}>
+            <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 2, fontFamily: '"JetBrains Mono", monospace', wordBreak: 'break-word' }}>
               {this.state.error.message}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
               <Button size="small" variant="outlined" onClick={() => {
                 localStorage.removeItem('analytics-gen-studio');
                 window.location.reload();
-              }} sx={{ fontSize: '0.82rem', borderColor: isDark ? '#333' : '#EEEBE8', color: isDark ? '#aaa' : '#888' }}>
+              }} sx={{ fontSize: '0.82rem' }}>
                 Reset &amp; Reload
               </Button>
               <Button size="small" variant="contained" onClick={() => window.location.reload()}
-                sx={{ fontSize: '0.82rem', bgcolor: '#DF4926', '&:hover': { bgcolor: '#C03A1C' } }}>
+                sx={{ fontSize: '0.82rem' }}>
                 Reload
               </Button>
             </Box>
@@ -103,17 +103,39 @@ function getTheme(mode: ColorMode) {
       disabled: isLight ? '#bbb' : '#666',
     },
     divider: isLight ? '#EEEBE8' : '#333',
-    error: { main: '#D32F2F' },
+    error: { main: '#D32F2F', dark: '#B71C1C' },
     success: { main: isLight ? '#2E7D32' : '#4CAF50' },
     info: { main: '#DF4926' },
     action: {
       hover: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)',
       selected: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
     },
+    brand: {
+      events: '#E8A84E',
+      shared: '#22A06B',
+      contexts: '#6366F1',
+      fileIcon: '#8B9DAF',
+    },
+    yaml: {
+      key: '#DF4926',
+      comment: '#5C5C5C',
+      text: '#D4D4D4',
+      boolean: '#E8A84E',
+      number: '#B8D97A',
+      string: '#B8D97A',
+      null: '#7C8CFF',
+      muted: '#B0B0B0',
+      lineNumber: 'rgba(255,255,255,0.15)',
+      border: 'rgba(255,255,255,0.06)',
+      errorBadge: '#FF8A80',
+    },
   } as const;
 
   return createTheme({
     palette,
+    breakpoints: {
+      values: { xs: 0, sm: 600, md: 768, lg: 900, xl: 1024 },
+    },
     typography: {
       fontFamily: '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       fontSize: 13,
@@ -140,6 +162,14 @@ function getTheme(mode: ColorMode) {
             scrollbarWidth: 'thin',
             scrollbarColor: isLight ? 'rgba(0,0,0,0.18) transparent' : 'rgba(255,255,255,0.15) transparent',
           },
+          '@media (prefers-reduced-motion: reduce)': {
+            '*, *::before, *::after': {
+              animationDuration: '0.01ms !important',
+              animationIterationCount: '1 !important',
+              transitionDuration: '0.01ms !important',
+              scrollBehavior: 'auto !important',
+            },
+          },
         },
       },
       MuiButtonBase: {
@@ -157,26 +187,26 @@ function getTheme(mode: ColorMode) {
             boxShadow: 'none',
             fontSize: '0.85rem',
             '&:hover': { boxShadow: 'none' },
-            '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: 2 },
+            '&:focus-visible': { outline: `2px solid ${palette.primary.main}`, outlineOffset: 2 },
           },
           contained: {
-            backgroundColor: '#DF4926',
-            '&:hover': { backgroundColor: '#C03A1C' },
+            backgroundColor: palette.primary.main,
+            '&:hover': { backgroundColor: palette.primary.dark },
           },
           outlined: {
             borderColor: palette.divider,
             color: palette.text.secondary,
             '&:hover': {
-              borderColor: '#DF4926',
-              color: '#DF4926',
-              backgroundColor: alpha('#DF4926', 0.04),
+              borderColor: palette.primary.main,
+              color: palette.primary.main,
+              backgroundColor: alpha(palette.primary.main, 0.04),
             },
           },
         },
       },
       MuiIconButton: {
         styleOverrides: {
-          root: { borderRadius: 8, transition: 'all 0.15s ease', '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: 2 } },
+          root: { borderRadius: 8, transition: 'all 0.15s ease', '&:focus-visible': { outline: `2px solid ${palette.primary.main}`, outlineOffset: 2 } },
         },
       },
       MuiTab: {
@@ -186,7 +216,7 @@ function getTheme(mode: ColorMode) {
             fontWeight: 600,
             fontSize: '0.86rem',
             minHeight: 44,
-            '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2, borderRadius: 6 },
+            '&:focus-visible': { outline: `2px solid ${palette.primary.main}`, outlineOffset: -2, borderRadius: 6 },
           },
         },
       },
@@ -197,11 +227,11 @@ function getTheme(mode: ColorMode) {
             margin: '1px 4px',
             transition: 'all 0.1s ease',
             '&.Mui-selected': {
-              backgroundColor: alpha('#DF4926', 0.06),
-              '&:hover': { backgroundColor: alpha('#DF4926', 0.1) },
+              backgroundColor: alpha(palette.primary.main, 0.06),
+              '&:hover': { backgroundColor: alpha(palette.primary.main, 0.1) },
             },
             '&:hover': { backgroundColor: palette.action.hover },
-            '&:focus-visible': { outline: '2px solid #DF4926', outlineOffset: -2 },
+            '&:focus-visible': { outline: `2px solid ${palette.primary.main}`, outlineOffset: -2 },
           },
         },
       },
@@ -225,14 +255,14 @@ function getTheme(mode: ColorMode) {
             borderRadius: 10,
             '& .MuiOutlinedInput-notchedOutline': { borderColor: palette.divider },
             '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: isLight ? '#CCC' : '#555' },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#DF4926', borderWidth: 1.5 },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: palette.primary.main, borderWidth: 1.5 },
           },
         },
       },
       MuiInputLabel: {
         defaultProps: { size: 'small' as const },
         styleOverrides: {
-          root: { fontSize: '0.88rem', '&.Mui-focused': { color: '#DF4926' } },
+          root: { fontSize: '0.88rem', '&.Mui-focused': { color: palette.primary.main } },
         },
       },
       MuiSelect: {
@@ -243,7 +273,7 @@ function getTheme(mode: ColorMode) {
           root: {
             color: isLight ? '#D0CCC8' : '#555',
             borderRadius: 4,
-            '&.Mui-checked': { color: '#DF4926' },
+            '&.Mui-checked': { color: palette.primary.main },
           },
         },
       },
@@ -251,8 +281,8 @@ function getTheme(mode: ColorMode) {
         styleOverrides: {
           root: { padding: 7 },
           switchBase: {
-            '&.Mui-checked': { color: '#DF4926' },
-            '&.Mui-checked + .MuiSwitch-track': { backgroundColor: '#DF4926' },
+            '&.Mui-checked': { color: palette.primary.main },
+            '&.Mui-checked + .MuiSwitch-track': { backgroundColor: palette.primary.main },
           },
           track: { borderRadius: 10, backgroundColor: isLight ? '#D0CCC8' : '#555' },
           thumb: { boxShadow: 'none' },
@@ -398,7 +428,7 @@ export default function App() {
                   ))}
                 </Box>
                 <Box sx={{ width: 12 }} />
-                <Box sx={{ flex: 1, bgcolor: '#1E1E1E', borderRadius: 1.5, p: 2 }}>
+                <Box sx={{ flex: 1, bgcolor: 'background.paper', borderRadius: 1.5, p: 2 }}>
                   <Skeleton variant="rounded" width={140} height={20} sx={{ mb: 2, bgcolor: 'rgba(255,255,255,0.06)' }} />
                   {Array.from({ length: 8 }, (_, i) => (
                     <Skeleton key={i} variant="rounded" height={14} sx={{ mb: 1, bgcolor: 'rgba(255,255,255,0.04)', width: `${50 + Math.random() * 40}%` }} />

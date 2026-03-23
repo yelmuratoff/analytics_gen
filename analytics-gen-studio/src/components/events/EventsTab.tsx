@@ -46,8 +46,8 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
         <Box>
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FolderRounded sx={{ fontSize: 20, color: '#DF4926' }} />
-              <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace', color: '#DF4926' }}>
+              <FolderRounded sx={{ fontSize: 20, color: 'primary.main' }} />
+              <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, fontFamily: '"JetBrains Mono", monospace', color: 'primary.main' }}>
                 {selectedPath.domain}
               </Typography>
             </Box>
@@ -72,7 +72,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
                       fontFamily: '"JetBrains Mono", monospace', fontSize: '0.78rem',
                       cursor: 'pointer', fontWeight: 500,
                       bgcolor: 'transparent', border: '1px solid', borderColor: 'divider',
-                      '&:hover': { borderColor: '#DF4926', color: '#DF4926' },
+                      '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
                     }}
                   />
                 ))}
@@ -86,7 +86,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
     if (!selectedPath || selectedPath.tab !== 'events' || !selectedPath.event) {
       return (
         <EmptyState
-          icon={<ElectricBoltRounded sx={{ fontSize: 28, color: '#E8A84E' }} />}
+          icon={<ElectricBoltRounded sx={{ fontSize: 28, color: 'brand.events' }} />}
           title={selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
           description="Add a file, then create domains and events. Click any item to edit its properties."
           accentColor="#E8A84E"

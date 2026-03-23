@@ -136,7 +136,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
               <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
                 <IconButton size="small" onClick={allExpanded ? collapseAllFiles : expandAllFiles} sx={{
                   color: 'text.secondary', flexShrink: 0,
-                  '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                  '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                 }}>
                   {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 18 }} /> : <UnfoldMoreRounded sx={{ fontSize: 18 }} />}
                 </IconButton>
@@ -167,9 +167,9 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: 'rgba(99,102,241,0.06)', border: '2px dashed', borderColor: '#6366F1',
+              bgcolor: (t: any) => `${t.palette.brand.contexts}0F`, border: '2px dashed', borderColor: 'brand.contexts',
             }}>
-              <LayersRounded sx={{ fontSize: 28, color: '#6366F1' }} />
+              <LayersRounded sx={{ fontSize: 28, color: 'brand.contexts' }} />
             </Box>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 0.5, fontWeight: 600 }}>No contexts yet</Typography>
             <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', lineHeight: 1.5, px: 1, mb: 1.5 }}>
@@ -192,7 +192,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
         <Box sx={{ position: 'relative' }}>
           {isPending && (
             <Box sx={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', justifyContent: 'center', pt: 4 }}>
-              <CircularProgress size={20} sx={{ color: '#DF4926' }} />
+              <CircularProgress size={20} sx={{ color: 'primary.main' }} />
             </Box>
           )}
         <List dense disablePadding sx={{ px: 0.5, pb: 1, ...(isPending && { opacity: 0.4, pointerEvents: 'none' }) }}>
@@ -204,10 +204,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                   {isFileExpanded(fi) ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
                     : <KeyboardArrowRightRounded sx={{ fontSize: 18, color: 'text.disabled' }} />}
                   <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
-                    <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
+                    <InsertDriveFileRounded sx={{ fontSize: 17, color: 'brand.contexts' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Tooltip title={errorMessages.get(`contexts:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Tooltip title={errorMessages.get(`contexts:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
@@ -224,10 +224,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                   <List dense disablePadding>
                     <ListItemButton sx={{ pl: 5, py: 0.3 }} dense>
                       <ListItemIcon sx={{ minWidth: 20 }}>
-                        <FolderRounded sx={{ fontSize: 16, color: '#DF4926' }} />
+                        <FolderRounded sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary={file.contextName} primaryTypographyProps={{
-                        fontSize: '0.82rem', fontWeight: 600, color: '#DF4926',
+                        fontSize: '0.82rem', fontWeight: 600, color: 'primary.main',
                       }} />
                     </ListItemButton>
                     {(() => {
@@ -244,12 +244,12 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                             return (
                             <ListItemButton key={pn} sx={{
                               pl: 7, py: 0.4,
-                              ...(isSel(fi, pn) && { bgcolor: alpha('#DF4926', 0.06) }),
+                              ...(isSel(fi, pn) && { bgcolor: (t: any) => alpha(t.palette.primary.main, 0.06) }),
                             }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
                               <ListItemIcon sx={{ minWidth: 18 }}>
-                                <CircleRounded sx={{ fontSize: 6, color: hasErr ? '#D32F2F' : 'text.disabled' }} />
+                                <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />
                               </ListItemIcon>
-                              <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Tooltip title={errorMessages.get(`contexts:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}</Box>} primaryTypographyProps={{
+                              <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Tooltip title={errorMessages.get(`contexts:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}</Box>} primaryTypographyProps={{
                                 fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
                               }} />
                               <Tooltip title="Delete" arrow enterDelay={400}>
@@ -266,16 +266,16 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                           {remaining > 0 && (
                             <ListItemButton sx={{ pl: 7, py: 0.5, justifyContent: 'center' }}
                               onClick={() => setVisibleLimits((prev) => ({ ...prev, [fi]: Math.min((prev[fi] ?? PAGE_SIZE) + PAGE_SIZE, propKeys.length) }))} dense>
-                              <Typography sx={{ fontSize: '0.75rem', color: '#DF4926', fontWeight: 600 }}>
+                              <Typography sx={{ fontSize: '0.75rem', color: 'primary.main', fontWeight: 600 }}>
                                 Show {remaining} more {remaining > 1 ? 'properties' : 'property'}...
                               </Typography>
                             </ListItemButton>
                           )}
                           {!q && (
                             <ListItemButton sx={{ pl: 7, ...addItemButton }} onClick={() => setAddPropOpen(fi)}>
-                              <AddRounded sx={{ fontSize: 15, color: '#DF4926', mr: 0.5 }} />
+                              <AddRounded sx={{ fontSize: 15, color: 'primary.main', mr: 0.5 }} />
                               <ListItemText primary="Add Property" primaryTypographyProps={{
-                                fontSize: '0.78rem', color: '#DF4926', fontWeight: 600,
+                                fontSize: '0.78rem', color: 'primary.main', fontWeight: 600,
                               }} />
                             </ListItemButton>
                           )}
@@ -301,7 +301,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
         ) : (
           <EmptyState
-            icon={<LayersRounded sx={{ fontSize: 28, color: '#6366F1' }} />}
+            icon={<LayersRounded sx={{ fontSize: 28, color: 'brand.contexts' }} />}
             title="Select a property"
             description="Context properties track state across the app lifecycle. Select operations and configure type."
             accentColor="#6366F1"

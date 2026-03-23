@@ -8,6 +8,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Fade from '@mui/material/Fade';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import CodeRounded from '@mui/icons-material/CodeRounded';
 import CodeOffRounded from '@mui/icons-material/CodeOffRounded';
 import Button from '@mui/material/Button';
@@ -41,7 +42,8 @@ export default function Layout({ schemas }: LayoutProps) {
   const { width: formWidth, dragging, atLimit, containerRef, handleMouseDown } = useResizeHandle({
     initialWidth: 57, min: 30, max: 75, storageKey: 'studio-form-width', unit: 'percent',
   });
-  const isNarrow = useMediaQuery('(max-width:1024px)');
+  const theme = useTheme();
+  const isNarrow = useMediaQuery(theme.breakpoints.down(1025));
   const [showPreview, setShowPreview] = useState(true);
 
   // Reset scroll position on tab change instead of remounting with key={activeTab}
@@ -144,7 +146,7 @@ export default function Layout({ schemas }: LayoutProps) {
           <Tooltip title={showPreview ? 'Show editor' : 'Show YAML preview'} arrow>
             <IconButton size="small" onClick={() => setShowPreview((v) => !v)} sx={{
               color: 'text.secondary', ml: 'auto',
-              '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+              '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
             }}>
               {showPreview ? <CodeOffRounded sx={{ fontSize: 20 }} /> : <CodeRounded sx={{ fontSize: 20 }} />}
             </IconButton>
@@ -170,9 +172,9 @@ export default function Layout({ schemas }: LayoutProps) {
                 <Box sx={{
                   width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  bgcolor: 'rgba(223,73,38,0.08)', border: '2px solid rgba(223,73,38,0.2)',
+                  bgcolor: (t: any) => `${t.palette.primary.main}14`, border: '2px solid', borderColor: (t: any) => `${t.palette.primary.main}33`,
                 }}>
-                  <ElectricBoltRounded sx={{ fontSize: 26, color: '#DF4926' }} />
+                  <ElectricBoltRounded sx={{ fontSize: 26, color: 'primary.main' }} />
                 </Box>
                 <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 0.5, color: 'text.primary' }}>
                   Welcome to Analytics Gen Studio
@@ -225,14 +227,14 @@ export default function Layout({ schemas }: LayoutProps) {
                       };
                       input.click();
                     }}
-                    sx={{ fontSize: '0.82rem', borderColor: 'divider', color: 'text.secondary', '&:hover': { color: '#DF4926', borderColor: '#DF4926' } }}
+                    sx={{ fontSize: '0.82rem', borderColor: 'divider', color: 'text.secondary', '&:hover': { color: 'primary.main', borderColor: 'primary.main' } }}
                   >
                     Import YAML
                   </Button>
                 </Box>
               </Box>
             )}
-            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={24} sx={{ color: '#DF4926' }} /></Box>}>{renderTab()}</Suspense>
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={24} sx={{ color: 'primary.main' }} /></Box>}>{renderTab()}</Suspense>
           </Box>
         )}
         {!isNarrow && <ResizeHandle dragging={dragging} atLimit={atLimit} onMouseDown={handleMouseDown} />}
@@ -244,7 +246,7 @@ export default function Layout({ schemas }: LayoutProps) {
             borderRadius: 1.5,
             display: 'flex', flexDirection: 'column',
           }}>
-            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={20} sx={{ color: '#555' }} /></Box>}><YamlPreview /></Suspense>
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={20} sx={{ color: 'text.disabled' }} /></Box>}><YamlPreview /></Suspense>
           </Box>
         )}
       </Box>
@@ -260,9 +262,9 @@ export default function Layout({ schemas }: LayoutProps) {
           <Box sx={{
             width: 80, height: 80, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: 'rgba(223,73,38,0.15)', border: '2px dashed #DF4926',
+            bgcolor: (t: any) => `${t.palette.primary.main}26`, border: '2px dashed', borderColor: 'primary.main',
           }}>
-            <UploadFileRounded sx={{ fontSize: 36, color: '#DF4926' }} />
+            <UploadFileRounded sx={{ fontSize: 36, color: 'primary.main' }} />
           </Box>
           <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '1rem' }}>
             Drop YAML files to import

@@ -33,6 +33,7 @@ import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import Divider from '@mui/material/Divider';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import SearchRounded from '@mui/icons-material/SearchRounded';
+import { useTheme } from '@mui/material/styles';
 import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
 import { useColorMode } from '../App.tsx';
@@ -80,7 +81,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
-  const isCompact = useMediaQuery('(max-width:900px)');
+  const theme = useTheme();
+  const isCompact = useMediaQuery(theme.breakpoints.down('lg'));
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [fileMenuAnchor, setFileMenuAnchor] = useState<HTMLElement | null>(null);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
@@ -289,7 +291,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     color: 'text.secondary',
     borderColor: 'transparent',
     whiteSpace: 'nowrap',
-    '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)', borderColor: 'transparent' },
+    '&:hover': { color: 'primary.main', bgcolor: 'action.hover', borderColor: 'transparent' },
   };
 
   return (
@@ -310,9 +312,9 @@ export default function Toolbar({ importHints }: ToolbarProps) {
           />
           <Box sx={{
             px: 1, py: 0.25,
-            bgcolor: 'rgba(223,73,38,0.08)', borderRadius: 1.5,
+            bgcolor: (t: any) => `${t.palette.primary.main}14`, borderRadius: 1.5,
           }}>
-            <Typography sx={{ fontWeight: 600, fontSize: '0.65rem', color: '#DF4926' }}>
+            <Typography sx={{ fontWeight: 600, fontSize: '0.65rem', color: 'primary.main' }}>
               Studio
             </Typography>
           </Box>
@@ -327,7 +329,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
                 fontSize: '0.78rem', color: 'text.secondary', fontFamily: '"JetBrains Mono", monospace',
                 maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
-                {fileName}{isDirty && <Box component="span" sx={{ color: '#DF4926', ml: 0.75 }}>●</Box>}
+                {fileName}{isDirty && <Box component="span" sx={{ color: 'primary.main', ml: 0.75 }}>●</Box>}
               </Typography>
             </Box>
           </Tooltip>
@@ -340,7 +342,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
             <span>
               <IconButton size="small" onClick={() => undo()} disabled={!canUndo} sx={{
                 color: 'text.secondary',
-                '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                 '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
               }}>
                 <UndoRounded sx={{ fontSize: 20 }} />
@@ -351,7 +353,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
             <span>
               <IconButton size="small" onClick={() => redo()} disabled={!canRedo} sx={{
                 color: 'text.secondary',
-                '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                 '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
               }}>
                 <RedoRounded sx={{ fontSize: 20 }} />
@@ -365,7 +367,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title={`Search (${mod}K)`} arrow>
             <IconButton size="small" aria-label="Search" onClick={() => setPaletteOpen(true)} sx={{
-              color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+              color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
             }}>
               <SearchRounded sx={{ fontSize: 20 }} />
             </IconButton>
@@ -373,7 +375,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
           <Tooltip title={`Open Project (${mod}O)`} arrow>
             {isCompact ? (
               <IconButton onClick={handleOpen} size="small" sx={{
-                color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
               }}>
                 <FileOpenRounded sx={{ fontSize: 20 }} />
               </IconButton>
@@ -397,7 +399,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
             <>
               <Tooltip title={`Save (${mod}S)`} arrow>
                 <IconButton onClick={handleSave} disabled={saving} size="small" sx={{
-                  color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                  color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                 }}>
                   {saving ? <CircularProgress size={14} /> : <SaveRounded sx={{ fontSize: 20 }} />}
                 </IconButton>
@@ -405,8 +407,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
               <Tooltip title={hasErrors ? `Fix ${errors.length} error${errors.length > 1 ? 's' : ''} before exporting` : `Export ZIP (${mod}\u21E7E)`} arrow>
                 <span>
                   <IconButton onClick={handleExportZip} disabled={hasErrors} size="small" sx={{
-                    color: '#DF4926',
-                    '&:hover': { bgcolor: 'rgba(223,73,38,0.08)' },
+                    color: 'primary.main',
+                    '&:hover': { bgcolor: 'action.hover' },
                     '&.Mui-disabled': { color: 'text.disabled', opacity: 0.3 },
                   }}>
                     <FolderZipRounded sx={{ fontSize: 20 }} />
@@ -493,7 +495,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
 
           <Tooltip title={mode === 'light' ? 'Dark mode' : 'Light mode'} arrow>
             <IconButton onClick={toggleColorMode} size="small" sx={{
-              color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+              color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
             }}>
               {mode === 'light' ? <DarkModeRounded sx={{ fontSize: 20 }} /> : <LightModeRounded sx={{ fontSize: 20 }} />}
             </IconButton>
@@ -526,9 +528,9 @@ export default function Toolbar({ importHints }: ToolbarProps) {
             </MenuItem>
             <Divider />
             <MenuItem onClick={() => { setMoreMenuAnchor(null); setConfirmOpen(true); }} sx={{
-              color: 'error.main', '&:hover': { bgcolor: 'rgba(211,47,47,0.04)' },
+              color: 'error.main', '&:hover': { bgcolor: 'action.hover' },
             }}>
-              <ListItemIcon><RefreshRounded sx={{ fontSize: 18, color: '#D32F2F' }} /></ListItemIcon>
+              <ListItemIcon><RefreshRounded sx={{ fontSize: 18, color: 'error.main' }} /></ListItemIcon>
               <ListItemText primary="Reset All" primaryTypographyProps={{ fontSize: '0.85rem' }} />
             </MenuItem>
           </Menu>
@@ -545,7 +547,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small">Cancel</Button>
           <Button onClick={handleReset} variant="contained" size="small"
-            sx={{ bgcolor: '#D32F2F', '&:hover': { bgcolor: '#B71C1C' } }}>Reset</Button>
+            sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}>Reset</Button>
         </DialogActions>
       </Dialog>
 

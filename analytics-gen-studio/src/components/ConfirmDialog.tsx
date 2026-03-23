@@ -22,11 +22,11 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'De
       <DialogTitle sx={{ fontWeight: 700, pb: 0.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box sx={{
           width: 40, height: 40, borderRadius: '50%',
-          bgcolor: 'rgba(211,47,47,0.12)',
+          bgcolor: (t: { palette: { error: { main: string } } }) => `${t.palette.error.main}1F`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
-          <WarningAmberRounded sx={{ fontSize: 22, color: '#D32F2F' }} />
+          <WarningAmberRounded sx={{ fontSize: 22, color: 'error.main' }} />
         </Box>
         {title}
       </DialogTitle>
@@ -36,7 +36,7 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'De
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={onCancel} variant="outlined" size="small">Cancel</Button>
         <Button onClick={onConfirm} variant="contained" size="small"
-          sx={{ bgcolor: '#D32F2F', '&:hover': { bgcolor: '#B71C1C' } }}>{confirmLabel}</Button>
+          sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}>{confirmLabel}</Button>
       </DialogActions>
     </Dialog>
   );
