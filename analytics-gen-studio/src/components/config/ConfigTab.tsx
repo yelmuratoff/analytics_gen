@@ -19,6 +19,7 @@ import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRound
 import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
 import InputRounded from '@mui/icons-material/InputRounded';
 import OutputRounded from '@mui/icons-material/OutputRounded';
 import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
@@ -26,6 +27,7 @@ import GavelRounded from '@mui/icons-material/GavelRounded';
 import TextFieldsRounded from '@mui/icons-material/TextFieldsRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
+import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 
@@ -349,12 +351,35 @@ interface ConfigTabProps {
 export default function ConfigTab({ configSchema }: ConfigTabProps) {
   const config = useStore((s) => s.config);
   const updateConfig = useStore((s) => s.updateConfig);
+  const { searchInput, search, handleSearchChange } = useDebouncedSearch();
 
   const sections = configSchema.properties ?? {};
   const sectionKeys = Object.keys(sections).filter((k) => {
     const s = sections[k] as Record<string, unknown>;
     return s.type === 'object' && s.properties;
   });
+
+  const q = search.toLowerCase();
+
+  const sectionMatchesSearch = (sectionKey: string, sec: Record<string, unknown>) => {
+    if (!q) return true;
+    const sectionTitle = (sec.title as string) ?? sectionKey;
+    if (sectionTitle.toLowerCase().includes(q) || sectionKey.toLowerCase().includes(q)) return true;
+    const fields = sec.properties as Record<string, Record<string, unknown>> | undefined;
+    if (!fields) return false;
+    return Object.entries(fields).some(([fk, fs]) => {
+      const ft = (fs.title as string) ?? fk;
+      return ft.toLowerCase().includes(q) || fk.toLowerCase().includes(q) ||
+        ((fs.description as string) ?? '').toLowerCase().includes(q);
+    });
+  };
+
+  const fieldMatchesSearch = (fieldKey: string, fieldSchema: Record<string, unknown>) => {
+    if (!q) return true;
+    const ft = (fieldSchema.title as string) ?? fieldKey;
+    return ft.toLowerCase().includes(q) || fieldKey.toLowerCase().includes(q) ||
+      ((fieldSchema.description as string) ?? '').toLowerCase().includes(q);
+  };
 
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(sectionKeys.length > 0 ? [sectionKeys[0]] : []));
   const toggleSection = (key: string) => setOpenSections((prev) => {
@@ -371,20 +396,44 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
           <Typography variant="h4">Configuration</Typography>
           <Typography variant="caption">analytics_gen.yaml</Typography>
         </Box>
-        {sectionKeys.length > 1 && (
-          <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
-            <IconButton size="small" onClick={() => setOpenSections(allExpanded ? new Set() : new Set(sectionKeys))} sx={{
-              color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
-            }}>
-              {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 20 }} /> : <UnfoldMoreRounded sx={{ fontSize: 20 }} />}
-            </IconButton>
-          </Tooltip>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {sectionKeys.length > 1 && (
+            <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
+              <IconButton size="small" onClick={() => setOpenSections(allExpanded ? new Set() : new Set(sectionKeys))} sx={{
+                color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+              }}>
+                {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 20 }} /> : <UnfoldMoreRounded sx={{ fontSize: 20 }} />}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       </Box>
+
+      {sectionKeys.length > 2 && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Search config fields..."
+          value={searchInput}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+              sx: { fontSize: '0.82rem', py: 0, height: 36 },
+            },
+          }}
+          sx={{ mb: 2 }}
+        />
+      )}
 
       {Object.entries(sections).map(([sectionKey, sectionSchema]) => {
         const sec = sectionSchema as Record<string, unknown>;
         if (sec.type !== 'object' || !sec.properties) return null;
+        if (!sectionMatchesSearch(sectionKey, sec)) return null;
         const sectionTitle = (sec.title as string) ?? sectionKey;
         const sectionConfig = (config as unknown as Record<string, Record<string, unknown>>)[sectionKey] ?? {};
         const fields = sec.properties as Record<string, Record<string, unknown>>;
@@ -399,8 +448,8 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
         }).length;
 
         return (
-          <Section key={sectionKey} title={sectionTitle} icon={getSectionIcon(sec)} open={openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
-            {Object.entries(fields).map(([fieldKey, fieldSchema]) => (
+          <Section key={sectionKey} title={sectionTitle} icon={getSectionIcon(sec)} open={!!q || openSections.has(sectionKey)} onToggle={() => toggleSection(sectionKey)} filledCount={filledCount}>
+            {Object.entries(fields).filter(([fk, fs]) => fieldMatchesSearch(fk, fs)).map(([fieldKey, fieldSchema]) => (
               <DynamicField
                 key={fieldKey}
                 fieldKey={fieldKey}
@@ -417,6 +466,12 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
           </Section>
         );
       })}
+
+      {q && sectionKeys.every((k) => !sectionMatchesSearch(k, sections[k] as Record<string, unknown>)) && (
+        <Typography sx={{ py: 4, textAlign: 'center', fontSize: '0.82rem', color: 'text.disabled' }}>
+          No matches for &ldquo;{searchInput}&rdquo;
+        </Typography>
+      )}
     </Box>
   );
 }

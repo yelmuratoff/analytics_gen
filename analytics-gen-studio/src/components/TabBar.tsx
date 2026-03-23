@@ -23,7 +23,11 @@ const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
   { id: 'contexts', label: 'Contexts', icon: <LayersRounded sx={{ fontSize: 18 }} /> },
 ];
 
-export default function TabBar() {
+interface TabBarProps {
+  children?: React.ReactNode;
+}
+
+export default function TabBar({ children }: TabBarProps) {
   const activeTab = useStore((s) => s.activeTab);
   const setActiveTab = useStore((s) => s.setActiveTab);
   const config = useStore((s) => s.config);
@@ -69,8 +73,17 @@ export default function TabBar() {
     return () => window.removeEventListener('keydown', handler);
   }, [setActiveTab]);
 
+  const countLabel = (id: TabId, n: number): string => {
+    switch (id) {
+      case 'config': return `${n} field${n === 1 ? '' : 's'} configured`;
+      case 'events': return `${n} event${n === 1 ? '' : 's'}`;
+      case 'shared': return `${n} parameter${n === 1 ? '' : 's'}`;
+      case 'contexts': return `${n} ${n === 1 ? 'property' : 'properties'}`;
+    }
+  };
+
   return (
-    <Box sx={{ px: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
+    <Box sx={{ px: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center' }}>
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v as TabId)}
@@ -103,19 +116,21 @@ export default function TabBar() {
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.7 }}>
                     {t.label}
                     {itemCounts[t.id] > 0 && (
-                      <Box component="span" sx={{
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        minWidth: 20, height: 18, px: 0.5,
-                        borderRadius: 2,
-                        bgcolor: activeTab === t.id ? 'rgba(223,73,38,0.1)' : 'action.hover',
-                      }}>
-                        <Typography component="span" sx={{
-                          fontSize: '0.68rem', fontWeight: 600,
-                          color: activeTab === t.id ? '#DF4926' : 'text.disabled',
+                      <Tooltip title={countLabel(t.id, itemCounts[t.id])} arrow enterDelay={400} placement="top">
+                        <Box component="span" sx={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          minWidth: 20, height: 18, px: 0.5,
+                          borderRadius: 2,
+                          bgcolor: activeTab === t.id ? 'rgba(223,73,38,0.1)' : 'action.hover',
                         }}>
-                          {itemCounts[t.id]}
-                        </Typography>
-                      </Box>
+                          <Typography component="span" sx={{
+                            fontSize: '0.68rem', fontWeight: 600,
+                            color: activeTab === t.id ? '#DF4926' : 'text.disabled',
+                          }}>
+                            {itemCounts[t.id]}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
                     )}
                   </Box>
                 </Badge>
@@ -127,6 +142,7 @@ export default function TabBar() {
           />
         ))}
       </Tabs>
+      {children}
     </Box>
   );
 }

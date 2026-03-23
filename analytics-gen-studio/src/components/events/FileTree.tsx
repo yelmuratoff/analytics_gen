@@ -21,6 +21,7 @@ import KeyboardArrowRightRounded from '@mui/icons-material/KeyboardArrowRightRou
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
+import EditRounded from '@mui/icons-material/EditRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
@@ -31,7 +32,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
-import { hoverAction, hoverDelete as hoverDel, addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
+import { hoverAction, hoverEdit, hoverDelete as hoverDel, addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
@@ -367,14 +368,19 @@ export default function FileTree() {
                 {editing?.type === 'file' && editing.fi === fi
                   ? renderInlineEdit(commitRename, '0.82rem', 26)
                   : (
-                    <Tooltip title="Double-click to rename" arrow enterDelay={800} placement="right">
+                    <>
                       <ListItemText
                         primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}</>}
                         primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                         sx={truncTextSx}
                         onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
                       />
-                    </Tooltip>
+                      <Tooltip title="Rename" arrow enterDelay={400}>
+                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }} sx={hoverEdit}>
+                          <EditRounded sx={{ fontSize: 13 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </>
                   )}
                 <Tooltip title="Delete file" arrow enterDelay={400}>
                   <IconButton size="small" onClick={confirmDel(
@@ -410,14 +416,19 @@ export default function FileTree() {
                           {editing?.type === 'domain' && editing.fi === fi && editing.original === dn
                             ? renderInlineEdit(commitRename)
                             : (
-                              <Tooltip title="Double-click to rename" arrow enterDelay={800} placement="right">
+                              <>
                                 <ListItemText
                                   primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}</>}
                                   primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
                                   sx={truncTextSx}
                                   onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
                                 />
-                              </Tooltip>
+                                <Tooltip title="Rename" arrow enterDelay={400}>
+                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }} sx={hoverEdit}>
+                                    <EditRounded sx={{ fontSize: 12 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
                             )}
                           <Tooltip title="Delete domain" arrow enterDelay={400}>
                             <IconButton size="small" onClick={confirmDel(

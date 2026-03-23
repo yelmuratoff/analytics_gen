@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
@@ -72,6 +72,11 @@ export default function YamlPreview() {
   const [copied, setCopied] = useState(false);
   const [wordWrap, setWordWrap] = useState(false);
 
+  // Clamp index when file list changes (e.g. tab switch)
+  useEffect(() => {
+    if (activeFileIndex >= files.length) setActiveFileIndex(0);
+  }, [files.length, activeFileIndex]);
+
   const safeIndex = Math.min(activeFileIndex, Math.max(0, files.length - 1));
   const currentFile = files[safeIndex];
 
@@ -86,7 +91,7 @@ export default function YamlPreview() {
       <EmptyState
         icon={<CodeRounded sx={{ fontSize: 28, color: '#777' }} />}
         title="YAML Preview"
-        description="Start by adding events in the Events tab — generated YAML will appear here in real-time."
+        description="Add configuration, events, or parameters — generated YAML will appear here in real-time."
         accentColor="rgba(255,255,255,0.12)"
       />
     );
@@ -134,8 +139,28 @@ export default function YamlPreview() {
         }}>
           {currentFile.fileName}
         </Typography>
-        {tabErrors.length === 0 && (
+        {tabErrors.length === 0 ? (
           <CheckCircleRounded sx={{ fontSize: 14, color: '#4CAF50', mr: 0.5 }} />
+        ) : (
+          <Tooltip title={`${tabErrors.length} issue${tabErrors.length > 1 ? 's' : ''} — click to scroll`} arrow>
+            <Box
+              onClick={() => {
+                const el = document.getElementById('yaml-error-panel');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 0.5,
+                px: 1, py: 0.2, mr: 0.5, borderRadius: 1.5,
+                bgcolor: 'rgba(211,47,47,0.15)', cursor: 'pointer',
+                '&:hover': { bgcolor: 'rgba(211,47,47,0.25)' },
+              }}
+            >
+              <ErrorOutlineRounded sx={{ fontSize: 13, color: '#FF8A80' }} />
+              <Typography sx={{ fontSize: '0.72rem', color: '#FF8A80', fontWeight: 700 }}>
+                {tabErrors.length}
+              </Typography>
+            </Box>
+          </Tooltip>
         )}
         <Typography sx={{ fontSize: '0.78rem', color: '#777', mr: 1.5 }}>
           {lineCount}L
@@ -189,7 +214,7 @@ export default function YamlPreview() {
 
       {/* Validation errors */}
       {tabErrors.length > 0 && (
-        <Box role="status" aria-live="polite" aria-label={`${tabErrors.length} validation error${tabErrors.length > 1 ? 's' : ''}`} sx={{
+        <Box id="yaml-error-panel" role="status" aria-live="polite" aria-label={`${tabErrors.length} validation error${tabErrors.length > 1 ? 's' : ''}`} sx={{
           borderTop: '1px solid rgba(255,255,255,0.08)',
           maxHeight: 160, overflow: 'auto',
           px: 2, py: 1.5,

@@ -5,13 +5,15 @@ interface UseResizeHandleOptions {
   min?: number;
   max?: number;
   storageKey?: string;
+  /** When 'percent', width is a percentage of the container. Default: 'px'. */
+  unit?: 'px' | 'percent';
 }
 
 /**
- * Shared resize handle hook — used by EventsTab, SharedParamsTab, ContextsTab.
+ * Shared resize handle hook — used by EventsTab, SharedParamsTab, ContextsTab, Layout.
  * Supports rAF-throttled dragging and optional localStorage persistence.
  */
-export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey }: UseResizeHandleOptions) {
+export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey, unit = 'px' }: UseResizeHandleOptions) {
   const [width, setWidth] = useState(() => {
     if (storageKey) {
       const stored = localStorage.getItem(storageKey);
@@ -38,8 +40,14 @@ export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
         if (!containerRef.current) return;
-        const newWidth = e.clientX - containerRef.current.getBoundingClientRect().left;
-        setWidth(Math.max(min, Math.min(max, newWidth)));
+        const rect = containerRef.current.getBoundingClientRect();
+        if (unit === 'percent') {
+          const pct = ((e.clientX - rect.left) / rect.width) * 100;
+          setWidth(Math.max(min, Math.min(max, pct)));
+        } else {
+          const newWidth = e.clientX - rect.left;
+          setWidth(Math.max(min, Math.min(max, newWidth)));
+        }
       });
     };
 
@@ -55,7 +63,7 @@ export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [min, max]);
+  }, [min, max, unit]);
 
   // Persist to localStorage on drag end
   useEffect(() => {

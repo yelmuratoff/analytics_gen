@@ -1,10 +1,16 @@
-import { useState, useCallback, useRef, useMemo, useEffect, lazy, Suspense } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import CodeRounded from '@mui/icons-material/CodeRounded';
+import CodeOffRounded from '@mui/icons-material/CodeOffRounded';
 import TabBar from './TabBar.tsx';
 import Toolbar from './Toolbar.tsx';
 import ResizeHandle from './ResizeHandle.tsx';
 import { useStore } from '../state/store.ts';
+import { useResizeHandle } from '../hooks/useResizeHandle.ts';
 import type { LoadedSchemas } from '../schemas/loader.ts';
 import { extractImportHints } from '../utils/yaml-importer.ts';
 
@@ -14,8 +20,6 @@ const EventsTab = lazy(() => import('./events/EventsTab.tsx'));
 const SharedParamsTab = lazy(() => import('./shared/SharedParamsTab.tsx'));
 const ContextsTab = lazy(() => import('./contexts/ContextsTab.tsx'));
 const YamlPreview = lazy(() => import('./YamlPreview.tsx'));
-
-const STORAGE_KEY = 'studio-form-width';
 
 interface LayoutProps {
   schemas: LoadedSchemas;
@@ -27,51 +31,11 @@ export default function Layout({ schemas }: LayoutProps) {
     () => extractImportHints(schemas.rawConfigSchema, schemas.eventsSchema, schemas.sharedParametersSchema),
     [schemas],
   );
-  const [formWidth, setFormWidth] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) { const n = Number(stored); if (!isNaN(n) && n >= 30 && n <= 75) return n; }
-    return 57;
+  const { width: formWidth, dragging, containerRef, handleMouseDown } = useResizeHandle({
+    initialWidth: 57, min: 30, max: 75, storageKey: 'studio-form-width', unit: 'percent',
   });
-  const [dragging, setDragging] = useState(false);
-  const isDragging = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef(0);
-
-  const handleMouseDown = useCallback(() => {
-    isDragging.current = true;
-    setDragging(true);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return;
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const pct = ((e.clientX - rect.left) / rect.width) * 100;
-        setFormWidth(Math.max(30, Math.min(75, pct)));
-      });
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      setDragging(false);
-      cancelAnimationFrame(rafRef.current);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  }, []);
-
-  // Persist form width on drag end
-  useEffect(() => {
-    if (!dragging) localStorage.setItem(STORAGE_KEY, String(formWidth));
-  }, [dragging, formWidth]);
+  const isNarrow = useMediaQuery('(max-width:1024px)');
+  const [showPreview, setShowPreview] = useState(true);
 
   const renderTab = () => {
     switch (activeTab) {
@@ -86,35 +50,48 @@ export default function Layout({ schemas }: LayoutProps) {
     }
   };
 
+  const previewVisible = !isNarrow || showPreview;
+  const formVisible = !isNarrow || !showPreview;
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
       <Toolbar importHints={importHints} />
-      <TabBar />
+      <TabBar>
+        {isNarrow && (
+          <Tooltip title={showPreview ? 'Show editor' : 'Show YAML preview'} arrow>
+            <IconButton size="small" onClick={() => setShowPreview((v) => !v)} sx={{
+              color: 'text.secondary', ml: 'auto',
+              '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+            }}>
+              {showPreview ? <CodeOffRounded sx={{ fontSize: 20 }} /> : <CodeRounded sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
+        )}
+      </TabBar>
       <Box ref={containerRef} sx={{ display: 'flex', flex: 1, overflow: 'hidden', p: 2, gap: 0 }}>
         {/* Form panel */}
-        <Box key={activeTab} sx={{
-          flex: `0 0 ${formWidth}%`, overflow: 'auto', p: 3,
-          bgcolor: 'background.paper',
-          borderRadius: 1.5,
-          border: 1, borderColor: 'divider',
-          '@keyframes fadeSlideIn': {
-            from: { opacity: 0, transform: 'translateY(4px)' },
-            to: { opacity: 1, transform: 'translateY(0)' },
-          },
-          animation: 'fadeSlideIn 0.2s ease-out',
-        }}>
-          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={24} sx={{ color: '#DF4926' }} /></Box>}>{renderTab()}</Suspense>
-        </Box>
-        <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
+        {formVisible && (
+          <Box key={activeTab} sx={{
+            flex: isNarrow ? 1 : `0 0 ${formWidth}%`, overflow: 'auto', p: 3,
+            bgcolor: 'background.paper',
+            borderRadius: 1.5,
+            border: 1, borderColor: 'divider',
+          }}>
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={24} sx={{ color: '#DF4926' }} /></Box>}>{renderTab()}</Suspense>
+          </Box>
+        )}
+        {!isNarrow && <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />}
         {/* YAML preview panel */}
-        <Box sx={{
-          flex: 1, overflow: 'hidden',
-          bgcolor: '#1E1E1E',
-          borderRadius: 1.5,
-          display: 'flex', flexDirection: 'column',
-        }}>
-          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={20} sx={{ color: '#555' }} /></Box>}><YamlPreview /></Suspense>
-        </Box>
+        {previewVisible && (
+          <Box sx={{
+            flex: 1, overflow: 'hidden',
+            bgcolor: '#1E1E1E',
+            borderRadius: 1.5,
+            display: 'flex', flexDirection: 'column',
+          }}>
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={20} sx={{ color: '#555' }} /></Box>}><YamlPreview /></Suspense>
+          </Box>
+        )}
       </Box>
     </Box>
   );

@@ -7,6 +7,13 @@ export const hoverAction = {
   '.MuiListItemButton-root:hover &': { opacity: 1 },
 } as const;
 
+export const hoverEdit = {
+  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
+  p: 0.3, flexShrink: 0,
+  '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.06)', opacity: 1 },
+  '.MuiListItemButton-root:hover &': { opacity: 0.7 },
+} as const;
+
 export const hoverDelete = {
   opacity: 0, transition: 'opacity 0.15s', color: 'text.disabled',
   p: 0.5, flexShrink: 0,
