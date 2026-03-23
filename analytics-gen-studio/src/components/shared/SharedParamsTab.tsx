@@ -163,13 +163,13 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
               Define once, reference from any event. Use <code>null</code> in events to link.
             </Typography>
             <Box sx={{
-              mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: '#1E1E1E', textAlign: 'left',
-              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: '#D4D4D4',
+              mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'yaml.bg', textAlign: 'left',
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: 'yaml.text',
             }}>
-              <Box><Box component="span" sx={{ color: '#5C5C5C' }}># shared_user.yaml</Box></Box>
-              <Box><Box component="span" sx={{ color: '#DF4926' }}>session_id</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box></Box>
-              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>type</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> string</Box></Box>
-              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>required</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#E8A84E' }}> true</Box></Box>
+              <Box><Box component="span" sx={{ color: 'yaml.comment' }}># shared_user.yaml</Box></Box>
+              <Box><Box component="span" sx={{ color: 'yaml.key' }}>session_id</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box></Box>
+              <Box>  <Box component="span" sx={{ color: 'yaml.key' }}>type</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box><Box component="span" sx={{ color: 'yaml.text' }}> string</Box></Box>
+              <Box>  <Box component="span" sx={{ color: 'yaml.key' }}>required</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box><Box component="span" sx={{ color: 'yaml.boolean' }}> true</Box></Box>
             </Box>
             <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
               Add your first file
@@ -299,7 +299,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             icon={<ShareRounded sx={{ fontSize: 28, color: 'brand.shared' }} />}
             title="Select a parameter"
             description="Shared parameters can be referenced from any event. Click one to edit."
-            accentColor="#22A06B"
+            accentColor="brand.shared"
           />
         )}
       </Box>

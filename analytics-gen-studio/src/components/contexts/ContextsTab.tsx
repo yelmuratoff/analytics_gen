@@ -175,13 +175,13 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
               Contexts track state across the app lifecycle with set/update operations.
             </Typography>
             <Box sx={{
-              mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: '#1E1E1E', textAlign: 'left',
-              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: '#D4D4D4',
+              mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'yaml.bg', textAlign: 'left',
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: 'yaml.text',
             }}>
-              <Box><Box component="span" sx={{ color: '#5C5C5C' }}># user_properties.yaml</Box></Box>
-              <Box><Box component="span" sx={{ color: '#DF4926' }}>user_id</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box></Box>
-              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>type</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> string</Box></Box>
-              <Box>  <Box component="span" sx={{ color: '#DF4926' }}>operations</Box><Box component="span" sx={{ color: '#5C5C5C' }}>:</Box><Box component="span" sx={{ color: '#D4D4D4' }}> [set]</Box></Box>
+              <Box><Box component="span" sx={{ color: 'yaml.comment' }}># user_properties.yaml</Box></Box>
+              <Box><Box component="span" sx={{ color: 'yaml.key' }}>user_id</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box></Box>
+              <Box>  <Box component="span" sx={{ color: 'yaml.key' }}>type</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box><Box component="span" sx={{ color: 'yaml.text' }}> string</Box></Box>
+              <Box>  <Box component="span" sx={{ color: 'yaml.key' }}>operations</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box><Box component="span" sx={{ color: 'yaml.text' }}> [set]</Box></Box>
             </Box>
             <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
               Add your first context
@@ -303,7 +303,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             icon={<LayersRounded sx={{ fontSize: 28, color: 'brand.contexts' }} />}
             title="Select a property"
             description="Context properties track state across the app lifecycle. Select operations and configure type."
-            accentColor="#6366F1"
+            accentColor="brand.contexts"
           />
         )}
       </Box>

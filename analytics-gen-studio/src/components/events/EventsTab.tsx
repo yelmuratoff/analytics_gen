@@ -89,7 +89,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           icon={<ElectricBoltRounded sx={{ fontSize: 28, color: 'brand.events' }} />}
           title={selectedPath?.tab === 'events' ? 'Select an event or parameter' : 'Select from the tree'}
           description="Add a file, then create domains and events. Click any item to edit its properties."
-          accentColor="#E8A84E"
+          accentColor="brand.events"
         />
       );
     }

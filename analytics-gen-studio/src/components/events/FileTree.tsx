@@ -412,13 +412,13 @@ export default function FileTree() {
             Files group events by feature. Each file has domains with events inside.
           </Typography>
           <Box sx={{
-            mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: '#1E1E1E', textAlign: 'left',
-            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: 'text.primary',
+            mx: 1, mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'yaml.bg', textAlign: 'left',
+            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem', lineHeight: 1.7, color: 'yaml.text',
           }}>
-            <Box><Box component="span" sx={{ color: 'text.disabled' }}># auth.yaml</Box></Box>
-            <Box><Box component="span" sx={{ color: 'primary.main' }}>auth</Box><Box component="span" sx={{ color: 'text.disabled' }}>:</Box></Box>
-            <Box>  <Box component="span" sx={{ color: 'primary.main' }}>login</Box><Box component="span" sx={{ color: 'text.disabled' }}>:</Box></Box>
-            <Box>    <Box component="span" sx={{ color: 'primary.main' }}>method</Box><Box component="span" sx={{ color: 'text.disabled' }}>:</Box><Box component="span" sx={{ color: 'text.primary' }}> string</Box></Box>
+            <Box><Box component="span" sx={{ color: 'yaml.comment' }}># auth.yaml</Box></Box>
+            <Box><Box component="span" sx={{ color: 'yaml.key' }}>auth</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box></Box>
+            <Box>  <Box component="span" sx={{ color: 'yaml.key' }}>login</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box></Box>
+            <Box>    <Box component="span" sx={{ color: 'yaml.key' }}>method</Box><Box component="span" sx={{ color: 'yaml.comment' }}>:</Box><Box component="span" sx={{ color: 'yaml.text' }}> string</Box></Box>
           </Box>
           <Button size="small" variant="contained" onClick={() => setAddFileOpen(true)} sx={{ fontSize: '0.78rem' }}>
             Create your first file
