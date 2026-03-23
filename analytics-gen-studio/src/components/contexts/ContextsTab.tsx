@@ -307,7 +307,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
         )}
       </Box>
 
-      <Dialog open={addFileOpen} onClose={() => setAddFileOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={addFileOpen} onClose={() => { setAddFileOpen(false); setFileError(''); setCtxError(''); setFileNameInput(''); setContextNameInput(''); }} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, pb: 0.5 }}>Add Context</DialogTitle>
         <DialogContent sx={{ pt: '12px !important' }}>
           <TextField autoFocus fullWidth size="small" margin="dense" label="File name"
@@ -328,7 +328,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddFile(); }} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setAddFileOpen(false)} variant="outlined" size="small">Cancel</Button>
+          <Button onClick={() => { setAddFileOpen(false); setFileError(''); setCtxError(''); setFileNameInput(''); setContextNameInput(''); }} variant="outlined" size="small">Cancel</Button>
           <Button onClick={handleAddFile} variant="contained" size="small"
             disabled={!fileNameInput.trim() || !contextNameInput.trim()}>Add</Button>
         </DialogActions>

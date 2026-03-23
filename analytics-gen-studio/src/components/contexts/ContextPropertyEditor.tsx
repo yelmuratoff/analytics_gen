@@ -100,7 +100,7 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
                   border: '1.5px solid',
                   borderColor: active ? '#DF4926' : 'divider',
                   '&:hover': {
-                    bgcolor: active ? '#C03A1C' : 'action.selected',
+                    bgcolor: active ? '#C03A1C' : 'rgba(223,73,38,0.08)',
                     borderColor: '#DF4926',
                     color: active ? '#fff' : '#DF4926',
                   },

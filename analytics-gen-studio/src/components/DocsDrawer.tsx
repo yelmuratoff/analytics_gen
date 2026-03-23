@@ -70,7 +70,7 @@ export default function DocsDrawer({ open, onClose }: DocsDrawerProps) {
           <Box sx={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: 'background.paper', zIndex: 1,
+            bgcolor: 'background.paper', zIndex: 1, pointerEvents: 'none',
           }}>
             <CircularProgress size={28} thickness={4} sx={{ color: '#DF4926' }} />
           </Box>
