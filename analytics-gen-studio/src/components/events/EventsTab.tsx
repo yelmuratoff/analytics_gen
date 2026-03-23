@@ -23,7 +23,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
   const selectedPath = useStore((s) => s.selectedPath);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
   const files = useStore((s) => s.eventFiles);
-  const { width: sidebarWidth, dragging, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
+  const { width: sidebarWidth, dragging, atLimit, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
     initialWidth: 260, storageKey: 'studio-sidebar-events',
   });
 
@@ -127,7 +127,7 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
       }}>
         <FileTree />
       </Box>
-      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
+      <ResizeHandle dragging={dragging} atLimit={atLimit} onMouseDown={handleMouseDown} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {renderEditor()}
       </Box>

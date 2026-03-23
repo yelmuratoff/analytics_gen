@@ -25,6 +25,7 @@ export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey
     return initialWidth;
   });
   const [dragging, setDragging] = useState(false);
+  const [atLimit, setAtLimit] = useState(false);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef(0);
@@ -43,10 +44,14 @@ export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey
         const rect = containerRef.current.getBoundingClientRect();
         if (unit === 'percent') {
           const pct = ((e.clientX - rect.left) / rect.width) * 100;
-          setWidth(Math.max(min, Math.min(max, pct)));
+          const clamped = Math.max(min, Math.min(max, pct));
+          setWidth(clamped);
+          setAtLimit(pct <= min || pct >= max);
         } else {
           const newWidth = e.clientX - rect.left;
-          setWidth(Math.max(min, Math.min(max, newWidth)));
+          const clamped = Math.max(min, Math.min(max, newWidth));
+          setWidth(clamped);
+          setAtLimit(newWidth <= min || newWidth >= max);
         }
       });
     };
@@ -54,6 +59,7 @@ export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey
     const handleMouseUp = () => {
       isDragging.current = false;
       setDragging(false);
+      setAtLimit(false);
       cancelAnimationFrame(rafRef.current);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
@@ -72,5 +78,5 @@ export function useResizeHandle({ initialWidth, min = 200, max = 400, storageKey
     }
   }, [dragging, width, storageKey]);
 
-  return { width, dragging, containerRef, handleMouseDown };
+  return { width, dragging, atLimit, containerRef, handleMouseDown };
 }

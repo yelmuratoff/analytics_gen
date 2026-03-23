@@ -34,17 +34,21 @@ import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { hoverAction, hoverEdit, hoverDelete as hoverDel, addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
-import { useErrorKeys } from '../../hooks/useValidation.ts';
+import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import type { EventDef, ParamDef } from '../../types/index.ts';
 
-const ErrorDot = () => (
-  <Box component="span" sx={{
-    width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F',
-    display: 'inline-block', flexShrink: 0, ml: 0.5,
-  }} />
-);
+const ErrorDot = ({ messages }: { messages?: string[] }) => {
+  const dot = (
+    <Box component="span" sx={{
+      width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F',
+      display: 'inline-block', flexShrink: 0, ml: 0.5,
+    }} />
+  );
+  if (!messages?.length) return dot;
+  return <Tooltip title={messages.join('; ')} arrow enterDelay={200} placement="right">{dot}</Tooltip>;
+};
 
 const Arrow = ({ open }: { open: boolean }) => open
   ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
@@ -62,9 +66,9 @@ const Badge = memo(({ n }: { n: number }) => (
 
 // ── Parameter Row ──
 
-const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, onSelect, onDuplicate, onDelete }: {
+const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, onSelect, onDuplicate, onDelete }: {
   pn: string; pv: ParamDef | string | null; fi: number; dn: string; en: string;
-  isSelected: boolean; hasError?: boolean;
+  isSelected: boolean; hasError?: boolean; errorMsgs?: string[];
   onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
 }) => (
   <ListItemButton sx={{
@@ -89,7 +93,7 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, onSelect, onD
               '& .MuiChip-label': { px: 0.6 },
             }} />
           )}
-          {hasError && <ErrorDot />}
+          {hasError && <ErrorDot messages={errorMsgs} />}
         </Box>
       }
       secondary={pv !== null ? (typeof pv === 'string' ? pv : pv?.type) : undefined}
@@ -111,9 +115,9 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, onSelect, onD
 
 // ── Event Row ──
 
-const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, onToggle, onSelect, onDuplicate, onDelete, children }: {
+const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, errorMsgs, onToggle, onSelect, onDuplicate, onDelete, children }: {
   en: string; paramCount: number; fi: number; dn: string;
-  isSelected: boolean; isOpen: boolean; hasError?: boolean;
+  isSelected: boolean; isOpen: boolean; hasError?: boolean; errorMsgs?: string[];
   onToggle: () => void; onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
   children?: React.ReactNode;
 }) => (
@@ -128,7 +132,7 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, o
         <ElectricBoltRounded sx={{ fontSize: 15, color: '#E8A84E' }} />
       </ListItemIcon>
       <ListItemText
-        primary={<><Box component="span" sx={truncNameSx}>{en}</Box>{paramCount > 0 && <Badge n={paramCount} />}{hasError && <ErrorDot />}</>}
+        primary={<><Box component="span" sx={truncNameSx}>{en}</Box>{paramCount > 0 && <Badge n={paramCount} />}{hasError && <ErrorDot messages={errorMsgs} />}</>}
         primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }}
         sx={truncTextSx}
       />
@@ -153,6 +157,7 @@ export default function FileTree() {
   const files = useStore((s) => s.eventFiles);
   const sharedParamFiles = useStore((s) => s.sharedParamFiles);
   const errorKeys = useErrorKeys();
+  const errorMessages = useErrorMessages();
   const selectedPath = useStore((s) => s.selectedPath);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
   const addEventFile = useStore((s) => s.addEventFile);
@@ -394,7 +399,7 @@ export default function FileTree() {
                   : (
                     <>
                       <ListItemText
-                        primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}{errorKeys.has(`events:${fi}`) && <ErrorDot />}</>}
+                        primary={<><Box component="span" sx={truncNameSx}>{file.fileName}</Box>{totalEvents > 0 && <Badge n={totalEvents} />}{errorKeys.has(`events:${fi}`) && <ErrorDot messages={errorMessages.get(`events:${fi}`)} />}</>}
                         primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                         sx={truncTextSx}
                         onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'file', fi, original: file.fileName }); }}
@@ -443,7 +448,7 @@ export default function FileTree() {
                             : (
                               <>
                                 <ListItemText
-                                  primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}{errorKeys.has(`events:${fi}:${dn}`) && <ErrorDot />}</>}
+                                  primary={<><Box component="span" sx={truncNameSx}>{dn}</Box>{eventCount > 0 && <Badge n={eventCount} />}{errorKeys.has(`events:${fi}:${dn}`) && <ErrorDot messages={errorMessages.get(`events:${fi}:${dn}`)} />}</>}
                                   primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 600, color: '#DF4926' }}
                                   sx={truncTextSx}
                                   onDoubleClick={(e) => { e.stopPropagation(); startEditing({ type: 'domain', fi, original: dn }); }}
@@ -482,6 +487,7 @@ export default function FileTree() {
                                     isSelected={isSel(fi, dn, en, undefined)}
                                     isOpen={eventOpen}
                                     hasError={errorKeys.has(`events:${fi}:${dn}:${en}`)}
+                                    errorMsgs={errorMessages.get(`events:${fi}:${dn}:${en}`)}
                                     onToggle={() => toggle(ek)}
                                     onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en })}
                                     onDuplicate={() => duplicateEvent(fi, dn, en)}
@@ -498,6 +504,7 @@ export default function FileTree() {
                                           <ParamRow key={pn} pn={pn} pv={pv} fi={fi} dn={dn} en={en}
                                             isSelected={isSel(fi, dn, en, pn)}
                                             hasError={errorKeys.has(`events:${fi}:${dn}:${en}:${pn}`)}
+                                            errorMsgs={errorMessages.get(`events:${fi}:${dn}:${en}:${pn}`)}
                                             onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })}
                                             onDuplicate={() => duplicateParameter(fi, dn, en, pn)}
                                             onDelete={() => setConfirmDelete({

@@ -35,6 +35,8 @@ function highlightYamlToHtml(content: string): string {
       let valHtml: string;
       if (!val) {
         valHtml = escapeHtml(rest);
+      } else if (val === 'null' || val === '~') {
+        valHtml = `<span style="color:#7C8CFF"> ${escapeHtml(val)}</span>`;
       } else if (val === 'true' || val === 'false') {
         valHtml = `<span style="color:#E8A84E"> ${escapeHtml(val)}</span>`;
       } else if (/^-?\d+(\.\d+)?$/.test(val)) {

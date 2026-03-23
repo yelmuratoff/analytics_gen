@@ -2,13 +2,15 @@ import Box from '@mui/material/Box';
 
 interface ResizeHandleProps {
   dragging: boolean;
+  atLimit?: boolean;
   onMouseDown: () => void;
 }
 
-export default function ResizeHandle({ dragging, onMouseDown }: ResizeHandleProps) {
+export default function ResizeHandle({ dragging, atLimit, onMouseDown }: ResizeHandleProps) {
   return (
     <Box
       role="separator"
+      aria-orientation="vertical"
       aria-label="Resize panels"
       onMouseDown={onMouseDown}
       sx={{
@@ -23,7 +25,8 @@ export default function ResizeHandle({ dragging, onMouseDown }: ResizeHandleProp
         mx: -0.25,
         '&:hover': { bgcolor: 'rgba(223,73,38,0.06)' },
         '&:hover .dot': { bgcolor: '#DF4926', opacity: 0.8 },
-        ...(dragging && { bgcolor: 'rgba(223,73,38,0.06)' }),
+        ...(dragging && !atLimit && { bgcolor: 'rgba(223,73,38,0.06)' }),
+        ...(dragging && atLimit && { bgcolor: 'rgba(211,47,47,0.08)' }),
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -32,7 +35,7 @@ export default function ResizeHandle({ dragging, onMouseDown }: ResizeHandleProp
             width: 3,
             height: 3,
             borderRadius: '50%',
-            bgcolor: dragging ? '#DF4926' : 'text.disabled',
+            bgcolor: dragging ? (atLimit ? '#D32F2F' : '#DF4926') : 'text.disabled',
             opacity: dragging ? 0.8 : 0.25,
             transition: 'all 0.15s',
           }} />

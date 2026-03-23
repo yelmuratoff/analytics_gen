@@ -38,7 +38,7 @@ export default function Layout({ schemas }: LayoutProps) {
     () => extractImportHints(schemas.rawConfigSchema, schemas.eventsSchema, schemas.sharedParametersSchema),
     [schemas],
   );
-  const { width: formWidth, dragging, containerRef, handleMouseDown } = useResizeHandle({
+  const { width: formWidth, dragging, atLimit, containerRef, handleMouseDown } = useResizeHandle({
     initialWidth: 57, min: 30, max: 75, storageKey: 'studio-form-width', unit: 'percent',
   });
   const isNarrow = useMediaQuery('(max-width:1024px)');
@@ -235,7 +235,7 @@ export default function Layout({ schemas }: LayoutProps) {
             <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><CircularProgress size={24} sx={{ color: '#DF4926' }} /></Box>}>{renderTab()}</Suspense>
           </Box>
         )}
-        {!isNarrow && <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />}
+        {!isNarrow && <ResizeHandle dragging={dragging} atLimit={atLimit} onMouseDown={handleMouseDown} />}
         {/* YAML preview panel */}
         {previewVisible && (
           <Box sx={{

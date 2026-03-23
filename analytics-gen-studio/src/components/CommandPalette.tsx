@@ -22,11 +22,15 @@ import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import { useStore } from '../state/store.ts';
 import type { SelectionPath, TabId } from '../types/index.ts';
 
+const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
+const mod = isMac ? '\u2318' : 'Ctrl+';
+
 interface PaletteItem {
   label: string;
   secondary: string;
   icon: React.ReactNode;
   kind: 'action' | 'navigation';
+  shortcut?: string;
   tab?: TabId;
   path?: SelectionPath | null;
   action?: () => void;
@@ -62,11 +66,11 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
 
   const actionItems = useMemo((): PaletteItem[] => {
     const items: PaletteItem[] = [];
-    if (actions?.onSave) items.push({ label: 'Save Project', secondary: 'Action', icon: <SaveRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onSave });
-    if (actions?.onOpen) items.push({ label: 'Open Project', secondary: 'Action', icon: <FileOpenRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onOpen });
-    if (actions?.onExportZip) items.push({ label: 'Export ZIP', secondary: 'Action', icon: <FolderZipRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: actions.onExportZip });
-    if (actions?.onUndo) items.push({ label: 'Undo', secondary: 'Action', icon: <UndoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onUndo });
-    if (actions?.onRedo) items.push({ label: 'Redo', secondary: 'Action', icon: <RedoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onRedo });
+    if (actions?.onSave) items.push({ label: 'Save Project', secondary: 'Action', shortcut: `${mod}S`, icon: <SaveRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onSave });
+    if (actions?.onOpen) items.push({ label: 'Open Project', secondary: 'Action', shortcut: `${mod}O`, icon: <FileOpenRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onOpen });
+    if (actions?.onExportZip) items.push({ label: 'Export ZIP', secondary: 'Action', shortcut: `${mod}\u21E7E`, icon: <FolderZipRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: actions.onExportZip });
+    if (actions?.onUndo) items.push({ label: 'Undo', secondary: 'Action', shortcut: `${mod}Z`, icon: <UndoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onUndo });
+    if (actions?.onRedo) items.push({ label: 'Redo', secondary: 'Action', shortcut: `${mod}\u21E7Z`, icon: <RedoRounded sx={{ fontSize: 16, color: 'text.secondary' }} />, kind: 'action', action: actions.onRedo });
     if (actions?.onToggleTheme) items.push({
       label: actions.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
       secondary: 'Action',
@@ -74,10 +78,10 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
       kind: 'action', action: actions.onToggleTheme,
     });
     // Tab navigation
-    items.push({ label: 'Config', secondary: 'Go to tab', icon: <SettingsRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: () => setActiveTab('config') });
-    items.push({ label: 'Events', secondary: 'Go to tab', icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />, kind: 'action', action: () => setActiveTab('events') });
-    items.push({ label: 'Shared Params', secondary: 'Go to tab', icon: <ShareRounded sx={{ fontSize: 16, color: '#22A06B' }} />, kind: 'action', action: () => setActiveTab('shared') });
-    items.push({ label: 'Contexts', secondary: 'Go to tab', icon: <LayersRounded sx={{ fontSize: 16, color: '#6366F1' }} />, kind: 'action', action: () => setActiveTab('contexts') });
+    items.push({ label: 'Config', secondary: 'Go to tab', shortcut: `${mod}1`, icon: <SettingsRounded sx={{ fontSize: 16, color: '#DF4926' }} />, kind: 'action', action: () => setActiveTab('config') });
+    items.push({ label: 'Events', secondary: 'Go to tab', shortcut: `${mod}2`, icon: <ElectricBoltRounded sx={{ fontSize: 16, color: '#E8A84E' }} />, kind: 'action', action: () => setActiveTab('events') });
+    items.push({ label: 'Shared Params', secondary: 'Go to tab', shortcut: `${mod}3`, icon: <ShareRounded sx={{ fontSize: 16, color: '#22A06B' }} />, kind: 'action', action: () => setActiveTab('shared') });
+    items.push({ label: 'Contexts', secondary: 'Go to tab', shortcut: `${mod}4`, icon: <LayersRounded sx={{ fontSize: 16, color: '#6366F1' }} />, kind: 'action', action: () => setActiveTab('contexts') });
     return items;
   }, [actions, setActiveTab]);
 
@@ -265,6 +269,9 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
           },
         }}
       />
+      <Box aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+        {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+      </Box>
       <Box sx={{ borderTop: 1, borderColor: 'divider', maxHeight: 360, overflow: 'auto' }} ref={listRef}>
         {filtered.length === 0 && (
           <Typography sx={{ p: 3, textAlign: 'center', fontSize: '0.85rem', color: 'text.disabled' }}>
@@ -306,6 +313,16 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
                     {item.label}
                   </Typography>
                 </Box>
+                {item.shortcut && (
+                  <Box component="kbd" sx={{
+                    px: 0.7, py: 0.15, borderRadius: 0.5,
+                    border: 1, borderColor: 'divider', bgcolor: 'action.hover',
+                    fontSize: '0.65rem', fontWeight: 600, fontFamily: '"JetBrains Mono", monospace',
+                    color: 'text.disabled', whiteSpace: 'nowrap', flexShrink: 0,
+                  }}>
+                    {item.shortcut}
+                  </Box>
+                )}
                 <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {item.secondary}
                 </Typography>

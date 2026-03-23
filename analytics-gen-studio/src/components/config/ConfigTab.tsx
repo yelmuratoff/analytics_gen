@@ -31,14 +31,6 @@ import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 
-const sectionColors: Record<string, string> = {
-  input: '#DF4926',
-  output: '#2E7D32',
-  target: '#6366F1',
-  rule: '#E8A84E',
-  text_fields: '#0288D1',
-  info: '#888',
-};
 
 const iconMap: Record<string, (color: string) => React.ReactNode> = {
   input: (c) => <InputRounded sx={{ fontSize: 18, color: c }} />,
@@ -52,7 +44,7 @@ const iconMap: Record<string, (color: string) => React.ReactNode> = {
 function getSectionMeta(schema: Record<string, unknown>): { icon: React.ReactNode; color: string } {
   const xui = schema['x-ui'] as Record<string, string> | undefined;
   const iconName = xui?.icon;
-  const color = (iconName && sectionColors[iconName]) ?? '#DF4926';
+  const color = xui?.color ?? '#DF4926';
   const icon = (iconName && iconMap[iconName]?.(color)) ?? <SettingsRounded sx={{ fontSize: 18, color }} />;
   return { icon, color };
 }
@@ -69,6 +61,7 @@ function Section({ title, icon, accentColor, open, onToggle, filledCount, childr
         role="button"
         tabIndex={0}
         aria-expanded={open}
+        aria-label={`${open ? 'Collapse' : 'Expand'} ${title} section`}
         onClick={onToggle}
         onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
         sx={{
@@ -403,44 +396,48 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
 
   return (
     <Box>
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <Box>
-          <Typography variant="h4">Configuration</Typography>
-          <Typography variant="caption">analytics_gen.yaml</Typography>
+      <Box sx={{
+        position: 'sticky', top: -24, zIndex: 2,
+        bgcolor: 'background.paper', mx: -3, px: 3, pt: 3, mt: -3, pb: 1.5,
+      }}>
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h4">Configuration</Typography>
+            <Typography variant="caption">analytics_gen.yaml</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {sectionKeys.length > 1 && (
+              <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
+                <IconButton size="small" onClick={() => setOpenSections(allExpanded ? new Set() : new Set(sectionKeys))} sx={{
+                  color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
+                }}>
+                  {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 20 }} /> : <UnfoldMoreRounded sx={{ fontSize: 20 }} />}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {sectionKeys.length > 1 && (
-            <Tooltip title={allExpanded ? 'Collapse all' : 'Expand all'} arrow>
-              <IconButton size="small" onClick={() => setOpenSections(allExpanded ? new Set() : new Set(sectionKeys))} sx={{
-                color: 'text.secondary', '&:hover': { color: '#DF4926', bgcolor: 'rgba(223,73,38,0.04)' },
-              }}>
-                {allExpanded ? <UnfoldLessRounded sx={{ fontSize: 20 }} /> : <UnfoldMoreRounded sx={{ fontSize: 20 }} />}
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </Box>
 
-      {sectionKeys.length > 2 && (
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Search config fields..."
-          value={searchInput}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
-                </InputAdornment>
-              ),
-              sx: { fontSize: '0.82rem', py: 0, height: 36 },
-            },
-          }}
-          sx={{ mb: 2 }}
-        />
-      )}
+        {sectionKeys.length > 2 && (
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search config fields..."
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+                sx: { fontSize: '0.82rem', py: 0, height: 36 },
+              },
+            }}
+          />
+        )}
+      </Box>
 
       {Object.entries(sections).map(([sectionKey, sectionSchema]) => {
         const sec = sectionSchema as Record<string, unknown>;

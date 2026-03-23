@@ -14,7 +14,7 @@
           "type": "object",
           "title": "Input Configuration",
           "description": "Configures where analytics_gen reads its source YAML files.",
-          "x-ui": { "icon": "input" },
+          "x-ui": { "icon": "input", "color": "#DF4926" },
           "properties": {
             "events": {
               "type": "string",
@@ -60,7 +60,7 @@
           "type": "object",
           "title": "Output Configuration",
           "description": "Configures where analytics_gen writes generated files.",
-          "x-ui": { "icon": "output" },
+          "x-ui": { "icon": "output", "color": "#2E7D32" },
           "properties": {
             "dart": {
               "type": "string",
@@ -88,7 +88,7 @@
           "type": "object",
           "title": "Generation Targets",
           "description": "Toggles for which output artifacts to generate.",
-          "x-ui": { "icon": "target" },
+          "x-ui": { "icon": "target", "color": "#6366F1" },
           "properties": {
             "csv": {
               "type": "boolean",
@@ -133,7 +133,7 @@
           "type": "object",
           "title": "Validation & Generation Rules",
           "description": "Rules that control validation strictness and generation behavior.",
-          "x-ui": { "icon": "rule" },
+          "x-ui": { "icon": "rule", "color": "#E8A84E" },
           "properties": {
             "include_event_description": {
               "type": "boolean",
@@ -166,7 +166,7 @@
           "type": "object",
           "title": "Naming Strategy",
           "description": "Controls how domains, events, and parameters are named in generated code and analytics output.",
-          "x-ui": { "icon": "text_fields" },
+          "x-ui": { "icon": "text_fields", "color": "#0288D1" },
           "properties": {
             "casing": {
               "type": "string",
@@ -219,7 +219,7 @@
           "type": "object",
           "title": "Meta Configuration",
           "description": "Configuration for automatic meta field injection into generated events.",
-          "x-ui": { "icon": "info" },
+          "x-ui": { "icon": "info", "color": "#888888" },
           "properties": {
             "auto_tracking_creation_date": {
               "type": "boolean",

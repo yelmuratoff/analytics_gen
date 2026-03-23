@@ -34,7 +34,7 @@ import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts
 import { hoverDelete, addItemButton, sidebarScroll } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
-import { useErrorKeys } from '../../hooks/useValidation.ts';
+import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
@@ -60,6 +60,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const removeContextProperty = useStore((s) => s.removeContextProperty);
 
   const errorKeys = useErrorKeys();
+  const errorMessages = useErrorMessages();
   const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
   const [isExpandPending, startTransition] = useTransition();
   const isPending = isSearchPending || isExpandPending;
@@ -71,7 +72,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
   const PAGE_SIZE = 20;
-  const { width: sidebarWidth, dragging, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
+  const { width: sidebarWidth, dragging, atLimit, containerRef: sidebarRef, handleMouseDown } = useResizeHandle({
     initialWidth: 240, storageKey: 'studio-sidebar-contexts',
   });
 
@@ -205,7 +206,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     <InsertDriveFileRounded sx={{ fontSize: 17, color: '#6366F1' }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0, ml: 0.5 }} />}</>}
+                    primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Tooltip title={errorMessages.get(`contexts:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                     sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                   />
@@ -247,7 +248,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                               <ListItemIcon sx={{ minWidth: 18 }}>
                                 <CircleRounded sx={{ fontSize: 6, color: hasErr ? '#D32F2F' : 'text.disabled' }} />
                               </ListItemIcon>
-                              <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0 }} />}</Box>} primaryTypographyProps={{
+                              <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Tooltip title={errorMessages.get(`contexts:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D32F2F', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}</Box>} primaryTypographyProps={{
                                 fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
                               }} />
                               <Tooltip title="Delete" arrow enterDelay={400}>
@@ -293,7 +294,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
           </Typography>
         )}
       </Box>
-      <ResizeHandle dragging={dragging} onMouseDown={handleMouseDown} />
+      <ResizeHandle dragging={dragging} atLimit={atLimit} onMouseDown={handleMouseDown} />
       <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
         {selectedPath?.tab === 'contexts' && selectedPath.contextProperty ? (
           <ContextPropertyEditor fileIndex={selectedPath.fileIndex} propName={selectedPath.contextProperty} parameterSchema={parameterSchema} operations={operations} />
