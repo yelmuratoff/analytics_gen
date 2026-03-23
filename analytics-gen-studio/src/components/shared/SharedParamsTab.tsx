@@ -139,6 +139,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
               value={searchInput}
               onChange={(e) => handleSearchChange(e.target.value)}
               slotProps={{
+                htmlInput: { 'aria-label': 'Search shared parameters' },
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">

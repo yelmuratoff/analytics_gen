@@ -328,7 +328,14 @@ function DynamicField({ fieldKey, schema, value, onChange, required }: {
           <FieldLabel label={title} hint={description ? `${description} \u2014 add key-value pairs below` : 'Add key-value pairs below'} />
           <KeyValueEditor
             entries={(value as Record<string, string>) ?? {}}
-            placeholder={{ key: 'alias', value: 'target_domain' }}
+            placeholder={(() => {
+              const ex = examples?.[0];
+              if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
+                const firstEntry = Object.entries(ex as Record<string, string>)[0];
+                if (firstEntry) return { key: firstEntry[0], value: firstEntry[1] };
+              }
+              return { key: 'Key', value: 'Value' };
+            })()}
             onChange={(v) => onChange(Object.keys(v).length > 0 ? v : undefined)}
           />
         </Box>
@@ -426,6 +433,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
             value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
             slotProps={{
+              htmlInput: { 'aria-label': 'Search config fields' },
               input: {
                 startAdornment: (
                   <InputAdornment position="start">

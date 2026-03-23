@@ -150,6 +150,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
               value={searchInput}
               onChange={(e) => handleSearchChange(e.target.value)}
               slotProps={{
+                htmlInput: { 'aria-label': 'Search contexts' },
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">

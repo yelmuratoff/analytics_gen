@@ -296,7 +296,10 @@ export default function FileTree() {
       onBlur={onCommit}
       onKeyDown={(e) => { if (e.key === 'Enter') onCommit(); if (e.key === 'Escape') setEditing(null); }}
       onClick={(e) => e.stopPropagation()}
-      slotProps={{ input: { sx: { fontSize, py: 0, height, ...(mono ? { fontFamily: '"JetBrains Mono", monospace' } : {}) } } }}
+      slotProps={{
+        htmlInput: { 'aria-label': 'Rename' },
+        input: { sx: { fontSize, py: 0, height, ...(mono ? { fontFamily: '"JetBrains Mono", monospace' } : {}), '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#DF4926', borderWidth: 2 } } },
+      }}
       sx={{ flex: 1 }}
     />
   );
@@ -327,6 +330,7 @@ export default function FileTree() {
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
           slotProps={{
+            htmlInput: { 'aria-label': 'Search events' },
             input: {
               startAdornment: (
                 <InputAdornment position="start">

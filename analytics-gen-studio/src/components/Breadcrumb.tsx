@@ -14,7 +14,7 @@ export default function Breadcrumb({ parts, onPartClick }: BreadcrumbProps) {
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'nowrap', overflow: 'hidden' }}>
       {parts.map((part, i) => {
         const isLast = i === parts.length - 1;
-        const isClickable = !isLast && i >= 1 && !!onPartClick;
+        const isClickable = !isLast && !!onPartClick;
         return (
           <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {i > 0 && (

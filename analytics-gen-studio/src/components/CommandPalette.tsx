@@ -255,6 +255,7 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         slotProps={{
+          htmlInput: { 'aria-label': 'Search command palette', role: 'combobox', 'aria-expanded': true },
           input: {
             startAdornment: (
               <InputAdornment position="start">
@@ -299,6 +300,7 @@ export default function CommandPalette({ open, onClose, actions }: CommandPalett
                   cursor: 'pointer',
                   bgcolor: i === selectedIndex ? 'action.selected' : 'transparent',
                   '&:hover': { bgcolor: 'action.hover' },
+                  ...(i === selectedIndex && { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2, borderRadius: 1 }),
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24 }}>

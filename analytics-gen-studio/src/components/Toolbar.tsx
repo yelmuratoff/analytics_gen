@@ -320,15 +320,17 @@ export default function Toolbar({ importHints }: ToolbarProps) {
 
         {/* Current file indicator */}
         {fileName && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 'auto' }}>
-            <InsertDriveFileRounded sx={{ fontSize: 14, color: 'text.disabled' }} />
-            <Typography sx={{
-              fontSize: '0.78rem', color: 'text.secondary', fontFamily: '"JetBrains Mono", monospace',
-              maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {fileName}{isDirty && <Box component="span" sx={{ color: '#DF4926', ml: 0.75 }}>●</Box>}
-            </Typography>
-          </Box>
+          <Tooltip title={fileName} arrow enterDelay={400} placement="bottom">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 'auto' }}>
+              <InsertDriveFileRounded sx={{ fontSize: 14, color: 'text.disabled' }} />
+              <Typography sx={{
+                fontSize: '0.78rem', color: 'text.secondary', fontFamily: '"JetBrains Mono", monospace',
+                maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {fileName}{isDirty && <Box component="span" sx={{ color: '#DF4926', ml: 0.75 }}>●</Box>}
+              </Typography>
+            </Box>
+          </Tooltip>
         )}
         {!fileName && <Box sx={{ flex: 1 }} />}
 
