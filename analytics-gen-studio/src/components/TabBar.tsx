@@ -94,11 +94,15 @@ export default function TabBar({ children }: TabBarProps) {
         variant={isCompact ? 'fullWidth' : 'standard'}
         sx={{
           minHeight: 44,
+          overflow: 'visible',
+          '& .MuiTabs-scroller': { overflow: 'visible !important' },
+          '& .MuiTabs-flexContainer': { overflow: 'visible' },
           '& .MuiTabs-indicator': { height: 2.5, borderRadius: '2px 2px 0 0', bgcolor: '#DF4926' },
           '& .MuiTab-root': {
             minHeight: 44, py: 0, px: isCompact ? 1 : 2, gap: 0.7,
             color: 'text.secondary', fontSize: '0.86rem',
             minWidth: isCompact ? 44 : undefined,
+            overflow: 'visible',
             '&.Mui-selected': { color: 'text.primary' },
           },
         }}

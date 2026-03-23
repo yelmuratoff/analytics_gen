@@ -1,5 +1,6 @@
+import { useCallback } from 'react';
 import Form from '@rjsf/mui';
-import type { RJSFSchema } from '@rjsf/utils';
+import type { RJSFSchema, FormValidation } from '@rjsf/utils';
 import type { IChangeEvent } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
@@ -10,10 +11,14 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Button from '@mui/material/Button';
 import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
+import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import {
+  DEFAULT_PARAM_TYPE, SNAKE_CASE_PARAM, NON_NUMERIC_TYPES,
+  PARAM_MUTUAL_EXCLUSIONS, STRING_ONLY_FIELDS, NUMERIC_ONLY_FIELDS,
+} from '../../schemas/constants.ts';
 import Breadcrumb from '../Breadcrumb.tsx';
 import AdvancedSection from '../AdvancedSection.tsx';
 import type { ParamDef } from '../../types/index.ts';
@@ -103,9 +108,71 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
     return true;
   }).length;
 
+  const cfg = useStore((s) => s.config) as unknown as Record<string, Record<string, unknown>>;
+  const enforceSnakeParams = cfg.naming?.enforce_snake_case_parameters as boolean ?? false;
+
+  // Name-level error (shown as banner — can't be on a form field)
+  const nameError = enforceSnakeParams && !SNAKE_CASE_PARAM.test(paramName)
+    ? `"${paramName}" must be snake_case (a-z, 0-9, _)` : null;
+
+  // Field-level errors via customValidate — validated directly from form data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const customValidate = useCallback((data: any, errors: FormValidation) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = errors as any;
+    const baseType = data.type?.replace(/\?$/, '');
+    const isStringLike = baseType === 'string';
+    const isNumericLike = baseType ? !NON_NUMERIC_TYPES.has(baseType) : false;
+
+    // Mutual exclusion checks
+    for (const [a, b] of PARAM_MUTUAL_EXCLUSIONS) {
+      const valA = data[a as keyof ParamDef];
+      const valB = data[b as keyof ParamDef];
+      const hasA = valA !== undefined && valA !== '' && !(Array.isArray(valA) && valA.length === 0);
+      const hasB = valB !== undefined && valB !== '' && !(Array.isArray(valB) && valB.length === 0);
+      if (hasA && hasB) {
+        e[b]?.addError(`${a} and ${b} cannot be used together`);
+      }
+    }
+    // Regex triple quotes
+    if (data.regex && data.regex.includes("'''")) {
+      e.regex?.addError("regex cannot contain triple quotes (''')");
+    }
+    // String-only fields
+    for (const field of STRING_ONLY_FIELDS) {
+      if (data[field as keyof ParamDef] !== undefined && baseType && !isStringLike) {
+        e[field]?.addError(`${field} only applies to string type`);
+      }
+    }
+    // Numeric-only fields
+    for (const field of NUMERIC_ONLY_FIELDS) {
+      if (data[field as keyof ParamDef] !== undefined && baseType && !isNumericLike) {
+        e[field]?.addError(`${field} only applies to numeric types`);
+      }
+    }
+    // Range checks
+    if (data.min_length !== undefined && data.max_length !== undefined && data.max_length < data.min_length) {
+      e.max_length?.addError('max_length must be >= min_length');
+    }
+    if (data.min !== undefined && data.max !== undefined && data.max < data.min) {
+      e.max?.addError('max must be >= min');
+    }
+    return errors;
+  }, []);
+
   const header = (
     <Box sx={{ mb: 3 }}>
       {breadcrumbEl}
+      {nameError && (
+        <Box sx={{
+          mt: 1.5, px: 2, py: 1.2, borderRadius: 1.5,
+          bgcolor: 'rgba(211,47,47,0.06)', border: '1px solid rgba(211,47,47,0.2)',
+          display: 'flex', alignItems: 'center', gap: 0.75,
+        }}>
+          <ErrorOutlineRounded sx={{ fontSize: 14, color: '#D32F2F', flexShrink: 0 }} />
+          <Typography sx={{ fontSize: '0.78rem', color: '#D32F2F', fontWeight: 500 }}>{nameError}</Typography>
+        </Box>
+      )}
     </Box>
   );
 
@@ -138,8 +205,8 @@ export default function ParameterEditor({ fileIndex, domain, eventName, paramNam
           formData={formData}
           validator={validator}
           onChange={handleChange}
+          customValidate={customValidate}
           templates={compactTemplates}
-          liveValidate
           showErrorList={false}
         >
           <div />

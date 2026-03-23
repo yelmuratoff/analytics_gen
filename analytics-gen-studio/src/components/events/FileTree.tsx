@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo, useTransition, useRef } from 'react';
+import { useState, useMemo, useCallback, memo, useTransition, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -71,7 +71,7 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, on
   isSelected: boolean; hasError?: boolean; errorMsgs?: string[];
   onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
 }) => (
-  <ListItemButton sx={{
+  <ListItemButton data-selected={isSelected || undefined} sx={{
     pl: 9.5, py: 0.4,
     ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
     ...(hasError && !isSelected && { bgcolor: alpha('#D32F2F', 0.03) }),
@@ -122,7 +122,7 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, e
   children?: React.ReactNode;
 }) => (
   <Box>
-    <ListItemButton sx={{
+    <ListItemButton data-selected={isSelected || undefined} sx={{
       pl: 6.5, py: 0.4,
       ...(isSelected && { bgcolor: alpha('#DF4926', 0.06) }),
       ...(hasError && !isSelected && { bgcolor: alpha('#D32F2F', 0.03) }),
@@ -247,6 +247,37 @@ export default function FileTree() {
   const allExpanded = allKeys.size > 0 && allKeys.size === expanded.size;
   const expandAll = useCallback(() => startTransition(() => setExpanded(new Set(allKeys))), [allKeys]);
   const collapseAll = useCallback(() => setExpanded(new Set()), []);
+
+  // Auto-expand tree path and scroll to selected item when selectedPath changes (e.g. from error click)
+  const prevSelectedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedPath || selectedPath.tab !== 'events') return;
+    const key = JSON.stringify(selectedPath);
+    if (key === prevSelectedRef.current) return;
+    prevSelectedRef.current = key;
+
+    const fi = selectedPath.fileIndex;
+    const fk = `f${fi}`;
+    const keysToExpand: string[] = [fk];
+    if (selectedPath.domain) {
+      const dk = `${fk}.d${selectedPath.domain}`;
+      keysToExpand.push(dk);
+      if (selectedPath.event) {
+        keysToExpand.push(`${dk}.e${selectedPath.event}`);
+      }
+    }
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      for (const k of keysToExpand) next.add(k);
+      return next;
+    });
+
+    // Scroll selected item into view after a short delay for DOM update
+    requestAnimationFrame(() => {
+      const el = document.querySelector('[data-selected="true"]');
+      el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  }, [selectedPath]);
 
   const isSel = useCallback((fi: number, domain?: string, event?: string, param?: string) =>
     selectedPath?.tab === 'events' && selectedPath.fileIndex === fi &&

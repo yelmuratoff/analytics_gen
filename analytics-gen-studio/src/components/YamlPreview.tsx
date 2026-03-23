@@ -17,16 +17,80 @@ import { useValidation } from '../hooks/useValidation.ts';
 import { useStore } from '../state/store.ts';
 import { copyToClipboard, exportSingleFile } from '../utils/export.ts';
 import EmptyState from './EmptyState.tsx';
-import type { SelectionPath } from '../types/index.ts';
+import type { SelectionPath, ValidationError } from '../types/index.ts';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function highlightYamlToHtml(content: string): string {
-  return content.split('\n').map((line) => {
+function buildErrorLineSet(content: string, errors: ValidationError[]): Set<number> {
+  if (errors.length === 0) return new Set();
+  const lines = content.split('\n');
+  const errorLines = new Set<number>();
+
+  // Build lookup structures from errors
+  const errorEventNames = new Set<string>();
+  const errorParamNames = new Set<string>();
+  const errorFields = new Set<string>();
+  // Map: eventName → set of field names that have errors
+  const eventFieldErrors = new Map<string, Set<string>>();
+
+  for (const err of errors) {
+    if (err.event) errorEventNames.add(err.event);
+    if (err.parameter) errorParamNames.add(err.parameter);
+    if (err.contextProperty) errorParamNames.add(err.contextProperty);
+    // Extract field name from message like "event_name cannot contain..."
+    const fieldMatch = err.message.match(/^(\w+)\s/);
+    if (fieldMatch && err.event) {
+      errorFields.add(fieldMatch[1]);
+      if (!eventFieldErrors.has(err.event)) eventFieldErrors.set(err.event, new Set());
+      eventFieldErrors.get(err.event)!.add(fieldMatch[1]);
+    }
+  }
+
+  // Track YAML context by indentation — generated YAML uses 2-space indent:
+  // domain:           (0)
+  //   event:          (2)
+  //     field: val    (4)
+  //     parameters:   (4)
+  //       param: type (6)
+  let currentDomain = '';
+  let currentEvent = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(/^(\s*)([\w_.-]+)(:)(.*)/);
+    if (!match) continue;
+    const [, indent, key] = match;
+    const depth = indent.length;
+
+    // Track context
+    if (depth === 0) { currentDomain = key; currentEvent = ''; }
+    if (depth === 2) { currentEvent = key; }
+
+    // Event name line (indent 2)
+    if (depth === 2 && errorEventNames.has(key)) {
+      errorLines.add(i);
+    }
+    // Event field line (indent 4) — e.g. event_name within an error event
+    if (depth === 4 && currentEvent && eventFieldErrors.get(currentEvent)?.has(key)) {
+      errorLines.add(i);
+    }
+    // Parameter name that has errors (indent 6 for events, indent 2 for shared/contexts)
+    if (errorParamNames.has(key)) {
+      errorLines.add(i);
+    }
+  }
+
+  return errorLines;
+}
+
+function highlightYamlToHtml(content: string, errorLines?: Set<number>): string {
+  return content.split('\n').map((line, lineIndex) => {
+    const hasError = errorLines?.has(lineIndex);
+    const errorBg = hasError ? ' style="background:rgba(211,47,47,0.12);border-radius:2px"' : '';
     if (line.trimStart().startsWith('#')) {
-      return `<div><span style="color:#5C5C5C">${escapeHtml(line)}</span></div>`;
+      return `<div${errorBg}><span style="color:#5C5C5C">${escapeHtml(line)}</span></div>`;
     }
     const match = line.match(/^(\s*)([\w_.-]+)(:)(.*)/);
     if (match) {
@@ -46,14 +110,14 @@ function highlightYamlToHtml(content: string): string {
       } else {
         valHtml = `<span style="color:#D4D4D4"> ${escapeHtml(val)}</span>`;
       }
-      return `<div>${escapeHtml(indent)}<span style="color:#DF4926">${escapeHtml(key)}</span><span style="color:#5C5C5C">${colon}</span>${valHtml}</div>`;
+      return `<div${errorBg}>${escapeHtml(indent)}<span style="color:#DF4926">${escapeHtml(key)}</span><span style="color:#5C5C5C">${colon}</span>${valHtml}</div>`;
     }
     const m2 = line.match(/^(\s*)(- )(.*)/);
     if (m2) {
       const [, indent, dash, val] = m2;
-      return `<div>${escapeHtml(indent)}<span style="color:#5C5C5C">${escapeHtml(dash)}</span><span style="color:#D4D4D4">${escapeHtml(val)}</span></div>`;
+      return `<div${errorBg}>${escapeHtml(indent)}<span style="color:#5C5C5C">${escapeHtml(dash)}</span><span style="color:#D4D4D4">${escapeHtml(val)}</span></div>`;
     }
-    return `<div><span style="color:#D4D4D4">${escapeHtml(line) || ' '}</span></div>`;
+    return `<div${errorBg}><span style="color:#D4D4D4">${escapeHtml(line) || ' '}</span></div>`;
   }).join('');
 }
 
@@ -64,9 +128,17 @@ export default function YamlPreview() {
   const setSelectedPath = useStore((s) => s.setSelectedPath);
   const errors = useValidation();
   const tabErrors = errors.filter((e) => e.tab === activeTab);
+  const selectedPath = useStore((s) => s.selectedPath);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [wordWrap, setWordWrap] = useState(false);
+
+  // Sync YAML preview file tab with selected item in tree
+  useEffect(() => {
+    if (selectedPath && selectedPath.tab === activeTab && selectedPath.fileIndex !== undefined && selectedPath.fileIndex < files.length) {
+      setActiveFileIndex(selectedPath.fileIndex);
+    }
+  }, [selectedPath, activeTab, files.length]);
 
   // Clamp index when file list changes (e.g. tab switch)
   useEffect(() => {
@@ -76,9 +148,22 @@ export default function YamlPreview() {
   const safeIndex = Math.min(activeFileIndex, Math.max(0, files.length - 1));
   const currentFile = files[safeIndex];
 
+  // Filter errors relevant to current file
+  const currentFileErrors = useMemo(() => {
+    if (!currentFile) return [];
+    return tabErrors.filter((e) => {
+      if (activeTab === 'config') return true; // config is single file
+      return e.fileIndex === safeIndex;
+    });
+  }, [tabErrors, activeTab, safeIndex, currentFile]);
+
   const highlightedHtml = useMemo(
-    () => currentFile ? highlightYamlToHtml(currentFile.content) : '',
-    [currentFile],
+    () => {
+      if (!currentFile) return '';
+      const errorLines = buildErrorLineSet(currentFile.content, currentFileErrors);
+      return highlightYamlToHtml(currentFile.content, errorLines);
+    },
+    [currentFile, currentFileErrors],
   );
   const lineCount = currentFile ? currentFile.content.split('\n').length : 0;
 
