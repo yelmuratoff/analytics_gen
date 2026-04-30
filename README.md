@@ -88,6 +88,14 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/ye
 - Preview generated YAML in real time
 - Export as ZIP or save/load project files
 
+To round-trip an existing project into Studio, generate the project file from your repo and upload it via "Open Project":
+
+```bash
+dart run analytics_gen:generate --studio    # writes analytics-studio.json
+```
+
+Or enable `targets.studio: true` in `analytics_gen.yaml` to bundle it into the regular generation run.
+
 ## CLI Commands
 
 ```bash
@@ -96,13 +104,15 @@ dart run analytics_gen:generate --docs       # code + docs
 dart run analytics_gen:generate --docs --exports
 dart run analytics_gen:generate --docs --no-code
 dart run analytics_gen:generate --exports --no-code
+dart run analytics_gen:generate --studio              # + Studio project file
 dart run analytics_gen:generate --validate-only
 dart run analytics_gen:generate --plan
 dart run analytics_gen:generate --watch              # incremental rebuilds on file change
 dart run analytics_gen:audit                         # scan for unused events
+dart run analytics_gen:studio_export                 # studio file only (shortcut)
 ```
 
-Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` locally if you need a faster iteration loop-the config still drives CI.
+Pair these with the configuration you committed to `analytics_gen.yaml`. Add `--no-docs` / `--no-exports` / `--no-studio` locally if you need a faster iteration loop-the config still drives CI.
 
 ## Key Features
 

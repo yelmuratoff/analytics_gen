@@ -95,5 +95,31 @@ void main() {
 
       expect(cli.resolveExportsFlag(results, config), isFalse);
     });
+
+    test('studio flag defaults to false', () {
+      final results = parser.parse(const <String>[]);
+      expect(results['studio'], isFalse);
+    });
+
+    test('--studio enables studio generation', () {
+      final results = parser.parse(const <String>['--studio']);
+      expect(results['studio'], isTrue);
+    });
+
+    test('resolveStudioFlag falls back to config when flag omitted', () {
+      final results = parser.parse(const <String>[]);
+      const config =
+          AnalyticsConfig(targets: AnalyticsTargets(generateStudio: true));
+
+      expect(cli.resolveStudioFlag(results, config), isTrue);
+    });
+
+    test('resolveStudioFlag respects CLI --no-studio', () {
+      final results = parser.parse(const <String>['--no-studio']);
+      const config =
+          AnalyticsConfig(targets: AnalyticsTargets(generateStudio: true));
+
+      expect(cli.resolveStudioFlag(results, config), isFalse);
+    });
   });
 }

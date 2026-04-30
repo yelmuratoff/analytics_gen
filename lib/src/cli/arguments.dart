@@ -38,6 +38,11 @@ ArgParser createArgParser() {
       negatable: true,
       help: 'Generate export files (CSV, JSON, SQL)',
     )
+    ..addFlag(
+      'studio',
+      negatable: true,
+      help: 'Generate AnalyticsGen Studio project file (analytics-studio.json)',
+    )
     ..addOption(
       'config',
       abbr: 'c',
@@ -79,4 +84,12 @@ bool resolveExportsFlag(ArgResults results, AnalyticsConfig config) {
   return config.targets.generateCsv ||
       config.targets.generateJson ||
       config.targets.generateSql;
+}
+
+/// Resolves the studio flag based on the command-line arguments and config.
+bool resolveStudioFlag(ArgResults results, AnalyticsConfig config) {
+  if (results.wasParsed('studio')) {
+    return results['studio'] as bool;
+  }
+  return config.targets.generateStudio;
 }

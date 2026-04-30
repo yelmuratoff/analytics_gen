@@ -80,6 +80,13 @@
               "title": "Exports Output Path",
               "description": "Path where database exports (CSV, JSON, SQL) will be generated (optional). Required when CSV/JSON/SQL targets are enabled.",
               "examples": ["exports/analytics", "data/exports"]
+            },
+            "studio": {
+              "type": "string",
+              "title": "Studio Project Output Path",
+              "description": "Path where the AnalyticsGen Studio project file will be written. Required when the studio target is enabled.",
+              "default": "analytics-studio.json",
+              "examples": ["analytics-studio.json", "build/analytics-studio.json"]
             }
           },
           "additionalProperties": false
@@ -124,6 +131,12 @@
               "type": "boolean",
               "title": "Generate Test Matchers",
               "description": "Whether to generate test matchers for `package:test` to verify analytics calls in tests.",
+              "default": false
+            },
+            "studio": {
+              "type": "boolean",
+              "title": "Generate Studio Project File",
+              "description": "Whether to generate an `analytics-studio.json` project file importable by AnalyticsGen Studio. Output path is configured via `outputs.studio`.",
               "default": false
             }
           },
@@ -283,6 +296,12 @@
           "description": "Flat alias for outputs.exports.",
           "x-alias-for": "outputs.exports"
         },
+        "studio_path": {
+          "type": "string",
+          "title": "Studio Path (flat alias)",
+          "description": "Flat alias for outputs.studio.",
+          "x-alias-for": "outputs.studio"
+        },
         "generate_csv": {
           "type": "boolean",
           "title": "Generate CSV (flat alias)",
@@ -318,6 +337,12 @@
           "title": "Generate Test Matchers (flat alias)",
           "description": "Flat alias for targets.test_matchers.",
           "x-alias-for": "targets.test_matchers"
+        },
+        "generate_studio": {
+          "type": "boolean",
+          "title": "Generate Studio (flat alias)",
+          "description": "Flat alias for targets.studio.",
+          "x-alias-for": "targets.studio"
         },
         "include_event_description": {
           "type": "boolean",

@@ -5,6 +5,7 @@ import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
 import 'package:analytics_gen/src/generator/output_manager.dart';
+import 'package:analytics_gen/src/generator/studio_generator.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:analytics_gen/src/models/tracking_plan.dart';
@@ -28,6 +29,7 @@ class GenerationPipeline {
   GenerationPipeline({
     required this.projectRoot,
     required this.config,
+    this.configPath = 'analytics_gen.yaml',
     SchemaEvolutionChecker? schemaChecker,
     WatcherService? watcherService,
     EventLoaderFactory? eventLoaderFactory,
@@ -47,6 +49,10 @@ class GenerationPipeline {
 
   /// The analytics configuration.
   final AnalyticsConfig config;
+
+  /// Path to the source `analytics_gen.yaml` (relative to [projectRoot]).
+  /// Used by the studio export task to embed the raw config in the project file.
+  final String configPath;
 
   final SchemaEvolutionChecker _schemaChecker;
   final WatcherService _watcherService;
@@ -201,6 +207,20 @@ class GenerationPipeline {
             log: rootLogger.scoped('Export generation'),
             outputManager: const OutputManager(),
           ).generate(domains),
+        ),
+      );
+    }
+
+    if (request.generateStudio) {
+      tasks.add(
+        _GeneratorTask(
+          label: 'Studio export',
+          invoke: () => StudioGenerator(
+            config: config,
+            projectRoot: projectRoot,
+            configPath: configPath,
+            log: rootLogger.scoped('Studio export'),
+          ).generate(),
         ),
       );
     }

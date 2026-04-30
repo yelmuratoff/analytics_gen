@@ -35,6 +35,10 @@ analytics_gen:
     # (optional). Required when CSV/JSON/SQL targets are enabled.
     # exports:
 
+    # Path where the AnalyticsGen Studio project file will be written.
+    # Required when the studio target is enabled.
+    studio: analytics-studio.json
+
   # ── Generation Targets ──
   targets:
 
@@ -56,6 +60,10 @@ analytics_gen:
     # Whether to generate test matchers for `package:test` to verify analytics
     # calls in tests.
     test_matchers: false
+
+    # Whether to generate an `analytics-studio.json` project file importable
+    # by AnalyticsGen Studio. Output path is configured via `outputs.studio`.
+    studio: false
 
   # ── Validation & Generation Rules ──
   rules:

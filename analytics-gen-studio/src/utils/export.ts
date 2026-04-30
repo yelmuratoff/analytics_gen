@@ -1,12 +1,13 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import type { StudioState } from '../types/index.ts';
+import type { EventFile, StudioState } from '../types/index.ts';
 import {
   generateConfigYaml,
   generateEventFileYaml,
   generateSharedParamFileYaml,
   generateContextFileYaml,
 } from './yaml-generator.ts';
+import { normalizeEventDef } from './yaml-importer.ts';
 
 // ── File System Access API support ──
 
@@ -43,6 +44,21 @@ function parseProject(text: string): Partial<StudioState> {
   const data = JSON.parse(text);
   if (!data.version || !data.config) {
     throw new Error('Invalid project file format');
+  }
+  if (Array.isArray(data.eventFiles)) {
+    data.eventFiles = (data.eventFiles as EventFile[]).map((file) => ({
+      fileName: file.fileName,
+      domains: Object.fromEntries(
+        Object.entries(file.domains ?? {}).map(([dn, events]) => [
+          dn,
+          Object.fromEntries(
+            Object.entries(events ?? {})
+              .map(([en, ev]) => [en, normalizeEventDef(ev)] as const)
+              .filter(([, ev]) => ev !== null),
+          ),
+        ]),
+      ),
+    }));
   }
   return data;
 }

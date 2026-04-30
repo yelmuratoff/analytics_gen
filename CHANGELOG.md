@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0]
+
+### Features
+
+- **Studio export as a first-class generation target** — added `targets.studio` (with `outputs.studio` path) to `analytics_gen.yaml`. The Studio project file is now produced by the main pipeline alongside Dart code, docs, and exports.
+- **`--studio` CLI flag** for `dart run analytics_gen:generate`. CLI flags follow the same precedence as `--docs` / `--exports`: explicit flag wins over config, with `--no-studio` to disable.
+- **Flat aliases** `generate_studio` and `studio_path` are accepted at the root of the config for parity with other targets.
+
+### Fixes
+
+- Studio now normalizes events when loading a project file — events without a `parameters` block (allowed by schema) no longer crash the import. YAML and JSON import paths share the same normalization logic.
+
+### Internals
+
+- Extracted studio export logic into `StudioGenerator` so the standalone `analytics_gen:studio_export` binary and the main pipeline use the same zero-knowledge YAML reader.
+
 ## [2.0.0]
 
 ### Features

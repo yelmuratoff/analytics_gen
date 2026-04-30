@@ -48,6 +48,7 @@ class AnalyticsGenRunner {
       final generateCode = results['code'] as bool;
       final generateDocs = resolveDocsFlag(results, config);
       final generateExports = resolveExportsFlag(results, config);
+      final generateStudio = resolveStudioFlag(results, config);
       final watch = results['watch'] as bool;
       final planOnly = results['plan'] as bool;
       final validateOnly = results['validate-only'] as bool;
@@ -80,6 +81,7 @@ class AnalyticsGenRunner {
         generateCode: generateCode,
         generateDocs: generateDocs,
         generateExports: generateExports,
+        generateStudio: generateStudio,
         verbose: verbose,
         enableMetrics: enableMetrics,
         logger: logger,
@@ -88,6 +90,7 @@ class AnalyticsGenRunner {
       final pipeline = GenerationPipeline(
         projectRoot: projectRoot,
         config: config,
+        configPath: configPath,
       );
 
       if (watch) {

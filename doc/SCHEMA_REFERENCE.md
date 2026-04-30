@@ -29,6 +29,7 @@ Configures where analytics_gen writes generated files.
 | `dart` | `string` | `"lib/src/analytics/generated"` | Path where generated Dart code will be written (relative to project root). |
 | `docs` | `string` | — | Path where documentation will be generated (optional). Required when generate_docs target is enabled. |
 | `exports` | `string` | — | Path where database exports (CSV, JSON, SQL) will be generated (optional). Required when CSV/JSON/SQL targets are enabled. |
+| `studio` | `string` | `"analytics-studio.json"` | Path where the AnalyticsGen Studio project file will be written. Required when the studio target is enabled. |
 
 ### Generation Targets
 
@@ -42,6 +43,7 @@ Toggles for which output artifacts to generate.
 | `docs` | `boolean` | `false` | Whether to generate Markdown documentation from event definitions. |
 | `plan` | `boolean` | `true` | Whether to include the runtime tracking plan in generated Dart code. |
 | `test_matchers` | `boolean` | `false` | Whether to generate test matchers for `package:test` to verify analytics calls in tests. |
+| `studio` | `boolean` | `false` | Whether to generate an `analytics-studio.json` project file importable by AnalyticsGen Studio. Output path is configured via `outputs.studio`. |
 
 ### Validation & Generation Rules
 

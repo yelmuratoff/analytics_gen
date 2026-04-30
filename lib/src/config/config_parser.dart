@@ -90,6 +90,11 @@ class ConfigParser {
           YamlKeys.exports,
           val(config, YamlKeys.exportsPath, null),
         ),
+        studioPath: val(
+          outputs,
+          YamlKeys.studio,
+          val(config, YamlKeys.studioPath, 'analytics-studio.json'),
+        ),
       ),
       targets: AnalyticsTargets(
         generateCsv: val(
@@ -121,6 +126,11 @@ class ConfigParser {
           targets,
           YamlKeys.testMatchers,
           val(config, YamlKeys.generateTestMatchers, false),
+        ),
+        generateStudio: val(
+          targets,
+          YamlKeys.studio,
+          val(config, YamlKeys.generateStudio, false),
         ),
       ),
       rules: AnalyticsRules(

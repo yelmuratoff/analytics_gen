@@ -30,6 +30,7 @@ class AnalyticsOutputs {
     this.dartPath = 'lib/src/analytics/generated',
     this.docsPath,
     this.exportsPath,
+    this.studioPath = 'analytics-studio.json',
   });
 
   /// Path where generated Dart code will be written (relative to project root).
@@ -40,6 +41,9 @@ class AnalyticsOutputs {
 
   /// Path where database exports will be generated (optional).
   final String? exportsPath;
+
+  /// Path where the AnalyticsGen Studio project file will be written.
+  final String studioPath;
 }
 
 /// Configuration for code generation targets.
@@ -52,6 +56,7 @@ class AnalyticsTargets {
     this.generateDocs = false,
     this.generatePlan = true,
     this.generateTestMatchers = false,
+    this.generateStudio = false,
   });
 
   /// Whether to generate CSV export.
@@ -71,6 +76,9 @@ class AnalyticsTargets {
 
   /// Whether to generate test matchers for `package:test`.
   final bool generateTestMatchers;
+
+  /// Whether to generate the AnalyticsGen Studio project file.
+  final bool generateStudio;
 }
 
 /// Configuration for validation and generation rules.

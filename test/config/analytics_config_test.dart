@@ -15,6 +15,8 @@ void main() {
       expect(config.targets.generateSql, isFalse);
       expect(config.targets.generateDocs, isFalse);
       expect(config.targets.generatePlan, isTrue);
+      expect(config.targets.generateStudio, isFalse);
+      expect(config.outputs.studioPath, 'analytics-studio.json');
       expect(config.naming.enforceSnakeCaseDomains, isTrue);
       expect(config.naming.enforceSnakeCaseParameters, isTrue);
       expect(config.naming.eventNameTemplate, '{domain}: {event}');
@@ -35,6 +37,8 @@ void main() {
           'generate_sql': true,
           'generate_docs': true,
           'generate_plan': false,
+          'generate_studio': true,
+          'studio_path': 'build/analytics-studio.json',
           'naming': {
             'enforce_snake_case_domains': false,
             'enforce_snake_case_parameters': false,
@@ -58,6 +62,8 @@ void main() {
       expect(config.targets.generateSql, isTrue);
       expect(config.targets.generateDocs, isTrue);
       expect(config.targets.generatePlan, isFalse);
+      expect(config.targets.generateStudio, isTrue);
+      expect(config.outputs.studioPath, 'build/analytics-studio.json');
       expect(config.naming.enforceSnakeCaseDomains, isFalse);
       expect(config.naming.enforceSnakeCaseParameters, isFalse);
       expect(config.naming.eventNameTemplate, '{domain_alias}.{event}');

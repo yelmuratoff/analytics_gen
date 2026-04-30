@@ -8,6 +8,7 @@ class GenerationRequest {
     required this.generateDocs,
     required this.generateExports,
     required this.verbose,
+    this.generateStudio = false,
     this.enableMetrics = false,
     this.logger = const NoOpLogger(),
   });
@@ -21,6 +22,9 @@ class GenerationRequest {
   /// Whether to generate export files.
   final bool generateExports;
 
+  /// Whether to generate the AnalyticsGen Studio project file.
+  final bool generateStudio;
+
   /// Whether to enable verbose logging.
   final bool verbose;
 
@@ -31,5 +35,6 @@ class GenerationRequest {
   final Logger logger;
 
   /// Whether to generate any artifacts.
-  bool get hasArtifacts => generateCode || generateDocs || generateExports;
+  bool get hasArtifacts =>
+      generateCode || generateDocs || generateExports || generateStudio;
 }

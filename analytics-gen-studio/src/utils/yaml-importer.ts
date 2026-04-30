@@ -101,6 +101,21 @@ function normalizeParam(raw: unknown): ParamDef | string | null {
   return String(raw);
 }
 
+/** Normalize a raw event object — guarantees `parameters` is a record. */
+export function normalizeEventDef(raw: unknown): EventDef | null {
+  if (!isObject(raw)) return null;
+  const { parameters: rawParams, ...eventFields } = raw;
+
+  const parameters: Record<string, ParamDef | string | null> = {};
+  if (isObject(rawParams)) {
+    for (const [pn, pv] of Object.entries(rawParams)) {
+      parameters[pn] = normalizeParam(pv);
+    }
+  }
+
+  return { ...eventFields, parameters } as EventDef;
+}
+
 /** Parse a YAML event file into store EventFile */
 export function parseEventYaml(data: Record<string, unknown>, fileName: string): EventFile {
   const domains: EventFile['domains'] = {};
@@ -109,19 +124,9 @@ export function parseEventYaml(data: Record<string, unknown>, fileName: string):
     if (!isObject(domainData)) continue;
     const events: Record<string, EventDef> = {};
 
-    for (const [eventName, eventData] of Object.entries(domainData as Record<string, unknown>)) {
-      if (!isObject(eventData)) continue;
-      const eventObj = eventData as Record<string, unknown>;
-      const { parameters: rawParams, ...eventFields } = eventObj;
-
-      const parameters: Record<string, ParamDef | string | null> = {};
-      if (isObject(rawParams)) {
-        for (const [pn, pv] of Object.entries(rawParams as Record<string, unknown>)) {
-          parameters[pn] = normalizeParam(pv);
-        }
-      }
-
-      events[eventName] = { ...eventFields, parameters } as EventDef;
+    for (const [eventName, eventData] of Object.entries(domainData)) {
+      const normalized = normalizeEventDef(eventData);
+      if (normalized) events[eventName] = normalized;
     }
 
     domains[domainName] = events;

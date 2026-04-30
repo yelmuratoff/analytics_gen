@@ -35,6 +35,10 @@ export type DocumentationOutputPath = string;
  */
 export type ExportsOutputPath = string;
 /**
+ * Path where the AnalyticsGen Studio project file will be written. Required when the studio target is enabled.
+ */
+export type StudioProjectOutputPath = string;
+/**
  * Whether to generate CSV export of events and parameters.
  */
 export type GenerateCSV = boolean;
@@ -58,6 +62,10 @@ export type GenerateTrackingPlan = boolean;
  * Whether to generate test matchers for `package:test` to verify analytics calls in tests.
  */
 export type GenerateTestMatchers = boolean;
+/**
+ * Whether to generate an `analytics-studio.json` project file importable by AnalyticsGen Studio. Output path is configured via `outputs.studio`.
+ */
+export type GenerateStudioProjectFile = boolean;
 /**
  * Whether to include the event 'description' field as a parameter in the generated analytics map.
  */
@@ -131,6 +139,10 @@ export type DocsPathFlatAlias = string;
  */
 export type ExportsPathFlatAlias = string;
 /**
+ * Flat alias for outputs.studio.
+ */
+export type StudioPathFlatAlias = string;
+/**
  * Flat alias for targets.csv.
  */
 export type GenerateCSVFlatAlias = boolean;
@@ -154,6 +166,10 @@ export type GeneratePlanFlatAlias = boolean;
  * Flat alias for targets.test_matchers.
  */
 export type GenerateTestMatchersFlatAlias = boolean;
+/**
+ * Flat alias for targets.studio.
+ */
+export type GenerateStudioFlatAlias = boolean;
 /**
  * Flat alias for rules.include_event_description.
  */
@@ -194,12 +210,14 @@ export interface AnalyticsGenRoot {
   output_path?: OutputPathFlatAlias;
   docs_path?: DocsPathFlatAlias;
   exports_path?: ExportsPathFlatAlias;
+  studio_path?: StudioPathFlatAlias;
   generate_csv?: GenerateCSVFlatAlias;
   generate_json?: GenerateJSONFlatAlias;
   generate_sql?: GenerateSQLFlatAlias;
   generate_docs?: GenerateDocsFlatAlias;
   generate_plan?: GeneratePlanFlatAlias;
   generate_test_matchers?: GenerateTestMatchersFlatAlias;
+  generate_studio?: GenerateStudioFlatAlias;
   include_event_description?: IncludeEventDescriptionFlatAlias;
   strict_event_names?: StrictEventNamesFlatAlias;
   enforce_centrally_defined_parameters?: EnforceCentrallyDefinedParametersFlatAlias;
@@ -221,6 +239,7 @@ export interface OutputConfiguration {
   dart?: DartOutputPath;
   docs?: DocumentationOutputPath;
   exports?: ExportsOutputPath;
+  studio?: StudioProjectOutputPath;
 }
 /**
  * Toggles for which output artifacts to generate.
@@ -232,6 +251,7 @@ export interface GenerationTargets {
   docs?: GenerateDocumentation;
   plan?: GenerateTrackingPlan;
   test_matchers?: GenerateTestMatchers;
+  studio?: GenerateStudioProjectFile;
 }
 /**
  * Rules that control validation strictness and generation behavior.

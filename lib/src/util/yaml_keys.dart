@@ -29,6 +29,7 @@ final class YamlKeys {
   static const String docsPath = 'docs_path';
   static const String exports = 'exports';
   static const String exportsPath = 'exports_path';
+  static const String studioPath = 'studio_path';
 
   // Target keys
   static const String generateCsv = 'generate_csv';
@@ -37,11 +38,13 @@ final class YamlKeys {
   static const String generateDocs = 'generate_docs';
   static const String generatePlan = 'generate_plan';
   static const String generateTestMatchers = 'generate_test_matchers';
+  static const String generateStudio = 'generate_studio';
   static const String csv = 'csv';
   static const String json = 'json';
   static const String sql = 'sql';
   static const String plan = 'plan';
   static const String testMatchers = 'test_matchers';
+  static const String studio = 'studio';
 
   // Rule keys
   static const String includeEventDescription = 'include_event_description';
