@@ -96,16 +96,17 @@ function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedP
       }
       evFileNames.add(file.fileName);
 
-      if (Object.keys(file.domains).length === 0) {
+      const domains = file.domains ?? {};
+      if (Object.keys(domains).length === 0) {
         errors.push({ path: `events.${file.fileName}`, message: 'File has no domains', tab: 'events', fileIndex: fi });
       }
 
-      for (const [domainName, events] of Object.entries(file.domains)) {
+      for (const [domainName, events] of Object.entries(domains)) {
         if (enforceSnakeDomains && !SNAKE_CASE_DOMAIN.test(domainName)) {
           errors.push({ path: `events.${file.fileName}.${domainName}`, message: `Domain "${domainName}" must be snake_case`, tab: 'events', fileIndex: fi, domain: domainName });
         }
 
-        for (const [eventName, event] of Object.entries(events)) {
+        for (const [eventName, event] of Object.entries(events ?? {})) {
           const ePath = `events.${file.fileName}.${domainName}.${eventName}`;
           const nav = { fileIndex: fi, domain: domainName, event: eventName };
 
@@ -115,7 +116,7 @@ function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedP
             errors.push({ path: ePath, message: 'event_name cannot contain { } when strict_event_names is enabled', tab: 'events', ...nav });
           }
 
-          for (const [paramName, paramVal] of Object.entries(event.parameters)) {
+          for (const [paramName, paramVal] of Object.entries(event.parameters ?? {})) {
             errors.push(...validateParam(paramName, paramVal, `${ePath}.${paramName}`, 'events', enforceSnakeParams).map((e) => ({ ...e, ...nav, parameter: paramName })));
           }
         }
@@ -135,7 +136,7 @@ function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedP
       }
       spFileNames.add(file.fileName);
 
-      for (const [paramName, paramVal] of Object.entries(file.parameters)) {
+      for (const [paramName, paramVal] of Object.entries(file.parameters ?? {})) {
         errors.push(...validateParam(paramName, paramVal, `shared.${file.fileName}.${paramName}`, 'shared', enforceSnakeParams).map((e) => ({ ...e, fileIndex: fi, parameter: paramName })));
       }
     }
@@ -156,7 +157,7 @@ function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedP
       }
       ctxFileNames.add(file.fileName);
 
-      for (const [propName, propVal] of Object.entries(file.properties)) {
+      for (const [propName, propVal] of Object.entries(file.properties ?? {})) {
         errors.push(...validateParam(propName, propVal, `contexts.${file.fileName}.${propName}`, 'contexts', enforceSnakeParams).map((e) => ({ ...e, fileIndex: fi, contextProperty: propName })));
       }
     }

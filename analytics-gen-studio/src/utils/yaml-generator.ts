@@ -104,15 +104,15 @@ function cleanEventFields(
 
 export function generateEventFileYaml(file: EventFile): string {
   const output: Record<string, Record<string, unknown>> = {};
-  for (const [domainName, events] of Object.entries(file.domains)) {
+  for (const [domainName, events] of Object.entries(file.domains ?? {})) {
     output[domainName] = {};
-    for (const [eventName, event] of Object.entries(events)) {
+    for (const [eventName, event] of Object.entries(events ?? {})) {
       const eventOut = cleanEventFields(
         event as unknown as Record<string, unknown>,
       );
 
       const params: Record<string, unknown> = {};
-      for (const [paramName, paramValue] of Object.entries(event.parameters)) {
+      for (const [paramName, paramValue] of Object.entries(event.parameters ?? {})) {
         params[paramName] = cleanParam(paramValue);
       }
       eventOut.parameters = params;
@@ -125,7 +125,7 @@ export function generateEventFileYaml(file: EventFile): string {
 
 export function generateSharedParamFileYaml(file: SharedParamFile): string {
   const params: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(file.parameters)) {
+  for (const [name, value] of Object.entries(file.parameters ?? {})) {
     params[name] = cleanParam(value);
   }
   const output = { parameters: params };
@@ -134,7 +134,7 @@ export function generateSharedParamFileYaml(file: SharedParamFile): string {
 
 export function generateContextFileYaml(file: ContextFile): string {
   const props: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(file.properties)) {
+  for (const [name, value] of Object.entries(file.properties ?? {})) {
     props[name] = cleanParam(value);
   }
   const output = { [file.contextName]: props };
