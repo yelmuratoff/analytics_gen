@@ -48,3 +48,24 @@ analytics-gen-studio/ — Web studio (React/Vite)
 - Templates and docs: regenerate after schema changes via scripts above
 - `npm run build` in studio: copies schemas → generates types → builds
 - YAML generation is generic (iterates object keys, not hardcoded field names)
+
+## Pre-push validation
+
+Before declaring work done or pushing, run the same checks CI runs. **`npm test` alone is NOT enough** — vitest uses esbuild and skips strict TypeScript checking, so type errors slip through locally and break the `Deploy Studio` workflow.
+
+Run all of these:
+
+```bash
+# Dart side
+dart analyze lib/ bin/ test/
+dart test
+
+# Studio side — both required
+cd analytics-gen-studio
+npm test -- --run
+npx tsc -b              # ← catches type errors vitest misses
+```
+
+When you add a field to a schema and it lands in `Required<…>` types (e.g. `Required<GenerationTargets>`), every test fixture / mock with that type needs the new field — `tsc -b` is what surfaces this.
+
+Or just run `/validate` — it bundles all of the above.
