@@ -45,14 +45,61 @@ import {
   saveProjectAs,
   openProject,
   loadProjectFile,
-  getCurrentFileName,
+  restoreFileHandle,
   clearFileHandle,
+  getLastFileName,
+  setLastFileName,
+  getBaselineRevision,
+  setBaselineRevision,
+  peekDiskState,
   supportsFileSystemAccess,
 } from '../utils/export.ts';
+import type { StudioState } from '../types/index.ts';
+import {
+  computeRevision,
+  deriveJsonName,
+  deriveZipName,
+  getUniqueExportNames,
+} from '../utils/project-meta.ts';
 import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
+import TuneRounded from '@mui/icons-material/TuneRounded';
 import { useValidation } from '../hooks/useValidation.ts';
 import { importYamlString, type ImportSchemaHints } from '../utils/yaml-importer.ts';
 import DocsDrawer from './DocsDrawer.tsx';
+import ProjectDialog from './ProjectDialog.tsx';
+
+/** Builds export file names from the project name (or last file) + uniqueness pref. */
+function exportNames() {
+  const s = useStore.getState();
+  const unique = getUniqueExportNames();
+  const revision = computeRevision({
+    config: s.config,
+    eventFiles: s.eventFiles,
+    sharedParamFiles: s.sharedParamFiles,
+    contextFiles: s.contextFiles,
+  });
+  // A user-set project name is the customization knob; otherwise reuse the
+  // remembered file name so Save As proposes what the user already had.
+  const named = s.projectName.trim().length > 0;
+  const jsonName = named
+    ? deriveJsonName(s.projectName, { unique, revision })
+    : getLastFileName() ?? deriveJsonName('', { unique, revision });
+  return {
+    jsonName,
+    zipName: deriveZipName(s.projectName, { unique, revision }),
+  };
+}
+
+/** Content revision of the current working state. */
+function currentRevision(): string {
+  const s = useStore.getState();
+  return computeRevision({
+    config: s.config,
+    eventFiles: s.eventFiles,
+    sharedParamFiles: s.sharedParamFiles,
+    contextFiles: s.contextFiles,
+  });
+}
 
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
 const mod = isMac ? '\u2318' : 'Ctrl+';
@@ -89,6 +136,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
+  const [diskChange, setDiskChange] = useState<{ data: Partial<StudioState>; fileName: string; revision: string } | null>(null);
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down('lg'));
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -112,17 +161,24 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const mergeConfig = useStore((s) => s.mergeConfig);
   const { mode, toggleColorMode } = useColorMode();
 
+  // Shows the file name and remembers it for the next session (all browsers).
+  const rememberFile = useCallback((name: string) => {
+    setFileName(name);
+    setLastFileName(name);
+  }, []);
+
   const handleExportZip = useCallback(() => {
-    exportAllAsZip(useStore.getState());
+    exportAllAsZip(useStore.getState(), { zipName: exportNames().zipName });
     setSnackbar({ message: 'ZIP exported', severity: 'success' });
   }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const result = await saveProject(useStore.getState());
+      const result = await saveProject(useStore.getState(), { suggestedName: exportNames().jsonName });
       if (result.saved) {
-        setFileName(result.fileName);
+        if (result.fileName) rememberFile(result.fileName);
+        setBaselineRevision(currentRevision());
         setLastSavedVersion(changeVersion.current);
         setSnackbar({ message: `Saved${result.fileName ? ` \u2192 ${result.fileName}` : ''}`, severity: 'success' });
       }
@@ -131,14 +187,15 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [rememberFile]);
 
   const handleSaveAs = useCallback(async () => {
     setSaving(true);
     try {
-      const name = await saveProjectAs(useStore.getState());
+      const name = await saveProjectAs(useStore.getState(), { suggestedName: exportNames().jsonName });
       if (name) {
-        setFileName(name);
+        rememberFile(name);
+        setBaselineRevision(currentRevision());
         setLastSavedVersion(changeVersion.current);
         setSnackbar({ message: `Saved \u2192 ${name}`, severity: 'success' });
       }
@@ -147,7 +204,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [rememberFile]);
 
   const handleOpen = useCallback(async () => {
     if (supportsFileSystemAccess) {
@@ -155,7 +212,9 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         const result = await openProject();
         if (result) {
           loadProject(result.data);
-          setFileName(result.fileName);
+          rememberFile(result.fileName);
+          setBaselineRevision(currentRevision());
+          setDiskChange(null);
           setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
           setSnackbar({ message: `Opened ${result.fileName}`, severity: 'success' });
         }
@@ -165,7 +224,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } else {
       fileInputRef.current?.click();
     }
-  }, [loadProject]);
+  }, [loadProject, rememberFile]);
 
   const handleLoadFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -173,7 +232,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     try {
       const data = await loadProjectFile(file);
       loadProject(data);
-      setFileName(file.name);
+      rememberFile(file.name);
+      setBaselineRevision(currentRevision());
       setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
       setSnackbar({ message: `Opened ${file.name}`, severity: 'success' });
     } catch (err) {
@@ -189,6 +249,23 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     setLastSavedVersion(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
+  };
+
+  const handleReloadFromDisk = () => {
+    if (!diskChange) return;
+    loadProject(diskChange.data);
+    rememberFile(diskChange.fileName);
+    setBaselineRevision(diskChange.revision);
+    setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
+    setDiskChange(null);
+    setSnackbar({ message: 'Reloaded from disk', severity: 'success' });
+  };
+
+  const handleKeepMine = () => {
+    // Acknowledge the on-disk version so we stop prompting; the user's next
+    // save will overwrite it.
+    if (diskChange) setBaselineRevision(diskChange.revision);
+    setDiskChange(null);
   };
 
   const handleImportYaml = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,10 +314,39 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     if (yamlInputRef.current) yamlInputRef.current.value = '';
   };
 
-  useEffect(() => {
-    const name = getCurrentFileName();
-    if (name) setFileName(name);
+  // Detects when the file changed on disk under us (external edit, git pull,
+  // CI regen). Silent: only reads when permission is already granted.
+  const checkDiskChange = useCallback(async () => {
+    const disk = await peekDiskState();
+    if (!disk) return;
+    if (disk.revision !== currentRevision() && disk.revision !== getBaselineRevision()) {
+      setDiskChange({ data: disk.data, fileName: disk.fileName, revision: disk.revision });
+    }
   }, []);
+
+  // Reconnect to the file remembered from a previous session, then check disk.
+  // The handle restores on Chrome/Edge; the name falls back to localStorage.
+  useEffect(() => {
+    let active = true;
+    restoreFileHandle().then((name) => {
+      if (!active) return;
+      const restored = name ?? getLastFileName();
+      if (restored) setFileName(restored);
+      checkDiskChange();
+    });
+    return () => { active = false; };
+  }, [checkDiskChange]);
+
+  // Re-check whenever the user returns to the tab.
+  useEffect(() => {
+    const onVisible = () => { if (!document.hidden) checkDiskChange(); };
+    window.addEventListener('focus', checkDiskChange);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('focus', checkDiskChange);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [checkDiskChange]);
 
   // Lightweight dirty check — increment counter on any data change
   useEffect(() => {
@@ -514,6 +620,10 @@ export default function Toolbar({ importHints }: ToolbarProps) {
             onClose={() => setMoreMenuAnchor(null)}
             slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 180 } } }}
           >
+            <MenuItem onClick={() => { setMoreMenuAnchor(null); setProjectOpen(true); }}>
+              <ListItemIcon><TuneRounded sx={{ fontSize: 18 }} /></ListItemIcon>
+              <ListItemText primary="Project..." primaryTypographyProps={{ fontSize: '0.85rem' }} />
+            </MenuItem>
             <MenuItem onClick={() => { setMoreMenuAnchor(null); yamlInputRef.current?.click(); }}>
               <ListItemIcon><UploadFileRounded sx={{ fontSize: 18 }} /></ListItemIcon>
               <ListItemText primary="Import YAML..." primaryTypographyProps={{ fontSize: '0.85rem' }} />
@@ -536,6 +646,35 @@ export default function Toolbar({ importHints }: ToolbarProps) {
           </Menu>
         </Box>
       </Box>
+
+      {diskChange && (
+        <Alert
+          severity="info"
+          variant="standard"
+          icon={<RefreshRounded sx={{ fontSize: 20 }} />}
+          sx={{
+            borderRadius: 0, borderBottom: 1, borderColor: 'divider',
+            alignItems: 'center', py: 0.25,
+            '& .MuiAlert-message': { flex: 1 },
+          }}
+          action={
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Button size="small" variant="contained" onClick={handleReloadFromDisk}
+                startIcon={<RefreshRounded sx={{ fontSize: 16 }} />} sx={{ fontSize: '0.78rem', py: 0.3 }}>
+                Reload
+              </Button>
+              <Button size="small" variant="outlined" onClick={handleKeepMine} sx={{ fontSize: '0.78rem', py: 0.3 }}>
+                Keep mine
+              </Button>
+            </Box>
+          }
+        >
+          <Typography component="span" sx={{ fontSize: '0.82rem' }}>
+            <Box component="span" sx={{ fontFamily: '"JetBrains Mono", monospace', fontWeight: 600 }}>{diskChange.fileName}</Box>
+            {' changed on disk'}{isDirty ? ' — reloading discards your unsaved changes' : ''}.
+          </Typography>
+        </Alert>
+      )}
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 700, pb: 0.5 }}>Reset everything?</DialogTitle>
@@ -590,6 +729,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         isDarkMode: mode === 'dark',
       } satisfies CommandPaletteActions} />
       <DocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />
+      <ProjectDialog open={projectOpen} onClose={() => setProjectOpen(false)} />
 
       <Snackbar
         open={!!snackbar}

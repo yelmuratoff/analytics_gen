@@ -8,6 +8,12 @@ import {
   generateContextFileYaml,
 } from './yaml-generator.ts';
 import { normalizeEventDef } from './yaml-importer.ts';
+import { computeRevision, type ProjectMeta } from './project-meta.ts';
+import {
+  saveProjectHandle,
+  loadProjectHandle,
+  deleteProjectHandle,
+} from './file-handle-store.ts';
 
 // ── File System Access API support ──
 
@@ -24,18 +30,154 @@ export function getCurrentFileName(): string | null {
 
 export function clearFileHandle() {
   currentFileHandle = null;
+  clearLastFileName();
+  clearBaselineRevision();
+  void deleteProjectHandle();
+}
+
+// ── Baseline revision (external-change detection) ──
+//
+// The content revision of the file as of our last sync (open/save). Comparing
+// it against the on-disk revision tells us when the file changed underneath us
+// (an external edit, a git pull, a CI regeneration) versus our own edits.
+
+const BASELINE_REV_KEY = 'studio-file-baseline-revision';
+
+/** Revision of the file as of our last open/save, or null. */
+export function getBaselineRevision(): string | null {
+  try {
+    return localStorage.getItem(BASELINE_REV_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Records the revision we are now in sync with on disk. */
+export function setBaselineRevision(revision: string): void {
+  try {
+    localStorage.setItem(BASELINE_REV_KEY, revision);
+  } catch {
+    // Ignore storage failures; degrades to no external-change detection.
+  }
+}
+
+function clearBaselineRevision(): void {
+  try {
+    localStorage.removeItem(BASELINE_REV_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+/**
+ * Reads the current file from disk and returns its parsed data + revision —
+ * but only when read permission is already granted, so it never prompts.
+ * Returns null when there is no handle, no permission, or the read fails.
+ */
+export async function peekDiskState(): Promise<{ data: Partial<StudioState>; revision: string; fileName: string } | null> {
+  if (!currentFileHandle) return null;
+  // Query only — requesting permission here would prompt without a user gesture.
+  if (currentFileHandle.queryPermission &&
+      (await currentFileHandle.queryPermission({ mode: 'read' })) !== 'granted') {
+    return null;
+  }
+  try {
+    const file = await currentFileHandle.getFile();
+    const data = parseProject(await file.text());
+    const revision = computeRevision({
+      config: data.config!,
+      eventFiles: data.eventFiles ?? [],
+      sharedParamFiles: data.sharedParamFiles ?? [],
+      contextFiles: data.contextFiles ?? [],
+    });
+    return { data, revision, fileName: file.name };
+  } catch {
+    return null;
+  }
+}
+
+// ── Last file name (every browser, incl. Safari/Firefox) ──
+//
+// The File System Access handle is Chromium-only. To keep the "remembered
+// file" UX consistent everywhere, the last opened/saved file name is also kept
+// in localStorage — it drives the toolbar indicator and the Save As default.
+
+const LAST_FILE_NAME_KEY = 'studio-last-file-name';
+
+/** Returns the last opened/saved project file name, or null. */
+export function getLastFileName(): string | null {
+  try {
+    return localStorage.getItem(LAST_FILE_NAME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Remembers the last opened/saved project file name. */
+export function setLastFileName(name: string): void {
+  try {
+    localStorage.setItem(LAST_FILE_NAME_KEY, name);
+  } catch {
+    // Ignore storage failures (private mode / quota); non-critical.
+  }
+}
+
+function clearLastFileName(): void {
+  try {
+    localStorage.removeItem(LAST_FILE_NAME_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+/**
+ * Reconnects to the project file remembered from a previous session.
+ * Returns the file name to display, or null when nothing is remembered.
+ * Does not prompt for permission — that is requested lazily on the first save.
+ */
+export async function restoreFileHandle(): Promise<string | null> {
+  if (currentFileHandle) return currentFileHandle.name;
+  if (!supportsFileSystemAccess) return null;
+  const handle = await loadProjectHandle();
+  if (!handle) return null;
+  currentFileHandle = handle;
+  return handle.name;
+}
+
+/**
+ * Ensures read-write permission on the handle. Only prompts when [request] is
+ * true — which must coincide with a user gesture (e.g. a Save click).
+ */
+async function ensureWritePermission(handle: FileSystemFileHandle, request: boolean): Promise<boolean> {
+  // Legacy implementations grant access at pick time and expose no permission API.
+  if (!handle.queryPermission && !handle.requestPermission) return true;
+  const descriptor = { mode: 'readwrite' as const };
+  if (handle.queryPermission && (await handle.queryPermission(descriptor)) === 'granted') return true;
+  if (request && handle.requestPermission) {
+    return (await handle.requestPermission(descriptor)) === 'granted';
+  }
+  return false;
 }
 
 // ── Project serialization ──
 
 function serializeProject(state: StudioState): string {
-  const projectData = {
-    version: 1,
-    activeTab: state.activeTab,
+  const content = {
     config: state.config,
     eventFiles: state.eventFiles,
     sharedParamFiles: state.sharedParamFiles,
     contextFiles: state.contextFiles,
+  };
+  const meta: ProjectMeta = {
+    projectId: state.projectId,
+    ...(state.projectName ? { name: state.projectName } : {}),
+    revision: computeRevision(content),
+  };
+  const projectData = {
+    version: 1,
+    meta,
+    activeTab: state.activeTab,
+    ...content,
   };
   return JSON.stringify(projectData, null, 2);
 }
@@ -59,6 +201,10 @@ function parseProject(text: string): Partial<StudioState> {
         ]),
       ),
     }));
+  }
+  if (data.meta && typeof data.meta === 'object') {
+    if (typeof data.meta.projectId === 'string') data.projectId = data.meta.projectId;
+    if (typeof data.meta.name === 'string') data.projectName = data.meta.name;
   }
   return data;
 }
@@ -84,6 +230,7 @@ export async function openProject(): Promise<{ data: Partial<StudioState>; fileN
       const text = await file.text();
       const data = parseProject(text);
       currentFileHandle = handle;
+      await saveProjectHandle(handle);
       return { data, fileName: file.name };
     } catch (err) {
       // User cancelled the picker
@@ -120,26 +267,36 @@ export function loadProjectFile(file: File): Promise<Partial<StudioState>> {
  */
 export async function saveProjectToHandle(state: StudioState): Promise<boolean> {
   if (!currentFileHandle) return false;
+  // Save is a user gesture, so a permission re-prompt is allowed here. A handle
+  // restored from a previous session starts in the "prompt" permission state.
+  if (!(await ensureWritePermission(currentFileHandle, true))) return false;
   try {
     const writable = await currentFileHandle.createWritable();
     await writable.write(serializeProject(state));
     await writable.close();
     return true;
   } catch {
-    // Permission denied or handle invalidated
+    // Handle invalidated (file moved/deleted) — forget it so we fall back to Save As.
     currentFileHandle = null;
+    await deleteProjectHandle();
     return false;
   }
+}
+
+interface SaveAsOptions {
+  /** File name proposed in the picker / used for the download fallback. */
+  suggestedName?: string;
 }
 
 /**
  * Save As — always shows picker dialog. Updates the file handle.
  */
-export async function saveProjectAs(state: StudioState): Promise<string | null> {
+export async function saveProjectAs(state: StudioState, opts: SaveAsOptions = {}): Promise<string | null> {
+  const suggestedName = opts.suggestedName ?? currentFileHandle?.name ?? 'analytics-studio.json';
   if (supportsFileSystemAccess) {
     try {
       const handle = await window.showSaveFilePicker!({
-        suggestedName: currentFileHandle?.name ?? 'analytics-studio.json',
+        suggestedName,
         types: [{
           description: 'Studio Project',
           accept: { 'application/json': ['.json'] },
@@ -149,6 +306,7 @@ export async function saveProjectAs(state: StudioState): Promise<string | null> 
       await writable.write(serializeProject(state));
       await writable.close();
       currentFileHandle = handle;
+      await saveProjectHandle(handle);
       return handle.name;
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return null;
@@ -157,19 +315,19 @@ export async function saveProjectAs(state: StudioState): Promise<string | null> 
   }
   // Fallback: download
   const blob = new Blob([serializeProject(state)], { type: 'application/json' });
-  saveAs(blob, 'analytics-studio.json');
-  return 'analytics-studio.json';
+  saveAs(blob, suggestedName);
+  return suggestedName;
 }
 
 /**
  * Smart save: if file handle exists, save silently. Otherwise, Save As.
  */
-export async function saveProject(state: StudioState): Promise<{ saved: boolean; fileName: string | null }> {
+export async function saveProject(state: StudioState, opts: SaveAsOptions = {}): Promise<{ saved: boolean; fileName: string | null }> {
   if (currentFileHandle) {
     const ok = await saveProjectToHandle(state);
     if (ok) return { saved: true, fileName: currentFileHandle.name };
   }
-  const name = await saveProjectAs(state);
+  const name = await saveProjectAs(state, opts);
   return { saved: !!name, fileName: name };
 }
 
@@ -180,7 +338,7 @@ export function exportSingleFile(content: string, fileName: string) {
   saveAs(blob, fileName);
 }
 
-export function exportAllAsZip(state: StudioState) {
+export function exportAllAsZip(state: StudioState, opts: { zipName?: string } = {}) {
   const zip = new JSZip();
 
   zip.file('analytics_gen.yaml', generateConfigYaml(state.config));
@@ -198,7 +356,7 @@ export function exportAllAsZip(state: StudioState) {
   }
 
   zip.generateAsync({ type: 'blob' }).then((blob) => {
-    saveAs(blob, 'analytics-gen-config.zip');
+    saveAs(blob, opts.zipName ?? 'analytics-gen-config.zip');
   });
 }
 

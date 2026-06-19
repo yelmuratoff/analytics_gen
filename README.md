@@ -87,6 +87,8 @@ Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/ye
 - Create and edit events, parameters, shared parameters, and contexts
 - Preview generated YAML in real time
 - Export as ZIP or save/load project files
+- Remember your project file across sessions and reload it when it changes on disk (Chrome/Edge)
+- Name your project and export with a stable ID + content revision for CI/CD comparison
 
 To round-trip an existing project into Studio, generate the project file from your repo and upload it via "Open Project":
 
@@ -95,6 +97,8 @@ dart run analytics_gen:generate --studio    # writes analytics-studio.json
 ```
 
 Or enable `targets.studio: true` in `analytics_gen.yaml` to bundle it into the regular generation run.
+
+The generated `analytics-studio.json` includes a `meta` block — a stable `projectId` and a deterministic, timestamp-free content `revision`. Commit the file and compare `meta.revision` across builds in CI/CD to detect whether the analytics definitions changed.
 
 ## CLI Commands
 

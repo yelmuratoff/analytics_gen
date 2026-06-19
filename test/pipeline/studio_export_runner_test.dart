@@ -74,6 +74,10 @@ void main() {
       expect(json['sharedParamFiles'], isA<List>());
       expect(json['contextFiles'], isA<List>());
 
+      // Metadata block carries a content revision for CI comparison.
+      expect(json['meta'], isA<Map>());
+      expect((json['meta'] as Map)['revision'], isA<String>());
+
       // Config
       final config = json['config'] as Map<String, dynamic>;
       expect(config['inputs']['events'], 'events');

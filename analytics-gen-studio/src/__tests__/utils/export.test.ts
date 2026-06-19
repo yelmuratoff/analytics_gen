@@ -54,6 +54,24 @@ describe('loadProjectFile', () => {
     expect(result).toBeDefined();
   });
 
+  it('maps meta.projectId and meta.name into project state', async () => {
+    const data = {
+      version: 1,
+      meta: { projectId: 'proj-123', name: 'Checkout Funnel', revision: 'abc' },
+      config: { inputs: {}, outputs: {}, targets: {}, rules: {}, naming: {}, meta: {} },
+    };
+    const result = await loadProjectFile(makeFile(JSON.stringify(data)));
+    expect((result as any).projectId).toBe('proj-123');
+    expect((result as any).projectName).toBe('Checkout Funnel');
+  });
+
+  it('loads legacy files without a meta block', async () => {
+    const data = { version: 1, config: { inputs: {}, outputs: {}, targets: {}, rules: {}, naming: {}, meta: {} } };
+    const result = await loadProjectFile(makeFile(JSON.stringify(data)));
+    expect((result as any).projectId).toBeUndefined();
+    expect((result as any).projectName).toBeUndefined();
+  });
+
   it('preserves all data fields', async () => {
     const data = {
       version: 1,
@@ -68,6 +86,26 @@ describe('loadProjectFile', () => {
     expect((result as any).eventFiles?.[0]?.fileName).toBe('a.yaml');
     expect((result as any).sharedParamFiles?.[0]?.parameters?.sid).toBe('string');
     expect((result as any).contextFiles?.[0]?.contextName).toBe('ctx');
+  });
+});
+
+describe('external-change detection', () => {
+  it('round-trips the baseline revision through storage', async () => {
+    const { getBaselineRevision, setBaselineRevision } = await import('../../utils/export.ts');
+    setBaselineRevision('rev-abc');
+    expect(getBaselineRevision()).toBe('rev-abc');
+  });
+
+  it('clears the baseline on clearFileHandle', async () => {
+    const { getBaselineRevision, setBaselineRevision, clearFileHandle } = await import('../../utils/export.ts');
+    setBaselineRevision('rev-xyz');
+    clearFileHandle();
+    expect(getBaselineRevision()).toBeNull();
+  });
+
+  it('peekDiskState returns null when no file is open', async () => {
+    const { peekDiskState } = await import('../../utils/export.ts');
+    expect(await peekDiskState()).toBeNull();
   });
 });
 

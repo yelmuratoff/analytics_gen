@@ -8,6 +8,7 @@ import 'package:yaml/yaml.dart';
 
 import '../config/analytics_config.dart';
 import '../util/logger.dart';
+import '../util/project_revision.dart';
 import '../util/yaml_keys.dart';
 
 /// Generates the AnalyticsGen Studio project file (`analytics-studio.json`)
@@ -57,16 +58,22 @@ class StudioGenerator {
       '${contextFiles.length} context file(s)',
     );
 
-    final studioJson = <String, dynamic>{
-      'version': 1,
-      'activeTab': 'config',
+    final outputFile = File(p.join(projectRoot, resolvedOutput));
+
+    final content = <String, dynamic>{
       'config': _readConfigYaml(p.join(projectRoot, configPath)),
       'eventFiles': eventFiles,
       'sharedParamFiles': sharedParamFiles,
       'contextFiles': contextFiles,
     };
 
-    final outputFile = File(p.join(projectRoot, resolvedOutput));
+    final studioJson = <String, dynamic>{
+      'version': 1,
+      'meta': _buildMeta(content, outputFile),
+      'activeTab': 'config',
+      ...content,
+    };
+
     await outputFile.parent.create(recursive: true);
     await outputFile.writeAsString(
       const JsonEncoder.withIndent('  ').convert(studioJson),
@@ -195,6 +202,41 @@ class StudioGenerator {
   }
 
   // ── Helpers ──
+
+  /// Builds the project metadata block.
+  ///
+  /// A previously assigned `projectId`/`name` is preserved from an existing
+  /// output file so the project identity stays stable across regenerations.
+  /// `revision` is always recomputed from content, so CI can compare it across
+  /// commits without timestamp noise.
+  Map<String, dynamic> _buildMeta(
+      Map<String, dynamic> content, File outputFile) {
+    final meta = <String, dynamic>{};
+    final existing = _readExistingMeta(outputFile);
+    if (existing != null) {
+      final projectId = existing['projectId'];
+      final name = existing['name'];
+      if (projectId is String) meta['projectId'] = projectId;
+      if (name is String) meta['name'] = name;
+    }
+    meta['revision'] = computeRevision(content);
+    return meta;
+  }
+
+  /// Reads the `meta` block of an existing studio file, or null when absent or
+  /// malformed.
+  Map<String, dynamic>? _readExistingMeta(File outputFile) {
+    if (!outputFile.existsSync()) return null;
+    try {
+      final decoded = jsonDecode(outputFile.readAsStringSync());
+      if (decoded is Map && decoded['meta'] is Map) {
+        return (decoded['meta'] as Map).cast<String, dynamic>();
+      }
+    } catch (_) {
+      // Malformed existing file — fall back to a revision-only meta.
+    }
+    return null;
+  }
 
   Map<String, dynamic> _readYamlFileAs(
     File file,

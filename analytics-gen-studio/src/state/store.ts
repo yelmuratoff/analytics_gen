@@ -4,6 +4,7 @@ import { immer } from 'zustand/middleware/immer';
 import { temporal } from 'zundo';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
 import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
+import { newProjectId } from '../utils/project-meta.ts';
 
 /** Placeholder config — replaced by schema-derived defaults on first load.
  *  See App.tsx: applySchemaDefaults() fills real values from schema.
@@ -34,6 +35,8 @@ function getDefaultConfig(): ConfigState {
 
 const initialState = {
   activeTab: 'config' as const,
+  projectId: newProjectId(),
+  projectName: '',
   config: getDefaultConfig(),
   eventFiles: [],
   sharedParamFiles: [],
@@ -59,6 +62,7 @@ export const useStore = create<StudioState>()(
         ...initialState,
 
         setActiveTab: (tab) => set((s) => { s.activeTab = tab; }),
+        setProjectName: (name) => set((s) => { s.projectName = name; }),
         setConfig: (config) => set((s) => { s.config = config; }),
         updateConfig: (updater) => set((s) => { updater(s.config); }),
 
@@ -266,9 +270,16 @@ export const useStore = create<StudioState>()(
 
         setSelectedPath: (path) => set((s) => { s.selectedPath = path; }),
 
-        resetState: () => set(() => ({ ...initialState, config: getDefaultConfig() })),
+        resetState: () => set(() => ({
+          ...initialState,
+          projectId: newProjectId(),
+          projectName: '',
+          config: getDefaultConfig(),
+        })),
         loadProject: (data) => set(() => ({
           ...initialState,
+          projectId: data.projectId ?? newProjectId(),
+          projectName: data.projectName ?? '',
           ...(data.activeTab && { activeTab: data.activeTab }),
           ...(data.config && { config: data.config }),
           ...(data.eventFiles && { eventFiles: data.eventFiles }),

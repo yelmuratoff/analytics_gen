@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0]
+
+### Features
+
+- **Studio remembers your project file** — after a reload the Studio reconnects to the last opened `analytics-studio.json` (Chrome/Edge, via the File System Access API) and remembers the file name on every browser, so you no longer re-open it each session. `Save` writes straight back to the same file; data is auto-saved locally regardless.
+- **Project identity & content revision for CI/CD** — saved and generated `analytics-studio.json` now carries a `meta` block with a stable `projectId`, an optional `name`, and a content `revision` hash. The revision is deterministic and timestamp-free, so CI can compare project files across commits to detect analytics changes. The Dart `studio` target emits the same `meta` and preserves `projectId` across regenerations.
+- **Customizable / unique export names** — set a project name (drives both the `.json` and ZIP file names) and optionally append the content-revision hash for unique CI-artifact names, via the new "Project…" dialog (which also shows the project ID and revision).
+- **External-change detection** — when `analytics-studio.json` changes on disk (an external edit, a `git pull`, a CI regeneration), the Studio offers to reload it instead of silently diverging (Chrome/Edge).
+
+### Internals
+
+- Shared cross-language `revision` hash (cyrb53 over canonical, key-sorted JSON) implemented in both the Studio (`project-meta.ts`) and the Dart generator (`project_revision.dart`), locked by a parity test so a studio-saved and a CI-generated file agree for identical content.
+
 ## [2.1.0]
 
 ### Features

@@ -92,6 +92,10 @@ export interface ValidationError {
 
 export interface StudioState {
   activeTab: TabId;
+  /** Stable project identity — survives saves, regenerated on reset. */
+  projectId: string;
+  /** Optional human-readable project name; drives exported file names. */
+  projectName: string;
   config: ConfigState;
   eventFiles: EventFile[];
   sharedParamFiles: SharedParamFile[];
@@ -101,6 +105,7 @@ export interface StudioState {
 
   // Actions
   setActiveTab: (tab: TabId) => void;
+  setProjectName: (name: string) => void;
   setConfig: (config: ConfigState) => void;
   updateConfig: (updater: (config: ConfigState) => void) => void;
 
