@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git blame *)",
+      "Bash(dart pub get)",
+      "Bash(dart format *)",
+      "Bash(dart analyze *)",
+      "Bash(dart test *)",
+      "Bash(dart doc)",
+      "Bash(dart run scripts/generate_templates.dart)",
+      "Bash(dart run scripts/generate_schema_docs.dart)",
+      "Bash(dart run analytics_gen:generate *)",
+      "Bash(npm --prefix analytics-gen-studio ci)",
+      "Bash(npm --prefix analytics-gen-studio test *)",
+      "Bash(npm --prefix analytics-gen-studio run *)",
+      "Bash(npm --prefix analytics-gen-studio exec *)",
+      "Bash(./scripts/sync.sh)",
+      "Bash(agentsync sync *)",
+      "Bash(skills-ref validate *)"
+    ],
+    "ask": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git rebase *)",
+      "Bash(dart pub publish *)",
+      "Bash(npm publish *)",
+      "Bash(gh release *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/.npmrc)",
+      "Read(**/credentials/**)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Read(**/service-account*.json)"
+    ]
+  }
+}
