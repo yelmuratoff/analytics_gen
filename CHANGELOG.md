@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1]
+
+### Features
+
+- Added the `analytics-gen-yaml-schema` package skill for AI agents creating, updating, and validating YAML tracking plans. Install it from an application that depends on `analytics_gen` with `dart run skills@ get -p analytics_gen -s analytics-gen-yaml-schema`.
+
 ## [2.2.0]
 
 ### Features
