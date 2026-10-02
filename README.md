@@ -45,6 +45,7 @@
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [AI Agent Skill](#ai-agent-skill)
 - [Studio (Web UI)](#studio-web-ui)
 - [CLI Commands](#cli-commands)
 - [Key Features](#key-features)
@@ -78,6 +79,22 @@
 5. **Review diffs** for generated Dart, docs, and exports during PRs-treat them as production code.
 
 Need a detailed walkthrough? Head to [`doc/ONBOARDING.md`](https://github.com/yelmuratoff/analytics_gen/blob/main/doc/ONBOARDING.md).
+
+## AI Agent Skill
+
+The package includes [`analytics-gen-yaml-schema`](skills/analytics-gen-yaml-schema/SKILL.md)
+for AI agents creating, updating, and validating YAML tracking plans in your app.
+After adding `analytics_gen` to your dependencies, install its skill from your
+application directory:
+
+```bash
+dart run skills@ get -p analytics_gen -s analytics-gen-yaml-schema
+```
+
+To discover skills from all your dependencies, run `dart run skills@ get`.
+See [Dart package skills](https://dart.dev/ai/package-skills) for installation and
+update options. Consumer skills ship in the package's `skills/` directory;
+repository contributor skills live separately in `.ai/src/skills/`.
 
 ## Studio (Web UI)
 
