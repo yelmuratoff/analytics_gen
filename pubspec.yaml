@@ -23,7 +23,7 @@ dependencies:
   collection: ^1.19.1
   source_span: ^1.10.1
   meta: ^1.11.0
-  analyzer: ^7.7.1
+  analyzer: ">=7.7.1 <15.0.0"
   file: ^7.0.1
   glob: ^2.1.2
 
