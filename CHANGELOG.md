@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2]
+
+### Fixes
+
+- Widened the `analyzer` constraint to `>=7.7.1 <15.0.0`. Projects on Dart 3.10+ need a newer `analyzer` for `build_runner`, `freezed`, and `drift_dev`, and the previous `^7.7.1` pin blocked their resolution. Projects that stay on `analyzer` 7 resolve as before.
+
 ## [2.2.1]
 
 ### Features
