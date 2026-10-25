@@ -15,16 +15,9 @@ class ConsoleMetrics implements Metrics {
   }
 
   @override
-  void recordGeneration(Duration elapsed, int fileCount) {
+  void recordGeneration(Duration elapsed) {
     _logger.info(
-      ' [Metrics] Generated $fileCount files in ${elapsed.inMilliseconds}ms',
-    );
-  }
-
-  @override
-  void recordValidation(String checkName, Duration elapsed, int issueCount) {
-    _logger.info(
-      ' [Metrics] Validation "$checkName" took ${elapsed.inMilliseconds}ms ($issueCount issues found)',
+      ' [Metrics] Ran generation tasks in ${elapsed.inMilliseconds}ms',
     );
   }
 }

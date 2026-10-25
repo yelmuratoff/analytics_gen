@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
+import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/pipeline/generation_pipeline.dart';
 import 'package:analytics_gen/src/pipeline/generation_request.dart';
+import 'package:analytics_gen/src/services/schema_evolution_checker.dart';
 import 'package:analytics_gen/src/services/watcher_service.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as p;
@@ -30,6 +32,27 @@ final class _RepeatingWatcherService implements WatcherService {
     for (var i = 0; i < runs; i++) {
       await onGenerate();
     }
+  }
+}
+
+final class _RecordingSchemaChecker implements SchemaEvolutionChecker {
+  _RecordingSchemaChecker(this.exportFile);
+
+  final File exportFile;
+  final List<bool> exportExistedAtCheck = [];
+
+  @override
+  String get projectRoot => '';
+
+  @override
+  Logger get logger => const NoOpLogger();
+
+  @override
+  Future<void> checkSchemaEvolution(
+    Map<String, AnalyticsDomain> currentDomains,
+    String? exportsPath,
+  ) async {
+    exportExistedAtCheck.add(exportFile.existsSync());
   }
 }
 
@@ -113,6 +136,56 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('checks schema evolution before the exports are rewritten', () async {
+      writeEvents('auth:\n  login:\n    description: Login\n');
+      final exportFile =
+          File(p.join(tempDir.path, 'exports', 'analytics_events.json'));
+      final checker = _RecordingSchemaChecker(exportFile);
+      final exportingPipeline = GenerationPipeline(
+        projectRoot: tempDir.path,
+        config: AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(
+            dartPath: 'lib/analytics',
+            exportsPath: 'exports',
+          ),
+          targets: AnalyticsTargets(generateJson: true),
+        ),
+        schemaChecker: checker,
+        logger: const NoOpLogger(),
+      );
+
+      await exportingPipeline.run(GenerationRequest(
+        generateCode: false,
+        generateDocs: false,
+        generateExports: true,
+        verbose: false,
+      ));
+
+      expect(checker.exportExistedAtCheck, [false]);
+      expect(exportFile.existsSync(), isTrue);
+    });
+
+    test('reports generation time in metrics without a file count', () async {
+      writeEvents('auth:\n  login:\n    description: Login\n');
+      final logs = <String>[];
+
+      await pipeline().run(GenerationRequest(
+        generateCode: true,
+        generateDocs: false,
+        generateExports: false,
+        verbose: false,
+        enableMetrics: true,
+        logger: TestLogger(logs),
+      ));
+
+      expect(
+        logs.where((line) => line.contains('[Metrics] Ran generation tasks')),
+        hasLength(1),
+      );
+      expect(logs.where((line) => line.contains('Generated 0 files')), isEmpty);
     });
 
     test('keeps watching and reports each failed regeneration', () async {

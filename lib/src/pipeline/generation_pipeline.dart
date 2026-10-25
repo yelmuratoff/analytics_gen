@@ -94,27 +94,24 @@ class GenerationPipeline {
         domains.values.fold<int>(0, (sum, d) => sum + d.events.length);
     metrics.recordParsing(parseSw.elapsed, domains.length, totalEvents);
 
-    final tasks = _buildTasks(
-      request,
-      domains,
-      contexts,
-    );
-
-    final schemaCheckTask =
-        tasks.where((t) => t.label == 'Schema evolution check').firstOrNull;
-
-    if (schemaCheckTask != null) {
-      tasks.remove(schemaCheckTask);
-      await _invokeTask(schemaCheckTask, request.logger);
+    final exportsPath = config.outputs.exportsPath;
+    if (exportsPath != null) {
+      await _invokeTask(
+        _GeneratorTask(
+          label: 'Schema evolution check',
+          invoke: () =>
+              _schemaChecker.checkSchemaEvolution(domains, exportsPath),
+        ),
+        request.logger,
+      );
     }
-    final startTime = DateTime.now();
 
     final genSw = Stopwatch()..start();
-    await _runTasks(tasks, request.logger);
-    metrics.recordGeneration(genSw.elapsed, 0); // 0 file count for now
-    final duration = DateTime.now().difference(startTime);
+    await _runTasks(_buildTasks(request, domains, contexts), request.logger);
+    genSw.stop();
+    metrics.recordGeneration(genSw.elapsed);
     request.logger.info(
-        '✓ All generation tasks completed in ${duration.inMilliseconds}ms');
+        '✓ All generation tasks completed in ${genSw.elapsed.inMilliseconds}ms');
   }
 
   /// Runs the generation pipeline in watch mode.
@@ -229,19 +226,6 @@ class GenerationPipeline {
             configPath: configPath,
             log: rootLogger.scoped('Studio export'),
           ).generate(),
-        ),
-      );
-    }
-
-    // Schema evolution check
-    if (config.outputs.exportsPath != null) {
-      tasks.add(
-        _GeneratorTask(
-          label: 'Schema evolution check',
-          invoke: () => _schemaChecker.checkSchemaEvolution(
-            domains,
-            config.outputs.exportsPath,
-          ),
         ),
       );
     }
