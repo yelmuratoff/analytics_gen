@@ -143,6 +143,44 @@ user_properties:
       expect(names, isNot(contains('user_properties.yaml')));
     });
 
+    List<String> eventFileNames(Map<String, dynamic> json) =>
+        (json['eventFiles'] as List)
+            .map((f) => (f as Map)['fileName'] as String)
+            .toList();
+
+    test('reads the same event files as code generation', () async {
+      scaffold();
+      write('events/nested/legacy.yaml', 'legacy:\n  opened: {}\n');
+
+      final json = await generate(outputPath: 'out.json');
+
+      expect(eventFileNames(json), ['auth.yaml', 'checkout.yaml']);
+    });
+
+    test('reads event files matching a glob events path', () async {
+      scaffold();
+      write('events/nested/legacy.yaml', 'legacy:\n  opened: {}\n');
+      final generator = StudioGenerator(
+        config: const AnalyticsConfig(
+          inputs: AnalyticsInputs(
+            eventsPath: 'events/**.yaml',
+            sharedParameters: ['events/shared_user.yaml'],
+            contexts: ['events/user_properties.yaml'],
+          ),
+        ),
+        projectRoot: tempDir.path,
+        configPath: 'analytics_gen.yaml',
+      );
+
+      final file = await generator.generate(outputPath: 'out.json');
+      final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+
+      expect(
+        eventFileNames(json),
+        ['auth.yaml', 'checkout.yaml', 'legacy.yaml'],
+      );
+    });
+
     test('reads shared parameter files', () async {
       scaffold();
       final json = await generate(outputPath: 'out.json');
