@@ -143,7 +143,7 @@ final class EventParser {
         final found = parameters.where((p) => p.name == key).toList();
         if (found.isEmpty) return match.group(0)!;
 
-        final camel = StringUtils.toCamelCase(found.first.name);
+        final camel = StringUtils.toCamelCase(found.first.codeName);
         return '\${$camel}';
       });
       // If no replacements were made (e.g. invalid placeholders), keep null to avoid noise?

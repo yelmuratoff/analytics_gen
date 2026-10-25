@@ -481,6 +481,32 @@ void main() {
       );
     });
 
+    test('interpolates event_name placeholders with the identifier override',
+        () async {
+      final parser = YamlParser(
+        config: ParserConfig(strictEventNames: false),
+      );
+
+      final domains = await parser.parseEvents([
+        AnalyticsSource(
+          filePath: 'screen.yaml',
+          content: 'screen:\n'
+              '  viewed:\n'
+              '    description: Test\n'
+              '    event_name: "Screen: {page_name}"\n'
+              '    parameters:\n'
+              '      page_name:\n'
+              '        type: string\n'
+              '        identifier: page\n',
+        ),
+      ]);
+
+      expect(
+        domains['screen']!.events.single.interpolatedName,
+        equals(r'Screen: ${page}'),
+      );
+    });
+
     test('throws when parameter names conflict after camelCase', () async {
       final files = {
         'auth.yaml': 'auth:\n'
