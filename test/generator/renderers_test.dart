@@ -305,6 +305,36 @@ void main() {
       expectValidDart(result);
     });
 
+    test('passes dual-write arguments by identifier, not by wire name', () {
+      AnalyticsParameter userId() => AnalyticsParameter(
+            name: 'uid',
+            codeName: 'user_id',
+            type: 'string',
+            isNullable: false,
+          );
+      final sourceEvent = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [userId()],
+        dualWriteTo: ['auth.login_legacy'],
+      );
+      final targetEvent = AnalyticsEvent(
+        name: 'login_legacy',
+        description: 'Legacy login event',
+        parameters: [userId()],
+      );
+      final domain =
+          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(
+        result,
+        contains('logAuthLoginLegacy(userId: userId, parameters: parameters);'),
+      );
+    });
+
     test('throws when allowed values map to the same enum constant', () {
       final event = AnalyticsEvent(
         name: 'login',

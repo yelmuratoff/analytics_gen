@@ -106,7 +106,7 @@ class CrossDomainValidator {
       // Handle dart_type matching
       if (sourceParam.dartType != null || targetParam.dartType != null) {
         if (sourceParam.dartType == targetParam.dartType) {
-          args[targetParam.name] = sourceVarName;
+          args[targetParam.codeName] = sourceVarName;
         } else {
           // Mismatch in dart_type, cannot guarantee compatibility
           return CrossDomainValidationResult.invalid(
@@ -115,10 +115,10 @@ class CrossDomainValidator {
       } else if (targetParam.type == sourceParam.type) {
         if (sourceIsEnum && !targetIsEnum) {
           // Enum -> String
-          args[targetParam.name] = '$sourceVarName.value';
+          args[targetParam.codeName] = '$sourceVarName.value';
         } else if (sourceIsEnum == targetIsEnum) {
           // Both Enum or Both String (or other types)
-          args[targetParam.name] = sourceVarName;
+          args[targetParam.codeName] = sourceVarName;
         } else {
           // String -> Enum (Cannot handle easily)
           return CrossDomainValidationResult.invalid(
