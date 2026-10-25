@@ -6,6 +6,8 @@ import 'package:analytics_gen/src/generator/studio_generator.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 /// Exercises the raw-YAML readers in-process. The CLI integration test runs the
 /// generator in a subprocess, which the coverage collector cannot instrument —
 /// these tests cover the reader/conversion logic directly.
@@ -240,6 +242,27 @@ user_properties:
       final file = await generator.generate(outputPath: 'out.json');
       return jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
     }
+
+    test('warns about each malformed YAML file it skips', () async {
+      write('events/broken.yaml', 'auth: [unclosed');
+      write('shared_broken.yaml', 'parameters: [unclosed');
+      final logs = <String>[];
+
+      await StudioGenerator(
+        config: const AnalyticsConfig(
+          inputs: AnalyticsInputs(sharedParameters: ['shared_broken.yaml']),
+        ),
+        projectRoot: tempDir.path,
+        configPath: 'analytics_gen.yaml',
+        log: TestLogger(logs),
+      ).generate(outputPath: 'out.json');
+
+      final warnings =
+          logs.where((l) => l.startsWith('Skipping malformed YAML'));
+      expect(warnings, hasLength(2));
+      expect(warnings.first, contains('broken.yaml'));
+      expect(warnings.last, contains('shared_broken.yaml'));
+    });
 
     test('falls back to empty parameters on malformed shared file', () async {
       write('events/.keep', '');

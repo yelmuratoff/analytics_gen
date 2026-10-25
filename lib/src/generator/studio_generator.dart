@@ -135,6 +135,7 @@ class StudioGenerator {
           }
           return {'fileName': fileName, 'domains': domains};
         },
+        source: source.filePath,
         fallback: {'fileName': fileName, 'domains': <String, dynamic>{}},
       );
     }).toList();
@@ -235,21 +236,29 @@ class StudioGenerator {
     required Map<String, dynamic> fallback,
   }) {
     if (!file.existsSync()) return fallback;
-    return _parseYamlAs(file.readAsStringSync(), transform, fallback: fallback);
+    return _parseYamlAs(
+      file.readAsStringSync(),
+      transform,
+      source: file.path,
+      fallback: fallback,
+    );
   }
 
   Map<String, dynamic> _parseYamlAs(
     String content,
     Map<String, dynamic> Function(YamlMap) transform, {
+    required String source,
     required Map<String, dynamic> fallback,
   }) {
+    final Object? parsed;
     try {
-      final parsed = loadYaml(content);
-      if (parsed is! YamlMap || parsed.isEmpty) return fallback;
-      return transform(parsed);
-    } catch (_) {
+      parsed = loadYaml(content);
+    } on YamlException catch (e) {
+      log.warning('Skipping malformed YAML in $source: ${e.message}');
       return fallback;
     }
+    if (parsed is! YamlMap || parsed.isEmpty) return fallback;
+    return transform(parsed);
   }
 
   /// Recursively converts any YAML node to JSON-compatible Dart object.
