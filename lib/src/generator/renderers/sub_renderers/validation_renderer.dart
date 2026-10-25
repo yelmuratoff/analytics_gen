@@ -152,8 +152,11 @@ class ValidationRenderer {
     }).join(', ');
   }
 
-  /// Joins allowed values for error messages.
+  /// Joins allowed values for error messages, escaped for use inside a
+  /// single-quoted Dart string literal.
   String joinAllowedValues(List<dynamic> values) {
-    return values.join(', ');
+    return values
+        .map((value) => StringUtils.escapeSingleQuoted(value.toString()))
+        .join(', ');
   }
 }

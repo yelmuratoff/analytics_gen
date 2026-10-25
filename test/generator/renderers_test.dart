@@ -585,6 +585,39 @@ void main() {
       renderer = ContextRenderer();
     });
 
+    test('escapes allowed values in the validation message', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'answer',
+          type: 'string',
+          isNullable: false,
+          allowedValues: ["don't", r'$5'],
+        ),
+      ];
+
+      final result = renderer.renderContextFile('survey', properties);
+
+      expect(result, contains(r"'must be one of don\'t, \$5',"));
+    });
+
+    test('renders each line of a multi-line description as a doc comment', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'plan',
+          type: 'string',
+          isNullable: false,
+          description: 'Current plan\nUpdated on purchase',
+        ),
+      ];
+
+      final result = renderer.renderContextFile('user_properties', properties);
+
+      expect(
+        result,
+        contains('  /// Current plan\n  /// Updated on purchase\n'),
+      );
+    });
+
     test('renders context file with capability and mixin', () {
       final properties = [
         AnalyticsParameter(

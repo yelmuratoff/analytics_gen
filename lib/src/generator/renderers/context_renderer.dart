@@ -65,7 +65,7 @@ class ContextRenderer extends BaseRenderer {
         final nullableType = prop.isNullable ? '$dartType?' : dartType;
 
         if (prop.description != null) {
-          buffer.writeln('  /// ${prop.description}');
+          buffer.write(renderDocComment(prop.description!, indent: 1));
         }
         buffer.writeln('  void $methodName($nullableType value) {');
 
