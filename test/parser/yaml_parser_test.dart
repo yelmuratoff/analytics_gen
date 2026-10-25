@@ -154,6 +154,55 @@ void main() {
       );
     });
 
+    test('lists every scalar type alias when allowed_values is unsupported',
+        () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      when:\n'
+            '        type: datetime\n'
+            '        allowed_values: [today]\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.single.message,
+            'message',
+            'allowed_values is only supported for scalar parameter types '
+                '(int, bool, boolean, float, double, string, num, number). '
+                'Parameter "when" has unsupported type "datetime".',
+          ),
+        ),
+      );
+    });
+
+    test('accepts allowed_values on the float and number aliases', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      ratio:\n'
+            '        type: float\n'
+            '        allowed_values: [1, 2.5]\n'
+            '      level:\n'
+            '        type: number\n'
+            '        allowed_values: [1, 2.5]\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+      final parameters = {
+        for (final p in domains['auth']!.events.single.parameters) p.name: p,
+      };
+
+      expect(parameters['ratio']!.allowedValues, everyElement(isA<double>()));
+      expect(parameters['level']!.allowedValues!.first, isA<int>());
+    });
+
     test('throws at the pattern when a regex does not compile', () async {
       final files = {
         'auth.yaml': 'auth:\n'

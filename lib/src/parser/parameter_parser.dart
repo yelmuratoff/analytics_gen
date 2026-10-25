@@ -341,8 +341,8 @@ final class ParameterParser {
 
       final normalizedType = paramType.trim().toLowerCase();
 
-      switch (normalizedType) {
-        case 'string':
+      switch (DartTypeMapper.toDartType(paramType)) {
+        case 'String':
           if (allowedValues.any((v) => v is! String)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of strings '
@@ -352,7 +352,7 @@ final class ParameterParser {
             );
           }
           break;
-        case 'bool' || 'boolean':
+        case 'bool':
           if (allowedValues.any((v) => v is! bool)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of booleans '
@@ -372,7 +372,7 @@ final class ParameterParser {
             );
           }
           break;
-        case 'double' || 'float':
+        case 'double':
           if (allowedValues.any((v) => v is! num)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of numbers '
@@ -387,7 +387,7 @@ final class ParameterParser {
               .map<Object>((v) => (v as num).toDouble())
               .toList(growable: false);
           break;
-        case 'num' || 'number':
+        case 'num':
           if (allowedValues.any((v) => v is! num)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of numbers '
@@ -398,9 +398,11 @@ final class ParameterParser {
           }
           break;
         default:
+          final supportedTypes =
+              DartTypeMapper.yamlTypesFor(_allowedValuesDartTypes);
           throw AnalyticsParseException(
             'allowed_values is only supported for scalar parameter types '
-            '(string, bool, boolean, int, double, num). '
+            '(${supportedTypes.join(', ')}). '
             'Parameter "$rawName" has unsupported type "$paramType".',
             filePath: filePath,
             span: allowedValuesSpan ?? valueNode.span,
@@ -432,6 +434,14 @@ final class ParameterParser {
       sourceName: rawName,
     );
   }
+
+  static const _allowedValuesDartTypes = {
+    'String',
+    'bool',
+    'int',
+    'double',
+    'num'
+  };
 
   static const _stringRuleKeys = [
     YamlKeys.regex,

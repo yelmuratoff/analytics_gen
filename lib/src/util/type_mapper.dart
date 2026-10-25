@@ -27,4 +27,11 @@ final class DartTypeMapper {
     final key = yamlType.trim().toLowerCase();
     return _kTypeMap[key] ?? yamlType.trim();
   }
+
+  /// Returns the YAML type names, aliases included, that map to one of
+  /// [dartTypes].
+  static List<String> yamlTypesFor(Set<String> dartTypes) => [
+        for (final MapEntry(:key, :value) in _kTypeMap.entries)
+          if (dartTypes.contains(value)) key,
+      ];
 }

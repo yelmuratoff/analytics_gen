@@ -351,19 +351,17 @@ final class DocsGenerator {
       }
     }
 
-    final rawType = param.type.trim();
-    final normalizedType = rawType.toLowerCase();
+    final dartType = DartTypeMapper.toDartType(param.type);
+    final normalizedType = dartType.toLowerCase();
 
-    return switch (normalizedType) {
+    return switch (dartType) {
       'int' => '123',
-      'bool' || 'boolean' => 'true',
-      'double' || 'float' => '1.5',
-      'string' => "'example'",
-      'datetime' || 'date' => 'DateTime.fromMillisecondsSinceEpoch(0)',
-      'uri' => "Uri.parse('https://example.com')",
-      'map' => "{'key': 'value'}",
+      'bool' => 'true',
+      'double' => '1.5',
+      'String' => "'example'",
+      'DateTime' => 'DateTime.fromMillisecondsSinceEpoch(0)',
+      'Uri' => "Uri.parse('https://example.com')",
       _ when normalizedType.startsWith('map<') => "{'key': 'value'}",
-      'list' => "['item1', 'item2']",
       _ when normalizedType.startsWith('list<') => "['item1', 'item2']",
       _ => 'value',
     };
