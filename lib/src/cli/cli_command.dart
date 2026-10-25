@@ -5,7 +5,7 @@ import 'package:args/args.dart';
 import '../config/analytics_config.dart';
 import '../config/config_loader.dart';
 import '../config/config_parser.dart';
-import '../core/exceptions.dart';
+import '../pipeline/failure_report.dart';
 import '../util/logger.dart';
 
 /// The parsed arguments, logger and configuration a CLI command runs with.
@@ -42,8 +42,9 @@ final class CliInvocation {
 /// Runs one analytics_gen command from its command-line [arguments].
 ///
 /// Parses [arguments] with [parser] and calls [printUsage] for `--help`.
-/// Otherwise loads the config named by `--config` and runs [command]. Any
-/// failure is logged and ends the process with exit code 1. With
+/// Otherwise loads the config named by `--config` from [projectRoot], the
+/// current directory by default, and runs [command]. Any failure is logged
+/// and ends the process through [exitProcess] with exit code 1. With
 /// `--verbose`, failures other than invalid input also print their stack
 /// trace.
 Future<void> runCliCommand(
@@ -52,6 +53,8 @@ Future<void> runCliCommand(
   required void Function(Logger logger) printUsage,
   required Future<void> Function(CliInvocation invocation) command,
   ConfigParser? configParser,
+  String? projectRoot,
+  Never Function(int code) exitProcess = exit,
 }) async {
   Logger logger = const ConsoleLogger();
   var verbose = false;
@@ -66,10 +69,10 @@ Future<void> runCliCommand(
       return;
     }
 
-    final projectRoot = Directory.current.path;
+    final root = projectRoot ?? Directory.current.path;
     final configPath = results['config'] as String;
     final config = await loadAnalyticsConfig(
-      projectRoot,
+      root,
       configPath,
       logger: consoleLogger,
       parser: configParser,
@@ -80,7 +83,7 @@ Future<void> runCliCommand(
         results: results,
         logger: consoleLogger,
         verbose: verbose,
-        projectRoot: projectRoot,
+        projectRoot: root,
         configPath: configPath,
         config: config,
       ),
@@ -90,6 +93,6 @@ Future<void> runCliCommand(
     if (verbose && !isInvalidInputError(e)) {
       logger.error('Stack trace: $stackTrace');
     }
-    exit(1);
+    exitProcess(1);
   }
 }

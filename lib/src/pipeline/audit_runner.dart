@@ -22,14 +22,23 @@ import '../services/git_service.dart';
 /// Runner for the dead event audit tool.
 class AuditRunner {
   /// Creates a new audit runner.
+  ///
+  /// [projectRoot] defaults to the current directory, and [exitProcess] to
+  /// `exit` from `dart:io`.
   AuditRunner({
     ArgParser? parser,
     ConfigParser? configParser,
+    String? projectRoot,
+    Never Function(int code) exitProcess = exit,
   })  : _parser = parser ?? createAuditArgParser(),
-        _configParser = configParser;
+        _configParser = configParser,
+        _projectRoot = projectRoot,
+        _exitProcess = exitProcess;
 
   final ArgParser _parser;
   final ConfigParser? _configParser;
+  final String? _projectRoot;
+  final Never Function(int code) _exitProcess;
 
   /// Runs the audit.
   Future<void> run(List<String> arguments) => runCliCommand(
@@ -37,6 +46,8 @@ class AuditRunner {
         parser: _parser,
         printUsage: (logger) => printAuditUsage(_parser, logger: logger),
         configParser: _configParser,
+        projectRoot: _projectRoot,
+        exitProcess: _exitProcess,
         command: (invocation) => _runAudit(
           invocation.projectRoot,
           invocation.config,
@@ -82,8 +93,7 @@ class AuditRunner {
     // 3. Scan Codebase using AnalysisContextCollection
     final libPath = path.join(projectRoot, 'lib');
     if (!Directory(libPath).existsSync()) {
-      logger.error('Error: lib directory not found at $libPath');
-      exit(1);
+      throw FileSystemException('lib directory not found', libPath);
     }
 
     logger.info('Scanning codebase including: $libPath');

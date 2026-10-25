@@ -15,19 +15,6 @@ void main() {
     });
   });
 
-  group('isInvalidInputError', () {
-    test('is true for analytics and format exceptions', () {
-      expect(
-          isInvalidInputError(const AnalyticsGenerationException('x')), isTrue);
-      expect(isInvalidInputError(const FormatException('bad flag')), isTrue);
-    });
-
-    test('is false for other failures', () {
-      expect(isInvalidInputError(StateError('bug')), isFalse);
-      expect(isInvalidInputError(Exception('io')), isFalse);
-    });
-  });
-
   group('AnalyticsParseException', () {
     test('toString omits file info when none provided', () {
       final exception = AnalyticsParseException('bad format');

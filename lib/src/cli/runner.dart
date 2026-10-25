@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/config_parser.dart';
-import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
 import '../pipeline/generation_pipeline.dart';
@@ -14,14 +13,23 @@ import 'usage.dart';
 /// Runner for the analytics code generator CLI.
 class AnalyticsGenRunner {
   /// Creates a new analytics runner.
+  ///
+  /// [projectRoot] defaults to the current directory, and [exitProcess] to
+  /// `exit` from `dart:io`.
   AnalyticsGenRunner({
     ArgParser? parser,
     ConfigParser? configParser,
+    String? projectRoot,
+    Never Function(int code) exitProcess = exit,
   })  : _parser = parser ?? createArgParser(),
-        _configParser = configParser;
+        _configParser = configParser,
+        _projectRoot = projectRoot,
+        _exitProcess = exitProcess;
 
   final ArgParser _parser;
   final ConfigParser? _configParser;
+  final String? _projectRoot;
+  final Never Function(int code) _exitProcess;
 
   /// Runs the generator.
   Future<void> run(List<String> arguments) => runCliCommand(
@@ -29,6 +37,8 @@ class AnalyticsGenRunner {
         parser: _parser,
         printUsage: (logger) => printUsage(_parser, logger: logger),
         configParser: _configParser,
+        projectRoot: _projectRoot,
+        exitProcess: _exitProcess,
         command: _generate,
       );
 
@@ -39,9 +49,9 @@ class AnalyticsGenRunner {
     final planOnly = results['plan'] as bool;
     final validateOnly = results['validate-only'] as bool;
 
-    _ensureNotCombined('plan', planOnly, 'watch', watch, logger);
-    _ensureNotCombined('plan', planOnly, 'validate-only', validateOnly, logger);
-    _ensureNotCombined('validate-only', validateOnly, 'watch', watch, logger);
+    _ensureNotCombined('plan', planOnly, 'watch', watch);
+    _ensureNotCombined('plan', planOnly, 'validate-only', validateOnly);
+    _ensureNotCombined('validate-only', validateOnly, 'watch', watch);
 
     if (planOnly) {
       await printTrackingPlan(projectRoot, config, logger: logger);
@@ -81,12 +91,11 @@ class AnalyticsGenRunner {
     bool primaryValue,
     String secondaryFlag,
     bool secondaryValue,
-    Logger logger,
   ) {
     if (primaryValue && secondaryValue) {
-      logger.error(
-          'Error: --$primaryFlag cannot be used together with --$secondaryFlag.');
-      exit(1);
+      throw FormatException(
+        '--$primaryFlag cannot be used together with --$secondaryFlag.',
+      );
     }
   }
 }

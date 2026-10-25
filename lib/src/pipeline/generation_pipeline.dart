@@ -19,6 +19,7 @@ import 'package:path/path.dart' as path;
 import '../metrics/console_metrics.dart';
 import '../metrics/metrics.dart';
 
+import 'failure_report.dart';
 import 'generation_request.dart';
 import 'pipeline_factories.dart';
 

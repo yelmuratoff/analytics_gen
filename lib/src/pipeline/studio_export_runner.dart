@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:analytics_gen/src/generator/studio_generator.dart';
 import 'package:args/args.dart';
@@ -14,14 +16,23 @@ import '../cli/usage.dart';
 /// Kept as a convenience binary for users who only need the studio export.
 class StudioExportRunner {
   /// Creates a new [StudioExportRunner].
+  ///
+  /// [projectRoot] defaults to the current directory, and [exitProcess] to
+  /// `exit` from `dart:io`.
   StudioExportRunner({
     ArgParser? parser,
     ConfigParser? configParser,
+    String? projectRoot,
+    Never Function(int code) exitProcess = exit,
   })  : _parser = parser ?? createStudioExportArgParser(),
-        _configParser = configParser;
+        _configParser = configParser,
+        _projectRoot = projectRoot,
+        _exitProcess = exitProcess;
 
   final ArgParser _parser;
   final ConfigParser? _configParser;
+  final String? _projectRoot;
+  final Never Function(int code) _exitProcess;
 
   /// Runs the export.
   Future<void> run(List<String> arguments) => runCliCommand(
@@ -29,6 +40,8 @@ class StudioExportRunner {
         parser: _parser,
         printUsage: (logger) => printStudioExportUsage(_parser, logger: logger),
         configParser: _configParser,
+        projectRoot: _projectRoot,
+        exitProcess: _exitProcess,
         command: _export,
       );
 
