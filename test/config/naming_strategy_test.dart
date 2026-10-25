@@ -55,6 +55,45 @@ void main() {
         final strategy = NamingStrategy.fromYaml({});
         expect(strategy.convention, EventNamingConvention.snakeCase);
       });
+
+      test('rejects an unknown casing instead of falling back', () {
+        expect(
+          () => NamingStrategy.fromYaml({'casing': 'snake-case'}),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              'Invalid configuration for "casing": expected one of '
+                  'snake_case, title_case, original but got "snake-case"',
+            ),
+          ),
+        );
+      });
+
+      test('rejects mistyped fields with the field name', () {
+        expect(
+          () => NamingStrategy.fromYaml({'enforce_snake_case_domains': 'no'}),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              'Invalid configuration for "enforce_snake_case_domains": '
+                  'expected bool but got String',
+            ),
+          ),
+        );
+        expect(
+          () => NamingStrategy.fromYaml({'event_name_template': 1}),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              'Invalid configuration for "event_name_template": '
+                  'expected String but got int',
+            ),
+          ),
+        );
+      });
     });
 
     group('Casing Logic', () {

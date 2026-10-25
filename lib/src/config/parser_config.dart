@@ -28,23 +28,4 @@ class ParserConfig {
 
   /// Shared parameters available to all events.
   final Map<String, AnalyticsParameter> sharedParameters;
-
-  /// Creates a copy of this key with the given fields replaced with the new values.
-  ParserConfig copyWith({
-    NamingStrategy? naming,
-    bool? strictEventNames,
-    bool? enforceCentrallyDefinedParameters,
-    bool? preventEventParameterDuplicates,
-    Map<String, AnalyticsParameter>? sharedParameters,
-  }) {
-    return ParserConfig(
-      naming: naming ?? this.naming,
-      strictEventNames: strictEventNames ?? this.strictEventNames,
-      enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters ??
-          this.enforceCentrallyDefinedParameters,
-      preventEventParameterDuplicates: preventEventParameterDuplicates ??
-          this.preventEventParameterDuplicates,
-      sharedParameters: sharedParameters ?? this.sharedParameters,
-    );
-  }
 }

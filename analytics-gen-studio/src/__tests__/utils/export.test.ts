@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 // Mock file-saver to prevent DOM access after test cleanup
-vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
+const { saveAs } = vi.hoisted(() => ({ saveAs: vi.fn() }));
+vi.mock('file-saver', () => ({ saveAs }));
 
 // Mock FileReader since it's not available in Node test env
 class MockFileReader {
   result: string | null = null;
-  onload: ((e: any) => void) | null = null;
+  onload: ((e: { target: { result: string } }) => void) | null = null;
   onerror: (() => void) | null = null;
   readAsText(file: File) {
     file.text().then((text) => {
@@ -61,15 +62,15 @@ describe('loadProjectFile', () => {
       config: { inputs: {}, outputs: {}, targets: {}, rules: {}, naming: {}, meta: {} },
     };
     const result = await loadProjectFile(makeFile(JSON.stringify(data)));
-    expect((result as any).projectId).toBe('proj-123');
-    expect((result as any).projectName).toBe('Checkout Funnel');
+    expect(result.projectId).toBe('proj-123');
+    expect(result.projectName).toBe('Checkout Funnel');
   });
 
   it('loads legacy files without a meta block', async () => {
     const data = { version: 1, config: { inputs: {}, outputs: {}, targets: {}, rules: {}, naming: {}, meta: {} } };
     const result = await loadProjectFile(makeFile(JSON.stringify(data)));
-    expect((result as any).projectId).toBeUndefined();
-    expect((result as any).projectName).toBeUndefined();
+    expect(result.projectId).toBeUndefined();
+    expect(result.projectName).toBeUndefined();
   });
 
   it('preserves all data fields', async () => {
@@ -83,9 +84,9 @@ describe('loadProjectFile', () => {
     };
     const result = await loadProjectFile(makeFile(JSON.stringify(data)));
     expect(result.activeTab).toBe('events');
-    expect((result as any).eventFiles?.[0]?.fileName).toBe('a.yaml');
-    expect((result as any).sharedParamFiles?.[0]?.parameters?.sid).toBe('string');
-    expect((result as any).contextFiles?.[0]?.contextName).toBe('ctx');
+    expect(result.eventFiles?.[0]?.fileName).toBe('a.yaml');
+    expect(result.sharedParamFiles?.[0]?.parameters?.sid).toBe('string');
+    expect(result.contextFiles?.[0]?.contextName).toBe('ctx');
   });
 });
 
@@ -120,43 +121,43 @@ describe('copyToClipboard', () => {
 });
 
 describe('saveProject', () => {
-  it('creates JSON blob with correct structure', async () => {
-    // Mock saveAs
-    const mockSaveAs = vi.fn();
-    vi.doMock('file-saver', () => ({ saveAs: mockSaveAs }));
+  it('downloads the project with its meta block when no file is open', async () => {
+    const { saveProject, clearFileHandle } = await import('../../utils/export.ts');
+    const { useStore } = await import('../../state/store.ts');
+    clearFileHandle();
+    saveAs.mockClear();
+    useStore.getState().resetState();
+    useStore.getState().setProjectName('Checkout Funnel');
+    useStore.getState().addEventFile('auth.yaml');
 
-    const { saveProject } = await import('../../utils/export.ts');
+    const result = await saveProject(useStore.getState(), { suggestedName: 'checkout.json' });
 
-    const mockState = {
-      activeTab: 'config' as const,
-      config: { inputs: { events: 'e', shared_parameters: [], contexts: [], imports: [] }, outputs: { dart: 'd' }, targets: { csv: false, json: false, sql: false, docs: false, plan: true, test_matchers: false }, rules: { include_event_description: false, strict_event_names: true, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false }, naming: { casing: 'snake_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '', identifier_template: '', domain_aliases: {} }, meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false } },
-      eventFiles: [],
-      sharedParamFiles: [],
-      contextFiles: [],
-      selectedPath: null,
-      errors: [],
-    } as any;
-
-    saveProject(mockState);
-
-    // saveAs is called - but since we can't easily mock the ES module import,
-    // verify the function doesn't throw
-    expect(true).toBe(true);
+    expect(result).toEqual({ saved: true, fileName: 'checkout.json' });
+    const [blob, name] = saveAs.mock.calls[0];
+    expect(name).toBe('checkout.json');
+    const saved = JSON.parse(new TextDecoder().decode(await (blob as Blob).arrayBuffer()));
+    expect(saved.meta).toMatchObject({ projectId: useStore.getState().projectId, name: 'Checkout Funnel' });
+    expect(saved.eventFiles).toEqual([{ fileName: 'auth.yaml', domains: {} }]);
   });
 });
 
 describe('exportAllAsZip', () => {
-  it('does not throw with empty state', async () => {
+  it('saves one ZIP with the config and every project file after it is built', async () => {
+    const JSZip = (await import('jszip')).default;
     const { exportAllAsZip } = await import('../../utils/export.ts');
+    const { useStore } = await import('../../state/store.ts');
+    saveAs.mockClear();
+    useStore.getState().resetState();
+    useStore.getState().addEventFile('auth.yaml');
+    useStore.getState().addSharedParamFile('shared.yaml');
+    useStore.getState().addContextFile('user.yaml', 'user');
 
-    const mockState = {
-      config: { inputs: { events: 'e', shared_parameters: [], contexts: [], imports: [] }, outputs: { dart: 'd' }, targets: { csv: false, json: false, sql: false, docs: false, plan: true, test_matchers: false }, rules: { include_event_description: false, strict_event_names: true, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false }, naming: { casing: 'snake_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '', identifier_template: '', domain_aliases: {} }, meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false } },
-      eventFiles: [],
-      sharedParamFiles: [],
-      contextFiles: [],
-    } as any;
+    await exportAllAsZip(useStore.getState(), { zipName: 'project.zip' });
 
-    // Should not throw
-    expect(() => exportAllAsZip(mockState)).not.toThrow();
+    expect(saveAs).toHaveBeenCalledTimes(1);
+    const [blob, name] = saveAs.mock.calls[0];
+    expect(name).toBe('project.zip');
+    const zip = await JSZip.loadAsync(await (blob as Blob).arrayBuffer());
+    expect(Object.keys(zip.files)).toEqual(['analytics_gen.yaml', 'auth.yaml', 'shared.yaml', 'user.yaml']);
   });
 });

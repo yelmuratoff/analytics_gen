@@ -24,15 +24,19 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import { DEFAULT_PARAM_TYPE, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
 import { addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
+import { useInlineRename } from '../../hooks/useInlineRename.ts';
+import { withYamlExtension } from '../../utils/file-names.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
+import InlineRenameField from '../InlineRenameField.tsx';
+import ErrorDot from '../ErrorDot.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
 import ItemMenu from '../ItemMenu.tsx';
@@ -54,6 +58,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const removeSharedParam = useStore((s) => s.removeSharedParam);
   const renameSharedParamFile = useStore((s) => s.renameSharedParamFile);
   const renameSharedParam = useStore((s) => s.renameSharedParam);
+  const enforceSnakeParams = useStore((s) => !!s.config.naming?.enforce_snake_case_parameters);
 
   const errorKeys = useErrorKeys();
   const errorMessages = useErrorMessages();
@@ -62,8 +67,15 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const isPending = isSearchPending || isExpandPending;
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addParamOpen, setAddParamOpen] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ type: 'file' | 'param'; fi: number; original: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const rename = useInlineRename<{ type: 'file' | 'param'; fi: number; original: string }>({
+    takenNames: (t) => t.type === 'file' ? files.map((f) => f.fileName) : Object.keys(files[t.fi].parameters),
+    normalize: (t, name) => t.type === 'file' ? withYamlExtension(name) : name,
+    apply: (t, name) => {
+      if (t.type === 'file') renameSharedParamFile(t.fi, name);
+      else renameSharedParam(t.fi, t.original, name);
+    },
+  });
+  const editing = rename.target;
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
@@ -113,34 +125,13 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     return Object.keys(file.parameters).some((pn) => pn.toLowerCase().includes(q));
   };
 
-  const startEditing = (type: 'file' | 'param', fi: number, original: string) => {
-    setEditing({ type, fi, original });
-    setEditValue(original);
-  };
-
-  const commitRename = () => {
-    if (!editing) return;
-    const val = editValue.trim();
-    if (!val || val === editing.original) { setEditing(null); return; }
-    if (editing.type === 'file') {
-      renameSharedParamFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`);
-    } else {
-      renameSharedParam(editing.fi, editing.original, val);
-    }
-    setEditing(null);
-  };
+  const startEditing = (type: 'file' | 'param', fi: number, original: string) => rename.start({ type, fi, original });
 
   const renderInlineEdit = (fontSize = '0.82rem', height = 24) => (
-    <TextField size="small" autoFocus value={editValue}
-      onChange={(e) => setEditValue(e.target.value)}
-      onBlur={commitRename}
-      onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-      onClick={(e) => e.stopPropagation()}
-      slotProps={{
-        htmlInput: { 'aria-label': 'Rename' },
-        input: { sx: { fontSize, py: 0, height, fontFamily: '"JetBrains Mono", monospace' } },
-      }}
-      sx={{ flex: 1 }}
+    <InlineRenameField
+      value={rename.value} error={rename.error}
+      onChange={rename.setValue} onCommit={rename.commit} onCancel={rename.cancel}
+      fontSize={fontSize} height={height}
     />
   );
 
@@ -191,7 +182,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: (t: any) => `${t.palette.brand.shared}0F`, border: '2px dashed', borderColor: 'brand.shared',
+              bgcolor: (t: Theme) => `${t.palette.brand.shared}0F`, border: '2px dashed', borderColor: 'brand.shared',
             }}>
               <ShareRounded sx={{ fontSize: 28, color: 'brand.shared' }} />
             </Box>
@@ -234,7 +225,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                     ? renderInlineEdit('0.85rem', 26)
                     : (
                       <ListItemText
-                        primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <Tooltip title={errorMessages.get(`shared:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
+                        primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.parameters).length || ''}</Typography>{errorKeys.has(`shared:${fi}`) && <ErrorDot messages={errorMessages.get(`shared:${fi}`)} />}</>}
                         primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                         sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                       />
@@ -261,7 +252,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                             return (
                               <ListItemButton key={pn} sx={{
                                 pl: 5.5, py: 0.4,
-                                ...(isSel(fi, pn) && { bgcolor: (t: any) => alpha(t.palette.primary.main, 0.06) }),
+                                ...(isSel(fi, pn) && { bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.06) }),
                               }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
                                 <ListItemIcon sx={{ minWidth: 18 }}>
                                   <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />
@@ -280,7 +271,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                                               '& .MuiChip-label': { px: 0.6 },
                                             }} />
                                           )}
-                                          {hasErr && <Tooltip title={errorMessages.get(`shared:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}
+                                          {hasErr && <ErrorDot messages={errorMessages.get(`shared:${fi}:${pn}`)} ml={0} />}
                                         </Box>
                                       }
                                       primaryTypographyProps={{
@@ -342,10 +333,10 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
       </Box>
       <AddItemDialog open={addFileOpen} title="Add File" label="File name" placeholder="shared_user.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
-        onAdd={(n) => addSharedParamFile(n.endsWith('.yaml') ? n : `${n}.yaml`)} />
+        onAdd={(n) => addSharedParamFile(withYamlExtension(n))} />
       {addParamOpen !== null && (
         <AddItemDialog open title="Add Parameter" label="Name" placeholder="session_id"
-          validateSnakeCase existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
+          namePattern={enforceSnakeParams ? SNAKE_CASE_PARAM : undefined} existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
           onClose={() => setAddParamOpen(null)}
           onAdd={(n) => {
             addSharedParam(addParamOpen, n, { type: DEFAULT_PARAM_TYPE });

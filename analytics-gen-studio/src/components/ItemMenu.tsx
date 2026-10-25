@@ -30,6 +30,9 @@ export default function ItemMenu({ actions }: { actions: ItemMenuAction[] }) {
     <>
       <IconButton
         size="small"
+        aria-label="More actions"
+        aria-haspopup="menu"
+        aria-expanded={!!anchor}
         onClick={(e) => { e.stopPropagation(); setAnchor(e.currentTarget); }}
         sx={{ ...menuBtnSx, ...(anchor && { opacity: 1, color: 'text.secondary' }) }}
       >

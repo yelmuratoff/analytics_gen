@@ -58,6 +58,16 @@ function canonicalize(value: unknown): unknown {
   return value;
 }
 
+/** Picks the analytics content out of the full Studio state. */
+export function contentOf(state: RevisionContent): RevisionContent {
+  return {
+    config: state.config,
+    eventFiles: state.eventFiles,
+    sharedParamFiles: state.sharedParamFiles,
+    contextFiles: state.contextFiles,
+  };
+}
+
 /** Content revision hash — stable across key ordering, changes on any edit. */
 export function computeRevision(content: RevisionContent): string {
   const canonical = JSON.stringify(canonicalize(content));

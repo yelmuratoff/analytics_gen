@@ -6,6 +6,7 @@ import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
 import '../util/logger.dart';
+import '../util/model_codegen.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
 import 'generation_metadata.dart';
@@ -97,13 +98,11 @@ final class DocsGenerator {
     buffer.writeln('## Table of Contents');
     buffer.writeln();
     for (final domainName in domains.keys) {
-      final anchor = domainName.toLowerCase().replaceAll('_', '-');
-      buffer.writeln('- [$domainName](#$anchor)');
+      buffer.writeln('- [$domainName](#${_headingAnchor(domainName)})');
     }
     for (final contextName in contexts.keys) {
       final title = _getContextTitle(contextName);
-      final anchor = title.toLowerCase().replaceAll(' ', '-');
-      buffer.writeln('- [$title](#$anchor)');
+      buffer.writeln('- [$title](#${_headingAnchor(title)})');
     }
     buffer.writeln();
 
@@ -151,7 +150,7 @@ final class DocsGenerator {
         } else {
           buffer.writeln('Analytics.instance.$methodName(');
           for (final param in firstEvent.parameters) {
-            final camelParam = _toCamelCase(param.codeName);
+            final camelParam = StringUtils.toCamelCase(param.codeName);
             buffer.writeln('  $camelParam: value,');
           }
           buffer.writeln(');');
@@ -169,6 +168,12 @@ final class DocsGenerator {
     if (contextName == 'global_context') return 'Global Context';
     return StringUtils.capitalizePascal(contextName);
   }
+
+  // GitHub heading anchors: lowercase, punctuation other than - and _ dropped, spaces become hyphens.
+  String _headingAnchor(String heading) => heading
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\w\- ]'), '')
+      .replaceAll(' ', '-');
 
   /// Generates documentation for a single domain
   String _generateDomainDocs(String domainName, AnalyticsDomain domain) {
@@ -238,7 +243,7 @@ final class DocsGenerator {
       } else {
         buffer.writeln('Analytics.instance.$methodName(');
         for (final param in event.parameters) {
-          final camelParam = _toCamelCase(param.codeName);
+          final camelParam = StringUtils.toCamelCase(param.codeName);
           final example = _getExampleValue(domainName, event, param);
           buffer.writeln('  $camelParam: $example,');
         }
@@ -295,17 +300,6 @@ final class DocsGenerator {
     return buffer.toString();
   }
 
-  /// Converts snake_case to camelCase
-  String _toCamelCase(String text) {
-    return StringUtils.toCamelCase(text);
-  }
-
-  bool _isGeneratedEnumParameter(AnalyticsParameter param) {
-    return param.dartType == null &&
-        param.type == 'string' &&
-        (param.allowedValues != null && param.allowedValues!.isNotEmpty);
-  }
-
   String _formatParameterType(
     String domainName,
     AnalyticsEvent event,
@@ -316,7 +310,7 @@ final class DocsGenerator {
       return '${explicitType.trim()}${param.isNullable ? '?' : ''}';
     }
 
-    if (_isGeneratedEnumParameter(param)) {
+    if (param.usesGeneratedEnum) {
       final enumName =
           const EnumRenderer().buildEnumName(domainName, event, param);
       return '$enumName${param.isNullable ? '?' : ''}';
@@ -341,7 +335,7 @@ final class DocsGenerator {
       return '${explicitType.trim()}.values.first';
     }
 
-    if (_isGeneratedEnumParameter(param)) {
+    if (param.usesGeneratedEnum) {
       final allowedValues = param.allowedValues;
       if (allowedValues != null && allowedValues.isNotEmpty) {
         final enumName =
@@ -352,19 +346,17 @@ final class DocsGenerator {
       }
     }
 
-    final rawType = param.type.trim();
-    final normalizedType = rawType.toLowerCase();
+    final dartType = DartTypeMapper.toDartType(param.type);
+    final normalizedType = dartType.toLowerCase();
 
-    return switch (normalizedType) {
+    return switch (dartType) {
       'int' => '123',
-      'bool' || 'boolean' => 'true',
-      'double' || 'float' => '1.5',
-      'string' => "'example'",
-      'datetime' || 'date' => 'DateTime.fromMillisecondsSinceEpoch(0)',
-      'uri' => "Uri.parse('https://example.com')",
-      'map' => "{'key': 'value'}",
+      'bool' => 'true',
+      'double' => '1.5',
+      'String' => "'example'",
+      'DateTime' => 'DateTime.fromMillisecondsSinceEpoch(0)',
+      'Uri' => "Uri.parse('https://example.com')",
       _ when normalizedType.startsWith('map<') => "{'key': 'value'}",
-      'list' => "['item1', 'item2']",
       _ when normalizedType.startsWith('list<') => "['item1', 'item2']",
       _ => 'value',
     };

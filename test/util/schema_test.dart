@@ -489,4 +489,110 @@ void main() {
       expect(changes.first.description, 'Regex validation changed.');
     });
   });
+
+  group('SchemaComparator parameter types and allowed values', () {
+    final comparator = SchemaComparator();
+
+    List<SchemaChange> compareParameter(
+      AnalyticsParameter previous,
+      AnalyticsParameter current,
+    ) {
+      Map<String, AnalyticsDomain> plan(AnalyticsParameter parameter) => {
+            'auth': AnalyticsDomain(name: 'auth', events: [
+              AnalyticsEvent(
+                name: 'login',
+                description: 'Login',
+                parameters: [parameter],
+              ),
+            ]),
+          };
+      return comparator.compare(plan(current), plan(previous));
+    }
+
+    AnalyticsParameter method({
+      String type = 'string',
+      String? dartType,
+      List<Object>? allowedValues,
+    }) =>
+        AnalyticsParameter(
+          name: 'method',
+          type: type,
+          dartType: dartType,
+          isNullable: false,
+          allowedValues: allowedValues,
+        );
+
+    test('treats a type alias as the same type', () {
+      expect(
+        compareParameter(method(type: 'bool'), method(type: 'boolean')),
+        isEmpty,
+      );
+    });
+
+    test('reports a dart_type change as breaking', () {
+      final changes = compareParameter(
+        method(dartType: 'LoginMethod'),
+        method(dartType: 'AuthMethod'),
+      );
+
+      expect(changes.single.isBreaking, isTrue);
+      expect(
+        changes.single.description,
+        'Type changed from "LoginMethod" to "AuthMethod".',
+      );
+    });
+
+    test('reports leaving a generated enum for String as breaking', () {
+      final changes = compareParameter(
+        method(allowedValues: ['email']),
+        method(type: 'String', allowedValues: ['email']),
+      );
+
+      expect(changes.single.isBreaking, isTrue);
+      expect(
+        changes.single.description,
+        'Type changed from "string (generated enum)" to "String".',
+      );
+    });
+
+    test('reports removed allowed values as breaking', () {
+      final changes = compareParameter(
+        method(allowedValues: ['email', 'google']),
+        method(allowedValues: ['email']),
+      );
+
+      expect(changes.single.isBreaking, isTrue);
+      expect(changes.single.description, 'Allowed values removed: google.');
+    });
+
+    test('reports added allowed values as non-breaking', () {
+      final changes = compareParameter(
+        method(allowedValues: ['email']),
+        method(allowedValues: ['email', 'apple']),
+      );
+
+      expect(changes.single.isBreaking, isFalse);
+      expect(changes.single.description, 'Allowed values added: apple.');
+    });
+
+    test('reports a new allowed values restriction as breaking', () {
+      final changes = compareParameter(
+        method(type: 'int'),
+        method(type: 'int', allowedValues: [1, 2]),
+      );
+
+      expect(changes.single.isBreaking, isTrue);
+      expect(changes.single.description, 'Allowed values restricted to: 1, 2.');
+    });
+
+    test('reports a lifted allowed values restriction as non-breaking', () {
+      final changes = compareParameter(
+        method(type: 'int', allowedValues: [1, 2]),
+        method(type: 'int'),
+      );
+
+      expect(changes.single.isBreaking, isFalse);
+      expect(changes.single.description, 'Allowed values restriction removed.');
+    });
+  });
 }

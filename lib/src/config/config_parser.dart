@@ -9,7 +9,8 @@ class ConfigParser {
 
   /// Parses configuration from a YAML map.
   AnalyticsConfig parse(Map<dynamic, dynamic> yaml) {
-    if (yaml.isEmpty) return const AnalyticsConfig();
+    const defaults = AnalyticsConfig();
+    if (yaml.isEmpty) return defaults;
 
     T cast<T>(dynamic value, String context) {
       // If T is nullable and value is null, "value is T" returns true.
@@ -56,116 +57,142 @@ class ConfigParser {
         eventsPath: val(
           inputs,
           YamlKeys.events,
-          val(config, YamlKeys.eventsPath, 'events'),
+          val(config, YamlKeys.eventsPath, defaults.inputs.eventsPath),
         ),
         contexts: list(
           inputs,
           YamlKeys.contexts,
-          list(config, YamlKeys.contexts, []),
+          list(config, YamlKeys.contexts, defaults.inputs.contexts),
         ),
         sharedParameters: list(
           inputs,
           YamlKeys.sharedParameters,
-          list(config, YamlKeys.sharedParameters, []),
+          list(
+            config,
+            YamlKeys.sharedParameters,
+            defaults.inputs.sharedParameters,
+          ),
         ),
         imports: list(
           inputs,
           YamlKeys.imports,
-          list(config, YamlKeys.imports, []),
+          list(config, YamlKeys.imports, defaults.inputs.imports),
         ),
       ),
       outputs: AnalyticsOutputs(
         dartPath: val(
           outputs,
           YamlKeys.dart,
-          val(config, YamlKeys.outputPath, 'lib/src/analytics/generated'),
+          val(config, YamlKeys.outputPath, defaults.outputs.dartPath),
         ),
         docsPath: val(
           outputs,
           YamlKeys.docs,
-          val(config, YamlKeys.docsPath, null),
+          val(config, YamlKeys.docsPath, defaults.outputs.docsPath),
         ),
         exportsPath: val(
           outputs,
           YamlKeys.exports,
-          val(config, YamlKeys.exportsPath, null),
+          val(config, YamlKeys.exportsPath, defaults.outputs.exportsPath),
         ),
         studioPath: val(
           outputs,
           YamlKeys.studio,
-          val(config, YamlKeys.studioPath, 'analytics-studio.json'),
+          val(config, YamlKeys.studioPath, defaults.outputs.studioPath),
         ),
       ),
       targets: AnalyticsTargets(
         generateCsv: val(
           targets,
           YamlKeys.csv,
-          val(config, YamlKeys.generateCsv, false),
+          val(config, YamlKeys.generateCsv, defaults.targets.generateCsv),
         ),
         generateJson: val(
           targets,
           YamlKeys.json,
-          val(config, YamlKeys.generateJson, false),
+          val(config, YamlKeys.generateJson, defaults.targets.generateJson),
         ),
         generateSql: val(
           targets,
           YamlKeys.sql,
-          val(config, YamlKeys.generateSql, false),
+          val(config, YamlKeys.generateSql, defaults.targets.generateSql),
         ),
         generateDocs: val(
           targets,
           YamlKeys.docs,
-          val(config, YamlKeys.generateDocs, false),
+          val(config, YamlKeys.generateDocs, defaults.targets.generateDocs),
         ),
         generatePlan: val(
           targets,
           YamlKeys.plan,
-          val(config, YamlKeys.generatePlan, true),
+          val(config, YamlKeys.generatePlan, defaults.targets.generatePlan),
         ),
         generateTestMatchers: val(
           targets,
           YamlKeys.testMatchers,
-          val(config, YamlKeys.generateTestMatchers, false),
+          val(
+            config,
+            YamlKeys.generateTestMatchers,
+            defaults.targets.generateTestMatchers,
+          ),
         ),
         generateStudio: val(
           targets,
           YamlKeys.studio,
-          val(config, YamlKeys.generateStudio, false),
+          val(config, YamlKeys.generateStudio, defaults.targets.generateStudio),
         ),
       ),
       rules: AnalyticsRules(
         includeEventDescription: val(
           rules,
           YamlKeys.includeEventDescription,
-          val(config, YamlKeys.includeEventDescription, false),
+          val(
+            config,
+            YamlKeys.includeEventDescription,
+            defaults.rules.includeEventDescription,
+          ),
         ),
         strictEventNames: val(
           rules,
           YamlKeys.strictEventNames,
-          val(config, YamlKeys.strictEventNames, true),
+          val(
+            config,
+            YamlKeys.strictEventNames,
+            defaults.rules.strictEventNames,
+          ),
         ),
         enforceCentrallyDefinedParameters: val(
           rules,
           YamlKeys.enforceCentrallyDefinedParameters,
-          val(config, YamlKeys.enforceCentrallyDefinedParameters, false),
+          val(
+            config,
+            YamlKeys.enforceCentrallyDefinedParameters,
+            defaults.rules.enforceCentrallyDefinedParameters,
+          ),
         ),
         preventEventParameterDuplicates: val(
           rules,
           YamlKeys.preventEventParameterDuplicates,
-          val(config, YamlKeys.preventEventParameterDuplicates, false),
+          val(
+            config,
+            YamlKeys.preventEventParameterDuplicates,
+            defaults.rules.preventEventParameterDuplicates,
+          ),
         ),
       ),
-      naming: NamingStrategy.fromYaml(config[YamlKeys.naming] as Map?),
+      naming: NamingStrategy.fromYaml(
+        safeMap(config[YamlKeys.naming], YamlKeys.naming),
+      ),
       meta: AnalyticsMeta(
         autoTrackingCreationDate: val(
           metaConfig,
           YamlKeys.autoTrackingCreationDate,
-          false,
+          defaults.meta.autoTrackingCreationDate,
         ),
         includeMetaInParameters: val(
           metaConfig,
           YamlKeys.includeMetaInParameters,
-          false,
+          defaults.meta.includeMetaInParameters,
         ),
       ),
     );

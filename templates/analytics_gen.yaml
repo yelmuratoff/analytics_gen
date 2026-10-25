@@ -102,11 +102,11 @@ analytics_gen:
 
     # Template for generating event names. Supports placeholders: {domain},
     # {domain_alias}, {event}.
-    event_name_template: {domain}: {event}
+    event_name_template: "{domain}: {event}"
 
     # Template for generating canonical event identifiers (used for uniqueness
     # checks). Supports the same placeholders as event_name_template.
-    identifier_template: {domain}: {event}
+    identifier_template: "{domain}: {event}"
 
     # Map of domain name to alias. When present, {domain_alias} in templates
     # resolves to the mapped value instead of the domain name.

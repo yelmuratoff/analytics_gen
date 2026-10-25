@@ -17,6 +17,7 @@ import { useStore } from '../state/store.ts';
 import { copyToClipboard } from '../utils/export.ts';
 import {
   computeRevision,
+  contentOf,
   deriveJsonName,
   getUniqueExportNames,
   setUniqueExportNames,
@@ -70,15 +71,7 @@ export default function ProjectDialog({ open, onClose }: ProjectDialogProps) {
   const [unique, setUnique] = useState(getUniqueExportNames);
 
   // Revision reflects the current content; recomputed each render while open.
-  const s = useStore.getState();
-  const revision = open
-    ? computeRevision({
-        config: s.config,
-        eventFiles: s.eventFiles,
-        sharedParamFiles: s.sharedParamFiles,
-        contextFiles: s.contextFiles,
-      })
-    : '';
+  const revision = open ? computeRevision(contentOf(useStore.getState())) : '';
 
   const handleToggleUnique = (value: boolean) => {
     setUnique(value);

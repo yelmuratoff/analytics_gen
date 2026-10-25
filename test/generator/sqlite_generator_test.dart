@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/naming_strategy.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/export/sqlite_generator.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
@@ -49,6 +50,7 @@ void main() {
       File(sqlPath).writeAsStringSync('prebuilt');
 
       final generator = SqliteGenerator(
+        projectRoot: tempDir.path,
         log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: (executable, arguments) async {
@@ -100,6 +102,7 @@ void main() {
       }
 
       final generator = SqliteGenerator(
+        projectRoot: tempDir.path,
         log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: fakeRun,
@@ -116,9 +119,48 @@ void main() {
       );
     });
 
-    test('deletes stale database and logs failure when sqlite3 errors',
+    test('passes the script path to sqlite3 as one quoted argument', () async {
+      final outputDir = p.join(tempDir.path, r'my "exports" \ dir');
+      Directory(outputDir).createSync();
+      final calls = <List<String>>[];
+
+      final generator = SqliteGenerator(
+        projectRoot: tempDir.path,
+        runProcess: (executable, arguments) async {
+          calls.add(arguments);
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      await generator.generate(domains, outputDir);
+
+      final sqlPath = p.join(outputDir, 'create_database.sql');
+      final escaped = sqlPath.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+      expect(calls.last, [
+        p.join(outputDir, 'analytics_events.db'),
+        '.read "$escaped"',
+      ]);
+    });
+
+    test('builds the database with sqlite3 in a directory with spaces',
         () async {
-      final logs = <String>[];
+      final outputDir = p.join(tempDir.path, "o'neil exports");
+      Directory(outputDir).createSync();
+
+      await SqliteGenerator(projectRoot: tempDir.path)
+          .generate(domains, outputDir);
+
+      final tables = Process.runSync(
+        'sqlite3',
+        [p.join(outputDir, 'analytics_events.db'), '.tables'],
+      );
+      expect(
+        (tables.stdout as String).split(RegExp(r'\s+')),
+        containsAll(['domains', 'events', 'parameters']),
+      );
+    }, skip: _sqlite3Missing() ? 'sqlite3 is not installed' : false);
+
+    test('deletes stale database and throws when sqlite3 errors', () async {
       final dbPath = p.join(tempDir.path, 'analytics_events.db');
       File(dbPath).writeAsStringSync('stale content');
 
@@ -140,20 +182,36 @@ void main() {
       }
 
       final generator = SqliteGenerator(
-        log: TestLogger(logs),
+        projectRoot: tempDir.path,
         naming: const NamingStrategy(),
         runProcess: fakeRun,
       );
 
-      await generator.generate(domains, tempDir.path);
-
-      expect(File(dbPath).existsSync(), isFalse);
-      final logOutput = logs.join('\n');
-      expect(
-        logOutput,
-        contains('⚠ Failed to create database: creation failed'),
+      await expectLater(
+        generator.generate(domains, tempDir.path),
+        throwsA(
+          isA<AnalyticsGenerationException>()
+              .having(
+                (e) => e.message,
+                'message',
+                'sqlite3 could not build $dbPath: creation failed',
+              )
+              .having(
+                (e) => e.sourcePath,
+                'sourcePath',
+                p.join(tempDir.path, 'create_database.sql'),
+              ),
+        ),
       );
-      expect(logOutput, contains('SQL script available at:'));
+      expect(File(dbPath).existsSync(), isFalse);
     });
   });
+}
+
+bool _sqlite3Missing() {
+  try {
+    return Process.runSync('sqlite3', ['--version']).exitCode != 0;
+  } on ProcessException {
+    return true;
+  }
 }

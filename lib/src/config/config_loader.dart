@@ -22,8 +22,18 @@ Future<AnalyticsConfig> loadAnalyticsConfig(
   }
 
   final content = await configFile.readAsString();
-  final yaml = loadYaml(content) as Map;
-  return configParser.parse(yaml);
+  return switch (loadYaml(content)) {
+    null => configParser.parse(const {}),
+    final Map yaml => configParser.parse(yaml),
+    final YamlList _ => throw FormatException(
+        'Invalid configuration file "$configPath": '
+        'expected a map but got a list',
+      ),
+    final other => throw FormatException(
+        'Invalid configuration file "$configPath": '
+        'expected a map but got "$other"',
+      ),
+  };
 }
 
 void _printDefaultConfigReminder(String configPath, Logger logger) {

@@ -67,7 +67,10 @@ void main() {
       };
 
       final outputPath = p.join(tempDir.path, 'create_database.sql');
-      final generator = SqlGenerator(naming: const NamingStrategy());
+      final generator = SqlGenerator(
+        naming: const NamingStrategy(),
+        projectRoot: '/tmp',
+      );
 
       await generator.generate(domains, outputPath);
 
@@ -93,7 +96,7 @@ void main() {
       expect(
         sql,
         contains(
-          r'''INSERT INTO events (id, domain_id, name, event_name, identifier, description, deprecated, replacement, added_in, deprecated_in, custom_event_name, dual_write_to, meta, source_path, line_number) VALUES (1, 1, 'login', 'auth_login_custom', 'event-id', 'User logs in', 1, 'auth.logout', '1.0.0', '2.0.0', 'auth_login_custom', '["legacy.auth.login"]', '{"owner":"growth"}', '/tmp/events/auth.yaml', 12);''',
+          r'''INSERT INTO events (id, domain_id, name, event_name, identifier, description, deprecated, replacement, added_in, deprecated_in, custom_event_name, dual_write_to, meta, source_path, line_number) VALUES (1, 1, 'login', 'auth_login_custom', 'event-id', 'User logs in', 1, 'auth.logout', '1.0.0', '2.0.0', 'auth_login_custom', '["legacy.auth.login"]', '{"owner":"growth"}', 'events/auth.yaml', 12);''',
         ),
       );
 
@@ -133,7 +136,10 @@ void main() {
       };
 
       final outputPath = p.join(tempDir.path, 'create_database.sql');
-      final generator = SqlGenerator(naming: const NamingStrategy());
+      final generator = SqlGenerator(
+        naming: const NamingStrategy(),
+        projectRoot: tempDir.path,
+      );
 
       await generator.generate(domains, outputPath);
       final sql = await File(outputPath).readAsString();
@@ -167,12 +173,13 @@ void main() {
       };
 
       final outputPath = p.join(tempDir.path, 'create_database.sql');
-      final generator = SqlGenerator(naming: const NamingStrategy());
+      final generator = SqlGenerator(
+        naming: const NamingStrategy(),
+        projectRoot: tempDir.path,
+      );
 
       await generator.generate(domains, outputPath);
       final first = await File(outputPath).readAsString();
-
-      await Future<void>.delayed(const Duration(milliseconds: 5));
 
       await generator.generate(domains, outputPath);
       final second = await File(outputPath).readAsString();

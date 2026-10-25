@@ -55,7 +55,7 @@ project/YAML round-trips.
    ```sh
    npm --prefix analytics-gen-studio test
    npm --prefix analytics-gen-studio run lint
-   npm --prefix analytics-gen-studio exec -- tsc -b
+   npm --prefix analytics-gen-studio exec -- tsc -b analytics-gen-studio
    dart doc
    npm --prefix analytics-gen-studio run build
    ```

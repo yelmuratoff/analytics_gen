@@ -1,5 +1,6 @@
 import 'package:analytics_gen/src/config/parser_config.dart';
 import 'package:analytics_gen/src/core/exceptions.dart';
+import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/parser/yaml_parser.dart';
 import 'package:test/test.dart';
@@ -65,6 +66,50 @@ events:
       final flowId = event.parameters.firstWhere((p) => p.name == 'flow_id');
       expect(flowId.type, 'String');
       expect(flowId.description, 'Shared flow ID');
+    });
+
+    group('a shared parameter with param_name', () {
+      final shared = YamlParser().parseSharedParameters(
+        AnalyticsSource(
+          filePath: 'shared.yaml',
+          content: 'parameters:\n'
+              '  app_version:\n'
+              '    type: string\n'
+              '    param_name: app_ver\n',
+        ),
+      );
+
+      Future<AnalyticsParameter> resolve(String reference) async {
+        final domains = await YamlParser(
+          config: ParserConfig(
+            sharedParameters: shared,
+            enforceCentrallyDefinedParameters: true,
+          ),
+        ).parseEvents([
+          AnalyticsSource(
+            filePath: 'events.yaml',
+            content: 'app:\n'
+                '  opened:\n'
+                '    description: Opened\n'
+                '    parameters:\n'
+                '      $reference:\n',
+          ),
+        ]);
+        return domains['app']!.events.single.parameters.single;
+      }
+
+      test('resolves by its key in the shared file', () async {
+        final parameter = await resolve('app_version');
+
+        expect(parameter.name, 'app_ver');
+        expect(parameter.codeName, 'app_version');
+      });
+
+      test('still resolves by its wire name', () async {
+        final parameter = await resolve('app_ver');
+
+        expect(parameter.name, 'app_ver');
+      });
     });
 
     test('enforces centrally defined parameters', () async {
@@ -169,7 +214,7 @@ events:
         throwsA(isA<AnalyticsParseException>().having(
           (e) => e.message,
           'message',
-          contains('Failed to parse shared parameters YAML'),
+          'Invalid YAML: Mock parsing error',
         )),
       );
     });

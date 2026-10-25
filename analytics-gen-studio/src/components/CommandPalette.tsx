@@ -20,10 +20,10 @@ import FileOpenRounded from '@mui/icons-material/FileOpenRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import { useStore } from '../state/store.ts';
+import { modKeyLabel } from '../utils/platform.ts';
 import type { SelectionPath, TabId } from '../types/index.ts';
 
-const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
-const mod = isMac ? '\u2318' : 'Ctrl+';
+const mod = modKeyLabel;
 
 interface PaletteItem {
   label: string;

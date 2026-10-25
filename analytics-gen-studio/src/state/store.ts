@@ -1,30 +1,25 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import { temporal } from 'zundo';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
 import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
 import { newProjectId } from '../utils/project-meta.ts';
+import { withDefaults } from '../utils/config-defaults.ts';
 
 /** Placeholder config — replaced by schema-derived defaults on first load.
  *  See App.tsx: applySchemaDefaults() fills real values from schema.
  *  This is only used before schemas are loaded (splash screen). */
 let schemaDefaultConfig: ConfigState | null = null;
 
-/** Called from App.tsx after schemas load to set the real defaults */
+/** Called from App.tsx after schemas load: records the defaults and fills in any setting the current config lacks. */
 export function setSchemaDefaultConfig(config: ConfigState) {
   schemaDefaultConfig = config;
-  // If store still has empty/placeholder config (first visit), apply schema defaults
-  const current = useStore.getState().config;
-  const cfg = current as unknown as Record<string, unknown>;
-  const hasData = Object.values(cfg).some((v) =>
-    typeof v === 'object' && v !== null && Object.values(v as Record<string, unknown>).some((fv) =>
-      fv !== '' && fv !== false && !(Array.isArray(fv) && fv.length === 0) && !(typeof fv === 'object' && fv !== null && Object.keys(fv).length === 0)
-    )
-  );
-  if (!hasData) {
-    useStore.getState().setConfig(config);
-  }
+  const history = useStore.temporal.getState();
+  history.pause();
+  useStore.setState((s) => ({ config: withDefaults(s.config, config) }));
+  history.resume();
 }
 
 function getDefaultConfig(): ConfigState {
@@ -42,8 +37,13 @@ const initialState = {
   sharedParamFiles: [],
   contextFiles: [],
   selectedPath: null,
-  errors: [],
 };
+
+/** Returns a copy of `record` with `oldName` renamed in place, or null when there is nothing to rename or `newName` is taken. */
+function renameKey<T>(record: Record<string, T>, oldName: string, newName: string): Record<string, T> | null {
+  if (oldName === newName || !(oldName in record) || newName in record) return null;
+  return Object.fromEntries(Object.entries(record).map(([k, v]) => [k === oldName ? newName : k, v]));
+}
 
 function uniqueName(base: string, existing: string[]): string {
   let name = `${base}_copy`;
@@ -203,51 +203,43 @@ export const useStore = create<StudioState>()(
           s.eventFiles[fileIndex].fileName = newName;
         }),
         renameDomain: (fileIndex, oldName, newName) => set((s) => {
-          const domains = s.eventFiles[fileIndex].domains;
-          if (oldName === newName || !domains[oldName]) return;
-          // Preserve key order: rebuild object
-          const entries = Object.entries(domains);
-          const rebuilt: typeof domains = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.eventFiles[fileIndex].domains = rebuilt;
+          const renamed = renameKey(s.eventFiles[fileIndex].domains, oldName, newName);
+          if (!renamed) return;
+          s.eventFiles[fileIndex].domains = renamed;
           if (s.selectedPath?.domain === oldName) s.selectedPath.domain = newName;
         }),
         renameEvent: (fileIndex, domain, oldName, newName) => set((s) => {
-          const events = s.eventFiles[fileIndex].domains[domain];
-          if (oldName === newName || !events[oldName]) return;
-          const entries = Object.entries(events);
-          const rebuilt: typeof events = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.eventFiles[fileIndex].domains[domain] = rebuilt;
+          const renamed = renameKey(s.eventFiles[fileIndex].domains[domain], oldName, newName);
+          if (!renamed) return;
+          s.eventFiles[fileIndex].domains[domain] = renamed;
           if (s.selectedPath?.event === oldName) s.selectedPath.event = newName;
         }),
         renameParameter: (fileIndex, domain, eventName, oldName, newName) => set((s) => {
-          const params = s.eventFiles[fileIndex].domains[domain][eventName].parameters;
-          if (oldName === newName || !(oldName in params)) return;
-          const entries = Object.entries(params);
-          const rebuilt: typeof params = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.eventFiles[fileIndex].domains[domain][eventName].parameters = rebuilt;
+          const event = s.eventFiles[fileIndex].domains[domain][eventName];
+          const renamed = renameKey(event.parameters, oldName, newName);
+          if (!renamed) return;
+          event.parameters = renamed;
           if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
         }),
         renameSharedParamFile: (fileIndex, newName) => set((s) => {
           s.sharedParamFiles[fileIndex].fileName = newName;
         }),
         renameSharedParam: (fileIndex, oldName, newName) => set((s) => {
-          const params = s.sharedParamFiles[fileIndex].parameters;
-          if (oldName === newName || !(oldName in params)) return;
-          const entries = Object.entries(params);
-          const rebuilt: typeof params = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
+          const file = s.sharedParamFiles[fileIndex];
+          const renamed = renameKey(file.parameters, oldName, newName);
+          if (!renamed) return;
+          file.parameters = renamed;
+          if (!s.sharedParamFiles.some((f) => oldName in f.parameters)) {
+            for (const eventFile of s.eventFiles) {
+              for (const events of Object.values(eventFile.domains)) {
+                for (const event of Object.values(events)) {
+                  if (event.parameters[oldName] !== null) continue;
+                  const references = renameKey(event.parameters, oldName, newName);
+                  if (references) event.parameters = references;
+                }
+              }
+            }
           }
-          s.sharedParamFiles[fileIndex].parameters = rebuilt;
           if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
         }),
         renameContextFile: (fileIndex, newName) => set((s) => {
@@ -257,14 +249,10 @@ export const useStore = create<StudioState>()(
           s.contextFiles[fileIndex].contextName = newName;
         }),
         renameContextProperty: (fileIndex, oldName, newName) => set((s) => {
-          const props = s.contextFiles[fileIndex].properties;
-          if (oldName === newName || !(oldName in props)) return;
-          const entries = Object.entries(props);
-          const rebuilt: typeof props = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.contextFiles[fileIndex].properties = rebuilt;
+          const file = s.contextFiles[fileIndex];
+          const renamed = renameKey(file.properties, oldName, newName);
+          if (!renamed) return;
+          file.properties = renamed;
           if (s.selectedPath?.contextProperty === oldName) s.selectedPath.contextProperty = newName;
         }),
 
@@ -281,7 +269,7 @@ export const useStore = create<StudioState>()(
           projectId: data.projectId ?? newProjectId(),
           projectName: data.projectName ?? '',
           ...(data.activeTab && { activeTab: data.activeTab }),
-          ...(data.config && { config: data.config }),
+          ...(data.config && { config: withDefaults(data.config, getDefaultConfig()) }),
           ...(data.eventFiles && { eventFiles: data.eventFiles }),
           ...(data.sharedParamFiles && { sharedParamFiles: data.sharedParamFiles }),
           ...(data.contextFiles && { contextFiles: data.contextFiles }),
@@ -289,10 +277,9 @@ export const useStore = create<StudioState>()(
       })),
       {
         limit: 50,
-        partialize: (state) => {
-          const { activeTab: _, selectedPath: _s, errors: _e, ...data } = state;
-          return data;
-        },
+        partialize: ({ projectId, projectName, config, eventFiles, sharedParamFiles, contextFiles }) =>
+          ({ projectId, projectName, config, eventFiles, sharedParamFiles, contextFiles }),
+        equality: shallow,
       },
     ),
     {

@@ -114,7 +114,7 @@ Defines a single analytics event parameter with type, validation rules, and meta
 | `dart_type` | `string` | — | Explicitly set the Dart type (e.g., a custom enum type). The generator will use this type in the method signature and serialize it using `.name`. Cannot be combined with allowed_values. |
 | `import` | `string` | — | Custom import path for the dart_type. Required when dart_type references a type from another package or file. |
 | `allowed_values` | `array` | — | Restricts the parameter to a fixed set of values. The list type must match the parameter type. Cannot be combined with dart_type. |
-| `regex` | `string` | — | Regex pattern for validation. Used in generated code for runtime validation. Cannot contain triple quotes ('''). |
+| `regex` | `string` | — | Regex pattern for validating string parameters. Used in generated code for runtime validation. Cannot contain triple quotes ('''). |
 | `min_length` | `integer` | — | Minimum length for string parameters. |
 | `max_length` | `integer` | — | Maximum length for string parameters. |
 | `min` | `number` | — | Minimum value for numeric parameters (int, double, num). |

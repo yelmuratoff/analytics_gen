@@ -321,7 +321,7 @@ export type DartImportPath = string;
  */
 export type AllowedValues = unknown[];
 /**
- * Regex pattern for validation. Used in generated code for runtime validation. Cannot contain triple quotes (''').
+ * Regex pattern for validating string parameters. Used in generated code for runtime validation. Cannot contain triple quotes (''').
  */
 export type RegexPattern = string;
 /**

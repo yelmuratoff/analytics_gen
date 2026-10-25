@@ -2,12 +2,8 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/config/config_parser.dart';
-import 'package:analytics_gen/src/config/parser_config.dart';
-import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
-import 'package:analytics_gen/src/models/analytics_parameter.dart';
-import 'package:analytics_gen/src/parser/event_loader.dart';
-import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/pipeline/tracking_plan_loader.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
@@ -19,50 +15,45 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 
 import '../cli/arguments.dart';
+import '../cli/cli_command.dart';
 import '../cli/usage.dart';
-import '../config/config_loader.dart';
 import '../services/git_service.dart';
 
 /// Runner for the dead event audit tool.
 class AuditRunner {
   /// Creates a new audit runner.
+  ///
+  /// [projectRoot] defaults to the current directory, and [exitProcess] to
+  /// `exit` from `dart:io`.
   AuditRunner({
     ArgParser? parser,
     ConfigParser? configParser,
-  })  : _parser = parser ?? createArgParser(),
-        _configParser = configParser;
+    String? projectRoot,
+    Never Function(int code) exitProcess = exit,
+  })  : _parser = parser ?? createAuditArgParser(),
+        _configParser = configParser,
+        _projectRoot = projectRoot,
+        _exitProcess = exitProcess;
 
   final ArgParser _parser;
   final ConfigParser? _configParser;
+  final String? _projectRoot;
+  final Never Function(int code) _exitProcess;
 
   /// Runs the audit.
-  Future<void> run(List<String> arguments) async {
-    Logger? logger;
-    try {
-      final results = _parser.parse(arguments);
-      final verbose = results['verbose'] as bool;
-      logger = ConsoleLogger(verbose: verbose);
-
-      if (results['help'] as bool) {
-        printUsage(_parser, logger: logger);
-        return;
-      }
-
-      final projectRoot = Directory.current.path;
-      final configPath = results['config'] as String;
-      final config = await loadAnalyticsConfig(
-        projectRoot,
-        configPath,
-        logger: logger,
-        parser: _configParser,
+  Future<void> run(List<String> arguments) => runCliCommand(
+        arguments,
+        parser: _parser,
+        printUsage: (logger) => printAuditUsage(_parser, logger: logger),
+        configParser: _configParser,
+        projectRoot: _projectRoot,
+        exitProcess: _exitProcess,
+        command: (invocation) => _runAudit(
+          invocation.projectRoot,
+          invocation.config,
+          invocation.logger,
+        ),
       );
-
-      await _runAudit(projectRoot, config, logger);
-    } catch (e) {
-      (logger ?? const ConsoleLogger()).error('Error: $e');
-      exit(1);
-    }
-  }
 
   Future<void> _runAudit(
     String projectRoot,
@@ -72,7 +63,10 @@ class AuditRunner {
     logger.info('Starting "Dead Event" Audit...');
 
     // 1. Load Defined Events
-    final domains = await _loadDomains(projectRoot, config, logger);
+    final plan =
+        await TrackingPlanLoader(projectRoot: projectRoot, config: config)
+            .load(logger);
+    final domains = plan.domains;
     if (domains.isEmpty) {
       logger.warning('No events found in definition files.');
       return;
@@ -99,14 +93,8 @@ class AuditRunner {
     // 3. Scan Codebase using AnalysisContextCollection
     final libPath = path.join(projectRoot, 'lib');
     if (!Directory(libPath).existsSync()) {
-      logger.error('Error: lib directory not found at $libPath');
-      exit(1);
+      throw FileSystemException('lib directory not found', libPath);
     }
-
-    // Exclude generated files from scan?
-    // We want to see usage in APP code. Generated files (implementation) definetely contain the method declaration,
-    // but typically we want to find INVOCATIONS.
-    // The AnalysisContextCollection will resolve everything.
 
     logger.info('Scanning codebase including: $libPath');
 
@@ -181,60 +169,6 @@ class AuditRunner {
         }
       }
     }
-  }
-
-  Future<Map<String, AnalyticsDomain>> _loadDomains(
-    String projectRoot,
-    AnalyticsConfig config,
-    Logger logger,
-  ) async {
-    // Resolve shared parameter paths
-    final sharedParameterPaths = config.inputs.sharedParameters
-        .map((p) => path.join(projectRoot, p))
-        .toList();
-
-    // Load files
-    final loader = EventLoader(
-      eventsPath: path.join(projectRoot, config.inputs.eventsPath),
-      contextFiles:
-          config.inputs.contexts.map((c) => path.join(projectRoot, c)).toList(),
-      sharedParameterFiles: sharedParameterPaths,
-      log: logger,
-    );
-    final eventSources = await loader.loadEventFiles();
-
-    final Map<String, AnalyticsParameter> sharedParameters = {};
-    if (sharedParameterPaths.isNotEmpty) {
-      final sharedParser = YamlParser(
-        log: logger,
-        config: ParserConfig(naming: config.naming),
-      );
-      for (final sharedPath in sharedParameterPaths) {
-        final sharedSource = await loader.loadSourceFile(sharedPath);
-        if (sharedSource != null) {
-          try {
-            final params = sharedParser.parseSharedParameters(sharedSource);
-            sharedParameters.addAll(params);
-          } catch (_) {
-            // Ignore errors here, just best effort
-          }
-        }
-      }
-    }
-
-    final parser = YamlParser(
-      log: logger,
-      config: ParserConfig(
-        naming: config.naming,
-        strictEventNames: config.rules.strictEventNames,
-        enforceCentrallyDefinedParameters:
-            config.rules.enforceCentrallyDefinedParameters,
-        preventEventParameterDuplicates:
-            config.rules.preventEventParameterDuplicates,
-        sharedParameters: sharedParameters,
-      ),
-    );
-    return parser.parseEvents(eventSources);
   }
 }
 

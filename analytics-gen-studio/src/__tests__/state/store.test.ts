@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../state/store.ts';
+import type { ParamDef, StudioState } from '../../types/index.ts';
 
 describe('store', () => {
   beforeEach(() => useStore.getState().resetState());
@@ -12,8 +13,8 @@ describe('store', () => {
       expect(config.inputs.contexts).toEqual([]);
       expect(config.inputs.imports).toEqual([]);
       expect(config.outputs.dart).toBe('lib/src/analytics/generated');
-      expect(config.outputs.docs).toBeUndefined();
-      expect(config.outputs.exports).toBeUndefined();
+      expect(config.outputs.docs).toBe('');
+      expect(config.outputs.exports).toBe('');
       expect(config.targets.plan).toBe(true);
       expect(config.targets.csv).toBe(false);
       expect(config.rules.strict_event_names).toBe(true);
@@ -129,7 +130,7 @@ describe('store', () => {
       s.addEventFile('f.yaml'); s.addDomain(0, 'auth'); s.addEvent(0, 'auth', 'login');
       s.addParameter(0, 'auth', 'login', 'method', 'string');
       s.updateParameter(0, 'auth', 'login', 'method', { type: 'string', description: 'Updated' });
-      const p = useStore.getState().eventFiles[0].domains.auth.login.parameters.method as any;
+      const p = useStore.getState().eventFiles[0].domains.auth.login.parameters.method as ParamDef;
       expect(p.description).toBe('Updated');
     });
 
@@ -180,7 +181,7 @@ describe('store', () => {
       expect(useStore.getState().sharedParamFiles[0].parameters.sid).toEqual({ type: 'string' });
 
       s.updateSharedParam(0, 'sid', { type: 'string', description: 'Session' });
-      expect((useStore.getState().sharedParamFiles[0].parameters.sid as any).description).toBe('Session');
+      expect((useStore.getState().sharedParamFiles[0].parameters.sid as ParamDef).description).toBe('Session');
 
       s.removeSharedParam(0, 'sid');
       expect(useStore.getState().sharedParamFiles[0].parameters).toEqual({});
@@ -212,7 +213,7 @@ describe('store', () => {
       expect(useStore.getState().contextFiles[0].properties.count).toEqual({ type: 'int', operations: ['set'] });
 
       s.updateContextProperty(0, 'count', { type: 'int', operations: ['set', 'increment'] });
-      expect((useStore.getState().contextFiles[0].properties.count as any).operations).toEqual(['set', 'increment']);
+      expect((useStore.getState().contextFiles[0].properties.count as ParamDef).operations).toEqual(['set', 'increment']);
 
       s.removeContextProperty(0, 'count');
       expect(useStore.getState().contextFiles[0].properties).toEqual({});
@@ -242,13 +243,13 @@ describe('store', () => {
         eventFiles: [{ fileName: 'a.yaml', domains: {} }],
         sharedParamFiles: [{ fileName: 's.yaml', parameters: {} }],
         contextFiles: [{ fileName: 'c.yaml', contextName: 'ctx', properties: {} }],
-      } as any);
+      } as Partial<StudioState>);
       const state = useStore.getState();
       expect(state.activeTab).toBe('events');
       expect(state.eventFiles).toHaveLength(1);
       expect(state.sharedParamFiles).toHaveLength(1);
       expect(state.contextFiles).toHaveLength(1);
-      expect((state as any).version).toBeUndefined();
+      expect('version' in state).toBe(false);
     });
 
     it('loadProject with empty data keeps defaults', () => {
@@ -258,15 +259,15 @@ describe('store', () => {
     });
 
     it('loadProject ignores unknown keys like version', () => {
-      useStore.getState().loadProject({ version: 1, activeTab: 'shared' } as any);
+      useStore.getState().loadProject({ version: 1, activeTab: 'shared' } as Partial<StudioState>);
       expect(useStore.getState().activeTab).toBe('shared');
-      expect((useStore.getState() as any).version).toBeUndefined();
+      expect('version' in useStore.getState()).toBe(false);
     });
 
     it('loadProject with only config preserves empty arrays for others', () => {
       useStore.getState().loadProject({
         config: { ...useStore.getState().config, outputs: { dart: 'test' } },
-      } as any);
+      } as Partial<StudioState>);
       const s = useStore.getState();
       expect(s.config.outputs.dart).toBe('test');
       expect(s.eventFiles).toHaveLength(0);
@@ -302,7 +303,7 @@ describe('store', () => {
         contextFiles: [{ fileName: 'c.yaml', contextName: 'user_props', properties: { count: { type: 'int', operations: ['set'] } } }],
       };
 
-      useStore.getState().loadProject(projectJson as any);
+      useStore.getState().loadProject(projectJson as unknown as Partial<StudioState>);
       const s = useStore.getState();
 
       expect(s.activeTab).toBe('events');
@@ -313,7 +314,7 @@ describe('store', () => {
       expect(s.eventFiles[0].domains.auth.login.parameters.session_id).toBeNull();
       expect(s.eventFiles[0].domains.auth.login.parameters.method).toBe('string');
       expect(s.sharedParamFiles[0].parameters.session_id).toEqual({ type: 'string' });
-      expect((s.contextFiles[0].properties.count as any).operations).toEqual(['set']);
+      expect((s.contextFiles[0].properties.count as ParamDef).operations).toEqual(['set']);
     });
   });
 
@@ -333,6 +334,83 @@ describe('store', () => {
       useStore.getState().setSelectedPath({ tab: 'events', fileIndex: 0 });
       useStore.getState().setSelectedPath(null);
       expect(useStore.getState().selectedPath).toBeNull();
+    });
+  });
+
+  describe('undo history', () => {
+    beforeEach(() => useStore.temporal.getState().clear());
+
+    const pastStates = () => useStore.temporal.getState().pastStates.length;
+
+    it('does not record navigation', () => {
+      useStore.getState().setActiveTab('events');
+      useStore.getState().setSelectedPath({ tab: 'events', fileIndex: 0 });
+      expect(pastStates()).toBe(0);
+    });
+
+    it('records project edits and undoes them without touching the selection', () => {
+      useStore.getState().addEventFile('auth.yaml');
+      useStore.getState().setSelectedPath({ tab: 'events', fileIndex: 0 });
+      expect(pastStates()).toBe(1);
+
+      useStore.temporal.getState().undo();
+
+      expect(useStore.getState().eventFiles).toEqual([]);
+      expect(useStore.getState().selectedPath).toEqual({ tab: 'events', fileIndex: 0 });
+    });
+  });
+
+  describe('renaming', () => {
+    beforeEach(() => {
+      useStore.setState({
+        eventFiles: [{
+          fileName: 'auth.yaml',
+          domains: {
+            auth: {
+              login: { description: 'Login', parameters: { method: 'string', flow_id: null, user_id: 'int' } },
+              logout: { description: 'Logout', parameters: { flow_id: null } },
+            },
+            profile: {},
+          },
+        }],
+        sharedParamFiles: [{ fileName: 'shared.yaml', parameters: { flow_id: 'string', session_id: 'string' } }],
+        contextFiles: [{ fileName: 'user.yaml', contextName: 'user', properties: { plan: 'string', role: 'string' } }],
+      });
+    });
+
+    const auth = () => useStore.getState().eventFiles[0].domains;
+
+    it('keeps key order when renaming', () => {
+      useStore.getState().renameParameter(0, 'auth', 'login', 'method', 'login_method');
+      expect(Object.keys(auth().auth.login.parameters)).toEqual(['login_method', 'flow_id', 'user_id']);
+    });
+
+    it.each([
+      ['domain', () => useStore.getState().renameDomain(0, 'profile', 'auth'), () => Object.keys(auth())],
+      ['event', () => useStore.getState().renameEvent(0, 'auth', 'logout', 'login'), () => Object.keys(auth().auth)],
+      ['parameter', () => useStore.getState().renameParameter(0, 'auth', 'login', 'method', 'user_id'), () => Object.keys(auth().auth.login.parameters)],
+      ['shared parameter', () => useStore.getState().renameSharedParam(0, 'session_id', 'flow_id'), () => Object.keys(useStore.getState().sharedParamFiles[0].parameters)],
+      ['context property', () => useStore.getState().renameContextProperty(0, 'role', 'plan'), () => Object.keys(useStore.getState().contextFiles[0].properties)],
+    ])('refuses to rename a %s onto an existing name', (_kind, rename, keys) => {
+      const before = keys();
+      rename();
+      expect(keys()).toEqual(before);
+    });
+
+    it('renames the event references of a shared parameter', () => {
+      useStore.getState().renameSharedParam(0, 'flow_id', 'journey_id');
+
+      expect(Object.keys(auth().auth.login.parameters)).toEqual(['method', 'journey_id', 'user_id']);
+      expect(auth().auth.logout.parameters).toEqual({ journey_id: null });
+    });
+
+    it('keeps event references when another shared file still defines the name', () => {
+      useStore.getState().addSharedParamFile('more.yaml');
+      useStore.getState().addSharedParam(1, 'flow_id', 'string');
+
+      useStore.getState().renameSharedParam(0, 'flow_id', 'journey_id');
+
+      expect(auth().auth.logout.parameters).toEqual({ flow_id: null });
     });
   });
 });

@@ -24,6 +24,83 @@ void main() {
       }
     });
 
+    test('names the file in the message of a span-based error', () async {
+      final source = AnalyticsSource(
+        filePath: 'events/auth.yaml',
+        content: 'auth:\n  login:\n    description: 42\n',
+      );
+
+      await expectLater(
+        parser.parseEvents([source]),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.single.toString(),
+            'error',
+            contains('line 3, column 18 of events/auth.yaml'),
+          ),
+        ),
+      );
+    });
+
+    test('reports a YAML syntax error once, at its location', () async {
+      final source = AnalyticsSource(
+        filePath: 'events/auth.yaml',
+        content: 'auth:\n  login:\n    description: [unclosed\n',
+      );
+
+      await expectLater(
+        parser.parseEvents([source]),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.single,
+            'error',
+            isA<AnalyticsParseException>()
+                .having(
+                  (e) => e.message,
+                  'message',
+                  "Invalid YAML: While parsing a flow sequence, expected ',' "
+                      "or ']'.",
+                )
+                .having(
+                  (e) => e.span?.sourceUrl?.path,
+                  'span file',
+                  'events/auth.yaml',
+                ),
+          ),
+        ),
+      );
+    });
+
+    test('names the file of a syntax error in a shared parameters file', () {
+      expect(
+        () => parser.parseSharedParameters(
+          AnalyticsSource(filePath: 'shared.yaml', content: 'parameters: ['),
+        ),
+        throwsA(
+          isA<AnalyticsParseException>().having(
+            (e) => e.span?.sourceUrl?.path,
+            'span file',
+            'shared.yaml',
+          ),
+        ),
+      );
+    });
+
+    test('names the file of a syntax error in a context file', () async {
+      await expectLater(
+        parser.parseContexts([
+          AnalyticsSource(filePath: 'context.yaml', content: 'user: ['),
+        ]),
+        throwsA(
+          isA<AnalyticsParseException>().having(
+            (e) => e.span?.sourceUrl?.path,
+            'span file',
+            'context.yaml',
+          ),
+        ),
+      );
+    });
+
     test('throws exception when event definition is invalid', () async {
       final source = AnalyticsSource(
         filePath: 'test.yaml',

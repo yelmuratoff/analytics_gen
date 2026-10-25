@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 import 'package:analytics_gen/src/parser/event_loader.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:file/file.dart';
@@ -346,6 +348,45 @@ void main() {
 
         expect(sources, hasLength(2));
       });
+    });
+  });
+
+  group('EventLoader on the local file system', () {
+    late io.Directory projectDir;
+
+    setUp(() {
+      projectDir =
+          io.Directory.systemTemp.createTempSync('event_loader_local_');
+      io.File('${projectDir.path}/events/auth.yaml')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('auth: {}');
+      io.File('${projectDir.path}/events/nested/shop.yaml')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('shop: {}');
+    });
+
+    tearDown(() => projectDir.deleteSync(recursive: true));
+
+    Future<List<String>> loadNames(String eventsPath) async {
+      final sources =
+          await EventLoader(eventsPath: eventsPath).loadEventFiles();
+      return sources.map((s) => s.filePath.split('/').last).toList();
+    }
+
+    test('matches a recursive glob', () async {
+      expect(
+        await loadNames('${projectDir.path}/events/**.yaml'),
+        ['auth.yaml', 'shop.yaml'],
+      );
+    });
+
+    test('matches a single-level glob', () async {
+      expect(
+          await loadNames('${projectDir.path}/events/*.yaml'), ['auth.yaml']);
+    });
+
+    test('lists only the top level of a plain directory', () async {
+      expect(await loadNames('${projectDir.path}/events'), ['auth.yaml']);
     });
   });
 }

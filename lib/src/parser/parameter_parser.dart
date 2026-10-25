@@ -5,9 +5,12 @@ import 'package:yaml/yaml.dart';
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_parameter.dart';
+import '../util/logger.dart';
 import '../util/string_utils.dart';
+import '../util/type_mapper.dart';
 import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
+import 'yaml_fields.dart';
 
 /// Parses analytics parameters from YAML.
 final class ParameterParser {
@@ -21,6 +24,7 @@ final class ParameterParser {
     Map<String, AnalyticsParameter> sharedParameters = const {},
     bool enforceCentrallyDefinedParameters = false,
     bool preventEventParameterDuplicates = false,
+    Logger log = const NoOpLogger(),
   }) {
     final parameters = <AnalyticsParameter>[];
     final seenRawNames = <String>{};
@@ -52,6 +56,7 @@ final class ParameterParser {
         sharedParameters: sharedParameters,
         enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
         preventEventParameterDuplicates: preventEventParameterDuplicates,
+        log: log,
       );
 
       if (!seenAnalyticsNames.add(param.name)) {
@@ -92,8 +97,11 @@ final class ParameterParser {
     Map<String, AnalyticsParameter> sharedParameters = const {},
     bool enforceCentrallyDefinedParameters = false,
     bool preventEventParameterDuplicates = false,
+    Logger log = const NoOpLogger(),
   }) {
-    final sharedParam = sharedParameters[rawName];
+    final sharedParam = sharedParameters[rawName] ??
+        sharedParameters.values
+            .firstWhereOrNull((p) => p.sourceName == rawName);
 
     if (enforceCentrallyDefinedParameters && sharedParam == null) {
       throw AnalyticsParseException(
@@ -112,7 +120,12 @@ final class ParameterParser {
       if (sharedParam != null) {
         return sharedParam;
       }
-      // If not shared, fall through to error or dynamic (likely error in strict mode)
+      throw AnalyticsParseException(
+        'Parameter "$rawName" has no type. Add a type, or define it in the '
+        'shared parameters file to reference it by name.',
+        filePath: filePath,
+        span: valueNode.span,
+      );
     }
 
     // Case 2: Redefinition of shared parameter
@@ -130,8 +143,14 @@ final class ParameterParser {
     String? wireNameOverride;
 
     if (paramValue is YamlMap) {
-      identifierOverride = paramValue[YamlKeys.identifier] as String?;
-      wireNameOverride = paramValue[YamlKeys.paramName] as String?;
+      identifierOverride = paramValue.optionalField<String>(
+        YamlKeys.identifier,
+        filePath: filePath,
+      );
+      wireNameOverride = paramValue.optionalField<String>(
+        YamlKeys.paramName,
+        filePath: filePath,
+      );
     }
 
     final codeIdentifier = identifierOverride ?? rawName;
@@ -175,10 +194,13 @@ final class ParameterParser {
 
     if (paramValue is YamlMap) {
       // Complex parameter with 'type' and/or 'description'
-      description = paramValue[YamlKeys.description] as String?;
-      addedIn = paramValue[YamlKeys.addedIn] as String?;
-      deprecatedIn = paramValue[YamlKeys.deprecatedIn] as String?;
-      dartType = paramValue[YamlKeys.dartType] as String?;
+      String? stringField(String key) =>
+          paramValue.optionalField<String>(key, filePath: filePath);
+
+      description = stringField(YamlKeys.description);
+      addedIn = stringField(YamlKeys.addedIn);
+      deprecatedIn = stringField(YamlKeys.deprecatedIn);
+      dartType = stringField(YamlKeys.dartType);
 
       final metaNode = paramValue.nodes[YamlKeys.meta];
       if (metaNode != null) {
@@ -196,21 +218,36 @@ final class ParameterParser {
           span: metaNode.span,
         );
       }
-      dartImport = paramValue[YamlKeys.dartImport] as String?;
+      dartImport = stringField(YamlKeys.dartImport);
       // Validation rules
-      regex = paramValue[YamlKeys.regex] as String?;
-      if (regex != null && regex.contains("'''")) {
-        throw AnalyticsParseException(
-          'Regex pattern for parameter "$rawName" cannot contain triple quotes '
-          "('''). This prevents generation errors in Dart raw strings.",
-          filePath: filePath,
-          span: paramValue.nodes[YamlKeys.regex]?.span ?? valueNode.span,
-        );
+      regex = stringField(YamlKeys.regex);
+      if (regex != null) {
+        final regexSpan = paramValue.nodes[YamlKeys.regex]!.span;
+        if (regex.contains("'''")) {
+          throw AnalyticsParseException(
+            'Regex pattern for parameter "$rawName" cannot contain triple quotes '
+            "('''). This prevents generation errors in Dart raw strings.",
+            filePath: filePath,
+            span: regexSpan,
+          );
+        }
+        try {
+          RegExp(regex);
+        } on FormatException catch (e) {
+          throw AnalyticsParseException(
+            'Regex pattern for parameter "$rawName" is not valid: ${e.message}',
+            filePath: filePath,
+            innerError: e,
+            span: regexSpan,
+          );
+        }
       }
-      minLength = paramValue[YamlKeys.minLength] as int?;
-      maxLength = paramValue[YamlKeys.maxLength] as int?;
-      min = paramValue[YamlKeys.min] as num?;
-      max = paramValue[YamlKeys.max] as num?;
+      minLength =
+          paramValue.optionalField<int>(YamlKeys.minLength, filePath: filePath);
+      maxLength =
+          paramValue.optionalField<int>(YamlKeys.maxLength, filePath: filePath);
+      min = paramValue.optionalField<num>(YamlKeys.min, filePath: filePath);
+      max = paramValue.optionalField<num>(YamlKeys.max, filePath: filePath);
 
       final rawOperations = paramValue.nodes[YamlKeys.operations];
       if (rawOperations != null) {
@@ -229,29 +266,25 @@ final class ParameterParser {
       // Check if 'type' key exists explicitly
       if (paramValue.containsKey(YamlKeys.type)) {
         paramType = paramValue[YamlKeys.type].toString();
+        paramValue.warnUnknownFields(
+          YamlKeys.parameterFields,
+          owner: 'parameter "$rawName"',
+          filePath: filePath,
+          log: log,
+        );
       } else {
         // Fallback: Find type key (anything except known property names)
-        const knownKeys = {
-          YamlKeys.description,
-          YamlKeys.allowedValues,
-          YamlKeys.identifier,
-          YamlKeys.paramName,
-          YamlKeys.dartType,
-          YamlKeys.meta,
-          YamlKeys.regex,
-          YamlKeys.minLength,
-          YamlKeys.maxLength,
-          YamlKeys.min,
-          YamlKeys.max,
-          YamlKeys.operations,
-          YamlKeys.addedIn,
-          YamlKeys.deprecatedIn,
-          YamlKeys.dartImport,
-        };
         final typeKey = paramValue.keys
-            .where((k) => !knownKeys.contains(k.toString()))
+            .map((k) => k.toString())
+            .where((k) => !YamlKeys.parameterFields.contains(k))
             .firstOrNull;
-        paramType = typeKey?.toString() ?? 'dynamic';
+        paramType = typeKey ?? 'dynamic';
+        paramValue.warnUnknownFields(
+          {...YamlKeys.parameterFields, if (typeKey != null) typeKey},
+          owner: 'parameter "$rawName"',
+          filePath: filePath,
+          log: log,
+        );
       }
 
       final rawAllowed = paramValue.nodes[YamlKeys.allowedValues];
@@ -289,6 +322,15 @@ final class ParameterParser {
       dartType = dartType.substring(0, dartType.length - 1);
     }
 
+    if (dartType == null && paramValue is YamlMap) {
+      _ensureRulesFitType(
+        paramValue,
+        rawName: rawName,
+        paramType: paramType,
+        filePath: filePath,
+      );
+    }
+
     if (allowedValues != null) {
       if (dartType != null) {
         throw AnalyticsParseException(
@@ -301,8 +343,8 @@ final class ParameterParser {
 
       final normalizedType = paramType.trim().toLowerCase();
 
-      switch (normalizedType) {
-        case 'string':
+      switch (DartTypeMapper.toDartType(paramType)) {
+        case 'String':
           if (allowedValues.any((v) => v is! String)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of strings '
@@ -312,7 +354,7 @@ final class ParameterParser {
             );
           }
           break;
-        case 'bool' || 'boolean':
+        case 'bool':
           if (allowedValues.any((v) => v is! bool)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of booleans '
@@ -332,7 +374,7 @@ final class ParameterParser {
             );
           }
           break;
-        case 'double' || 'float':
+        case 'double':
           if (allowedValues.any((v) => v is! num)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of numbers '
@@ -347,7 +389,7 @@ final class ParameterParser {
               .map<Object>((v) => (v as num).toDouble())
               .toList(growable: false);
           break;
-        case 'num' || 'number':
+        case 'num':
           if (allowedValues.any((v) => v is! num)) {
             throw AnalyticsParseException(
               'allowed_values for parameter "$rawName" must be a list of numbers '
@@ -358,9 +400,11 @@ final class ParameterParser {
           }
           break;
         default:
+          final supportedTypes =
+              DartTypeMapper.yamlTypesFor(_allowedValuesDartTypes);
           throw AnalyticsParseException(
             'allowed_values is only supported for scalar parameter types '
-            '(string, bool, boolean, int, double, num). '
+            '(${supportedTypes.join(', ')}). '
             'Parameter "$rawName" has unsupported type "$paramType".',
             filePath: filePath,
             span: allowedValuesSpan ?? valueNode.span,
@@ -391,5 +435,48 @@ final class ParameterParser {
       deprecatedIn: deprecatedIn,
       sourceName: rawName,
     );
+  }
+
+  static const _allowedValuesDartTypes = {
+    'String',
+    'bool',
+    'int',
+    'double',
+    'num'
+  };
+
+  static const _stringRuleKeys = [
+    YamlKeys.regex,
+    YamlKeys.minLength,
+    YamlKeys.maxLength,
+  ];
+  static const _stringRuleDartTypes = {'String', 'dynamic'};
+  static const _rangeRuleKeys = [YamlKeys.min, YamlKeys.max];
+  static const _rangeRuleDartTypes = {'int', 'double', 'num', 'dynamic'};
+
+  static void _ensureRulesFitType(
+    YamlMap paramValue, {
+    required String rawName,
+    required String paramType,
+    required String filePath,
+  }) {
+    final dartType = DartTypeMapper.toDartType(paramType);
+
+    void ensure(List<String> ruleKeys, Set<String> dartTypes, String kind) {
+      if (dartTypes.contains(dartType)) return;
+      for (final key in ruleKeys) {
+        final node = paramValue.nodes[key];
+        if (node == null || node.value == null) continue;
+        throw AnalyticsParseException(
+          '$key only applies to $kind parameters, but "$rawName" has type '
+          '"$paramType".',
+          filePath: filePath,
+          span: node.span,
+        );
+      }
+    }
+
+    ensure(_stringRuleKeys, _stringRuleDartTypes, 'string');
+    ensure(_rangeRuleKeys, _rangeRuleDartTypes, 'numeric');
   }
 }

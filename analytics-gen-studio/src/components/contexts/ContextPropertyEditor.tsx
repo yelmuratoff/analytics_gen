@@ -1,22 +1,14 @@
-import Form from '@rjsf/mui';
 import type { RJSFSchema } from '@rjsf/utils';
-import type { IChangeEvent } from '@rjsf/core';
-import validator from '@rjsf/validator-ajv8';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
 import Chip from '@mui/material/Chip';
-import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
-import { parameterEditorUiSchema } from '../../schemas/ui-schemas.ts';
-import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE, PARAMETER_TYPES, OPERATIONS_FIELD, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
-import { useParameterValidation, countAdvancedFields } from '../../hooks/useParameterValidation.ts';
+import { OPERATIONS_FIELD } from '../../schemas/constants.ts';
+import { toParamDef } from '../../utils/param-def.ts';
+import { snakeCaseNameError } from '../../utils/validation.ts';
 import Breadcrumb from '../Breadcrumb.tsx';
-import AdvancedSection from '../AdvancedSection.tsx';
+import NameErrorBanner from '../NameErrorBanner.tsx';
+import ParamDefinitionForm from '../ParamDefinitionForm.tsx';
 import type { ParamDef } from '../../types/index.ts';
 
 interface ContextPropertyEditorProps {
@@ -27,60 +19,27 @@ interface ContextPropertyEditorProps {
 }
 
 export default function ContextPropertyEditor({ fileIndex, propName, parameterSchema, operations }: ContextPropertyEditorProps) {
-  const files = useStore((s) => s.contextFiles);
+  const file = useStore((s) => s.contextFiles[fileIndex]);
   const updateContextProperty = useStore((s) => s.updateContextProperty);
-  const cfg = useStore((s) => s.config) as unknown as Record<string, Record<string, unknown>>;
-  const enforceSnakeParams = cfg.naming?.enforce_snake_case_parameters as boolean ?? false;
+  const enforceSnakeParams = useStore((s) => s.config.naming?.enforce_snake_case_parameters ?? false);
 
-  const file = files[fileIndex];
   if (!file) return null;
 
-  const rawValue = file.properties[propName];
-  const formData: ParamDef = typeof rawValue === 'string'
-    ? { type: rawValue }
-    : (rawValue ?? { type: DEFAULT_PARAM_TYPE });
-
-  const currentOps = (formData as Record<string, unknown>)[OPERATIONS_FIELD] as string[] ?? [];
-  const nameError = enforceSnakeParams && !SNAKE_CASE_PARAM.test(propName)
-    ? `"${propName}" must be snake_case (a-z, 0-9, _)` : null;
-
-  const customValidate = useParameterValidation();
-  const advancedSetCount = countAdvancedFields(formData, [OPERATIONS_FIELD]);
-
-  const handleChange = (e: IChangeEvent) => {
-    if (e.formData) {
-      const data = e.formData as ParamDef;
-      updateContextProperty(fileIndex, propName, { ...data, [OPERATIONS_FIELD]: currentOps } as unknown as ParamDef);
-    }
-  };
+  const value = toParamDef(file.properties[propName]);
+  const currentOps = (value as Record<string, unknown>)[OPERATIONS_FIELD] as string[] ?? [];
 
   const handleOpToggle = (op: string) => {
     const newOps = currentOps.includes(op)
       ? currentOps.filter((o) => o !== op)
       : [...currentOps, op];
-    updateContextProperty(fileIndex, propName, { ...formData, [OPERATIONS_FIELD]: newOps } as unknown as ParamDef);
+    updateContextProperty(fileIndex, propName, { ...value, [OPERATIONS_FIELD]: newOps } as ParamDef);
   };
-
-  const schemaWithoutOps = { ...parameterSchema };
-  if (schemaWithoutOps.properties && OPERATIONS_FIELD in schemaWithoutOps.properties) {
-    const { [OPERATIONS_FIELD]: _ops, ...restProps } = schemaWithoutOps.properties;
-    schemaWithoutOps.properties = restProps;
-  }
 
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
         <Breadcrumb parts={[file.fileName, file.contextName, propName]} />
-        {nameError && (
-          <Box sx={{
-            mt: 1.5, px: 2, py: 1.2, borderRadius: 1.5,
-            bgcolor: 'rgba(211,47,47,0.06)', border: '1px solid rgba(211,47,47,0.2)',
-            display: 'flex', alignItems: 'center', gap: 0.75,
-          }}>
-            <ErrorOutlineRounded sx={{ fontSize: 14, color: 'error.main', flexShrink: 0 }} />
-            <Typography sx={{ fontSize: '0.78rem', color: 'error.main', fontWeight: 500 }}>{nameError}</Typography>
-          </Box>
-        )}
+        <NameErrorBanner message={snakeCaseNameError(propName, enforceSnakeParams)} />
       </Box>
 
       <Box sx={{
@@ -128,37 +87,12 @@ export default function ContextPropertyEditor({ fileIndex, propName, parameterSc
         )}
       </Box>
 
-      <FormControl fullWidth size="small" sx={{ mb: 2.5 }}>
-        <InputLabel>Type</InputLabel>
-        <Select
-          value={PARAMETER_TYPES.includes(formData.type ?? '') ? formData.type : (PARAMETER_TYPES.find((t) => t.toLowerCase() === (formData.type ?? '').toLowerCase()) ?? DEFAULT_PARAM_TYPE)}
-          label="Type"
-          onChange={(e) => {
-            updateContextProperty(fileIndex, propName, { ...formData, type: e.target.value, [OPERATIONS_FIELD]: currentOps } as unknown as ParamDef);
-          }}
-        >
-          {PARAMETER_TYPES.map((t) => (
-            <MenuItem key={t} value={t}>
-              <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' }}>{t}</Typography>
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <AdvancedSection setCount={advancedSetCount}>
-        <Form
-          schema={schemaWithoutOps}
-          uiSchema={parameterEditorUiSchema}
-          formData={formData}
-          validator={validator}
-          onChange={handleChange}
-          customValidate={customValidate}
-          templates={compactTemplates}
-          showErrorList={false}
-        >
-          <div />
-        </Form>
-      </AdvancedSection>
+      <ParamDefinitionForm
+        value={value}
+        onChange={(next) => updateContextProperty(fileIndex, propName, next)}
+        parameterSchema={parameterSchema}
+        managedFields={[OPERATIONS_FIELD]}
+      />
     </Box>
   );
 }

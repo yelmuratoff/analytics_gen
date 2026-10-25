@@ -1,14 +1,9 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import type { EventFile, StudioState } from '../types/index.ts';
-import {
-  generateConfigYaml,
-  generateEventFileYaml,
-  generateSharedParamFileYaml,
-  generateContextFileYaml,
-} from './yaml-generator.ts';
+import { allYamlFiles } from './yaml-generator.ts';
 import { normalizeEventDef } from './yaml-importer.ts';
-import { computeRevision, type ProjectMeta } from './project-meta.ts';
+import { computeRevision, contentOf, type ProjectMeta } from './project-meta.ts';
 import {
   saveProjectHandle,
   loadProjectHandle,
@@ -23,10 +18,6 @@ export const supportsFileSystemAccess = typeof window !== 'undefined' &&
 
 /** Stored file handle for "Save" without dialog */
 let currentFileHandle: FileSystemFileHandle | null = null;
-
-export function getCurrentFileName(): string | null {
-  return currentFileHandle?.name ?? null;
-}
 
 export function clearFileHandle() {
   currentFileHandle = null;
@@ -162,12 +153,7 @@ async function ensureWritePermission(handle: FileSystemFileHandle, request: bool
 // ── Project serialization ──
 
 function serializeProject(state: StudioState): string {
-  const content = {
-    config: state.config,
-    eventFiles: state.eventFiles,
-    sharedParamFiles: state.sharedParamFiles,
-    contextFiles: state.contextFiles,
-  };
+  const content = contentOf(state);
   const meta: ProjectMeta = {
     projectId: state.projectId,
     ...(state.projectName ? { name: state.projectName } : {}),
@@ -338,26 +324,13 @@ export function exportSingleFile(content: string, fileName: string) {
   saveAs(blob, fileName);
 }
 
-export function exportAllAsZip(state: StudioState, opts: { zipName?: string } = {}) {
+export async function exportAllAsZip(state: StudioState, opts: { zipName?: string } = {}): Promise<void> {
   const zip = new JSZip();
-
-  zip.file('analytics_gen.yaml', generateConfigYaml(state.config));
-
-  for (const file of state.eventFiles) {
-    zip.file(file.fileName, generateEventFileYaml(file));
+  for (const { fileName, content } of allYamlFiles(state)) {
+    zip.file(fileName, content);
   }
-
-  for (const file of state.sharedParamFiles) {
-    zip.file(file.fileName, generateSharedParamFileYaml(file));
-  }
-
-  for (const file of state.contextFiles) {
-    zip.file(file.fileName, generateContextFileYaml(file));
-  }
-
-  zip.generateAsync({ type: 'blob' }).then((blob) => {
-    saveAs(blob, opts.zipName ?? 'analytics-gen-config.zip');
-  });
+  const blob = await zip.generateAsync({ type: 'blob' });
+  saveAs(blob, opts.zipName ?? 'analytics-gen-config.zip');
 }
 
 // ── Clipboard ──

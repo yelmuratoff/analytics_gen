@@ -3,6 +3,7 @@ import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
+import '../util/logger.dart';
 import 'event_loader.dart';
 import 'parameter_parser.dart';
 import 'schema_validator.dart';
@@ -15,10 +16,14 @@ class ContextParser {
     required this.naming,
     required this.validator,
     required this.loadYamlNode,
+    this.log = const NoOpLogger(),
   });
 
   /// The naming strategy to use.
   final NamingStrategy naming;
+
+  /// The logger that receives warnings about ignored fields.
+  final Logger log;
 
   /// Validator used to assert that the YAML structure conforms to the
   /// expected context schema.
@@ -36,16 +41,7 @@ class ContextParser {
     final contexts = <String, List<AnalyticsParameter>>{};
 
     for (final source in sources) {
-      final YamlNode parsedNode;
-      try {
-        parsedNode = loadYamlNode(source.content);
-      } catch (e) {
-        throw AnalyticsParseException(
-          'Failed to parse YAML file: $e',
-          filePath: source.filePath,
-          innerError: e,
-        );
-      }
+      final parsedNode = loadSourceYaml(loadYamlNode, source);
 
       if (parsedNode is! YamlMap) {
         throw AnalyticsParseException(
@@ -86,6 +82,7 @@ class ContextParser {
         eventName: 'context', // Dummy
         filePath: source.filePath,
         naming: naming,
+        log: log,
       );
 
       contexts[contextName] = parameters;

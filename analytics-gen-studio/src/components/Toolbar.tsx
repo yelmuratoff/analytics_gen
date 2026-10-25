@@ -33,10 +33,10 @@ import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import Divider from '@mui/material/Divider';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
-import { useColorMode } from '../App.tsx';
+import { useColorMode } from '../theme.ts';
 import CommandPalette from './CommandPalette.tsx';
 import type { CommandPaletteActions } from './CommandPalette.tsx';
 import {
@@ -50,13 +50,13 @@ import {
   getLastFileName,
   setLastFileName,
   getBaselineRevision,
-  setBaselineRevision,
   peekDiskState,
   supportsFileSystemAccess,
 } from '../utils/export.ts';
 import type { StudioState } from '../types/index.ts';
 import {
   computeRevision,
+  contentOf,
   deriveJsonName,
   deriveZipName,
   getUniqueExportNames,
@@ -64,7 +64,10 @@ import {
 import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import { useValidation } from '../hooks/useValidation.ts';
-import { importYamlString, type ImportSchemaHints } from '../utils/yaml-importer.ts';
+import { useSyncedRevision } from '../hooks/useSyncedRevision.ts';
+import { modKeyLabel } from '../utils/platform.ts';
+import { describeImport, type ImportSchemaHints } from '../utils/yaml-importer.ts';
+import { useYamlImport } from '../hooks/useYamlImport.ts';
 import DocsDrawer from './DocsDrawer.tsx';
 import ProjectDialog from './ProjectDialog.tsx';
 
@@ -72,12 +75,7 @@ import ProjectDialog from './ProjectDialog.tsx';
 function exportNames() {
   const s = useStore.getState();
   const unique = getUniqueExportNames();
-  const revision = computeRevision({
-    config: s.config,
-    eventFiles: s.eventFiles,
-    sharedParamFiles: s.sharedParamFiles,
-    contextFiles: s.contextFiles,
-  });
+  const revision = computeRevision(contentOf(s));
   // A user-set project name is the customization knob; otherwise reuse the
   // remembered file name so Save As proposes what the user already had.
   const named = s.projectName.trim().length > 0;
@@ -92,17 +90,10 @@ function exportNames() {
 
 /** Content revision of the current working state. */
 function currentRevision(): string {
-  const s = useStore.getState();
-  return computeRevision({
-    config: s.config,
-    eventFiles: s.eventFiles,
-    sharedParamFiles: s.sharedParamFiles,
-    contextFiles: s.contextFiles,
-  });
+  return computeRevision(contentOf(useStore.getState()));
 }
 
-const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
-const mod = isMac ? '\u2318' : 'Ctrl+';
+const mod = modKeyLabel;
 
 const shortcuts = [
   { keys: `${mod}S`, description: 'Save project' },
@@ -146,19 +137,13 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const [saving, setSaving] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSavedVersion, setLastSavedVersion] = useState<number | null>(null);
-  const changeVersion = useRef(0);
+  const { isDirty, markSynced, forgetSync } = useSyncedRevision();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const yamlInputRef = useRef<HTMLInputElement>(null);
   // Only subscribe to actions — NOT the full store, to avoid re-renders on data changes
   const loadProject = useStore((s) => s.loadProject);
   const resetState = useStore((s) => s.resetState);
-  const setActiveTab = useStore((s) => s.setActiveTab);
-  const importEventFile = useStore((s) => s.importEventFile);
-  const importSharedParamFile = useStore((s) => s.importSharedParamFile);
-  const importContextFile = useStore((s) => s.importContextFile);
-  const mergeConfig = useStore((s) => s.mergeConfig);
+  const importYamlFiles = useYamlImport(importHints);
   const { mode, toggleColorMode } = useColorMode();
 
   // Shows the file name and remembers it for the next session (all browsers).
@@ -167,19 +152,28 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     setLastFileName(name);
   }, []);
 
-  const handleExportZip = useCallback(() => {
-    exportAllAsZip(useStore.getState(), { zipName: exportNames().zipName });
-    setSnackbar({ message: 'ZIP exported', severity: 'success' });
-  }, []);
+  const handleExportZip = useCallback(async () => {
+    if (hasErrors) {
+      setSnackbar({ message: 'Fix the validation errors before exporting', severity: 'error' });
+      return;
+    }
+    try {
+      await exportAllAsZip(useStore.getState(), { zipName: exportNames().zipName });
+      setSnackbar({ message: 'ZIP exported', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ message: `Export failed: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+    }
+  }, [hasErrors]);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const result = await saveProject(useStore.getState(), { suggestedName: exportNames().jsonName });
+      const state = useStore.getState();
+      const savedRevision = currentRevision();
+      const result = await saveProject(state, { suggestedName: exportNames().jsonName });
       if (result.saved) {
         if (result.fileName) rememberFile(result.fileName);
-        setBaselineRevision(currentRevision());
-        setLastSavedVersion(changeVersion.current);
+        markSynced(savedRevision);
         setSnackbar({ message: `Saved${result.fileName ? ` \u2192 ${result.fileName}` : ''}`, severity: 'success' });
       }
     } catch (err) {
@@ -187,16 +181,17 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, [rememberFile]);
+  }, [rememberFile, markSynced]);
 
   const handleSaveAs = useCallback(async () => {
     setSaving(true);
     try {
-      const name = await saveProjectAs(useStore.getState(), { suggestedName: exportNames().jsonName });
+      const state = useStore.getState();
+      const savedRevision = currentRevision();
+      const name = await saveProjectAs(state, { suggestedName: exportNames().jsonName });
       if (name) {
         rememberFile(name);
-        setBaselineRevision(currentRevision());
-        setLastSavedVersion(changeVersion.current);
+        markSynced(savedRevision);
         setSnackbar({ message: `Saved \u2192 ${name}`, severity: 'success' });
       }
     } catch (err) {
@@ -204,7 +199,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, [rememberFile]);
+  }, [rememberFile, markSynced]);
 
   const handleOpen = useCallback(async () => {
     if (supportsFileSystemAccess) {
@@ -213,9 +208,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         if (result) {
           loadProject(result.data);
           rememberFile(result.fileName);
-          setBaselineRevision(currentRevision());
+          markSynced(currentRevision());
           setDiskChange(null);
-          setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
           setSnackbar({ message: `Opened ${result.fileName}`, severity: 'success' });
         }
       } catch (err) {
@@ -224,7 +218,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } else {
       fileInputRef.current?.click();
     }
-  }, [loadProject, rememberFile]);
+  }, [loadProject, rememberFile, markSynced]);
 
   const handleLoadFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -233,8 +227,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       const data = await loadProjectFile(file);
       loadProject(data);
       rememberFile(file.name);
-      setBaselineRevision(currentRevision());
-      setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
+      markSynced(currentRevision());
       setSnackbar({ message: `Opened ${file.name}`, severity: 'success' });
     } catch (err) {
       setSnackbar({ message: `Failed to load: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
@@ -245,8 +238,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const handleReset = () => {
     resetState();
     clearFileHandle();
+    forgetSync();
     setFileName(null);
-    setLastSavedVersion(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
   };
@@ -255,8 +248,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     if (!diskChange) return;
     loadProject(diskChange.data);
     rememberFile(diskChange.fileName);
-    setBaselineRevision(diskChange.revision);
-    setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
+    markSynced(diskChange.revision);
     setDiskChange(null);
     setSnackbar({ message: 'Reloaded from disk', severity: 'success' });
   };
@@ -264,53 +256,14 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const handleKeepMine = () => {
     // Acknowledge the on-disk version so we stop prompting; the user's next
     // save will overwrite it.
-    if (diskChange) setBaselineRevision(diskChange.revision);
+    if (diskChange) markSynced(diskChange.revision);
     setDiskChange(null);
   };
 
   const handleImportYaml = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    let imported = 0;
-    let lastType = '';
-
-    for (const file of Array.from(files)) {
-      try {
-        const content = await file.text();
-        const result = importYamlString(content, file.name, importHints);
-        if (!result) {
-          setSnackbar({ message: `Could not detect type of "${file.name}"`, severity: 'error' });
-          continue;
-        }
-
-        switch (result.type) {
-          case 'events':
-            if (result.eventFile) importEventFile(result.eventFile);
-            lastType = 'events';
-            break;
-          case 'shared':
-            if (result.sharedFile) importSharedParamFile(result.sharedFile);
-            lastType = 'shared';
-            break;
-          case 'context':
-            if (result.contextFile) importContextFile(result.contextFile);
-            lastType = 'contexts';
-            break;
-          case 'config':
-            if (result.config) mergeConfig(result.config);
-            lastType = 'config';
-            break;
-        }
-        imported++;
-      } catch (err) {
-        setSnackbar({ message: `Failed to parse "${file.name}": ${err instanceof Error ? err.message : 'Invalid YAML'}`, severity: 'error' });
-      }
-    }
-
-    if (imported > 0) {
-      setSnackbar({ message: `Imported ${imported} file${imported > 1 ? 's' : ''}`, severity: 'success' });
-      if (lastType) setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
-    }
+    setSnackbar(describeImport(await importYamlFiles(Array.from(files))));
     if (yamlInputRef.current) yamlInputRef.current.value = '';
   };
 
@@ -348,15 +301,6 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     };
   }, [checkDiskChange]);
 
-  // Lightweight dirty check — increment counter on any data change
-  useEffect(() => {
-    const unsub = useStore.subscribe(() => {
-      changeVersion.current++;
-      setIsDirty(lastSavedVersion !== null && changeVersion.current !== lastSavedVersion);
-    });
-    return unsub;
-  }, [lastSavedVersion]);
-
   // Warn before closing with unsaved changes
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -373,25 +317,26 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       // Skip undo/redo when a text input is focused (let browser handle it)
       const tag = (e.target as HTMLElement)?.tagName;
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
-      if (e.key === 'z' && e.shiftKey && !isInput) {
+      const key = e.key.toLowerCase();
+      if (key === 'z' && e.shiftKey && !isInput) {
         e.preventDefault();
         redo();
-      } else if (e.key === 'z' && !e.shiftKey && !isInput) {
+      } else if (key === 'z' && !e.shiftKey && !isInput) {
         e.preventDefault();
         undo();
-      } else if (e.key === 's' && e.shiftKey) {
+      } else if (key === 's' && e.shiftKey) {
         e.preventDefault();
         handleSaveAs();
-      } else if (e.key === 's') {
+      } else if (key === 's') {
         e.preventDefault();
         handleSave();
-      } else if (e.key === 'e' && e.shiftKey) {
+      } else if (key === 'e' && e.shiftKey) {
         e.preventDefault();
         handleExportZip();
-      } else if (e.key === 'k') {
+      } else if (key === 'k') {
         e.preventDefault();
         setPaletteOpen(true);
-      } else if (e.key === 'o') {
+      } else if (key === 'o') {
         e.preventDefault();
         handleOpen();
       }
@@ -418,7 +363,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
           />
           <Box sx={{
             px: 1, py: 0.25,
-            bgcolor: (t: any) => `${t.palette.primary.main}14`, borderRadius: 1.5,
+            bgcolor: (t: Theme) => `${t.palette.primary.main}14`, borderRadius: 1.5,
           }}>
             <Typography sx={{ fontWeight: 600, fontSize: '0.65rem', color: 'primary.main' }}>
               Studio

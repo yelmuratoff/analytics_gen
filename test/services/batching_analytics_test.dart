@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
+
+import '../test_utils.dart';
 
 void main() {
   group('BatchingAnalytics', () {
@@ -37,28 +40,62 @@ void main() {
       batching.logEvent(name: 'event_a');
       batching.logEvent(name: 'event_b');
 
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await pumpEventQueue();
 
       expect(
           delegate.recordedEvents.map((e) => e.name), ['event_a', 'event_b']);
       await batching.flush();
     });
 
-    test('flushInterval periodically drains queue', () async {
-      final delegate = _FakeAsyncAnalytics();
-      final batching = BatchingAnalytics(
-        delegate: delegate,
-        maxBatchSize: 10,
-        flushInterval: const Duration(milliseconds: 20),
-      );
+    test('flushInterval periodically drains queue', () {
+      fakeAsync((async) {
+        final delegate = _FakeAsyncAnalytics();
+        final batching = BatchingAnalytics(
+          delegate: delegate,
+          maxBatchSize: 10,
+          flushInterval: const Duration(milliseconds: 20),
+        );
 
-      batching.logEvent(name: 'interval_event');
-      expect(delegate.recordedEvents, isEmpty);
+        batching.logEvent(name: 'interval_event');
+        async.elapse(const Duration(milliseconds: 19));
+        expect(delegate.recordedEvents, isEmpty);
 
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-      expect(delegate.recordedEvents.length, 1);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(delegate.recordedEvents.length, 1);
 
-      await batching.dispose();
+        batching.dispose();
+        async.flushMicrotasks();
+      });
+    });
+
+    test('waits for the backoff before a failed flush completes', () {
+      fakeAsync((async) {
+        final batching = BatchingAnalytics(
+          delegate: _FakeAsyncAnalytics()..alwaysThrow = true,
+          maxRetries: 5,
+          minRetryDelay: const Duration(milliseconds: 100),
+          maxRetryDelay: const Duration(milliseconds: 150),
+          onFlushError: (_, __) {},
+        );
+        batching.logEvent(name: 'unstable');
+
+        var completed = 0;
+        void flush() {
+          batching.flush().catchError((_) {}).whenComplete(() => completed++);
+        }
+
+        flush();
+        async.elapse(const Duration(milliseconds: 99));
+        expect(completed, 0);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(completed, 1, reason: 'first retry waits minRetryDelay');
+
+        flush();
+        async.elapse(const Duration(milliseconds: 149));
+        expect(completed, 1);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(completed, 2, reason: 'doubled delay is capped');
+      });
     });
 
     test('failed flush requeues the batch', () async {
@@ -66,6 +103,7 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 10,
+        minRetryDelay: Duration.zero,
         onFlushError: (_, __) {},
       );
 
@@ -90,13 +128,13 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 1,
-        minRetryDelay: const Duration(milliseconds: 1),
+        minRetryDelay: Duration.zero,
         onFlushError: (error, _) => errors.add(error),
       );
 
       batching.logEvent(name: 'auto');
 
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await pumpEventQueue();
       expect(errors, isNotEmpty);
       expect(delegate.recordedEvents, isEmpty);
 
@@ -112,6 +150,7 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 10,
+        minRetryDelay: Duration.zero,
         onFlushError: (_, __) {},
       );
 
@@ -147,6 +186,7 @@ void main() {
         delegate: delegate,
         maxBatchSize: 1,
         maxRetries: 2,
+        minRetryDelay: Duration.zero,
         onFlushError: (_, __) {},
       );
 
@@ -219,7 +259,7 @@ void main() {
 
       // Allow first event to complete; this should trigger a follow-up flush
       c1.complete();
-      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await pumpEventQueue();
 
       // e1 should have been recorded, e2 still pending
       expect(delegate.recordedEvents.map((e) => e.name), ['e1']);
@@ -243,7 +283,7 @@ void main() {
       final disposing = batching.dispose().then((_) => done = true);
 
       // dispose shouldn't complete while flush is blocked
-      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await pumpEventQueue();
       expect(done, isFalse);
 
       // allow flush to complete
@@ -258,19 +298,95 @@ void main() {
       final batching = BatchingAnalytics(delegate: delegate);
       await expectLater(batching.flush(), completes);
     });
+
+    test('dispose delivers events re-queued by a failed automatic flush',
+        () async {
+      final delegate = _FakeAsyncAnalytics()..throwNext = true;
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxBatchSize: 1,
+        minRetryDelay: Duration.zero,
+        onFlushError: (_, __) {},
+      );
+
+      batching.logEvent(name: 'first');
+      await batching.dispose();
+
+      expect(delegate.recordedEvents.map((e) => e.name), ['first']);
+    });
+
+    test('drops an event logged after dispose and reports it', () async {
+      final delegate = _FakeAsyncAnalytics();
+      final dropped = <(String, Object)>[];
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxBatchSize: 1,
+        onEventDropped: (name, _, error, __) => dropped.add((name, error)),
+      );
+      await batching.dispose();
+
+      batching.logEvent(name: 'late');
+      await batching.flush();
+
+      expect(delegate.recordedEvents, isEmpty);
+      expect(dropped.single.$1, 'late');
+      expect(dropped.single.$2, isA<StateError>());
+    });
+
+    test('logs a dropped event when no onEventDropped handler is set',
+        () async {
+      final logs = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: _FakeAsyncAnalytics(),
+        logger: TestLogger(logs),
+      );
+      await batching.dispose();
+
+      batching.logEvent(name: 'late');
+
+      expect(logs, [
+        '[BatchingAnalytics] Dropped event "late": Bad state: '
+            'logEvent was called after dispose.',
+      ]);
+    });
+
+    test('logs a failed flush and rethrows the delegate error', () async {
+      final logs = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: _FakeAsyncAnalytics()..throwNext = true,
+        minRetryDelay: Duration.zero,
+        logger: TestLogger(logs),
+      );
+
+      batching.logEvent(name: 'unstable');
+
+      await expectLater(batching.flush(), throwsA(isA<StateError>()));
+      expect(logs, [
+        '[BatchingAnalytics] Flush failed',
+        'Bad state: delegate failure',
+      ]);
+    });
+
+    test('drops the oldest events beyond maxQueueSize', () async {
+      final delegate = _FakeAsyncAnalytics();
+      final dropped = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxQueueSize: 2,
+        onEventDropped: (name, _, __, ___) => dropped.add(name),
+      );
+
+      batching.logEvent(name: 'a');
+      batching.logEvent(name: 'b');
+      batching.logEvent(name: 'c');
+      await batching.flush();
+
+      expect(dropped, ['a']);
+      expect(delegate.recordedEvents.map((e) => e.name), ['b', 'c']);
+    });
   });
 
-  test(
-      '_startFlush returns immediate Future when nothing pending (via test seam)',
-      () async {
-    final delegate = _FakeAsyncAnalytics();
-    final batching = BatchingAnalytics(delegate: delegate);
-    await expectLater(
-        batching.startFlushForTest(propagateErrors: true), completes);
-  });
-
-  test(
-      'startFlush during active flush sets follow-up and returns active future',
+  test('flush during an active flush delivers events logged meanwhile',
       () async {
     final c1 = Completer<void>();
     final c2 = Completer<void>();
@@ -284,8 +400,7 @@ void main() {
     // Add pending e2
     batching.logEvent(name: 'e2');
 
-    // Call startFlushForTest which should detect active flush and set follow up
-    final futureDuring = batching.startFlushForTest(propagateErrors: true);
+    final futureDuring = batching.flush();
 
     // complete first; this will allow f1 to finish
     c1.complete();
@@ -318,7 +433,7 @@ void main() {
     // Allow second to finish
     c2.complete();
     // Wait a short while for the follow-up to finish
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await pumpEventQueue();
 
     expect(delegate.recordedEvents.map((e) => e.name), ['e1', 'e2']);
   });

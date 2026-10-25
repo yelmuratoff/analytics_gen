@@ -81,7 +81,7 @@ void main() {
       expect(
           content,
           contains(
-              'if (nullableStatus != null) "nullable_status": nullableStatus?.name,'));
+              'if (nullableStatus != null) "nullable_status": nullableStatus.name,'));
     });
 
     test('generates dual-write call matching dart_type correctly', () async {

@@ -8,7 +8,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Fade from '@mui/material/Fade';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import CodeRounded from '@mui/icons-material/CodeRounded';
 import CodeOffRounded from '@mui/icons-material/CodeOffRounded';
 import Button from '@mui/material/Button';
@@ -20,7 +20,8 @@ import ResizeHandle from './ResizeHandle.tsx';
 import { useStore } from '../state/store.ts';
 import { useResizeHandle } from '../hooks/useResizeHandle.ts';
 import type { LoadedSchemas } from '../schemas/loader.ts';
-import { extractImportHints, importYamlString, type ImportSchemaHints } from '../utils/yaml-importer.ts';
+import { useYamlImport } from '../hooks/useYamlImport.ts';
+import { extractImportHints, describeImport } from '../utils/yaml-importer.ts';
 
 // Lazy-load heavy tab components — only loaded when first activated
 const ConfigTab = lazy(() => import('./config/ConfigTab.tsx'));
@@ -60,11 +61,8 @@ export default function Layout({ schemas }: LayoutProps) {
   const eventFiles = useStore((s) => s.eventFiles);
   const sharedParamFiles = useStore((s) => s.sharedParamFiles);
   const contextFiles = useStore((s) => s.contextFiles);
-  const importEventFile = useStore((s) => s.importEventFile);
-  const importSharedParamFile = useStore((s) => s.importSharedParamFile);
-  const importContextFile = useStore((s) => s.importContextFile);
-  const mergeConfig = useStore((s) => s.mergeConfig);
   const setActiveTab = useStore((s) => s.setActiveTab);
+  const importYamlFiles = useYamlImport(importHints);
   const addEventFile = useStore((s) => s.addEventFile);
   const addDomain = useStore((s) => s.addDomain);
 
@@ -92,36 +90,15 @@ export default function Layout({ schemas }: LayoutProps) {
       setDropSnackbar({ message: 'Only .yaml / .yml files can be imported', severity: 'error' });
       return;
     }
-    let imported = 0;
-    let lastType = '';
-    for (const file of files) {
-      try {
-        const content = await file.text();
-        const result = importYamlString(content, file.name, importHints);
-        if (!result) continue;
-        switch (result.type) {
-          case 'events': if (result.eventFile) importEventFile(result.eventFile); lastType = 'events'; break;
-          case 'shared': if (result.sharedFile) importSharedParamFile(result.sharedFile); lastType = 'shared'; break;
-          case 'context': if (result.contextFile) importContextFile(result.contextFile); lastType = 'contexts'; break;
-          case 'config': if (result.config) mergeConfig(result.config); lastType = 'config'; break;
-        }
-        imported++;
-      } catch { /* skip malformed files */ }
-    }
-    if (imported > 0) {
-      setDropSnackbar({ message: `Imported ${imported} file${imported > 1 ? 's' : ''}`, severity: 'success' });
-      if (lastType) setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
-    } else {
-      setDropSnackbar({ message: 'Could not detect YAML type', severity: 'error' });
-    }
-  }, [importHints, importEventFile, importSharedParamFile, importContextFile, mergeConfig, setActiveTab]);
+    setDropSnackbar(describeImport(await importYamlFiles(files)));
+  }, [importYamlFiles]);
 
   const renderTab = () => {
     switch (activeTab) {
       case 'config':
         return <ConfigTab configSchema={schemas.configSchema} />;
       case 'events':
-        return <EventsTab parameterSchema={schemas.parameterSchema} eventEditorSchema={schemas.eventEditorSchema} parameterTypes={schemas.parameterTypes} />;
+        return <EventsTab parameterSchema={schemas.parameterSchema} eventEditorSchema={schemas.eventEditorSchema} />;
       case 'shared':
         return <SharedParamsTab parameterSchema={schemas.parameterSchema} />;
       case 'contexts':
@@ -172,7 +149,7 @@ export default function Layout({ schemas }: LayoutProps) {
                 <Box sx={{
                   width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  bgcolor: (t: any) => `${t.palette.primary.main}14`, border: '2px solid', borderColor: (t: any) => `${t.palette.primary.main}33`,
+                  bgcolor: (t: Theme) => `${t.palette.primary.main}14`, border: '2px solid', borderColor: (t: Theme) => `${t.palette.primary.main}33`,
                 }}>
                   <ElectricBoltRounded sx={{ fontSize: 26, color: 'primary.main' }} />
                 </Box>
@@ -207,23 +184,7 @@ export default function Layout({ schemas }: LayoutProps) {
                       input.multiple = true;
                       input.onchange = async () => {
                         if (!input.files) return;
-                        let count = 0;
-                        let lastType = '';
-                        for (const file of Array.from(input.files)) {
-                          try {
-                            const content = await file.text();
-                            const result = importYamlString(content, file.name, importHints);
-                            if (!result) continue;
-                            switch (result.type) {
-                              case 'events': if (result.eventFile) importEventFile(result.eventFile); lastType = 'events'; break;
-                              case 'shared': if (result.sharedFile) importSharedParamFile(result.sharedFile); lastType = 'shared'; break;
-                              case 'context': if (result.contextFile) importContextFile(result.contextFile); lastType = 'contexts'; break;
-                              case 'config': if (result.config) mergeConfig(result.config); lastType = 'config'; break;
-                            }
-                            count++;
-                          } catch { /* skip */ }
-                        }
-                        if (count > 0 && lastType) setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
+                        setDropSnackbar(describeImport(await importYamlFiles(Array.from(input.files))));
                       };
                       input.click();
                     }}
@@ -262,7 +223,7 @@ export default function Layout({ schemas }: LayoutProps) {
           <Box sx={{
             width: 80, height: 80, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: (t: any) => `${t.palette.primary.main}26`, border: '2px dashed', borderColor: 'primary.main',
+            bgcolor: (t: Theme) => `${t.palette.primary.main}26`, border: '2px dashed', borderColor: 'primary.main',
           }}>
             <UploadFileRounded sx={{ fontSize: 36, color: 'primary.main' }} />
           </Box>

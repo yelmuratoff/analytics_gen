@@ -13,6 +13,11 @@ final class TrackingLedger {
   /// Absolute path to the ledger JSON file.
   final String ledgerPath;
 
+  /// Returns the key the ledger stores the event [eventName] of
+  /// [domainName] under.
+  static String keyFor(String domainName, String eventName) =>
+      '$domainName.$eventName';
+
   final DateTime Function()? _clock;
 
   String get _timestamp {

@@ -208,6 +208,21 @@ void main() {
       );
     });
 
+    test('throws FormatException when naming is not a map', () {
+      expect(
+        () => ConfigParser().parse({
+          'analytics_gen': {'naming': 5},
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            'Invalid configuration for "naming": expected Map but got int',
+          ),
+        ),
+      );
+    });
+
     test('throws FormatException with readable message for invalid bool fields',
         () {
       final yaml = {

@@ -13,7 +13,7 @@
 #   dart_type: Explicitly set the Dart type (e.g., a custom enum type). The genera...
 #   import: Custom import path for the dart_type. Required when dart_type refer...
 #   allowed_values: Restricts the parameter to a fixed set of values. The list type mus...
-#   regex: Regex pattern for validation. Used in generated code for runtime va...
+#   regex: Regex pattern for validating string parameters. Used in generated c...
 #   min_length: Minimum length for string parameters.
 #   max_length: Maximum length for string parameters.
 #   min: Minimum value for numeric parameters (int, double, num).
@@ -41,7 +41,7 @@ parameters:
     type: string
     description: Current app version.
     param_name: app_ver
-    regex: "^\d+\.\d+\.\d+$"
+    regex: '^\d+\.\d+\.\d+$'
 
   screen_width:
     type: int

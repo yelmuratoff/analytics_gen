@@ -1,41 +1,21 @@
 import { describe, it, expect } from 'vitest';
+import { newNameError } from '../../utils/validation.ts';
+import { SNAKE_CASE_DOMAIN, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
 
-// Test the validation logic from AddItemDialog directly
-// (extracted here since it's pure logic)
-
-const YAML_UNSAFE = /[:{}\[\]&*?|><!%@`#,'"\\]/;
-const VALID_YAML_KEY = /^[a-zA-Z_][a-zA-Z0-9_./-]*$/;
-
-function validate(input: string, opts: { validateSnakeCase?: boolean; isFileName?: boolean; existingNames?: string[] } = {}): string | null {
-  if (!input) return 'Name cannot be empty';
-  if (opts.existingNames?.includes(input)) return 'Name already exists';
-
-  if (opts.isFileName) {
-    if (!/^[a-zA-Z0-9_.\-/]+$/.test(input)) return 'Invalid characters';
-  } else {
-    if (YAML_UNSAFE.test(input)) return 'Contains YAML-unsafe characters';
-    if (!VALID_YAML_KEY.test(input)) return 'Invalid YAML key';
-    if (opts.validateSnakeCase && !/^[a-z][a-z0-9_]*$/.test(input)) return 'Must be snake_case';
-  }
-
-  if (input.length > 100) return 'Too long';
-  return null;
-}
-
-describe('AddItemDialog validation', () => {
+describe('newNameError', () => {
   describe('empty input', () => {
     it('rejects empty string', () => {
-      expect(validate('')).toBe('Name cannot be empty');
+      expect(newNameError('')).toBe('Name cannot be empty');
     });
   });
 
   describe('duplicate names', () => {
     it('rejects existing name', () => {
-      expect(validate('auth', { existingNames: ['auth', 'user'] })).toBe('Name already exists');
+      expect(newNameError('auth', { existingNames: ['auth', 'user'] })).toBe('Name already exists');
     });
 
     it('accepts new name', () => {
-      expect(validate('purchase', { existingNames: ['auth'] })).toBeNull();
+      expect(newNameError('purchase', { existingNames: ['auth'] })).toBeNull();
     });
   });
 
@@ -43,77 +23,51 @@ describe('AddItemDialog validation', () => {
     it.each([
       ':', '{', '}', '[', ']', '&', '*', '?', '|', '>', '<', '!', '%', '@', '`', '#', ',', "'", '"', '\\',
     ])('rejects YAML-unsafe char: %s', (char) => {
-      expect(validate(`test${char}name`)).toBe('Contains YAML-unsafe characters');
+      expect(newNameError(`test${char}name`)).toBe('Contains characters that break YAML (: { } [ ] etc.)');
     });
 
     it('rejects key starting with number', () => {
-      expect(validate('123abc')).toBe('Invalid YAML key');
+      expect(newNameError('123abc')).toBe('Must start with a letter or _, only letters, numbers, _');
     });
 
-    it('accepts key starting with letter', () => {
-      expect(validate('auth_login')).toBeNull();
-    });
-
-    it('accepts key starting with underscore', () => {
-      expect(validate('_internal')).toBeNull();
-    });
-
-    it('accepts dots and slashes in key', () => {
-      expect(validate('path/to.file')).toBeNull();
+    it.each(['auth_login', '_internal', 'path/to.file', 'camelCase'])('accepts %s without a name pattern', (name) => {
+      expect(newNameError(name)).toBeNull();
     });
   });
 
-  describe('snake_case validation', () => {
-    it('rejects uppercase', () => {
-      expect(validate('MyDomain', { validateSnakeCase: true })).toBe('Must be snake_case');
+  describe('name pattern', () => {
+    it('rejects a name that breaks the pattern', () => {
+      expect(newNameError('MyDomain', { namePattern: SNAKE_CASE_PARAM }))
+        .toBe('Must be snake_case (lowercase, numbers, underscores)');
     });
 
-    it('rejects starting with number', () => {
-      expect(validate('1abc', { validateSnakeCase: true })).not.toBeNull();
+    it.each(['auth_login', 'a', 'login_v2'])('accepts %s for the parameter pattern', (name) => {
+      expect(newNameError(name, { namePattern: SNAKE_CASE_PARAM })).toBeNull();
     });
 
-    it('accepts valid snake_case', () => {
-      expect(validate('auth_login', { validateSnakeCase: true })).toBeNull();
-    });
-
-    it('accepts single letter', () => {
-      expect(validate('a', { validateSnakeCase: true })).toBeNull();
-    });
-
-    it('accepts underscores and numbers', () => {
-      expect(validate('login_v2', { validateSnakeCase: true })).toBeNull();
+    it('accepts a leading underscore under the domain pattern but not the parameter pattern', () => {
+      expect(newNameError('_internal', { namePattern: SNAKE_CASE_DOMAIN })).toBeNull();
+      expect(newNameError('_internal', { namePattern: SNAKE_CASE_PARAM })).not.toBeNull();
     });
   });
 
-  describe('fileName validation', () => {
-    it('accepts alphanumeric with dots', () => {
-      expect(validate('auth.yaml', { isFileName: true })).toBeNull();
+  describe('file names', () => {
+    it.each(['auth.yaml', 'shared_user-v2.yaml', 'events/auth.yaml'])('accepts %s', (name) => {
+      expect(newNameError(name, { isFileName: true })).toBeNull();
     });
 
-    it('accepts dashes and underscores', () => {
-      expect(validate('shared_user-v2.yaml', { isFileName: true })).toBeNull();
-    });
-
-    it('accepts path with slashes', () => {
-      expect(validate('events/auth.yaml', { isFileName: true })).toBeNull();
-    });
-
-    it('rejects spaces', () => {
-      expect(validate('my file.yaml', { isFileName: true })).toBe('Invalid characters');
-    });
-
-    it('rejects YAML special chars', () => {
-      expect(validate('file{1}.yaml', { isFileName: true })).toBe('Invalid characters');
+    it.each(['my file.yaml', 'file{1}.yaml'])('rejects %s', (name) => {
+      expect(newNameError(name, { isFileName: true })).toBe('Invalid characters. Use letters, numbers, _, -, .');
     });
   });
 
   describe('length limit', () => {
     it('accepts 100 chars', () => {
-      expect(validate('a'.repeat(100))).toBeNull();
+      expect(newNameError('a'.repeat(100))).toBeNull();
     });
 
     it('rejects 101 chars', () => {
-      expect(validate('a'.repeat(101))).toBe('Too long');
+      expect(newNameError('a'.repeat(101))).toBe('Name is too long (max 100 characters)');
     });
   });
 });

@@ -28,7 +28,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
@@ -36,6 +36,11 @@ import { addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-share
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
+import { useInlineRename } from '../../hooks/useInlineRename.ts';
+import { withYamlExtension } from '../../utils/file-names.ts';
+import { newNameError } from '../../utils/validation.ts';
+import InlineRenameField from '../InlineRenameField.tsx';
+import ErrorDot from '../ErrorDot.tsx';
 import ItemMenu from '../ItemMenu.tsx';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
@@ -63,6 +68,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const renameContextFile = useStore((s) => s.renameContextFile);
   const renameContextName = useStore((s) => s.renameContextName);
   const renameContextProperty = useStore((s) => s.renameContextProperty);
+  const enforceSnakeParams = useStore((s) => !!s.config.naming?.enforce_snake_case_parameters);
 
   const errorKeys = useErrorKeys();
   const errorMessages = useErrorMessages();
@@ -72,8 +78,20 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [fileNameInput, setFileNameInput] = useState('');
   const [contextNameInput, setContextNameInput] = useState('');
-  const [editing, setEditing] = useState<{ type: 'file' | 'context' | 'prop'; fi: number; original: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const rename = useInlineRename<{ type: 'file' | 'context' | 'prop'; fi: number; original: string }>({
+    takenNames: (t) => {
+      if (t.type === 'file') return files.map((f) => f.fileName);
+      if (t.type === 'context') return files.map((f) => f.contextName);
+      return Object.keys(files[t.fi].properties);
+    },
+    normalize: (t, name) => t.type === 'file' ? withYamlExtension(name) : name,
+    apply: (t, name) => {
+      if (t.type === 'file') renameContextFile(t.fi, name);
+      else if (t.type === 'context') renameContextName(t.fi, name);
+      else renameContextProperty(t.fi, t.original, name);
+    },
+  });
+  const editing = rename.target;
   const [addPropOpen, setAddPropOpen] = useState<number | null>(null);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
@@ -107,12 +125,11 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const handleAddFile = () => {
     const fn = fileNameInput.trim();
     const cn = contextNameInput.trim();
-    if (!fn) { setFileError('File name is required'); return; }
-    if (!/^[a-zA-Z0-9_.\-/]+$/.test(fn)) { setFileError('Invalid characters'); return; }
-    if (!cn) { setCtxError('Context name is required'); return; }
-    if (!SNAKE_CASE_PARAM.test(cn)) { setCtxError('Must be snake_case'); return; }
-    if (files.some((f) => f.fileName === (fn.endsWith('.yaml') ? fn : `${fn}.yaml`))) { setFileError('File already exists'); return; }
-    addContextFile(fn.endsWith('.yaml') ? fn : `${fn}.yaml`, cn);
+    const fileNameError = newNameError(fn && withYamlExtension(fn), { isFileName: true, existingNames: files.map((f) => f.fileName) });
+    if (fileNameError) { setFileError(fileNameError); return; }
+    const contextNameError = newNameError(cn, { namePattern: SNAKE_CASE_PARAM, existingNames: files.map((f) => f.contextName) });
+    if (contextNameError) { setCtxError(contextNameError); return; }
+    addContextFile(withYamlExtension(fn), cn);
     setFileNameInput(''); setContextNameInput('');
     setFileError(''); setCtxError('');
     setAddFileOpen(false);
@@ -126,36 +143,13 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
     return Object.keys(file.properties).some((pn) => pn.toLowerCase().includes(q));
   };
 
-  const startEditing = (type: 'file' | 'context' | 'prop', fi: number, original: string) => {
-    setEditing({ type, fi, original });
-    setEditValue(original);
-  };
-
-  const commitRename = () => {
-    if (!editing) return;
-    const val = editValue.trim();
-    if (!val || val === editing.original) { setEditing(null); return; }
-    if (editing.type === 'file') {
-      renameContextFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`);
-    } else if (editing.type === 'context') {
-      renameContextName(editing.fi, val);
-    } else {
-      renameContextProperty(editing.fi, editing.original, val);
-    }
-    setEditing(null);
-  };
+  const startEditing = (type: 'file' | 'context' | 'prop', fi: number, original: string) => rename.start({ type, fi, original });
 
   const renderInlineEdit = (fontSize = '0.82rem', height = 24) => (
-    <TextField size="small" autoFocus value={editValue}
-      onChange={(e) => setEditValue(e.target.value)}
-      onBlur={commitRename}
-      onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-      onClick={(e) => e.stopPropagation()}
-      slotProps={{
-        htmlInput: { 'aria-label': 'Rename' },
-        input: { sx: { fontSize, py: 0, height, fontFamily: '"JetBrains Mono", monospace' } },
-      }}
-      sx={{ flex: 1 }}
+    <InlineRenameField
+      value={rename.value} error={rename.error}
+      onChange={rename.setValue} onCommit={rename.commit} onCancel={rename.cancel}
+      fontSize={fontSize} height={height}
     />
   );
 
@@ -206,7 +200,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: (t: any) => `${t.palette.brand.contexts}0F`, border: '2px dashed', borderColor: 'brand.contexts',
+              bgcolor: (t: Theme) => `${t.palette.brand.contexts}0F`, border: '2px dashed', borderColor: 'brand.contexts',
             }}>
               <LayersRounded sx={{ fontSize: 28, color: 'brand.contexts' }} />
             </Box>
@@ -250,7 +244,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     : (
                       <>
                         <ListItemText
-                          primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Tooltip title={errorMessages.get(`contexts:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
+                          primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <ErrorDot messages={errorMessages.get(`contexts:${fi}`)} />}</>}
                           primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                           sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                         />
@@ -294,7 +288,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                             return (
                             <ListItemButton key={pn} sx={{
                               pl: 7, py: 0.4,
-                              ...(isSel(fi, pn) && { bgcolor: (t: any) => alpha(t.palette.primary.main, 0.06) }),
+                              ...(isSel(fi, pn) && { bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.06) }),
                             }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
                               <ListItemIcon sx={{ minWidth: 18 }}>
                                 <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />
@@ -303,7 +297,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                                 ? renderInlineEdit('0.78rem', 24)
                                 : (
                                   <>
-                                    <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Tooltip title={errorMessages.get(`contexts:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}</Box>} primaryTypographyProps={{
+                                    <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <ErrorDot messages={errorMessages.get(`contexts:${fi}:${pn}`)} ml={0} />}</Box>} primaryTypographyProps={{
                                       fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
                                     }} />
                                     <ItemMenu actions={[
@@ -390,7 +384,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
 
       {addPropOpen !== null && (
         <AddItemDialog open title="Add Property" label="Name" placeholder="user_id"
-          validateSnakeCase existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
+          namePattern={enforceSnakeParams ? SNAKE_CASE_PARAM : undefined} existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
           onClose={() => setAddPropOpen(null)}
           onAdd={(n) => {
             addContextProperty(addPropOpen, n, { type: DEFAULT_PARAM_TYPE });

@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:glob/glob.dart';
-import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import '../config/analytics_config.dart';
+import '../parser/event_loader.dart';
 import '../util/logger.dart';
 import '../util/project_revision.dart';
 import '../util/yaml_keys.dart';
+import 'output_manager.dart';
 
 /// Generates the AnalyticsGen Studio project file (`analytics-studio.json`)
 /// from the analytics YAML configuration.
@@ -23,6 +23,7 @@ class StudioGenerator {
     required this.projectRoot,
     required this.configPath,
     this.log = const NoOpLogger(),
+    this.outputManager = const OutputManager(),
   });
 
   /// Analytics configuration.
@@ -37,18 +38,23 @@ class StudioGenerator {
   /// The logger to use.
   final Logger log;
 
+  /// Writes the project file, skipping the write when its content is
+  /// unchanged.
+  final OutputManager outputManager;
+
   /// Generates the studio project file at [outputPath] (or
   /// `config.outputs.studioPath` when omitted).
   Future<File> generate({String? outputPath}) async {
     final resolvedOutput = outputPath ?? config.outputs.studioPath;
-    final eventsDir = p.join(projectRoot, config.inputs.eventsPath);
+    final eventsPath = p.join(projectRoot, config.inputs.eventsPath);
     final sharedPaths = config.inputs.sharedParameters
         .map((sp) => p.join(projectRoot, sp))
         .toSet();
     final contextPaths =
         config.inputs.contexts.map((cp) => p.join(projectRoot, cp)).toSet();
 
-    final eventFiles = _readEventFiles(eventsDir, sharedPaths, contextPaths);
+    final eventFiles =
+        await _readEventFiles(eventsPath, sharedPaths, contextPaths);
     final sharedParamFiles = _readSharedParamFiles(sharedPaths);
     final contextFiles = _readContextFiles(contextPaths);
 
@@ -74,8 +80,8 @@ class StudioGenerator {
       ...content,
     };
 
-    await outputFile.parent.create(recursive: true);
-    await outputFile.writeAsString(
+    await outputManager.writeFileIfContentChanged(
+      outputFile.path,
       const JsonEncoder.withIndent('  ').convert(studioJson),
     );
 
@@ -104,49 +110,41 @@ class StudioGenerator {
     return json;
   }
 
-  /// Reads event YAML files from the events directory.
+  /// Reads the event YAML files that code generation reads, via [EventLoader].
   /// Structure: domain → event → {fields} → wraps as {fileName, domains}.
-  List<Map<String, dynamic>> _readEventFiles(
-    String eventsDir,
+  Future<List<Map<String, dynamic>>> _readEventFiles(
+    String eventsPath,
     Set<String> sharedPaths,
     Set<String> contextPaths,
-  ) {
-    final dir = Directory(eventsDir);
-    if (!dir.existsSync()) return <Map<String, dynamic>>[];
+  ) async {
+    final sources = await EventLoader(
+      eventsPath: eventsPath,
+      contextFiles: contextPaths.toList(),
+      sharedParameterFiles: sharedPaths.toList(),
+      log: log,
+    ).loadEventFiles();
 
-    final excluded = {...sharedPaths, ...contextPaths}.map(p.normalize).toSet();
-
-    final files = Glob('**.{yaml,yml}')
-        .listSync(root: eventsDir)
-        .whereType<File>()
-        .where((f) => !excluded.contains(p.normalize(f.path)))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
-
-    return files
-        .map(
-          (file) => _readYamlFileAs(
-            file,
-            (parsed) {
-              final domains = <String, dynamic>{};
-              for (final e in parsed.entries) {
-                final events = e.value;
-                if (events is! YamlMap) continue;
-                domains[e.key.toString()] = <String, dynamic>{
-                  for (final ev in events.entries)
-                    if (ev.value is YamlMap)
-                      ev.key.toString(): _yamlToJson(ev.value),
-                };
-              }
-              return {'fileName': p.basename(file.path), 'domains': domains};
-            },
-            fallback: {
-              'fileName': p.basename(file.path),
-              'domains': <String, dynamic>{},
-            },
-          ),
-        )
-        .toList();
+    return sources.map((source) {
+      final fileName = p.basename(source.filePath);
+      return _parseYamlAs(
+        source.content,
+        (parsed) {
+          final domains = <String, dynamic>{};
+          for (final e in parsed.entries) {
+            final events = e.value;
+            if (events is! YamlMap) continue;
+            domains[e.key.toString()] = <String, dynamic>{
+              for (final ev in events.entries)
+                if (ev.value is YamlMap)
+                  ev.key.toString(): _yamlToJson(ev.value),
+            };
+          }
+          return {'fileName': fileName, 'domains': domains};
+        },
+        source: source.filePath,
+        fallback: {'fileName': fileName, 'domains': <String, dynamic>{}},
+      );
+    }).toList();
   }
 
   /// Reads shared parameter files.
@@ -244,13 +242,29 @@ class StudioGenerator {
     required Map<String, dynamic> fallback,
   }) {
     if (!file.existsSync()) return fallback;
+    return _parseYamlAs(
+      file.readAsStringSync(),
+      transform,
+      source: file.path,
+      fallback: fallback,
+    );
+  }
+
+  Map<String, dynamic> _parseYamlAs(
+    String content,
+    Map<String, dynamic> Function(YamlMap) transform, {
+    required String source,
+    required Map<String, dynamic> fallback,
+  }) {
+    final Object? parsed;
     try {
-      final parsed = loadYaml(file.readAsStringSync());
-      if (parsed is! YamlMap || parsed.isEmpty) return fallback;
-      return transform(parsed);
-    } catch (_) {
+      parsed = loadYaml(content);
+    } on YamlException catch (e) {
+      log.warning('Skipping malformed YAML in $source: ${e.message}');
       return fallback;
     }
+    if (parsed is! YamlMap || parsed.isEmpty) return fallback;
+    return transform(parsed);
   }
 
   /// Recursively converts any YAML node to JSON-compatible Dart object.

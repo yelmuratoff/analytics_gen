@@ -2,7 +2,6 @@ import 'package:analytics_gen/src/util/logger.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:glob/glob.dart';
-import 'package:glob/list_local_fs.dart';
 
 /// Represents a source file containing analytics definitions.
 final class AnalyticsSource {
@@ -102,17 +101,11 @@ final class EventLoader {
 
   /// Loads event files using glob pattern matching.
   Future<List<AnalyticsSource>> _loadEventFilesWithGlob() async {
-    List<File> yamlFiles;
-
-    if (fs is LocalFileSystem) {
-      yamlFiles = Glob(eventsPath)
-          .listSync()
-          .whereType<File>()
-          .where((f) => _isYamlFile(f.path))
-          .toList();
-    } else {
-      yamlFiles = await _listFilesMatchingPattern();
-    }
+    final yamlFiles = Glob(eventsPath.replaceAll('\\', '/'))
+        .listFileSystemSync(fs)
+        .whereType<File>()
+        .where((f) => _isYamlFile(f.path))
+        .toList();
 
     if (yamlFiles.isEmpty) {
       log.warning('No YAML files found matching pattern: $eventsPath');
@@ -163,57 +156,6 @@ final class EventLoader {
       }),
     );
     return results.whereType<AnalyticsSource>().toList();
-  }
-
-  /// Lists files matching the glob pattern (for non-LocalFileSystem).
-  Future<List<File>> _listFilesMatchingPattern() async {
-    final normalizedPattern = eventsPath.replaceAll('\\', '/');
-    final patternParts = normalizedPattern.split('/');
-    final baseParts = <String>[];
-
-    for (final part in patternParts) {
-      if (_containsGlobChars(part)) break;
-      baseParts.add(part);
-    }
-
-    if (baseParts.isEmpty) {
-      log.warning('Glob pattern must have a base directory: $eventsPath');
-      return const [];
-    }
-
-    final basePath = baseParts.join('/');
-    final dir = fs.directory(basePath);
-    if (!dir.existsSync()) {
-      log.warning('Base directory not found: $basePath');
-      return const [];
-    }
-
-    // Always collect recursively to ensure all potential matches are found
-    final isRecursive = normalizedPattern.contains('**');
-    final allFiles = <File>[];
-    _collectFiles(dir, allFiles, recursive: isRecursive);
-
-    final glob = Glob(normalizedPattern);
-    return allFiles.where((file) {
-      final filePath = file.path.replaceAll('\\', '/');
-      if (!_isYamlFile(filePath)) return false;
-      // Try matching both with and without leading slash
-      return glob.matches(filePath) ||
-          (filePath.startsWith('/') && glob.matches(filePath.substring(1)));
-    }).toList();
-  }
-
-  /// Collects files from a directory synchronously.
-  void _collectFiles(Directory dir, List<File> results,
-      {required bool recursive}) {
-    for (final entity in dir.listSync()) {
-      switch (entity) {
-        case File():
-          results.add(entity);
-        case Directory() when recursive:
-          _collectFiles(entity, results, recursive: true);
-      }
-    }
   }
 
   /// Loads all configured context files in parallel.

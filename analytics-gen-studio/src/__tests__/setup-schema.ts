@@ -1,22 +1,19 @@
 // Runs after setup.ts (localStorage is available)
-// Applies schema-derived defaults so tests work with real values
+// Loads the real schemas through the Studio loader so tests run against schema-derived rules and defaults
 
-import { setSchemaDefaultConfig } from '../state/store.ts';
+import { vi } from 'vitest';
+import { loadSchemas } from '../schemas/loader.ts';
 import { applySchemaConstants } from '../schemas/constants.ts';
-import type { ConfigState } from '../types/index.ts';
+import { setSchemaDefaultConfig } from '../state/store.ts';
+import { canonicalSchema } from './schema-fixtures.ts';
 
-applySchemaConstants({
-  defaultEventDescription: 'No description provided',
-  snakeCaseDomainPattern: /^[a-z0-9_]+$/,
-  snakeCaseParamPattern: /^[a-z][a-z0-9_]*$/,
+vi.stubGlobal('fetch', (url: string) => {
+  const schema = canonicalSchema(url.split('/').pop() ?? '');
+  if (!schema) return Promise.resolve({ ok: false, status: 404 });
+  return Promise.resolve({ ok: true, json: () => Promise.resolve(schema) });
 });
+const loaded = await loadSchemas();
+vi.unstubAllGlobals();
 
-const testDefaults: ConfigState = {
-  inputs: { events: 'events', shared_parameters: [], contexts: [], imports: [] },
-  outputs: { dart: 'lib/src/analytics/generated' },
-  targets: { csv: false, json: false, sql: false, docs: false, plan: true, test_matchers: false, studio: false },
-  rules: { include_event_description: false, strict_event_names: true, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false },
-  naming: { casing: 'snake_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '{domain}: {event}', identifier_template: '{domain}: {event}', domain_aliases: {} },
-  meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false },
-};
-setSchemaDefaultConfig(testDefaults);
+applySchemaConstants({ ...loaded, defaultParamType: loaded.parameterTypes[0] ?? 'string' });
+setSchemaDefaultConfig(loaded.defaultConfig);

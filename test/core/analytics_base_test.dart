@@ -25,6 +25,7 @@ void main() {
     test('returns analytics when initialized', () {
       final analytics = _StubAnalytics();
 
+      // ignore: deprecated_member_use_from_same_package
       final result = ensureAnalyticsInitialized(analytics);
 
       expect(result, same(analytics));
@@ -32,6 +33,7 @@ void main() {
 
     test('throws descriptive StateError when not initialized', () {
       expect(
+        // ignore: deprecated_member_use_from_same_package
         () => ensureAnalyticsInitialized(null),
         throwsA(
           isA<StateError>().having(

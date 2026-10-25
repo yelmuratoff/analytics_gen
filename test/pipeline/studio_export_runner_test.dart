@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:analytics_gen/src/pipeline/studio_export_runner.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
+
+import '../test_utils.dart';
 
 /// We test studio_export by running the actual CLI command from the project root
 /// against fixture YAML files created in a temp directory, then verifying the
@@ -193,6 +196,49 @@ void main() {
       );
       expect(result.exitCode, 0);
       expect(result.stdout.toString(), contains('studio_export'));
+    });
+  });
+
+  group('StudioExportRunner in process', () {
+    late Directory project;
+
+    setUp(() {
+      project = Directory.systemTemp.createTempSync('studio_in_process_');
+      File(p.join(project.path, 'analytics_gen.yaml'))
+          .writeAsStringSync('analytics_gen:\n  inputs:\n    events: events\n');
+      File(p.join(project.path, 'events/auth.yaml'))
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('auth:\n  login:\n    description: Login\n');
+    });
+
+    tearDown(() => project.deleteSync(recursive: true));
+
+    Future<({String output, int? exitCode})> export(List<String> args) =>
+        runCliForTest(
+          () => StudioExportRunner(
+            projectRoot: project.path,
+            exitProcess: exitForTest,
+          ).run(args),
+        );
+
+    test('writes the project file to --output', () async {
+      final result = await export(const ['-o', 'studio/out.json']);
+
+      final file = File(p.join(project.path, 'studio/out.json'));
+      expect(result.exitCode, isNull);
+      expect(result.output, contains('Exported: ${file.path}'));
+      final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      expect(json['eventFiles'], hasLength(1));
+    });
+
+    test('exits with 1 when the config file cannot be read', () async {
+      File(p.join(project.path, 'analytics_gen.yaml'))
+          .writeAsStringSync('- not a map\n');
+
+      final result = await export(const []);
+
+      expect(result.exitCode, 1);
+      expect(result.output, contains('expected a map but got a list'));
     });
   });
 }

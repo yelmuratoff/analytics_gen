@@ -73,83 +73,6 @@ void main() {
 
       expect(comment, equals('    /// Test\n'));
     });
-
-    test('renderClassHeader generates mixin declaration', () {
-      final header = renderer.renderClassHeader(
-        className: 'TestMixin',
-        extendsClass: 'BaseClass',
-        isMixin: true,
-        documentation: 'Test mixin documentation',
-      );
-
-      expect(header, contains('/// Test mixin documentation'));
-      expect(header, contains('mixin TestMixin on BaseClass {'));
-    });
-
-    test('renderClassHeader generates final class declaration', () {
-      final header = renderer.renderClassHeader(
-        className: 'TestClass',
-        extendsClass: 'BaseClass',
-        mixins: ['Mixin1', 'Mixin2'],
-        implements: ['Interface1'],
-        isFinal: true,
-      );
-
-      expect(header, contains('final class TestClass extends BaseClass'));
-      expect(header, contains('with Mixin1, Mixin2'));
-      expect(header, contains('implements Interface1'));
-    });
-
-    test('renderMethodParameters generates named parameters', () {
-      final params = renderer.renderMethodParameters(
-        parameters: [
-          const MethodParameter(name: 'name', type: 'String'),
-          const MethodParameter(name: 'age', type: 'int?', isNullable: true),
-          const MethodParameter(
-            name: 'status',
-            type: 'String?',
-            defaultValue: "'active'",
-            isNullable: true,
-          ),
-        ],
-      );
-
-      expect(params, contains('required String name'));
-      expect(params, contains('int? age'));
-      expect(params, contains("String? status = 'active'"));
-      expect(params, startsWith('({'));
-      expect(params, endsWith('})'));
-    });
-
-    test('renderMethodParameters generates positional parameters', () {
-      final params = renderer.renderMethodParameters(
-        parameters: [
-          const MethodParameter(name: 'name', type: 'String'),
-          const MethodParameter(name: 'age', type: 'int', defaultValue: '0'),
-        ],
-        useNamedParameters: false,
-      );
-
-      expect(params, contains('String name'));
-      expect(params, contains('int age = 0'));
-      expect(params, startsWith('('));
-      expect(params, endsWith(')'));
-      expect(params, isNot(contains('required')));
-    });
-
-    test('renderMethodParameters returns empty parens for no parameters', () {
-      final params = renderer.renderMethodParameters(parameters: []);
-
-      expect(params, equals('()'));
-    });
-
-    test('renderClassHeader generates plain class declaration', () {
-      final header = renderer.renderClassHeader(
-        className: 'TestClass',
-      );
-
-      expect(header, contains('class TestClass {'));
-    });
   });
 
   group('ValidationRenderer', () {
@@ -210,8 +133,10 @@ void main() {
       );
 
       // Without cachedRegexFieldName, creates inline local variable
-      expect(checks,
-          contains("final _emailRegex = RegExp(r'^[^@]+@[^@]+\\.[^@]+\$');"));
+      expect(
+          checks,
+          contains(
+              "final _emailRegex = RegExp(r'''^[^@]+@[^@]+\\.[^@]+\$''');"));
       expect(checks, contains('if (!_emailRegex.hasMatch(email))'));
       expect(checks, contains('throw ArgumentError.value'));
       expect(checks, contains('must match regex'));
@@ -225,8 +150,10 @@ void main() {
       );
 
       // Without cachedRegexFieldName, creates inline local variable
-      expect(checks,
-          contains("final _emailRegex = RegExp(r'^[^@]+@[^@]+\\.[^@]+\$');"));
+      expect(
+          checks,
+          contains(
+              "final _emailRegex = RegExp(r'''^[^@]+@[^@]+\\.[^@]+\$''');"));
       expect(checks,
           contains('if (email != null && !_emailRegex.hasMatch(email))'));
     });

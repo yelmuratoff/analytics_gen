@@ -58,7 +58,7 @@ final class CsvGenerator {
 
         // Remove complex fields not suitable for flat CSV (like parameters list)
         row.remove('parameters');
-        row.remove('dual_write_to'); // or flatten it?
+        row.remove('dual_write_to');
         row.remove('source_path'); // Internal field
 
         // Flatten dual_write_to if present
@@ -105,7 +105,6 @@ final class CsvGenerator {
         row['operations'] = (row['operations'] as List).join(';');
       }
 
-      // Add validation summary column for convenience (optional, but good for backward compat/readability)
       final validation = <String>[];
       if (param.regex != null) validation.add('regex:${param.regex}');
       if (param.minLength != null) validation.add('min_len:${param.minLength}');
@@ -206,9 +205,6 @@ final class CsvGenerator {
         }
 
         // Prefix event keys to avoid collision with parameter keys
-        // Exception: 'domain' and 'event_name' are fine as is or can be prefixed.
-        // Let's keep 'domain' as is, and 'event_name' is already specific.
-        // But 'name', 'description' etc should be prefixed.
 
         final finalEventRow = <String, dynamic>{};
         finalEventRow['domain'] = domain.name;
@@ -306,8 +302,7 @@ final class CsvGenerator {
       headers.addAll(row.keys);
     }
 
-    // Sort headers for deterministic output (optional but good)
-    // We might want specific headers first (like domain, event_name).
+    // Sort headers for deterministic output
     final sortedHeaders = headers.toList()
       ..sort((a, b) {
         // Prioritize common ID fields

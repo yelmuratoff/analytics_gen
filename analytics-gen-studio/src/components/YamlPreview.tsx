@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import FileDownloadRounded from '@mui/icons-material/FileDownloadRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
@@ -55,7 +55,6 @@ function buildErrorLineSet(content: string, errors: ValidationError[]): Set<numb
   //     field: val    (4)
   //     parameters:   (4)
   //       param: type (6)
-  let currentDomain = '';
   let currentEvent = '';
 
   for (let i = 0; i < lines.length; i++) {
@@ -66,7 +65,7 @@ function buildErrorLineSet(content: string, errors: ValidationError[]): Set<numb
     const depth = indent.length;
 
     // Track context
-    if (depth === 0) { currentDomain = key; currentEvent = ''; }
+    if (depth === 0) { currentEvent = ''; }
     if (depth === 2) { currentEvent = key; }
 
     // Event name line (indent 2)
@@ -140,20 +139,16 @@ export default function YamlPreview() {
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [wordWrap, setWordWrap] = useState(false);
+  const [syncedSelection, setSyncedSelection] = useState({ selectedPath, activeTab });
 
-  // Sync YAML preview file tab with selected item in tree
-  useEffect(() => {
-    if (selectedPath && selectedPath.tab === activeTab && selectedPath.fileIndex !== undefined && selectedPath.fileIndex < files.length) {
-      setActiveFileIndex(selectedPath.fileIndex);
-    }
-  }, [selectedPath, activeTab, files.length]);
+  if (selectedPath !== syncedSelection.selectedPath || activeTab !== syncedSelection.activeTab) {
+    setSyncedSelection({ selectedPath, activeTab });
+    const selectedFileIndex = selectedPath?.tab === activeTab ? selectedPath.fileIndex : undefined;
+    if (selectedFileIndex !== undefined && selectedFileIndex < files.length) setActiveFileIndex(selectedFileIndex);
+    else if (activeTab !== syncedSelection.activeTab) setActiveFileIndex(0);
+  }
 
-  // Clamp index when file list changes (e.g. tab switch)
-  useEffect(() => {
-    if (activeFileIndex >= files.length) setActiveFileIndex(0);
-  }, [files.length, activeFileIndex]);
-
-  const safeIndex = Math.min(activeFileIndex, Math.max(0, files.length - 1));
+  const safeIndex = activeFileIndex < files.length ? activeFileIndex : 0;
   const currentFile = files[safeIndex];
 
   // Filter errors relevant to current file
@@ -256,8 +251,8 @@ export default function YamlPreview() {
               sx={{
                 display: 'inline-flex', alignItems: 'center', gap: 0.5,
                 px: 1, py: 0.2, mr: 0.5, borderRadius: 1.5,
-                bgcolor: (t: any) => `${t.palette.error.main}26`, cursor: 'pointer',
-                '&:hover': { bgcolor: (t: any) => `${t.palette.error.main}40` },
+                bgcolor: (t: Theme) => `${t.palette.error.main}26`, cursor: 'pointer',
+                '&:hover': { bgcolor: (t: Theme) => `${t.palette.error.main}40` },
               }}
             >
               <ErrorOutlineRounded sx={{ fontSize: 13, color: 'yaml.errorBadge' }} />
@@ -322,7 +317,7 @@ export default function YamlPreview() {
           borderTop: '1px solid rgba(255,255,255,0.08)',
           maxHeight: 160, overflow: 'auto',
           px: 2, py: 1.5,
-          bgcolor: (t: any) => `${t.palette.error.main}14`,
+          bgcolor: (t: Theme) => `${t.palette.error.main}14`,
           scrollbarWidth: 'thin' as const,
           scrollbarColor: 'rgba(255,255,255,0.08) transparent',
           '&::-webkit-scrollbar': { width: 4 },
@@ -365,7 +360,7 @@ export default function YamlPreview() {
                   textDecoration: 'underline',
                   textDecorationColor: 'yaml.errorBadge',
                   textUnderlineOffset: '2px',
-                  '&:hover': { bgcolor: (t: any) => `${t.palette.primary.main}1F`, textDecorationColor: 'yaml.errorBadge' },
+                  '&:hover': { bgcolor: (t: Theme) => `${t.palette.primary.main}1F`, textDecorationColor: 'yaml.errorBadge' },
                 }),
               }}>
                 {hasNav && <ArrowForwardRounded sx={{ fontSize: 12, color: 'yaml.errorBadge', flexShrink: 0 }} />}

@@ -66,16 +66,6 @@ final class JsonGenerator {
             eventMap['identifier'] =
                 EventNaming.resolveIdentifier(domainName, event, naming);
 
-            // Ensure parameters are also maps (handled by event.toMap())
-            // We can optionally process parameters here if needed, but toMap should suffice.
-
-            // Remove fields that might be redundant or internal if necessary,
-            // but for "export" usually more data is better.
-            // The previous implementation conditionally added some fields (e.g. replacement).
-            // toMap includes them with null values if they are null.
-            // We might want to filter out nulls to keep JSON clean?
-            // The previous implementation used `if (event.replacement != null) ...`
-            // Let's filter nulls from the map to match that behavior and keep it clean.
             eventMap.removeWhere((key, value) =>
                 value == null ||
                 (value is Iterable && value.isEmpty) ||

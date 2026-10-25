@@ -4,6 +4,7 @@ import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:path/path.dart' as path;
 
 import '../../config/naming_strategy.dart';
+import '../../core/exceptions.dart';
 import '../../util/logger.dart';
 import 'sql_generator.dart';
 
@@ -13,10 +14,14 @@ import 'sql_generator.dart';
 final class SqliteGenerator {
   /// Creates a new SQLite generator.
   SqliteGenerator({
+    required String projectRoot,
     this.log = const NoOpLogger(),
     NamingStrategy? naming,
     Future<ProcessResult> Function(String, List<String>)? runProcess,
-  })  : _sqlGenerator = SqlGenerator(naming: naming ?? const NamingStrategy()),
+  })  : _sqlGenerator = SqlGenerator(
+          naming: naming ?? const NamingStrategy(),
+          projectRoot: projectRoot,
+        ),
         _runProcess = runProcess ?? Process.run;
   final SqlGenerator _sqlGenerator;
 
@@ -64,15 +69,24 @@ final class SqliteGenerator {
     }
 
     // Execute SQL script to create database
-    final result = await _runProcess('sqlite3', [dbPath, '.read $sqlPath']);
+    final result = await _runProcess(
+      'sqlite3',
+      [dbPath, '.read ${_dotCommandArgument(sqlPath)}'],
+    );
 
-    if (result.exitCode == 0) {
-      log.info('✓ Generated SQLite database at: $dbPath');
-    } else {
-      log.error('  ⚠ Failed to create database: ${result.stderr}');
-      log.info('    SQL script available at: $sqlPath');
+    if (result.exitCode != 0) {
+      throw AnalyticsGenerationException(
+        'sqlite3 could not build $dbPath: ${'${result.stderr}'.trim()}',
+        sourcePath: sqlPath,
+      );
     }
+    log.info('✓ Generated SQLite database at: $dbPath');
   }
+
+  /// Quotes [value] as one argument of a sqlite3 shell dot-command, which
+  /// resolves backslash escapes inside double quotes.
+  static String _dotCommandArgument(String value) =>
+      '"${value.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
 
   /// Checks if sqlite3 command is available
   Future<bool> _isSqlite3Available() async {

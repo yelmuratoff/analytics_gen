@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:path/path.dart' as path;
 
 import '../../config/naming_strategy.dart';
 import '../../util/event_naming.dart';
@@ -14,11 +15,15 @@ final class SqlGenerator {
   /// Creates a new SQL generator.
   SqlGenerator({
     required this.naming,
+    required this.projectRoot,
     this.outputManager = const OutputManager(),
   });
 
   /// The naming strategy to use.
   final NamingStrategy naming;
+
+  /// The directory that `source_path` values are written relative to.
+  final String projectRoot;
 
   /// The output manager to use.
   final OutputManager outputManager;
@@ -169,7 +174,7 @@ final class SqlGenerator {
         final dualWriteTo = _jsonOrNull(event.dualWriteTo);
         final meta = _jsonOrNull(event.meta);
         final sourcePath = event.sourcePath != null
-            ? "'${_escape(event.sourcePath!)}'"
+            ? "'${_escape(path.relative(event.sourcePath!, from: projectRoot))}'"
             : 'NULL';
         final lineNumber =
             event.lineNumber != null ? event.lineNumber.toString() : 'NULL';

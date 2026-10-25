@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 
 import '../test_utils.dart';
@@ -288,22 +290,25 @@ void main() {
       });
 
       test('logEventAsync waits for all async providers (concurrent execution)',
-          () async {
-        final slow1 =
-            _SlowAsyncProvider(delay: const Duration(milliseconds: 100));
-        final slow2 =
-            _SlowAsyncProvider(delay: const Duration(milliseconds: 50));
-        final multi = MultiProviderAnalytics([slow1, slow2]);
+          () {
+        fakeAsync((async) {
+          final slow1 =
+              _SlowAsyncProvider(delay: const Duration(milliseconds: 100));
+          final slow2 =
+              _SlowAsyncProvider(delay: const Duration(milliseconds: 50));
+          final multi = MultiProviderAnalytics([slow1, slow2]);
 
-        final stopwatch = Stopwatch()..start();
-        await multi.logEventAsync(name: 'concurrent_test');
-        stopwatch.stop();
+          var done = false;
+          multi.logEventAsync(name: 'concurrent_test').then((_) => done = true);
 
-        // Should wait at least for the slowest
-        expect(stopwatch.elapsedMilliseconds, greaterThanOrEqualTo(100));
+          async.elapse(const Duration(milliseconds: 99));
+          expect(done, isFalse, reason: 'waits for the slowest provider');
 
-        expect(slow1.eventCount, equals(1));
-        expect(slow2.eventCount, equals(1));
+          async.elapse(const Duration(milliseconds: 1));
+          expect(done, isTrue, reason: 'providers run concurrently, not 150ms');
+          expect(slow1.eventCount, equals(1));
+          expect(slow2.eventCount, equals(1));
+        });
       });
 
       test('respects provider filters in async path', () async {
@@ -371,6 +376,76 @@ void main() {
         expect(failures.single.stackTrace, isA<StackTrace>());
         expect(errors, isNotEmpty);
       });
+    });
+
+    test('reports a throwing provider filter and still serves other providers',
+        () async {
+      final filterError = StateError('filter failed');
+      final failures = <MultiProviderAnalyticsFailure>[];
+      final multi = MultiProviderAnalytics(
+        [service1, service2],
+        providerFilters: {service1: (_, __) => throw filterError},
+        onProviderFailure: failures.add,
+      );
+
+      multi.logEvent(name: 'filtered');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service1.totalEvents, 0);
+      expect(service2.totalEvents, 1);
+      expect(failures.single.provider, service1);
+      expect(failures.single.error, filterError);
+    });
+
+    test('reports a throwing provider filter on the async path', () async {
+      final filterError = StateError('filter failed');
+      final failures = <MultiProviderAnalyticsFailure>[];
+      final multi = MultiProviderAnalytics(
+        [service1, service2],
+        providerFilters: {service1: (_, __) => throw filterError},
+        onProviderFailure: failures.add,
+      );
+
+      await multi.logEventAsync(name: 'filtered');
+
+      expect(service2.totalEvents, 1);
+      expect(failures.single.error, filterError);
+    });
+
+    test('reports an async provider that throws before returning a future',
+        () async {
+      final failing = _ThrowingBeforeFutureProvider();
+      final failures = <MultiProviderAnalyticsFailure>[];
+      final multi = MultiProviderAnalytics(
+        [failing, service1],
+        onProviderFailure: failures.add,
+      );
+
+      await multi.logEventAsync(name: 'eager_fail');
+
+      expect(service1.totalEvents, 1);
+      expect(failures.single.provider, failing);
+    });
+
+    test('logs provider failures to the console when no handler is set',
+        () async {
+      final printed = <String>[];
+      await runZoned(
+        () async {
+          MultiProviderAnalytics([_FailingAnalyticsService()])
+              .logEvent(name: 'unhandled');
+          await Future<void>.delayed(Duration.zero);
+        },
+        zoneSpecification: ZoneSpecification(
+          print: (_, __, ___, line) => printed.add(line),
+        ),
+      );
+
+      expect(
+        printed.single,
+        contains('Provider failure (_FailingAnalyticsService) for event '
+            '"unhandled": Exception: Intentional failure'),
+      );
     });
 
     test('continues with other providers when async provider fails', () async {
@@ -452,7 +527,7 @@ class _AsyncLoggingProvider implements IAnalytics, IAsyncAnalytics {
   @override
   Future<void> logEventAsync(
       {required String name, AnalyticsParams? parameters}) async {
-    await Future.delayed(const Duration(milliseconds: 5));
+    await Future<void>.delayed(Duration.zero);
     _delegate.logEvent(name: name, parameters: parameters);
   }
 
@@ -470,6 +545,19 @@ class _FailingAsyncAnalyticsService implements IAnalytics, IAsyncAnalytics {
   Future<void> logEventAsync(
       {required String name, AnalyticsParams? parameters}) {
     return Future.error(Exception('Intentional async failure'));
+  }
+}
+
+class _ThrowingBeforeFutureProvider implements IAnalytics, IAsyncAnalytics {
+  @override
+  void logEvent({required String name, AnalyticsParams? parameters}) {}
+
+  @override
+  Future<void> logEventAsync({
+    required String name,
+    AnalyticsParams? parameters,
+  }) {
+    throw StateError('Provider not ready');
   }
 }
 

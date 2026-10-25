@@ -24,7 +24,6 @@ const mockSchemas: Record<string, object> = {
     additionalProperties: { description: 'legacy' },
   },
   'shared_parameters.schema.json': { type: 'object' },
-  'context.schema.json': { type: 'object' },
 };
 
 function mockFetch(overrides: Record<string, 'fail' | object> = {}) {
@@ -43,14 +42,13 @@ beforeEach(() => {
 });
 
 describe('loadSchemas', () => {
-  it('loads all 5 schemas', async () => {
+  it('loads the config, events, parameter and shared parameter schemas', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
     const s = await loadSchemas();
     expect(s.configSchema).toBeDefined();
     expect(s.eventsSchema).toBeDefined();
     expect(s.parameterSchema).toBeDefined();
     expect(s.sharedParametersSchema).toBeDefined();
-    expect(s.contextSchema).toBeDefined();
     expect(s.rawConfigSchema).toBeDefined();
   });
 
@@ -65,8 +63,9 @@ describe('loadSchemas', () => {
   it('removes minItems from allowed_values', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
     const s = await loadSchemas();
-    expect((s.parameterSchema.properties?.allowed_values as any)?.minItems).toBeUndefined();
-    expect((s.parameterSchema.properties?.allowed_values as any)?.type).toBe('array');
+    const allowedValues = s.parameterSchema.properties?.allowed_values as { minItems?: number; type?: string } | undefined;
+    expect(allowedValues?.minItems).toBeUndefined();
+    expect(allowedValues?.type).toBe('array');
   });
 
   it('sets additionalProperties false on parameter schema', async () => {

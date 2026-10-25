@@ -104,12 +104,24 @@ logger.logEvent(
 | `Duplicate analytics event identifier` | Two events resolve to the same canonical identifier. | Provide unique `identifier` values or adjust the template. |
 | `Parameters ... must be a map` | YAML indentation/structure is invalid. | Ensure `parameters` points to a map (use `{}` when there are no parameters). |
 | `Allowed values must be a non-empty list` | `allowed_values` was empty or not a list. | Provide at least one allowed value or remove the guard. |
+| `min_length only applies to string parameters, but "count" has type "int"` | `regex`, `min_length` and `max_length` generate `RegExp.hasMatch` and `.length` checks, and `min`/`max` generate `<`/`>` comparisons. These only compile on `string` (or `dynamic`) and numeric types respectively. | Change the type or remove the rule. With `dart_type`, the check is skipped and the custom type must support it. |
+| `Field "description" must be a string.` | A field holds a value of the wrong type, such as `description: 42`, `min: "1"` or `deprecated: "yes"`. The error points at the value. | Quote text values, write numbers and `true`/`false` without quotes, and use whole numbers for `min_length` and `max_length`. |
+| `Regex pattern for parameter "code" is not valid: ...` | The `regex` value does not compile as a Dart `RegExp`. Generated code compiles the same pattern, so it would throw in the app. | Fix the pattern. In YAML, single quotes keep backslashes as written: `regex: '^\d+$'`. |
+| `Invalid configuration for "casing": expected one of snake_case, title_case, original` | `naming.casing` is not one of the supported values. | Use one of the listed values. |
 
 CI should call `--validate-only` to catch these failures without touching generated files.
 
+A field the schema does not define, such as a misspelled `paramters:` or `allowed_value:`, is ignored, so the parser logs a warning with its location instead of failing:
+
+```
+events/auth.yaml:4:5: Unknown field "paramters" in event "auth.login" is ignored.
+```
+
+A parameter without a `type` key may name its type as a key instead (`method: {string: null}`); that key is not reported.
+
 ## Runtime Guards
 
-- `allowed_values` produces runtime assertions in generated methods. Passing a disallowed value throws `ArgumentError` immediately, making mistakes obvious in tests.
+- `allowed_values` on a lowercase `string` parameter generates an enum, so a value outside the list does not compile. On `String` and the other scalar types, generated methods check the value at runtime: passing a disallowed value throws `ArgumentError` immediately, making mistakes obvious in tests.
 - Deprecated events include their replacement in generated documentation and mixin comments so you can migrate safely.
 - Custom types (e.g., `DateTime`, `Uri`) pass through unchanged. Ensure your providers can serialize them; otherwise, transform to primitives before logging (e.g., convert `DateTime` to ISO 8601 strings). Add unit tests exercising provider adapters so unsupported types fail fast instead of silently dropping data.
 

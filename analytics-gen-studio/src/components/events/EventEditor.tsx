@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import { eventEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
+import { breaksStrictEventNames } from '../../utils/validation.ts';
 import Breadcrumb from '../Breadcrumb.tsx';
 import type { EventDef } from '../../types/index.ts';
 
@@ -19,31 +20,26 @@ interface EventEditorProps {
 }
 
 export default function EventEditor({ fileIndex, domain, eventName, eventEditorSchema, breadcrumb }: EventEditorProps) {
-  const files = useStore((s) => s.eventFiles);
-  const config = useStore((s) => s.config);
+  const event = useStore((s) => s.eventFiles[fileIndex]?.domains[domain]?.[eventName]);
+  const strictEventNames = useStore((s) => s.config.rules?.strict_event_names ?? false);
   const updateEvent = useStore((s) => s.updateEvent);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
-
-  const file = files[fileIndex];
-  if (!file) return null;
-  const event = file.domains[domain]?.[eventName];
-  if (!event) return null;
-
-  const { parameters: _params, ...formData } = event;
-  const cfg = config as unknown as Record<string, Record<string, unknown>>;
-  const strictEventNames = cfg.rules?.strict_event_names as boolean ?? false;
+  const customName = event?.event_name as string | undefined;
 
   // Compute extraErrors from form data directly — no dependency on useValidation() so no re-render loop
   const extraErrors = useMemo(() => {
     const result: ErrorSchema = {};
-    const customName = formData.event_name as string | undefined;
-    if (strictEventNames && customName && (customName.includes('{') || customName.includes('}'))) {
+    if (breaksStrictEventNames(customName, strictEventNames)) {
       (result as Record<string, unknown>).event_name = {
         __errors: ['Cannot contain { } when strict_event_names is enabled'],
       };
     }
     return result;
-  }, [formData.event_name, strictEventNames]);
+  }, [customName, strictEventNames]);
+
+  if (!event) return null;
+
+  const { parameters: _params, ...formData } = event;
 
   const handleChange = (e: IChangeEvent) => {
     if (e.formData) updateEvent(fileIndex, domain, eventName, e.formData as EventDef);

@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/code_generator.dart';
 import 'package:analytics_gen/src/generator/docs_generator.dart';
 import 'package:analytics_gen/src/generator/export_generator.dart';
@@ -20,6 +19,7 @@ import 'package:path/path.dart' as path;
 import '../metrics/console_metrics.dart';
 import '../metrics/metrics.dart';
 
+import 'failure_report.dart';
 import 'generation_request.dart';
 import 'pipeline_factories.dart';
 
@@ -59,7 +59,11 @@ class GenerationPipeline {
   final EventLoaderFactory _eventLoaderFactory;
   final YamlParserFactory _yamlParserFactory;
 
-  /// Runs the generation pipeline.
+  /// Runs every requested generation task once.
+  ///
+  /// Throws the [AnalyticsParseException] or [AnalyticsAggregateException]
+  /// from loading an invalid tracking plan, and an
+  /// [AnalyticsGenerationException] when a generation task fails.
   Future<void> run(GenerationRequest request) async {
     printBanner('Analytics Gen - Code Generation', logger: request.logger);
 
@@ -72,62 +76,64 @@ class GenerationPipeline {
         ? ConsoleMetrics(request.logger)
         : const NoOpMetrics();
 
-    try {
-      final parseSw = Stopwatch()..start();
+    final parseSw = Stopwatch()..start();
 
-      final loader = TrackingPlanLoader(
-        projectRoot: projectRoot,
-        config: config,
-        eventLoaderFactory: _eventLoaderFactory,
-        yamlParserFactory: _yamlParserFactory,
+    final loader = TrackingPlanLoader(
+      projectRoot: projectRoot,
+      config: config,
+      eventLoaderFactory: _eventLoaderFactory,
+      yamlParserFactory: _yamlParserFactory,
+    );
+
+    final rawPlan = await loader.load(request.logger);
+    final plan = await _applyTrackingCreationDate(rawPlan, request.logger);
+    final domains = plan.domains;
+    final contexts = plan.contexts;
+
+    parseSw.stop();
+    final totalEvents =
+        domains.values.fold<int>(0, (sum, d) => sum + d.events.length);
+    metrics.recordParsing(parseSw.elapsed, domains.length, totalEvents);
+
+    final exportsPath = config.outputs.exportsPath;
+    if (exportsPath != null) {
+      await _invokeTask(
+        _GeneratorTask(
+          label: 'Schema evolution check',
+          invoke: () =>
+              _schemaChecker.checkSchemaEvolution(domains, exportsPath),
+        ),
+        request.logger,
       );
-
-      final rawPlan = await loader.load(request.logger);
-      final plan = await _applyTrackingCreationDate(rawPlan, request.logger);
-      final domains = plan.domains;
-      final contexts = plan.contexts;
-
-      parseSw.stop();
-      final totalEvents =
-          domains.values.fold<int>(0, (sum, d) => sum + d.events.length);
-      metrics.recordParsing(parseSw.elapsed, domains.length, totalEvents);
-
-      final tasks = _buildTasks(
-        request,
-        domains,
-        contexts,
-      );
-
-      final schemaCheckTask =
-          tasks.where((t) => t.label == 'Schema evolution check').firstOrNull;
-
-      if (schemaCheckTask != null) {
-        tasks.remove(schemaCheckTask);
-        await _invokeTask(schemaCheckTask, request.logger);
-      }
-      final startTime = DateTime.now();
-
-      final genSw = Stopwatch()..start();
-      await _runTasks(tasks, request.logger);
-      metrics.recordGeneration(genSw.elapsed, 0); // 0 file count for now
-      final duration = DateTime.now().difference(startTime);
-      request.logger.info(
-          '✓ All generation tasks completed in ${duration.inMilliseconds}ms');
-    } on _TaskFailure catch (failure) {
-      _handleError(request, failure.label, failure.error, failure.stackTrace);
-    } catch (e, stack) {
-      _handleError(request, 'Generation', e, stack);
     }
+
+    final genSw = Stopwatch()..start();
+    await _runTasks(_buildTasks(request, domains, contexts), request.logger);
+    genSw.stop();
+    metrics.recordGeneration(genSw.elapsed);
+    request.logger.info(
+        '✓ All generation tasks completed in ${genSw.elapsed.inMilliseconds}ms');
   }
 
   /// Runs the generation pipeline in watch mode.
-  Future<void> watch(GenerationRequest request) async {
+  ///
+  /// A failed run is reported and watching continues, so a half-edited YAML
+  /// file does not end the session.
+  Future<void> watch(GenerationRequest request) {
+    return _watcherService.watch(
+      eventsPath: config.inputs.eventsPath,
+      onGenerate: () => _runAndReport(request),
+    );
+  }
+
+  Future<void> _runAndReport(GenerationRequest request) async {
     try {
-      await _watcherService.watch(
-          eventsPath: config.inputs.eventsPath, onGenerate: () => run(request));
-    } catch (e) {
-      request.logger.error('Watch error: $e');
-      exit(1);
+      await run(request);
+    } on Exception catch (error, stackTrace) {
+      request.logger.error('✗ Generation failed: $error');
+      if (request.verbose && !isInvalidInputError(error)) {
+        request.logger.error('Stack trace: $stackTrace');
+      }
     }
   }
 
@@ -142,7 +148,8 @@ class GenerationPipeline {
 
     final eventKeys = <String>[
       for (final entry in plan.domains.entries)
-        for (final event in entry.value.events) '${entry.key}.${event.name}',
+        for (final event in entry.value.events)
+          TrackingLedger.keyFor(entry.key, event.name),
     ];
 
     final existingCount = (await ledger.load()).length;
@@ -225,19 +232,6 @@ class GenerationPipeline {
       );
     }
 
-    // Schema evolution check
-    if (config.outputs.exportsPath != null) {
-      tasks.add(
-        _GeneratorTask(
-          label: 'Schema evolution check',
-          invoke: () => _schemaChecker.checkSchemaEvolution(
-            domains,
-            config.outputs.exportsPath,
-          ),
-        ),
-      );
-    }
-
     return tasks;
   }
 
@@ -258,18 +252,14 @@ class GenerationPipeline {
     try {
       await task.invoke();
       logger.info('✓ ${task.label} completed');
-    } catch (error, stackTrace) {
-      throw _TaskFailure(task.label, error, stackTrace);
+    } on AnalyticsException {
+      rethrow;
+    } on Exception catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        AnalyticsGenerationException('${task.label} failed: $error'),
+        stackTrace,
+      );
     }
-  }
-
-  void _handleError(GenerationRequest request, String context, Object error,
-      StackTrace stack) {
-    request.logger.error('✗ $context failed: $error');
-    if (request.verbose) {
-      request.logger.error('Stack trace: $stack');
-    }
-    exit(1);
   }
 }
 
@@ -281,15 +271,4 @@ class _GeneratorTask {
 
   final String label;
   final Future<void> Function() invoke;
-}
-
-final class _TaskFailure implements Exception {
-  _TaskFailure(this.label, this.error, this.stackTrace);
-
-  final String label;
-  final Object error;
-  final StackTrace stackTrace;
-
-  @override
-  String toString() => '$label failed: $error';
 }

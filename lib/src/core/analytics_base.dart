@@ -29,6 +29,12 @@ abstract class AnalyticsBase {
 }
 
 /// Ensures analytics has been initialized before logging events.
+///
+/// Throws a [StateError] when [analytics] is null.
+@Deprecated(
+  'Generated code no longer calls this; the generated Analytics.instance '
+  'getter performs the check. Will be removed in the next major release.',
+)
 IAnalytics ensureAnalyticsInitialized(IAnalytics? analytics) {
   if (analytics == null) {
     throw StateError(

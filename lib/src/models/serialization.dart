@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
@@ -37,10 +35,6 @@ final class AnalyticsSerialization {
     };
   }
 
-  /// Converts a domain to JSON.
-  static String domainToJson(AnalyticsDomain domain) =>
-      json.encode(domainToMap(domain));
-
   // --- Event ---
 
   /// Creates a new analytics event from a map.
@@ -68,8 +62,7 @@ final class AnalyticsSerialization {
       dualWriteTo: map['dual_write_to'] != null
           ? List<String>.from(cast<Iterable>('dual_write_to'))
           : null,
-      interpolatedName: cast<String?>(
-          'interpolated_name'), // Note: this might be missing in older serialized versions?
+      interpolatedName: cast<String?>('interpolated_name'),
     );
   }
 
@@ -92,10 +85,6 @@ final class AnalyticsSerialization {
       'interpolated_name': event.interpolatedName,
     };
   }
-
-  /// Converts an event to JSON.
-  static String eventToJson(AnalyticsEvent event) =>
-      json.encode(eventToMap(event));
 
   // --- Parameter ---
 

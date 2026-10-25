@@ -1,11 +1,14 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/config/naming_strategy.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
+import 'package:analytics_gen/src/generator/renderers/matchers_renderer.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -140,6 +143,257 @@ void main() {
       expect(result, contains("hubMarket('hub-market'),"));
       expect(result, contains("valueDefault('default'),"));
       expect(result, contains("valueNew('new');"));
+    });
+
+    test('derives enum identifiers from values with spaces and punctuation',
+        () {
+      final event = AnalyticsEvent(
+        name: 'checkout',
+        description: 'Checkout',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['Credit Card', 'google.com'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'shop', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('shop', domain, {'shop': domain});
+
+      expect(result, contains("creditCard('Credit Card'),"));
+      expect(result, contains("googleCom('google.com');"));
+    });
+
+    test('escapes quotes, dollar signs and backslashes in enum values', () {
+      final event = AnalyticsEvent(
+        name: 'survey',
+        description: 'Survey answered',
+        parameters: [
+          AnalyticsParameter(
+            name: 'answer',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ["don't know", r'$5', r'a\b'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'app', events: [event]);
+
+      final result = renderer.renderDomainFile('app', domain, {'app': domain});
+
+      expect(result, contains(r"donTKnow('don\'t know'),"));
+      expect(result, contains(r"value5('\$5'),"));
+      expect(result, contains(r"aB('a\\b');"));
+    });
+
+    test('reads nullable enum and dart_type values without a null-aware access',
+        () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: true,
+            allowedValues: ['email'],
+          ),
+          AnalyticsParameter(
+            name: 'locale',
+            type: 'string',
+            dartType: 'Locale',
+            isNullable: true,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(result, contains('if (method != null) "method": method.value,'));
+      expect(result, contains('if (locale != null) "locale": locale.name,'));
+    });
+
+    test('escapes wire names in the parameters map', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: r'user"s $id',
+            codeName: 'user_id',
+            type: 'string',
+            isNullable: false,
+          ),
+          AnalyticsParameter(
+            name: r'note"s $x',
+            codeName: 'note',
+            type: 'string',
+            isNullable: true,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(result, contains(r'"user\"s \$id": userId,'));
+      expect(result, contains(r'if (note != null) "note\"s \$x": note,'));
+      expectValidDart(result);
+    });
+
+    test('escapes a multi-line description in the parameters map', () {
+      final describingRenderer = EventRenderer(
+        AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+          rules: AnalyticsRules(includeEventDescription: true),
+        ),
+      );
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in\nwith a password',
+        parameters: [],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          describingRenderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(
+        result,
+        contains(r"'description': 'User logs in\nwith a password',"),
+      );
+      expectValidDart(result);
+    });
+
+    test('renders a regex that ends with a quote as an escaped literal', () {
+      final event = AnalyticsEvent(
+        name: 'search',
+        description: 'Search items',
+        parameters: [
+          AnalyticsParameter(
+            name: 'query',
+            type: 'string',
+            isNullable: false,
+            regex: "^[a-z]+'",
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'items', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('items', domain, {'items': domain});
+
+      expect(
+        result,
+        contains(r"static final _queryRegex = RegExp('^[a-z]+\'');"),
+      );
+      expectValidDart(result);
+    });
+
+    test('escapes the replacement in the deprecation message', () {
+      final event = AnalyticsEvent(
+        name: 'old_login',
+        description: 'Old login',
+        parameters: [],
+        deprecated: true,
+        replacement: "the user's new flow",
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(
+        result,
+        contains(r"@Deprecated('Use the user\'s new flow instead.')"),
+      );
+      expectValidDart(result);
+    });
+
+    test('escapes the event name of an unresolved dual-write target', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [],
+        dualWriteTo: [r'other.say"hi"'],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(result, contains(r'name: "other.say\"hi\"",'));
+      expectValidDart(result);
+    });
+
+    test('passes dual-write arguments by identifier, not by wire name', () {
+      AnalyticsParameter userId() => AnalyticsParameter(
+            name: 'uid',
+            codeName: 'user_id',
+            type: 'string',
+            isNullable: false,
+          );
+      final sourceEvent = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [userId()],
+        dualWriteTo: ['auth.login_legacy'],
+      );
+      final targetEvent = AnalyticsEvent(
+        name: 'login_legacy',
+        description: 'Legacy login event',
+        parameters: [userId()],
+      );
+      final domain =
+          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(
+        result,
+        contains('logAuthLoginLegacy(userId: userId, parameters: parameters);'),
+      );
+    });
+
+    test('throws when allowed values map to the same enum constant', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'channel',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['Email', 'email'],
+          ),
+        ],
+        sourcePath: 'events/auth.yaml',
+        lineNumber: 3,
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      expect(
+        () => renderer.renderDomainFile('auth', domain, {'auth': domain}),
+        throwsA(
+          isA<AnalyticsGenerationException>()
+              .having(
+                (e) => e.message,
+                'message',
+                allOf(contains('"Email"'), contains('"email"')),
+              )
+              .having((e) => e.sourcePath, 'sourcePath', 'events/auth.yaml')
+              .having((e) => e.lineNumber, 'lineNumber', 3),
+        ),
+      );
     });
 
     test('renders event with non-string parameter having allowed values', () {
@@ -417,45 +671,101 @@ void main() {
       expect(result, isNot(contains('logAuthLoginLegacy(method:')));
     });
 
-    test(
-        'renders dual-write event with method call when both parameters are enums',
-        () {
-      final sourceEvent = AnalyticsEvent(
-        name: 'login',
-        description: 'User logs in',
-        parameters: [
-          AnalyticsParameter(
-            name: 'method',
-            type: 'string',
-            isNullable: false,
-            allowedValues: ['email', 'google'],
-          ),
-        ],
-        dualWriteTo: ['auth.login_legacy'],
-      );
-      final targetEvent = AnalyticsEvent(
-        name: 'login_legacy',
-        description: 'Legacy login event',
-        parameters: [
-          AnalyticsParameter(
-            name: 'method',
-            type: 'string',
-            isNullable: false,
-            allowedValues: ['email', 'google'],
-          ),
-        ],
-      );
-      final domain =
-          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
-      final allDomains = {'auth': domain};
+    String renderDualWrite({
+      required AnalyticsParameter source,
+      required AnalyticsParameter target,
+    }) {
+      final domain = AnalyticsDomain(name: 'auth', events: [
+        AnalyticsEvent(
+          name: 'login',
+          description: 'User logs in',
+          parameters: [source],
+          dualWriteTo: ['auth.login_legacy'],
+        ),
+        AnalyticsEvent(
+          name: 'login_legacy',
+          description: 'Legacy login event',
+          parameters: [target],
+        ),
+      ]);
+      return renderer.renderDomainFile('auth', domain, {'auth': domain});
+    }
 
-      final result = renderer.renderDomainFile('auth', domain, allDomains);
+    AnalyticsParameter method({
+      bool isNullable = false,
+      List<Object>? allowedValues,
+    }) =>
+        AnalyticsParameter(
+          name: 'method',
+          type: 'string',
+          isNullable: isNullable,
+          allowedValues: allowedValues,
+        );
 
-      expect(result, contains('logAuthLogin('));
+    test('converts the enum when both dual-write parameters are enums', () {
+      final result = renderDualWrite(
+        source: method(allowedValues: ['email', 'google']),
+        target: method(allowedValues: ['google', 'email', 'apple']),
+      );
+
       expect(
-          result,
-          contains(
-              'logAuthLoginLegacy(method: method, parameters: parameters);'));
+        result,
+        contains(
+          'logAuthLoginLegacy(method: AnalyticsAuthLoginLegacyMethodEnum'
+          '.values.byName(method.name), parameters: parameters);',
+        ),
+      );
+    });
+
+    test('converts a nullable enum to a nullable target enum', () {
+      final result = renderDualWrite(
+        source: method(isNullable: true, allowedValues: ['email']),
+        target: method(isNullable: true, allowedValues: ['email']),
+      );
+
+      expect(
+        result,
+        contains(
+          'logAuthLoginLegacy(method: method == null ? null : '
+          'AnalyticsAuthLoginLegacyMethodEnum.values.byName(method.name), '
+          'parameters: parameters);',
+        ),
+      );
+    });
+
+    test('logs the target event when its enum lacks a source value', () {
+      final result = renderDualWrite(
+        source: method(allowedValues: ['email', 'google']),
+        target: method(allowedValues: ['email']),
+      );
+
+      expect(result, isNot(contains('logAuthLoginLegacy(method:')));
+      expect(result, contains('name: "auth_login_legacy",'));
+    });
+
+    test('logs the target event when a nullable source feeds a required one',
+        () {
+      final result = renderDualWrite(
+        source: method(isNullable: true),
+        target: method(),
+      );
+
+      expect(result, isNot(contains('logAuthLoginLegacy(method:')));
+      expect(result, contains('name: "auth_login_legacy",'));
+    });
+
+    test('reads the value of a nullable enum passed to a nullable string', () {
+      final result = renderDualWrite(
+        source: method(isNullable: true, allowedValues: ['email']),
+        target: method(isNullable: true),
+      );
+
+      expect(
+        result,
+        contains(
+          'logAuthLoginLegacy(method: method?.value, parameters: parameters);',
+        ),
+      );
     });
 
     test(
@@ -505,6 +815,79 @@ void main() {
 
     setUp(() {
       renderer = ContextRenderer();
+    });
+
+    test('escapes allowed values in the validation message', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'answer',
+          type: 'string',
+          isNullable: false,
+          allowedValues: ["don't", r'$5'],
+        ),
+      ];
+
+      final result = renderer.renderContextFile('survey', properties);
+
+      expect(result, contains(r"'must be one of don\'t, \$5',"));
+    });
+
+    test('renders a regex containing a quote as a valid literal', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'nickname',
+          type: 'string',
+          isNullable: false,
+          regex: r"^[a-z']+$",
+        ),
+      ];
+
+      final result = renderer.renderContextFile('profile', properties);
+
+      expect(
+        result,
+        contains(r"final _valueRegex = RegExp(r'''^[a-z']+$''');"),
+      );
+      expectValidDart(result);
+    });
+
+    test('escapes the property wire name passed to the capability', () {
+      final properties = [
+        AnalyticsParameter(
+          name: r"plan's $tier",
+          codeName: 'plan_tier',
+          type: 'string',
+          isNullable: false,
+        ),
+      ];
+
+      final result = renderer.renderContextFile('profile', properties);
+
+      expect(
+        result,
+        contains(
+          r"capability(profileKey)?.setProfileProperty('plan\'s \$tier', value);",
+        ),
+      );
+      expectValidDart(result);
+    });
+
+    test('renders each line of a multi-line description as a doc comment', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'plan',
+          type: 'string',
+          isNullable: false,
+          description: 'Current plan\nUpdated on purchase',
+        ),
+      ];
+
+      final result = renderer.renderContextFile('user_properties', properties);
+
+      expect(
+        result,
+        contains('  /// Current plan\n  /// Updated on purchase\n'),
+      );
     });
 
     test('renders context file with capability and mixin', () {
@@ -615,6 +998,36 @@ void main() {
               'static const List<AnalyticsDomain> plan = <AnalyticsDomain>['));
       expect(result, contains("name: 'auth',"));
       expect(result, contains("name: 'login',"));
+    });
+
+    test('escapes a multi-line event description in the plan', () {
+      renderer = AnalyticsClassRenderer(
+        AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+          targets: AnalyticsTargets(generatePlan: true),
+        ),
+      );
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'User logs in\r\nwith a password',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(
+        result,
+        contains(r"description: 'User logs in\r\nwith a password',"),
+      );
+      expectValidDart(result);
     });
 
     test('renders analytics plan with event identifier', () {
@@ -801,4 +1214,42 @@ void main() {
       expect(result, contains("'special_key\\'': 'value\\'with\\'quotes',"));
     });
   });
+
+  group('MatchersRenderer', () {
+    test('escapes wire names in parameter lookups', () {
+      final renderer = MatchersRenderer(
+        AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        ),
+      );
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: r'user"s $id',
+            codeName: 'user_id',
+            type: 'string',
+            isNullable: false,
+          ),
+        ],
+      );
+
+      final result = renderer.render(
+        {
+          'auth': AnalyticsDomain(name: 'auth', events: [event])
+        },
+      );
+
+      expect(result, contains(r'if (!params.containsKey("user\"s \$id"))'));
+      expect(result, contains(r'final actual = params["user\"s \$id"];'));
+      expectValidDart(result);
+    });
+  });
+}
+
+void expectValidDart(String source) {
+  final parsed = parseString(content: source, throwIfDiagnostics: false);
+  expect(parsed.errors, isEmpty, reason: source);
 }

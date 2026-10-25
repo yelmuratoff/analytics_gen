@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/generator/output_manager.dart';
 import 'package:analytics_gen/src/generator/studio_generator.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
+
+import '../test_utils.dart';
 
 /// Exercises the raw-YAML readers in-process. The CLI integration test runs the
 /// generator in a subprocess, which the coverage collector cannot instrument —
@@ -143,6 +146,44 @@ user_properties:
       expect(names, isNot(contains('user_properties.yaml')));
     });
 
+    List<String> eventFileNames(Map<String, dynamic> json) =>
+        (json['eventFiles'] as List)
+            .map((f) => (f as Map)['fileName'] as String)
+            .toList();
+
+    test('reads the same event files as code generation', () async {
+      scaffold();
+      write('events/nested/legacy.yaml', 'legacy:\n  opened: {}\n');
+
+      final json = await generate(outputPath: 'out.json');
+
+      expect(eventFileNames(json), ['auth.yaml', 'checkout.yaml']);
+    });
+
+    test('reads event files matching a glob events path', () async {
+      scaffold();
+      write('events/nested/legacy.yaml', 'legacy:\n  opened: {}\n');
+      final generator = StudioGenerator(
+        config: const AnalyticsConfig(
+          inputs: AnalyticsInputs(
+            eventsPath: 'events/**.yaml',
+            sharedParameters: ['events/shared_user.yaml'],
+            contexts: ['events/user_properties.yaml'],
+          ),
+        ),
+        projectRoot: tempDir.path,
+        configPath: 'analytics_gen.yaml',
+      );
+
+      final file = await generator.generate(outputPath: 'out.json');
+      final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+
+      expect(
+        eventFileNames(json),
+        ['auth.yaml', 'checkout.yaml', 'legacy.yaml'],
+      );
+    });
+
     test('reads shared parameter files', () async {
       scaffold();
       final json = await generate(outputPath: 'out.json');
@@ -163,6 +204,21 @@ user_properties:
       expect(context['contextName'], 'user_properties');
       expect(context['properties']['login_count']['operations'],
           contains('increment'));
+    });
+
+    test('writes the project file through the output manager', () async {
+      scaffold();
+      final outputManager = _RecordingOutputManager();
+
+      await StudioGenerator(
+        config: config,
+        projectRoot: tempDir.path,
+        configPath: 'analytics_gen.yaml',
+        outputManager: outputManager,
+      ).generate(outputPath: 'nested/out.json');
+
+      expect(outputManager.writes, [p.join(tempDir.path, 'nested/out.json')]);
+      expect(File(outputManager.writes.single).existsSync(), isTrue);
     });
 
     test('writes to config.outputs.studioPath when no outputPath is given',
@@ -202,6 +258,27 @@ user_properties:
       final file = await generator.generate(outputPath: 'out.json');
       return jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
     }
+
+    test('warns about each malformed YAML file it skips', () async {
+      write('events/broken.yaml', 'auth: [unclosed');
+      write('shared_broken.yaml', 'parameters: [unclosed');
+      final logs = <String>[];
+
+      await StudioGenerator(
+        config: const AnalyticsConfig(
+          inputs: AnalyticsInputs(sharedParameters: ['shared_broken.yaml']),
+        ),
+        projectRoot: tempDir.path,
+        configPath: 'analytics_gen.yaml',
+        log: TestLogger(logs),
+      ).generate(outputPath: 'out.json');
+
+      final warnings =
+          logs.where((l) => l.startsWith('Skipping malformed YAML'));
+      expect(warnings, hasLength(2));
+      expect(warnings.first, contains('broken.yaml'));
+      expect(warnings.last, contains('shared_broken.yaml'));
+    });
 
     test('falls back to empty parameters on malformed shared file', () async {
       write('events/.keep', '');
@@ -250,4 +327,14 @@ user_properties:
       expect(context['properties'], isEmpty);
     });
   });
+}
+
+final class _RecordingOutputManager extends OutputManager {
+  final writes = <String>[];
+
+  @override
+  Future<void> writeFileIfContentChanged(String filePath, String content) {
+    writes.add(filePath);
+    return super.writeFileIfContentChanged(filePath, content);
+  }
 }

@@ -31,6 +31,7 @@ import { useTheme } from '@mui/material/styles';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
+import { CONFIG_FILE_NAME } from '../../utils/yaml-generator.ts';
 
 
 const iconMap: Record<string, (color: string) => React.ReactNode> = {
@@ -412,7 +413,7 @@ export default function ConfigTab({ configSchema }: ConfigTabProps) {
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4">Configuration</Typography>
-            <Typography variant="caption">analytics_gen.yaml</Typography>
+            <Typography variant="caption">{CONFIG_FILE_NAME}</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {sectionKeys.length > 1 && (

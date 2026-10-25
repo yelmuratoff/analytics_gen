@@ -93,4 +93,43 @@ final class YamlKeys {
   static const String parameters = 'parameters';
   static const String sourcePath = 'source_path';
   static const String lineNumber = 'line_number';
+
+  /// The fields an event accepts, as listed in `schema/events.schema.json`.
+  static const Set<String> eventFields = {
+    eventName,
+    description,
+    identifier,
+    deprecated,
+    replacement,
+    addedIn,
+    deprecatedIn,
+    dualWriteTo,
+    meta,
+    parameters,
+  };
+
+  /// The fields a parameter accepts, as listed in
+  /// `schema/parameter.schema.json`.
+  static const Set<String> parameterFields = {
+    type,
+    description,
+    allowedValues,
+    identifier,
+    paramName,
+    dartType,
+    dartImport,
+    meta,
+    regex,
+    minLength,
+    maxLength,
+    min,
+    max,
+    operations,
+    addedIn,
+    deprecatedIn,
+  };
+
+  /// The root fields of a shared parameters file, as listed in
+  /// `schema/shared_parameters.schema.json`.
+  static const Set<String> sharedParametersFileFields = {parameters};
 }

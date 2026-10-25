@@ -24,6 +24,7 @@ export default function CompactArrayTemplate(props: ArrayFieldTemplateProps) {
 
   return (
     <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2.5, p: 2, mb: 1.5 }}>
+      {/* eslint-disable-next-line react-hooks/static-components -- RJSF getTemplate returns stable registry templates */}
       <ArrayFieldTitleTemplate
         fieldPathId={fieldPathId}
         title={uiOptions.title || title}
@@ -32,6 +33,7 @@ export default function CompactArrayTemplate(props: ArrayFieldTemplateProps) {
         required={required}
         registry={registry}
       />
+      {/* eslint-disable-next-line react-hooks/static-components -- RJSF getTemplate returns stable registry templates */}
       <ArrayFieldDescriptionTemplate
         fieldPathId={fieldPathId}
         description={uiOptions.description || schema.description}
@@ -75,6 +77,7 @@ export function CompactArrayItemTemplate(props: ArrayFieldItemTemplateProps) {
       </Grid>
       {hasToolbar && (
         <Grid>
+          {/* eslint-disable-next-line react-hooks/static-components -- RJSF getTemplate returns stable registry templates */}
           <ArrayFieldItemButtonsTemplate
             {...buttonsProps}
             style={{ flex: 1, paddingLeft: 4, paddingRight: 4, fontWeight: 'bold', minWidth: 0 }}

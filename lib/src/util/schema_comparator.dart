@@ -5,6 +5,8 @@ import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import 'package:analytics_gen/src/models/serialization.dart';
 
 import '../models/analytics_event.dart';
+import 'model_codegen.dart';
+import 'type_mapper.dart';
 
 /// Represents a type of schema change.
 enum SchemaChangeType {
@@ -221,15 +223,18 @@ class SchemaComparator {
     final paramPath = '$eventPath.${current.name}';
 
     // Type change
-    if (current.type != previous.type) {
+    final currentType = _apiType(current);
+    final previousType = _apiType(previous);
+    if (currentType != previousType) {
       changes.add(SchemaChange(
         type: SchemaChangeType.modified,
-        description:
-            'Type changed from "${previous.type}" to "${current.type}".',
+        description: 'Type changed from "$previousType" to "$currentType".',
         path: paramPath,
         isBreaking: true,
       ));
     }
+
+    changes.addAll(_compareAllowedValues(current, previous, paramPath));
 
     // Nullability change
     if (current.isNullable != previous.isNullable) {
@@ -243,9 +248,6 @@ class SchemaComparator {
       ));
     }
 
-    // Validation changes (regex, min, max, etc.)
-    // Adding validation is technically breaking for data ingestion (rejects previously valid data)
-    // but maybe not for code compilation. We'll mark it as breaking for safety.
     if (current.regex != previous.regex) {
       changes.add(SchemaChange(
         type: SchemaChangeType.modified,
@@ -254,9 +256,63 @@ class SchemaComparator {
         isBreaking: true,
       ));
     }
-    // ... other validations can be added similarly
 
     return changes;
+  }
+
+  /// Returns the type the generated API uses for [parameter], so that type
+  /// aliases such as `bool` and `boolean` compare equal.
+  static String _apiType(AnalyticsParameter parameter) {
+    if (parameter.dartType case final dartType?) return dartType;
+    if (parameter.usesGeneratedEnum) {
+      return '${parameter.type} (generated enum)';
+    }
+    return DartTypeMapper.toDartType(parameter.type);
+  }
+
+  /// Reports `allowed_values` changes that reject data valid before (a new
+  /// restriction or a removed value) as breaking, and the rest as
+  /// non-breaking.
+  List<SchemaChange> _compareAllowedValues(
+    AnalyticsParameter current,
+    AnalyticsParameter previous,
+    String paramPath,
+  ) {
+    final currentValues = {...?current.allowedValues};
+    final previousValues = {...?previous.allowedValues};
+
+    if (previousValues.isEmpty != currentValues.isEmpty) {
+      final restricted = currentValues.isNotEmpty;
+      return [
+        SchemaChange(
+          type: SchemaChangeType.modified,
+          description: restricted
+              ? 'Allowed values restricted to: ${currentValues.join(", ")}.'
+              : 'Allowed values restriction removed.',
+          path: paramPath,
+          isBreaking: restricted,
+        ),
+      ];
+    }
+
+    final removed = previousValues.difference(currentValues);
+    final added = currentValues.difference(previousValues);
+    return [
+      if (removed.isNotEmpty)
+        SchemaChange(
+          type: SchemaChangeType.modified,
+          description: 'Allowed values removed: ${removed.join(", ")}.',
+          path: paramPath,
+          isBreaking: true,
+        ),
+      if (added.isNotEmpty)
+        SchemaChange(
+          type: SchemaChangeType.modified,
+          description: 'Allowed values added: ${added.join(", ")}.',
+          path: paramPath,
+          isBreaking: false,
+        ),
+    ];
   }
 
   /// Reconstructs domains from a JSON export string.

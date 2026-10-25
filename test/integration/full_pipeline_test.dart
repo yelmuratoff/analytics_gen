@@ -113,7 +113,7 @@ dependencies:
       // Run pub get to resolve dependencies
       final pubGetResult = await Process.run(
         'dart',
-        ['pub', 'get'],
+        ['pub', 'get', '--offline'],
         workingDirectory: projectRoot,
       );
       expect(pubGetResult.exitCode, 0,

@@ -5,10 +5,12 @@ import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
 import '../models/analytics_parameter.dart';
+import '../util/logger.dart';
 import '../util/string_utils.dart';
 import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
 import 'parameter_parser.dart';
+import 'yaml_fields.dart';
 
 /// Parses analytics events from YAML.
 final class EventParser {
@@ -24,6 +26,7 @@ final class EventParser {
     bool preventEventParameterDuplicates = false,
     bool strictEventNames = true,
     SourceSpan? keySpan,
+    Logger log = const NoOpLogger(),
   }) {
     if (valueNode is! YamlMap) {
       throw AnalyticsParseException(
@@ -34,6 +37,12 @@ final class EventParser {
     }
 
     final eventData = valueNode;
+    eventData.warnUnknownFields(
+      YamlKeys.eventFields,
+      owner: 'event "$domainName.$eventName"',
+      filePath: filePath,
+      log: log,
+    );
 
     // Strict Event Name Validation: Check for interpolation
     if (strictEventNames &&
@@ -46,9 +55,12 @@ final class EventParser {
       );
     }
 
+    String? field(String key) =>
+        eventData.optionalField<String>(key, filePath: filePath);
+
     final description =
-        eventData[YamlKeys.description] as String? ?? 'No description provided';
-    final customEventName = eventData[YamlKeys.eventName] as String?;
+        field(YamlKeys.description) ?? 'No description provided';
+    final customEventName = field(YamlKeys.eventName);
 
     if (customEventName != null) {
       final customEventNameNode = eventData.nodes[YamlKeys.eventName];
@@ -62,11 +74,15 @@ final class EventParser {
         );
       }
     }
-    final identifier = eventData[YamlKeys.identifier] as String?;
-    final deprecated = eventData[YamlKeys.deprecated] as bool? ?? false;
-    final replacement = eventData[YamlKeys.replacement] as String?;
-    final addedIn = eventData[YamlKeys.addedIn] as String?;
-    final deprecatedIn = eventData[YamlKeys.deprecatedIn] as String?;
+    final identifier = field(YamlKeys.identifier);
+    final deprecated = eventData.optionalField<bool>(
+          YamlKeys.deprecated,
+          filePath: filePath,
+        ) ??
+        false;
+    final replacement = field(YamlKeys.replacement);
+    final addedIn = field(YamlKeys.addedIn);
+    final deprecatedIn = field(YamlKeys.deprecatedIn);
 
     final dualWriteToNode = eventData.nodes[YamlKeys.dualWriteTo];
     List<String>? dualWriteTo;
@@ -122,6 +138,7 @@ final class EventParser {
         sharedParameters: sharedParameters,
         enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
         preventEventParameterDuplicates: preventEventParameterDuplicates,
+        log: log,
       );
       parameters.addAll(parsedParams);
     }
@@ -143,10 +160,9 @@ final class EventParser {
         final found = parameters.where((p) => p.name == key).toList();
         if (found.isEmpty) return match.group(0)!;
 
-        final camel = StringUtils.toCamelCase(found.first.name);
+        final camel = StringUtils.toCamelCase(found.first.codeName);
         return '\${$camel}';
       });
-      // If no replacements were made (e.g. invalid placeholders), keep null to avoid noise?
       if (interpolatedName == escapedEffectiveName) {
         interpolatedName = null;
       }

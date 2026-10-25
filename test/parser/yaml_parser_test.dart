@@ -154,6 +154,85 @@ void main() {
       );
     });
 
+    test('lists every scalar type alias when allowed_values is unsupported',
+        () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      when:\n'
+            '        type: datetime\n'
+            '        allowed_values: [today]\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.single.message,
+            'message',
+            'allowed_values is only supported for scalar parameter types '
+                '(int, bool, boolean, float, double, string, num, number). '
+                'Parameter "when" has unsupported type "datetime".',
+          ),
+        ),
+      );
+    });
+
+    test('accepts allowed_values on the float and number aliases', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      ratio:\n'
+            '        type: float\n'
+            '        allowed_values: [1, 2.5]\n'
+            '      level:\n'
+            '        type: number\n'
+            '        allowed_values: [1, 2.5]\n'
+      };
+
+      final domains = await parseEventsHelper(files: files);
+      final parameters = {
+        for (final p in domains['auth']!.events.single.parameters) p.name: p,
+      };
+
+      expect(parameters['ratio']!.allowedValues, everyElement(isA<double>()));
+      expect(parameters['level']!.allowedValues!.first, isA<int>());
+    });
+
+    test('throws at the pattern when a regex does not compile', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      code:\n'
+            '        type: string\n'
+            '        regex: "[a-"\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.single,
+            'error',
+            isA<AnalyticsParseException>()
+                .having(
+                  (e) => e.message,
+                  'message',
+                  startsWith(
+                      'Regex pattern for parameter "code" is not valid:'),
+                )
+                .having((e) => e.span?.text, 'span text', '"[a-"'),
+          ),
+        ),
+      );
+    });
+
     test('throws when allowed_values types do not match parameter type',
         () async {
       final files = {
@@ -457,6 +536,56 @@ void main() {
       expect(param.codeName, equals('user_id'));
     });
 
+    test('throws when a parameter has neither a type nor a shared definition',
+        () async {
+      final files = {
+        'checkout.yaml': 'checkout:\n'
+            '  started:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      flow_idd:\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>()
+              .having(
+                (e) => e.errors.first.message,
+                'message',
+                contains('"flow_idd"'),
+              )
+              .having((e) => e.errors.first.span, 'span', isNotNull),
+        ),
+      );
+    });
+
+    test('interpolates event_name placeholders with the identifier override',
+        () async {
+      final parser = YamlParser(
+        config: ParserConfig(strictEventNames: false),
+      );
+
+      final domains = await parser.parseEvents([
+        AnalyticsSource(
+          filePath: 'screen.yaml',
+          content: 'screen:\n'
+              '  viewed:\n'
+              '    description: Test\n'
+              '    event_name: "Screen: {page_name}"\n'
+              '    parameters:\n'
+              '      page_name:\n'
+              '        type: string\n'
+              '        identifier: page\n',
+        ),
+      ]);
+
+      expect(
+        domains['screen']!.events.single.interpolatedName,
+        equals(r'Screen: ${page}'),
+      );
+    });
+
     test('throws when parameter names conflict after camelCase', () async {
       final files = {
         'auth.yaml': 'auth:\n'
@@ -706,7 +835,7 @@ void main() {
         throwsA(isA<AnalyticsParseException>().having(
           (e) => e.message,
           'message',
-          contains('Failed to parse YAML file'),
+          startsWith('Invalid YAML: '),
         )),
       );
     });
@@ -790,12 +919,12 @@ void main() {
         throwsA(isA<AnalyticsAggregateException>().having(
           (e) => e.errors.first.message,
           'message',
-          contains('Failed to parse YAML file'),
+          startsWith('Invalid YAML: '),
         )),
       );
     });
 
-    test('wraps non-Analytics exception during event parsing', () async {
+    test('reports a list where a string field is expected', () async {
       final files = {
         'auth.yaml': 'auth:\n'
             '  login:\n'
@@ -807,9 +936,9 @@ void main() {
       expect(
         () => parseEventsHelper(files: files),
         throwsA(isA<AnalyticsAggregateException>().having(
-          (e) => e.errors.first.innerError,
-          'innerError',
-          isNotNull,
+          (e) => e.errors.single.message,
+          'message',
+          'Field "description" must be a string.',
         )),
       );
     });

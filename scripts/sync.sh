@@ -9,7 +9,7 @@ set +e  # Don't exit on error — we track failures manually
 # ─────────────────────────────────────────────────────────────
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT"
+cd "$ROOT" || exit 1
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -55,7 +55,7 @@ fi
 
 step "Generate API docs (dart doc)"
 if dart doc 2>&1 | grep -q "Success!"; then
-  TOPIC_COUNT=$(ls doc/api/topics/*-topic.html 2>/dev/null | wc -l | tr -d ' ')
+  TOPIC_COUNT=$(find doc/api/topics -maxdepth 1 -name '*-topic.html' 2>/dev/null | wc -l | tr -d ' ')
   ok "doc/api/ — $TOPIC_COUNT topic pages"
 else
   dart doc 2>&1 | grep -E "error|warning" | tail -5
@@ -106,7 +106,7 @@ fi
 # ─── 5. Studio checks ───
 
 step "Studio: generate TypeScript types"
-cd analytics-gen-studio
+cd analytics-gen-studio || exit 1
 if node scripts/generate-types.mjs 2>&1 | grep -q "Generated"; then
   ok "src/types/generated.ts"
 else
@@ -114,18 +114,29 @@ else
 fi
 
 step "Studio: TypeScript check"
-TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
+TSC_OUTPUT=$(npx tsc -b 2>&1)
 TSC_EXIT=$?
 if [ "$TSC_EXIT" -eq 0 ]; then
-  ok "tsc --noEmit — 0 errors"
+  ok "tsc -b — 0 errors"
 else
   echo "$TSC_OUTPUT" | head -5
   fail "TypeScript errors found"
 fi
 
+step "Studio: lint"
+LINT_OUTPUT=$(npx eslint . 2>&1)
+LINT_EXIT=$?
+if [ "$LINT_EXIT" -eq 0 ]; then
+  ok "eslint — 0 errors"
+else
+  echo "$LINT_OUTPUT" | tail -5
+  fail "ESLint errors found"
+fi
+
 step "Studio: tests"
 STUDIO_TEST_OUTPUT=$(npx vitest run 2>&1)
-if echo "$STUDIO_TEST_OUTPUT" | grep -q "passed"; then
+STUDIO_TEST_EXIT=$?
+if [ "$STUDIO_TEST_EXIT" -eq 0 ]; then
   TEST_LINE=$(echo "$STUDIO_TEST_OUTPUT" | grep "Tests" | tail -1)
   ok "vitest — $TEST_LINE"
 else
@@ -134,14 +145,16 @@ else
 fi
 
 step "Studio: production build"
-if npm run build 2>&1 | grep -q "built in"; then
+BUILD_OUTPUT=$(npm run build 2>&1)
+BUILD_EXIT=$?
+if [ "$BUILD_EXIT" -eq 0 ]; then
   ok "vite build"
 else
-  npm run build 2>&1 | grep "error" | head -5
+  echo "$BUILD_OUTPUT" | grep -i "error" | head -5
   fail "Studio build failed"
 fi
 
-cd "$ROOT"
+cd "$ROOT" || exit 1
 
 # ─── 6. Cross-reference check ───
 
@@ -181,12 +194,12 @@ fi
 # ─── 7. Studio hardcode check ───
 
 step "Studio: no hardcoded schema values"
-cd analytics-gen-studio/src
-HARDCODE=$(grep -rn "'events'\|'shared_parameters'\|'dart'\|'plan'\|'csv'\|'snake_case'\|'No description'\|'lib/src/analytics'" \
+cd analytics-gen-studio/src || exit 1
+HARDCODE=$(grep -rn "'shared_parameters'\|'dart'\|'plan'\|'csv'\|'snake_case'\|'No description'\|'lib/src/analytics'" \
   --include="*.ts" --include="*.tsx" \
   | grep -v "node_modules\|__tests__\|generated\|constants\|schemas/\|tab:\|case '\|TabId\|import \|\.d\.ts" \
-  | grep -cv "selectedPath\.\|\.tab !==\|\.tab ===\|'events' ?\|outputs: Required\|tab: '\|id: '\|, 'events'" || true)
-cd "$ROOT"
+  | grep -cv "selectedPath\.\|\.tab !==\|\.tab ===\|outputs: Required\|tab: '\|id: '" || true)
+cd "$ROOT" || exit 1
 if [ "$HARDCODE" -le 0 ] 2>/dev/null; then
   ok "No hardcoded schema values"
 else
@@ -204,7 +217,7 @@ for f in schema/*.json; do
   fi
 done
 if $SCHEMA_OK; then
-  ok "All $(ls schema/*.json | wc -l | tr -d ' ') schema files valid"
+  ok "All $(find schema -maxdepth 1 -name '*.json' | wc -l | tr -d ' ') schema files valid"
 fi
 
 # ─── Summary ───

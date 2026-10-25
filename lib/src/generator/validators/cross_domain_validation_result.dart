@@ -20,7 +20,7 @@ class CrossDomainValidationResult {
   /// The name of the method to call (if valid).
   final String? methodName;
 
-  /// The arguments to pass to the method (key: parameter name, value: Dart expression).
+  /// The arguments to pass to the method (key: parameter identifier, value: Dart expression).
   final Map<String, String>? arguments;
 
   /// The resolved event name to use for the fallback generic log (if invalid).

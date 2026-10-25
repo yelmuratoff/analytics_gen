@@ -7,10 +7,8 @@ import 'output_manager.dart';
 
 import 'renderers/analytics_class_renderer.dart';
 import 'renderers/context_renderer.dart';
-import 'renderers/default_renderer_factory.dart';
 import 'renderers/event_renderer.dart';
 import 'renderers/matchers_renderer.dart';
-import 'renderers/renderer_factory.dart';
 import 'serializers/plan_serializer.dart';
 
 import 'tasks/clean_stale_files_task.dart';
@@ -31,7 +29,7 @@ final class CodeGenerator {
     this.log = const NoOpLogger(),
     AnalyticsClassRenderer? classRenderer,
     ContextRenderer? contextRenderer,
-    RendererFactory rendererFactory = const DefaultRendererFactory(),
+    EventRenderer? eventRenderer,
     MatchersRenderer? matchersRenderer,
     OutputManager? outputManager,
     PlanSerializer? planSerializer,
@@ -41,7 +39,7 @@ final class CodeGenerator {
               planSerializer: planSerializer ?? const PlanSerializer(),
             ),
         _contextRenderer = contextRenderer ?? const ContextRenderer(),
-        _eventRenderer = rendererFactory.createEventRenderer(config),
+        _eventRenderer = eventRenderer ?? EventRenderer(config),
         _matchersRenderer = matchersRenderer ?? MatchersRenderer(config),
         _outputManager = outputManager ?? const OutputManager();
 
