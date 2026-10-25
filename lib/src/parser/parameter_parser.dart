@@ -112,7 +112,12 @@ final class ParameterParser {
       if (sharedParam != null) {
         return sharedParam;
       }
-      // If not shared, fall through to error or dynamic (likely error in strict mode)
+      throw AnalyticsParseException(
+        'Parameter "$rawName" has no type. Add a type, or define it in the '
+        'shared parameters file to reference it by name.',
+        filePath: filePath,
+        span: valueNode.span,
+      );
     }
 
     // Case 2: Redefinition of shared parameter

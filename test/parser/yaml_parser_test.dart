@@ -457,6 +457,30 @@ void main() {
       expect(param.codeName, equals('user_id'));
     });
 
+    test('throws when a parameter has neither a type nor a shared definition',
+        () async {
+      final files = {
+        'checkout.yaml': 'checkout:\n'
+            '  started:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      flow_idd:\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>()
+              .having(
+                (e) => e.errors.first.message,
+                'message',
+                contains('"flow_idd"'),
+              )
+              .having((e) => e.errors.first.span, 'span', isNotNull),
+        ),
+      );
+    });
+
     test('throws when parameter names conflict after camelCase', () async {
       final files = {
         'auth.yaml': 'auth:\n'
