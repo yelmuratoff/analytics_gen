@@ -5,7 +5,7 @@ import {
   generateSharedParamFileYaml,
   generateContextFileYaml,
 } from '../../utils/yaml-generator.ts';
-import type { ConfigState, EventFile, SharedParamFile, ContextFile } from '../../types/index.ts';
+import type { ConfigState, EventFile } from '../../types/index.ts';
 
 const defaultConfig: ConfigState = {
   inputs: { events: 'events', shared_parameters: [], contexts: [], imports: [] },

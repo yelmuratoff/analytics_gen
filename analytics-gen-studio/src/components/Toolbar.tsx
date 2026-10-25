@@ -33,7 +33,7 @@ import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import Divider from '@mui/material/Divider';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
 import { useColorMode } from '../theme.ts';
@@ -363,7 +363,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
           />
           <Box sx={{
             px: 1, py: 0.25,
-            bgcolor: (t: any) => `${t.palette.primary.main}14`, borderRadius: 1.5,
+            bgcolor: (t: Theme) => `${t.palette.primary.main}14`, borderRadius: 1.5,
           }}>
             <Typography sx={{ fontWeight: 600, fontSize: '0.65rem', color: 'primary.main' }}>
               Studio

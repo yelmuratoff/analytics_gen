@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo, useTransition, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo, useTransition, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -29,7 +29,7 @@ import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
 import Collapse from '@mui/material/Collapse';
 import CircularProgress from '@mui/material/CircularProgress';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE, SNAKE_CASE_DOMAIN, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
 import { addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
@@ -42,7 +42,7 @@ import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import ItemMenu from '../ItemMenu.tsx';
 import ErrorDot from '../ErrorDot.tsx';
-import type { EventDef, ParamDef } from '../../types/index.ts';
+import type { ParamDef, SelectionPath } from '../../types/index.ts';
 
 const Arrow = ({ open }: { open: boolean }) => open
   ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
@@ -59,6 +59,15 @@ const Badge = memo(({ n }: { n: number }) => (
 ));
 
 // ── Parameter Row ──
+
+function treeKeysFor(selectedPath: SelectionPath | null): string[] {
+  if (selectedPath?.tab !== 'events') return [];
+  const fileKey = `f${selectedPath.fileIndex}`;
+  if (!selectedPath.domain) return [fileKey];
+  const domainKey = `${fileKey}.d${selectedPath.domain}`;
+  if (!selectedPath.event) return [fileKey, domainKey];
+  return [fileKey, domainKey, `${domainKey}.e${selectedPath.event}`];
+}
 
 interface RenameTarget {
   type: 'file' | 'domain' | 'event' | 'param';
@@ -84,8 +93,8 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, ac
 }) => (
   <ListItemButton data-selected={isSelected || undefined} sx={{
     pl: 9.5, py: 0.4,
-    ...(isSelected && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
-    ...(hasError && !isSelected && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.03)) }),
+    ...(isSelected && { bgcolor: ((t: Theme) => alpha(t.palette.primary.main, 0.06)) }),
+    ...(hasError && !isSelected && { bgcolor: ((t: Theme) => alpha(t.palette.error.main, 0.03)) }),
   }} onClick={() => actions.select({ tab: 'events', fileIndex: fi, domain: dn, event: en, parameter: pn })} dense>
     <ListItemIcon sx={{ minWidth: 18 }}>
       {pv === null
@@ -102,7 +111,7 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, ac
               {pv === null && (
                 <Chip label="shared" size="small" sx={{
                   height: 16, fontSize: '0.6rem', fontWeight: 600,
-                  bgcolor: (t: any) => `${t.palette.brand.contexts}14`, color: 'brand.contexts',
+                  bgcolor: (t: Theme) => `${t.palette.brand.contexts}14`, color: 'brand.contexts',
                   '& .MuiChip-label': { px: 0.6 },
                 }} />
               )}
@@ -125,8 +134,8 @@ const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, ac
 
 // ── Event Row ──
 
-const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, errorMsgs, onToggle, onSelect, onDuplicate, onDelete, onRename, editNode, children }: {
-  en: string; paramCount: number; fi: number; dn: string;
+const EventRow = memo(({ en, paramCount, isSelected, isOpen, hasError, errorMsgs, onToggle, onSelect, onDuplicate, onDelete, onRename, editNode, children }: {
+  en: string; paramCount: number;
   isSelected: boolean; isOpen: boolean; hasError?: boolean; errorMsgs?: string[];
   onToggle: () => void; onSelect: () => void; onDuplicate: () => void; onDelete: () => void;
   onRename: () => void; editNode?: React.ReactNode;
@@ -135,8 +144,8 @@ const EventRow = memo(({ en, paramCount, fi, dn, isSelected, isOpen, hasError, e
   <Box>
     <ListItemButton data-selected={isSelected || undefined} sx={{
       pl: 6.5, py: 0.4,
-      ...(isSelected && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
-      ...(hasError && !isSelected && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.03)) }),
+      ...(isSelected && { bgcolor: ((t: Theme) => alpha(t.palette.primary.main, 0.06)) }),
+      ...(hasError && !isSelected && { bgcolor: ((t: Theme) => alpha(t.palette.error.main, 0.03)) }),
     }} onClick={() => { onToggle(); onSelect(); }} dense>
       <Arrow open={isOpen} />
       <ListItemIcon sx={{ minWidth: 22, ml: 0.2 }}>
@@ -274,29 +283,15 @@ export default function FileTree() {
   const collapseAll = useCallback(() => setExpanded(new Set()), []);
 
   // Auto-expand tree path and scroll to selected item when selectedPath changes (e.g. from error click)
-  const prevSelectedRef = useRef<string | null>(null);
+  const [expandedForSelection, setExpandedForSelection] = useState(selectedPath);
+  if (selectedPath !== expandedForSelection) {
+    setExpandedForSelection(selectedPath);
+    const keysToExpand = treeKeysFor(selectedPath);
+    setExpanded((prev) => keysToExpand.every((k) => prev.has(k)) ? prev : new Set([...prev, ...keysToExpand]));
+  }
+
   useEffect(() => {
-    if (!selectedPath || selectedPath.tab !== 'events') return;
-    const key = JSON.stringify(selectedPath);
-    if (key === prevSelectedRef.current) return;
-    prevSelectedRef.current = key;
-
-    const fi = selectedPath.fileIndex;
-    const fk = `f${fi}`;
-    const keysToExpand: string[] = [fk];
-    if (selectedPath.domain) {
-      const dk = `${fk}.d${selectedPath.domain}`;
-      keysToExpand.push(dk);
-      if (selectedPath.event) {
-        keysToExpand.push(`${dk}.e${selectedPath.event}`);
-      }
-    }
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      for (const k of keysToExpand) next.add(k);
-      return next;
-    });
-
+    if (selectedPath?.tab !== 'events') return;
     // Scroll selected item into view after a short delay for DOM update
     requestAnimationFrame(() => {
       const el = document.querySelector('[data-selected="true"]');
@@ -311,7 +306,7 @@ export default function FileTree() {
 
   // Search helpers
   const matchesSearch = (name: string) => !q || name.toLowerCase().includes(q);
-  const fileMatchesSearch = useCallback((fi: number) => {
+  const fileMatchesSearch = (fi: number) => {
     if (!q) return true;
     const file = files[fi];
     if (file.fileName.toLowerCase().includes(q)) return true;
@@ -322,9 +317,9 @@ export default function FileTree() {
         Object.keys(ev.parameters).some((pn) => pn.toLowerCase().includes(q))
       )
     );
-  }, [files, q]);
+  };
 
-  const domainMatchesSearch = useCallback((fi: number, dn: string) => {
+  const domainMatchesSearch = (fi: number, dn: string) => {
     if (!q) return true;
     if (dn.toLowerCase().includes(q)) return true;
     const events = files[fi].domains[dn];
@@ -332,14 +327,14 @@ export default function FileTree() {
       en.toLowerCase().includes(q) ||
       Object.keys(ev.parameters).some((pn) => pn.toLowerCase().includes(q))
     );
-  }, [files, q]);
+  };
 
-  const eventMatchesSearch = useCallback((fi: number, dn: string, en: string) => {
+  const eventMatchesSearch = (fi: number, dn: string, en: string) => {
     if (!q) return true;
     if (en.toLowerCase().includes(q)) return true;
     const event = files[fi].domains[dn]?.[en];
     return event ? Object.keys(event.parameters).some((pn) => pn.toLowerCase().includes(q)) : false;
-  }, [files, q]);
+  };
 
   const renderInlineEdit = (fontSize = '0.78rem', height = 24, mono = false) => (
     <InlineRenameField
@@ -437,7 +432,7 @@ export default function FileTree() {
             <Box key={fi}>
               <ListItemButton onClick={() => toggle(fk)} dense sx={{
                 py: 0.4,
-                ...(errorKeys.has(`events:${fi}`) && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.02)) }),
+                ...(errorKeys.has(`events:${fi}`) && { bgcolor: ((t: Theme) => alpha(t.palette.error.main, 0.02)) }),
               }}>
                 <Arrow open={fileOpen} />
                 <ListItemIcon sx={{ minWidth: 26, ml: 0.2 }}>
@@ -471,8 +466,8 @@ export default function FileTree() {
                       <Box key={dn}>
                         <ListItemButton sx={{
                           pl: 4, py: 0.35,
-                          ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: ((t: any) => alpha(t.palette.primary.main, 0.06)) }),
-                          ...(errorKeys.has(`events:${fi}:${dn}`) && !isSel(fi, dn, undefined, undefined) && { bgcolor: ((t: any) => alpha(t.palette.error.main, 0.02)) }),
+                          ...(isSel(fi, dn, undefined, undefined) && !selectedPath?.event && { bgcolor: ((t: Theme) => alpha(t.palette.primary.main, 0.06)) }),
+                          ...(errorKeys.has(`events:${fi}:${dn}`) && !isSel(fi, dn, undefined, undefined) && { bgcolor: ((t: Theme) => alpha(t.palette.error.main, 0.02)) }),
                         }} onClick={() => {
                           toggle(dk);
                           setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn });
@@ -510,7 +505,7 @@ export default function FileTree() {
                                 const eventOpen = expanded.has(ek) || !!q;
                                 const paramCount = Object.keys(event.parameters).length;
                                 return (
-                                  <EventRow key={en} en={en} paramCount={paramCount} fi={fi} dn={dn}
+                                  <EventRow key={en} en={en} paramCount={paramCount}
                                     isSelected={isSel(fi, dn, en, undefined)}
                                     isOpen={eventOpen}
                                     hasError={errorKeys.has(`events:${fi}:${dn}:${en}`)}

@@ -14,6 +14,8 @@ import { applySchemaConstants } from './schemas/constants.ts';
 import { setSchemaDefaultConfig } from './state/store.ts';
 import { refreshValidation } from './hooks/useValidation.ts';
 
+const PREVIEW_SKELETON_WIDTHS = ['72%', '58%', '86%', '64%', '89%', '53%', '77%', '68%'];
+
 // ── Error Boundary ──
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -148,8 +150,8 @@ export default function App() {
                 <Box sx={{ width: 12 }} />
                 <Box sx={{ flex: 1, bgcolor: 'background.paper', borderRadius: 1.5, p: 2 }}>
                   <Skeleton variant="rounded" width={140} height={20} sx={{ mb: 2, bgcolor: 'rgba(255,255,255,0.06)' }} />
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <Skeleton key={i} variant="rounded" height={14} sx={{ mb: 1, bgcolor: 'rgba(255,255,255,0.04)', width: `${50 + Math.random() * 40}%` }} />
+                  {PREVIEW_SKELETON_WIDTHS.map((width, i) => (
+                    <Skeleton key={i} variant="rounded" height={14} sx={{ mb: 1, bgcolor: 'rgba(255,255,255,0.04)', width }} />
                   ))}
                 </Box>
               </Box>

@@ -6,7 +6,7 @@ import Badge from '@mui/material/Badge';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ElectricBoltRounded from '@mui/icons-material/ElectricBoltRounded';
 import ShareRounded from '@mui/icons-material/ShareRounded';
@@ -133,7 +133,7 @@ export default function TabBar({ children }: TabBarProps) {
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                           minWidth: 20, height: 18, px: 0.5,
                           borderRadius: 2,
-                          bgcolor: activeTab === t.id ? (th: any) => `${th.palette.primary.main}1A` : 'action.hover',
+                          bgcolor: activeTab === t.id ? (th: Theme) => `${th.palette.primary.main}1A` : 'action.hover',
                         }}>
                           <Typography component="span" sx={{
                             fontSize: '0.68rem', fontWeight: 600,

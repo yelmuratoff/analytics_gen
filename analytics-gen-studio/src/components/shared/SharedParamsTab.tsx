@@ -24,7 +24,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { DEFAULT_PARAM_TYPE, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
@@ -182,7 +182,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: (t: any) => `${t.palette.brand.shared}0F`, border: '2px dashed', borderColor: 'brand.shared',
+              bgcolor: (t: Theme) => `${t.palette.brand.shared}0F`, border: '2px dashed', borderColor: 'brand.shared',
             }}>
               <ShareRounded sx={{ fontSize: 28, color: 'brand.shared' }} />
             </Box>
@@ -252,7 +252,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
                             return (
                               <ListItemButton key={pn} sx={{
                                 pl: 5.5, py: 0.4,
-                                ...(isSel(fi, pn) && { bgcolor: (t: any) => alpha(t.palette.primary.main, 0.06) }),
+                                ...(isSel(fi, pn) && { bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.06) }),
                               }} onClick={() => setSelectedPath({ tab: 'shared', fileIndex: fi, parameter: pn })}>
                                 <ListItemIcon sx={{ minWidth: 18 }}>
                                   <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />

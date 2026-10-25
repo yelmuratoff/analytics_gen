@@ -63,8 +63,9 @@ describe('loadSchemas', () => {
   it('removes minItems from allowed_values', async () => {
     const { loadSchemas } = await import('../../schemas/loader.ts');
     const s = await loadSchemas();
-    expect((s.parameterSchema.properties?.allowed_values as any)?.minItems).toBeUndefined();
-    expect((s.parameterSchema.properties?.allowed_values as any)?.type).toBe('array');
+    const allowedValues = s.parameterSchema.properties?.allowed_values as { minItems?: number; type?: string } | undefined;
+    expect(allowedValues?.minItems).toBeUndefined();
+    expect(allowedValues?.type).toBe('array');
   });
 
   it('sets additionalProperties false on parameter schema', async () => {

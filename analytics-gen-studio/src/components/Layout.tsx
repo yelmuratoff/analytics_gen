@@ -8,7 +8,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Fade from '@mui/material/Fade';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, type Theme } from '@mui/material/styles';
 import CodeRounded from '@mui/icons-material/CodeRounded';
 import CodeOffRounded from '@mui/icons-material/CodeOffRounded';
 import Button from '@mui/material/Button';
@@ -149,7 +149,7 @@ export default function Layout({ schemas }: LayoutProps) {
                 <Box sx={{
                   width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  bgcolor: (t: any) => `${t.palette.primary.main}14`, border: '2px solid', borderColor: (t: any) => `${t.palette.primary.main}33`,
+                  bgcolor: (t: Theme) => `${t.palette.primary.main}14`, border: '2px solid', borderColor: (t: Theme) => `${t.palette.primary.main}33`,
                 }}>
                   <ElectricBoltRounded sx={{ fontSize: 26, color: 'primary.main' }} />
                 </Box>
@@ -223,7 +223,7 @@ export default function Layout({ schemas }: LayoutProps) {
           <Box sx={{
             width: 80, height: 80, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: (t: any) => `${t.palette.primary.main}26`, border: '2px dashed', borderColor: 'primary.main',
+            bgcolor: (t: Theme) => `${t.palette.primary.main}26`, border: '2px dashed', borderColor: 'primary.main',
           }}>
             <UploadFileRounded sx={{ fontSize: 36, color: 'primary.main' }} />
           </Box>

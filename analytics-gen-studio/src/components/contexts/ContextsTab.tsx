@@ -28,7 +28,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
 import { SNAKE_CASE_PARAM, DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
@@ -200,7 +200,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
             <Box sx={{
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 1.5,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: (t: any) => `${t.palette.brand.contexts}0F`, border: '2px dashed', borderColor: 'brand.contexts',
+              bgcolor: (t: Theme) => `${t.palette.brand.contexts}0F`, border: '2px dashed', borderColor: 'brand.contexts',
             }}>
               <LayersRounded sx={{ fontSize: 28, color: 'brand.contexts' }} />
             </Box>
@@ -288,7 +288,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                             return (
                             <ListItemButton key={pn} sx={{
                               pl: 7, py: 0.4,
-                              ...(isSel(fi, pn) && { bgcolor: (t: any) => alpha(t.palette.primary.main, 0.06) }),
+                              ...(isSel(fi, pn) && { bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.06) }),
                             }} onClick={() => setSelectedPath({ tab: 'contexts', fileIndex: fi, contextProperty: pn })}>
                               <ListItemIcon sx={{ minWidth: 18 }}>
                                 <CircleRounded sx={{ fontSize: 6, color: hasErr ? 'error.main' : 'text.disabled' }} />
