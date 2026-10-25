@@ -1,6 +1,7 @@
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
 
+import '../../core/exceptions.dart';
 import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';
 
@@ -36,12 +37,27 @@ class EnumRenderer {
     buffer.writeln('enum $enumName {');
 
     final values = param.allowedValues!;
+    final valuesByIdentifier = <String, String>{};
     for (var i = 0; i < values.length; i++) {
       final value = values[i];
       final stringValue = value.toString();
       final identifier = toEnumIdentifier(stringValue);
 
-      buffer.write("  $identifier('$stringValue')");
+      final clashingValue = valuesByIdentifier[identifier];
+      if (clashingValue != null) {
+        throw AnalyticsGenerationException(
+          'Allowed values "$clashingValue" and "$stringValue" of parameter '
+          '"${param.name}" in $domainName.${event.name} map to the same enum '
+          'constant "$identifier". Rename one of the values.',
+          sourcePath: event.sourcePath,
+          lineNumber: event.lineNumber,
+        );
+      }
+      valuesByIdentifier[identifier] = stringValue;
+
+      buffer.write(
+        "  $identifier('${StringUtils.escapeSingleQuoted(stringValue)}')",
+      );
       if (i == values.length - 1) {
         buffer.writeln(';');
       } else {
@@ -71,8 +87,14 @@ class EnumRenderer {
   ///
   /// Handles reserved words (e.g. `continue` → `valueContinue`) and
   /// digit-prefixed identifiers (e.g. `123test` → `value123test`).
+  /// Any character other than an ASCII letter or digit separates words
+  /// (e.g. `Credit Card` → `creditCard`).
   String toEnumIdentifier(String value) {
-    final camel = StringUtils.toCamelCase(value);
+    final words = value
+        .split(RegExp('[^A-Za-z0-9]+'))
+        .where((word) => word.isNotEmpty)
+        .join('_');
+    final camel = StringUtils.toCamelCase(words);
     if (camel.isEmpty) return 'empty';
     if (StringUtils.dartReservedWords.contains(camel)) {
       return 'value${camel[0].toUpperCase()}${camel.substring(1)}';

@@ -1,5 +1,6 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/config/naming_strategy.dart';
+import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
@@ -140,6 +141,83 @@ void main() {
       expect(result, contains("hubMarket('hub-market'),"));
       expect(result, contains("valueDefault('default'),"));
       expect(result, contains("valueNew('new');"));
+    });
+
+    test('derives enum identifiers from values with spaces and punctuation',
+        () {
+      final event = AnalyticsEvent(
+        name: 'checkout',
+        description: 'Checkout',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['Credit Card', 'google.com'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'shop', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('shop', domain, {'shop': domain});
+
+      expect(result, contains("creditCard('Credit Card'),"));
+      expect(result, contains("googleCom('google.com');"));
+    });
+
+    test('escapes quotes, dollar signs and backslashes in enum values', () {
+      final event = AnalyticsEvent(
+        name: 'survey',
+        description: 'Survey answered',
+        parameters: [
+          AnalyticsParameter(
+            name: 'answer',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ["don't know", r'$5', r'a\b'],
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'app', events: [event]);
+
+      final result = renderer.renderDomainFile('app', domain, {'app': domain});
+
+      expect(result, contains(r"donTKnow('don\'t know'),"));
+      expect(result, contains(r"value5('\$5'),"));
+      expect(result, contains(r"aB('a\\b');"));
+    });
+
+    test('throws when allowed values map to the same enum constant', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'channel',
+            type: 'string',
+            isNullable: false,
+            allowedValues: ['Email', 'email'],
+          ),
+        ],
+        sourcePath: 'events/auth.yaml',
+        lineNumber: 3,
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      expect(
+        () => renderer.renderDomainFile('auth', domain, {'auth': domain}),
+        throwsA(
+          isA<AnalyticsGenerationException>()
+              .having(
+                (e) => e.message,
+                'message',
+                allOf(contains('"Email"'), contains('"email"')),
+              )
+              .having((e) => e.sourcePath, 'sourcePath', 'events/auth.yaml')
+              .having((e) => e.lineNumber, 'lineNumber', 3),
+        ),
+      );
     });
 
     test('renders event with non-string parameter having allowed values', () {
