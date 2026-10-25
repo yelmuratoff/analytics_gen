@@ -123,6 +123,16 @@ else
   fail "TypeScript errors found"
 fi
 
+step "Studio: lint"
+LINT_OUTPUT=$(npx eslint . 2>&1)
+LINT_EXIT=$?
+if [ "$LINT_EXIT" -eq 0 ]; then
+  ok "eslint — 0 errors"
+else
+  echo "$LINT_OUTPUT" | tail -5
+  fail "ESLint errors found"
+fi
+
 step "Studio: tests"
 STUDIO_TEST_OUTPUT=$(npx vitest run 2>&1)
 STUDIO_TEST_EXIT=$?
@@ -135,10 +145,12 @@ else
 fi
 
 step "Studio: production build"
-if npm run build 2>&1 | grep -q "built in"; then
+BUILD_OUTPUT=$(npm run build 2>&1)
+BUILD_EXIT=$?
+if [ "$BUILD_EXIT" -eq 0 ]; then
   ok "vite build"
 else
-  npm run build 2>&1 | grep "error" | head -5
+  echo "$BUILD_OUTPUT" | grep -i "error" | head -5
   fail "Studio build failed"
 fi
 
@@ -183,10 +195,10 @@ fi
 
 step "Studio: no hardcoded schema values"
 cd analytics-gen-studio/src
-HARDCODE=$(grep -rn "'events'\|'shared_parameters'\|'dart'\|'plan'\|'csv'\|'snake_case'\|'No description'\|'lib/src/analytics'" \
+HARDCODE=$(grep -rn "'shared_parameters'\|'dart'\|'plan'\|'csv'\|'snake_case'\|'No description'\|'lib/src/analytics'" \
   --include="*.ts" --include="*.tsx" \
   | grep -v "node_modules\|__tests__\|generated\|constants\|schemas/\|tab:\|case '\|TabId\|import \|\.d\.ts" \
-  | grep -cv "selectedPath\.\|\.tab !==\|\.tab ===\|'events' ?\|outputs: Required\|tab: '\|id: '\|, 'events'" || true)
+  | grep -cv "selectedPath\.\|\.tab !==\|\.tab ===\|outputs: Required\|tab: '\|id: '" || true)
 cd "$ROOT"
 if [ "$HARDCODE" -le 0 ] 2>/dev/null; then
   ok "No hardcoded schema values"

@@ -91,6 +91,10 @@ jobs:
            working-directory: analytics-gen-studio
            run: npm ci
 
+         - name: Lint
+           working-directory: analytics-gen-studio
+           run: npm run lint
+
          - name: Run tests
            working-directory: analytics-gen-studio
            run: npm test
