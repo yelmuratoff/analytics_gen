@@ -642,45 +642,101 @@ void main() {
       expect(result, isNot(contains('logAuthLoginLegacy(method:')));
     });
 
-    test(
-        'renders dual-write event with method call when both parameters are enums',
-        () {
-      final sourceEvent = AnalyticsEvent(
-        name: 'login',
-        description: 'User logs in',
-        parameters: [
-          AnalyticsParameter(
-            name: 'method',
-            type: 'string',
-            isNullable: false,
-            allowedValues: ['email', 'google'],
-          ),
-        ],
-        dualWriteTo: ['auth.login_legacy'],
-      );
-      final targetEvent = AnalyticsEvent(
-        name: 'login_legacy',
-        description: 'Legacy login event',
-        parameters: [
-          AnalyticsParameter(
-            name: 'method',
-            type: 'string',
-            isNullable: false,
-            allowedValues: ['email', 'google'],
-          ),
-        ],
-      );
-      final domain =
-          AnalyticsDomain(name: 'auth', events: [sourceEvent, targetEvent]);
-      final allDomains = {'auth': domain};
+    String renderDualWrite({
+      required AnalyticsParameter source,
+      required AnalyticsParameter target,
+    }) {
+      final domain = AnalyticsDomain(name: 'auth', events: [
+        AnalyticsEvent(
+          name: 'login',
+          description: 'User logs in',
+          parameters: [source],
+          dualWriteTo: ['auth.login_legacy'],
+        ),
+        AnalyticsEvent(
+          name: 'login_legacy',
+          description: 'Legacy login event',
+          parameters: [target],
+        ),
+      ]);
+      return renderer.renderDomainFile('auth', domain, {'auth': domain});
+    }
 
-      final result = renderer.renderDomainFile('auth', domain, allDomains);
+    AnalyticsParameter method({
+      bool isNullable = false,
+      List<Object>? allowedValues,
+    }) =>
+        AnalyticsParameter(
+          name: 'method',
+          type: 'string',
+          isNullable: isNullable,
+          allowedValues: allowedValues,
+        );
 
-      expect(result, contains('logAuthLogin('));
+    test('converts the enum when both dual-write parameters are enums', () {
+      final result = renderDualWrite(
+        source: method(allowedValues: ['email', 'google']),
+        target: method(allowedValues: ['google', 'email', 'apple']),
+      );
+
       expect(
-          result,
-          contains(
-              'logAuthLoginLegacy(method: method, parameters: parameters);'));
+        result,
+        contains(
+          'logAuthLoginLegacy(method: AnalyticsAuthLoginLegacyMethodEnum'
+          '.values.byName(method.name), parameters: parameters);',
+        ),
+      );
+    });
+
+    test('converts a nullable enum to a nullable target enum', () {
+      final result = renderDualWrite(
+        source: method(isNullable: true, allowedValues: ['email']),
+        target: method(isNullable: true, allowedValues: ['email']),
+      );
+
+      expect(
+        result,
+        contains(
+          'logAuthLoginLegacy(method: method == null ? null : '
+          'AnalyticsAuthLoginLegacyMethodEnum.values.byName(method.name), '
+          'parameters: parameters);',
+        ),
+      );
+    });
+
+    test('logs the target event when its enum lacks a source value', () {
+      final result = renderDualWrite(
+        source: method(allowedValues: ['email', 'google']),
+        target: method(allowedValues: ['email']),
+      );
+
+      expect(result, isNot(contains('logAuthLoginLegacy(method:')));
+      expect(result, contains('name: "auth_login_legacy",'));
+    });
+
+    test('logs the target event when a nullable source feeds a required one',
+        () {
+      final result = renderDualWrite(
+        source: method(isNullable: true),
+        target: method(),
+      );
+
+      expect(result, isNot(contains('logAuthLoginLegacy(method:')));
+      expect(result, contains('name: "auth_login_legacy",'));
+    });
+
+    test('reads the value of a nullable enum passed to a nullable string', () {
+      final result = renderDualWrite(
+        source: method(isNullable: true, allowedValues: ['email']),
+        target: method(isNullable: true),
+      );
+
+      expect(
+        result,
+        contains(
+          'logAuthLoginLegacy(method: method?.value, parameters: parameters);',
+        ),
+      );
     });
 
     test(

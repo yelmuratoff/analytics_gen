@@ -1,9 +1,11 @@
 import '../../config/analytics_config.dart';
 import '../../models/analytics_domain.dart';
 import '../../models/analytics_event.dart';
+import '../../models/analytics_parameter.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
 import '../model_codegen.dart';
+import '../renderers/enum_renderer.dart';
 import 'cross_domain_validation_result.dart';
 
 /// Validates and resolves cross-domain event calls.
@@ -94,38 +96,17 @@ class CrossDomainValidator {
         continue;
       }
 
-      final sourceParam = currentEvent.parameters[sourceParamIndex];
-      final sourceVarName = StringUtils.toCamelCase(sourceParam.codeName);
-
-      final sourceIsEnum = sourceParam.usesGeneratedEnum;
-      final targetIsEnum = targetParam.usesGeneratedEnum;
-
-      // Handle dart_type matching
-      if (sourceParam.dartType != null || targetParam.dartType != null) {
-        if (sourceParam.dartType == targetParam.dartType) {
-          args[targetParam.codeName] = sourceVarName;
-        } else {
-          // Mismatch in dart_type, cannot guarantee compatibility
-          return CrossDomainValidationResult.invalid(
-              fallbackEventName: fallbackName);
-        }
-      } else if (targetParam.type == sourceParam.type) {
-        if (sourceIsEnum && !targetIsEnum) {
-          // Enum -> String
-          args[targetParam.codeName] = '$sourceVarName.value';
-        } else if (sourceIsEnum == targetIsEnum) {
-          // Both Enum or Both String (or other types)
-          args[targetParam.codeName] = sourceVarName;
-        } else {
-          // String -> Enum (Cannot handle easily)
-          return CrossDomainValidationResult.invalid(
-              fallbackEventName: fallbackName);
-        }
-      } else {
-        // Type mismatch -> cannot call method safely
+      final argument = _argumentFor(
+        currentEvent.parameters[sourceParamIndex],
+        targetParam,
+        targetDomainName: targetDomainName,
+        targetEvent: targetEvent,
+      );
+      if (argument == null) {
         return CrossDomainValidationResult.invalid(
             fallbackEventName: fallbackName);
       }
+      args[targetParam.codeName] = argument;
     }
 
     // Add the spread parameters map
@@ -135,5 +116,56 @@ class CrossDomainValidator {
       methodName: methodName,
       arguments: args,
     );
+  }
+
+  /// Returns the Dart expression that passes [source] to the generated
+  /// method's [target] parameter, or null when no expression type-checks.
+  String? _argumentFor(
+    AnalyticsParameter source,
+    AnalyticsParameter target, {
+    required String targetDomainName,
+    required AnalyticsEvent targetEvent,
+  }) {
+    if (source.isNullable && !target.isNullable) return null;
+    final variable = StringUtils.toCamelCase(source.codeName);
+
+    if (source.dartType != null || target.dartType != null) {
+      return source.dartType == target.dartType ? variable : null;
+    }
+    if (source.type != target.type) return null;
+
+    return switch ((source.usesGeneratedEnum, target.usesGeneratedEnum)) {
+      (false, false) => variable,
+      (true, false) =>
+        source.isNullable ? '$variable?.value' : '$variable.value',
+      (true, true) => _convertEnum(
+          variable,
+          source,
+          target,
+          targetDomainName: targetDomainName,
+          targetEvent: targetEvent,
+        ),
+      (false, true) => null,
+    };
+  }
+
+  /// Converts between the generated enums of two events by constant name,
+  /// which is defined only when every source value exists in the target.
+  String? _convertEnum(
+    String variable,
+    AnalyticsParameter source,
+    AnalyticsParameter target, {
+    required String targetDomainName,
+    required AnalyticsEvent targetEvent,
+  }) {
+    final targetValues = target.allowedValues!.toSet();
+    if (!source.allowedValues!.every(targetValues.contains)) return null;
+
+    final targetEnum = const EnumRenderer()
+        .buildEnumName(targetDomainName, targetEvent, target);
+    final conversion = '$targetEnum.values.byName($variable.name)';
+    return source.isNullable
+        ? '$variable == null ? null : $conversion'
+        : conversion;
   }
 }
