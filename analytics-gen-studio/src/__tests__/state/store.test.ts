@@ -336,6 +336,29 @@ describe('store', () => {
     });
   });
 
+  describe('undo history', () => {
+    beforeEach(() => useStore.temporal.getState().clear());
+
+    const pastStates = () => useStore.temporal.getState().pastStates.length;
+
+    it('does not record navigation', () => {
+      useStore.getState().setActiveTab('events');
+      useStore.getState().setSelectedPath({ tab: 'events', fileIndex: 0 });
+      expect(pastStates()).toBe(0);
+    });
+
+    it('records project edits and undoes them without touching the selection', () => {
+      useStore.getState().addEventFile('auth.yaml');
+      useStore.getState().setSelectedPath({ tab: 'events', fileIndex: 0 });
+      expect(pastStates()).toBe(1);
+
+      useStore.temporal.getState().undo();
+
+      expect(useStore.getState().eventFiles).toEqual([]);
+      expect(useStore.getState().selectedPath).toEqual({ tab: 'events', fileIndex: 0 });
+    });
+  });
+
   describe('renaming', () => {
     beforeEach(() => {
       useStore.setState({

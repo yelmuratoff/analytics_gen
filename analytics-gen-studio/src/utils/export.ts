@@ -8,7 +8,7 @@ import {
   generateContextFileYaml,
 } from './yaml-generator.ts';
 import { normalizeEventDef } from './yaml-importer.ts';
-import { computeRevision, type ProjectMeta } from './project-meta.ts';
+import { computeRevision, contentOf, type ProjectMeta } from './project-meta.ts';
 import {
   saveProjectHandle,
   loadProjectHandle,
@@ -162,12 +162,7 @@ async function ensureWritePermission(handle: FileSystemFileHandle, request: bool
 // ── Project serialization ──
 
 function serializeProject(state: StudioState): string {
-  const content = {
-    config: state.config,
-    eventFiles: state.eventFiles,
-    sharedParamFiles: state.sharedParamFiles,
-    contextFiles: state.contextFiles,
-  };
+  const content = contentOf(state);
   const meta: ProjectMeta = {
     projectId: state.projectId,
     ...(state.projectName ? { name: state.projectName } : {}),

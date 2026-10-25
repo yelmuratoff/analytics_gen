@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import { temporal } from 'zundo';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
 import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
@@ -283,10 +284,9 @@ export const useStore = create<StudioState>()(
       })),
       {
         limit: 50,
-        partialize: (state) => {
-          const { activeTab: _, selectedPath: _s, errors: _e, ...data } = state;
-          return data;
-        },
+        partialize: ({ projectId, projectName, config, eventFiles, sharedParamFiles, contextFiles }) =>
+          ({ projectId, projectName, config, eventFiles, sharedParamFiles, contextFiles }),
+        equality: shallow,
       },
     ),
     {

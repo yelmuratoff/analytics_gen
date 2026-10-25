@@ -50,13 +50,13 @@ import {
   getLastFileName,
   setLastFileName,
   getBaselineRevision,
-  setBaselineRevision,
   peekDiskState,
   supportsFileSystemAccess,
 } from '../utils/export.ts';
 import type { StudioState } from '../types/index.ts';
 import {
   computeRevision,
+  contentOf,
   deriveJsonName,
   deriveZipName,
   getUniqueExportNames,
@@ -64,6 +64,7 @@ import {
 import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import { useValidation } from '../hooks/useValidation.ts';
+import { useSyncedRevision } from '../hooks/useSyncedRevision.ts';
 import { importYamlString, type ImportSchemaHints } from '../utils/yaml-importer.ts';
 import DocsDrawer from './DocsDrawer.tsx';
 import ProjectDialog from './ProjectDialog.tsx';
@@ -72,12 +73,7 @@ import ProjectDialog from './ProjectDialog.tsx';
 function exportNames() {
   const s = useStore.getState();
   const unique = getUniqueExportNames();
-  const revision = computeRevision({
-    config: s.config,
-    eventFiles: s.eventFiles,
-    sharedParamFiles: s.sharedParamFiles,
-    contextFiles: s.contextFiles,
-  });
+  const revision = computeRevision(contentOf(s));
   // A user-set project name is the customization knob; otherwise reuse the
   // remembered file name so Save As proposes what the user already had.
   const named = s.projectName.trim().length > 0;
@@ -92,13 +88,7 @@ function exportNames() {
 
 /** Content revision of the current working state. */
 function currentRevision(): string {
-  const s = useStore.getState();
-  return computeRevision({
-    config: s.config,
-    eventFiles: s.eventFiles,
-    sharedParamFiles: s.sharedParamFiles,
-    contextFiles: s.contextFiles,
-  });
+  return computeRevision(contentOf(useStore.getState()));
 }
 
 const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
@@ -146,9 +136,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const [saving, setSaving] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSavedVersion, setLastSavedVersion] = useState<number | null>(null);
-  const changeVersion = useRef(0);
+  const { isDirty, markSynced, forgetSync } = useSyncedRevision();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const yamlInputRef = useRef<HTMLInputElement>(null);
   // Only subscribe to actions — NOT the full store, to avoid re-renders on data changes
@@ -175,11 +163,12 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const result = await saveProject(useStore.getState(), { suggestedName: exportNames().jsonName });
+      const state = useStore.getState();
+      const savedRevision = currentRevision();
+      const result = await saveProject(state, { suggestedName: exportNames().jsonName });
       if (result.saved) {
         if (result.fileName) rememberFile(result.fileName);
-        setBaselineRevision(currentRevision());
-        setLastSavedVersion(changeVersion.current);
+        markSynced(savedRevision);
         setSnackbar({ message: `Saved${result.fileName ? ` \u2192 ${result.fileName}` : ''}`, severity: 'success' });
       }
     } catch (err) {
@@ -187,16 +176,17 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, [rememberFile]);
+  }, [rememberFile, markSynced]);
 
   const handleSaveAs = useCallback(async () => {
     setSaving(true);
     try {
-      const name = await saveProjectAs(useStore.getState(), { suggestedName: exportNames().jsonName });
+      const state = useStore.getState();
+      const savedRevision = currentRevision();
+      const name = await saveProjectAs(state, { suggestedName: exportNames().jsonName });
       if (name) {
         rememberFile(name);
-        setBaselineRevision(currentRevision());
-        setLastSavedVersion(changeVersion.current);
+        markSynced(savedRevision);
         setSnackbar({ message: `Saved \u2192 ${name}`, severity: 'success' });
       }
     } catch (err) {
@@ -204,7 +194,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } finally {
       setSaving(false);
     }
-  }, [rememberFile]);
+  }, [rememberFile, markSynced]);
 
   const handleOpen = useCallback(async () => {
     if (supportsFileSystemAccess) {
@@ -213,9 +203,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
         if (result) {
           loadProject(result.data);
           rememberFile(result.fileName);
-          setBaselineRevision(currentRevision());
+          markSynced(currentRevision());
           setDiskChange(null);
-          setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
           setSnackbar({ message: `Opened ${result.fileName}`, severity: 'success' });
         }
       } catch (err) {
@@ -224,7 +213,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     } else {
       fileInputRef.current?.click();
     }
-  }, [loadProject, rememberFile]);
+  }, [loadProject, rememberFile, markSynced]);
 
   const handleLoadFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -233,8 +222,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       const data = await loadProjectFile(file);
       loadProject(data);
       rememberFile(file.name);
-      setBaselineRevision(currentRevision());
-      setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
+      markSynced(currentRevision());
       setSnackbar({ message: `Opened ${file.name}`, severity: 'success' });
     } catch (err) {
       setSnackbar({ message: `Failed to load: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
@@ -245,8 +233,8 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const handleReset = () => {
     resetState();
     clearFileHandle();
+    forgetSync();
     setFileName(null);
-    setLastSavedVersion(null);
     setConfirmOpen(false);
     setSnackbar({ message: 'Reset complete', severity: 'success' });
   };
@@ -255,8 +243,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     if (!diskChange) return;
     loadProject(diskChange.data);
     rememberFile(diskChange.fileName);
-    setBaselineRevision(diskChange.revision);
-    setTimeout(() => setLastSavedVersion(changeVersion.current), 0);
+    markSynced(diskChange.revision);
     setDiskChange(null);
     setSnackbar({ message: 'Reloaded from disk', severity: 'success' });
   };
@@ -264,7 +251,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const handleKeepMine = () => {
     // Acknowledge the on-disk version so we stop prompting; the user's next
     // save will overwrite it.
-    if (diskChange) setBaselineRevision(diskChange.revision);
+    if (diskChange) markSynced(diskChange.revision);
     setDiskChange(null);
   };
 
@@ -347,15 +334,6 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [checkDiskChange]);
-
-  // Lightweight dirty check — increment counter on any data change
-  useEffect(() => {
-    const unsub = useStore.subscribe(() => {
-      changeVersion.current++;
-      setIsDirty(lastSavedVersion !== null && changeVersion.current !== lastSavedVersion);
-    });
-    return unsub;
-  }, [lastSavedVersion]);
 
   // Warn before closing with unsaved changes
   useEffect(() => {
