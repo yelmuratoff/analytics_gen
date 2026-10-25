@@ -5,6 +5,7 @@ import 'package:args/args.dart';
 import '../config/analytics_config.dart';
 import '../config/config_loader.dart';
 import '../config/config_parser.dart';
+import '../core/exceptions.dart';
 import '../util/logger.dart';
 
 /// The parsed arguments, logger and configuration a CLI command runs with.
@@ -42,8 +43,9 @@ final class CliInvocation {
 ///
 /// Parses [arguments] with [parser] and calls [printUsage] for `--help`.
 /// Otherwise loads the config named by `--config` and runs [command]. Any
-/// failure is logged, with its stack trace when `--verbose` is set, and ends
-/// the process with exit code 1.
+/// failure is logged and ends the process with exit code 1. With
+/// `--verbose`, failures other than invalid input also print their stack
+/// trace.
 Future<void> runCliCommand(
   List<String> arguments, {
   required ArgParser parser,
@@ -85,7 +87,9 @@ Future<void> runCliCommand(
     );
   } catch (e, stackTrace) {
     logger.error('Error: $e');
-    if (verbose) logger.error('Stack trace: $stackTrace');
+    if (verbose && !isInvalidInputError(e)) {
+      logger.error('Stack trace: $stackTrace');
+    }
     exit(1);
   }
 }

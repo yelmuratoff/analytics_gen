@@ -130,7 +130,7 @@ class GenerationPipeline {
       await run(request);
     } on Exception catch (error, stackTrace) {
       request.logger.error('✗ Generation failed: $error');
-      if (request.verbose) {
+      if (request.verbose && !isInvalidInputError(error)) {
         request.logger.error('Stack trace: $stackTrace');
       }
     }

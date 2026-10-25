@@ -73,6 +73,12 @@ final class AnalyticsAggregateException implements AnalyticsException {
   }
 }
 
+/// Whether [error] reports invalid input that its message alone explains:
+/// an [AnalyticsException], or a [FormatException] from the tracking plan,
+/// the config file or the command line.
+bool isInvalidInputError(Object error) =>
+    error is AnalyticsException || error is FormatException;
+
 /// Exception thrown during code generation.
 final class AnalyticsGenerationException implements AnalyticsException {
   /// Creates a new generation exception.
