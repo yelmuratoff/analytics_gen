@@ -3,8 +3,8 @@ import 'package:analytics_gen/src/models/analytics_parameter.dart';
 
 import '../../core/exceptions.dart';
 import '../../models/analytics_event.dart';
+import '../../util/model_codegen.dart';
 import '../../util/string_utils.dart';
-import '../model_codegen.dart';
 
 /// Renders Dart enums for analytics parameters with allowed values.
 class EnumRenderer {

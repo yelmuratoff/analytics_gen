@@ -1,6 +1,6 @@
-import 'package:analytics_gen/src/generator/model_codegen.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:analytics_gen/src/util/model_codegen.dart';
 import 'package:test/test.dart';
 
 void main() {

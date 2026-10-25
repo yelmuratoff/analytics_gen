@@ -3,8 +3,8 @@ import '../../models/analytics_domain.dart';
 import '../../models/analytics_event.dart';
 import '../../models/analytics_parameter.dart';
 import '../../util/event_naming.dart';
+import '../../util/model_codegen.dart';
 import '../../util/string_utils.dart';
-import '../model_codegen.dart';
 import '../renderers/enum_renderer.dart';
 import 'cross_domain_validation_result.dart';
 

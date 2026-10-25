@@ -6,10 +6,10 @@ import '../config/analytics_config.dart';
 import '../models/analytics_event.dart';
 import '../util/event_naming.dart';
 import '../util/logger.dart';
+import '../util/model_codegen.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
 import 'generation_metadata.dart';
-import 'model_codegen.dart';
 import 'output_manager.dart';
 import 'renderers/enum_renderer.dart';
 

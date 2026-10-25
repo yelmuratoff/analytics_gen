@@ -1,7 +1,7 @@
 import 'package:analytics_gen/src/models/analytics_event.dart';
 
+import '../../../util/model_codegen.dart';
 import '../../../util/type_mapper.dart';
-import '../../model_codegen.dart';
 import '../enum_renderer.dart';
 
 /// Renders documentation comments.

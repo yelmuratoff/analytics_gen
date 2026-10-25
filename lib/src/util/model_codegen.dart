@@ -1,6 +1,6 @@
 import '../models/analytics_event.dart';
 import '../models/analytics_parameter.dart';
-import '../util/string_utils.dart';
+import 'string_utils.dart';
 
 /// How code generation treats an [AnalyticsParameter].
 extension ParameterCodegen on AnalyticsParameter {

@@ -2,8 +2,8 @@ import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 
 import '../../config/analytics_config.dart';
+import '../../util/model_codegen.dart';
 import '../../util/string_utils.dart';
-import '../model_codegen.dart';
 import 'base_renderer.dart';
 import 'enum_renderer.dart';
 

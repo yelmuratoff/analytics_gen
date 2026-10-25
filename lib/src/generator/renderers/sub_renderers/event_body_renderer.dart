@@ -3,9 +3,9 @@ import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 
 import '../../../util/event_naming.dart';
+import '../../../util/model_codegen.dart';
 import '../../../util/string_utils.dart';
 import '../../../util/type_mapper.dart';
-import '../../model_codegen.dart';
 import '../../utils/code_buffer.dart';
 import '../../validators/cross_domain_validator.dart';
 import 'validation_renderer.dart';
