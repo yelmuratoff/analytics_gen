@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import { eventEditorUiSchema } from '../../schemas/ui-schemas.ts';
 import { compactTemplates } from '../rjsf/index.ts';
 import { useStore } from '../../state/store.ts';
+import { breaksStrictEventNames } from '../../utils/validation.ts';
 import Breadcrumb from '../Breadcrumb.tsx';
 import type { EventDef } from '../../types/index.ts';
 
@@ -28,7 +29,7 @@ export default function EventEditor({ fileIndex, domain, eventName, eventEditorS
   // Compute extraErrors from form data directly — no dependency on useValidation() so no re-render loop
   const extraErrors = useMemo(() => {
     const result: ErrorSchema = {};
-    if (strictEventNames && customName && (customName.includes('{') || customName.includes('}'))) {
+    if (breaksStrictEventNames(customName, strictEventNames)) {
       (result as Record<string, unknown>).event_name = {
         __errors: ['Cannot contain { } when strict_event_names is enabled'],
       };

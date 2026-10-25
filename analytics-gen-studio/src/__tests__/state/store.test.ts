@@ -12,8 +12,8 @@ describe('store', () => {
       expect(config.inputs.contexts).toEqual([]);
       expect(config.inputs.imports).toEqual([]);
       expect(config.outputs.dart).toBe('lib/src/analytics/generated');
-      expect(config.outputs.docs).toBeUndefined();
-      expect(config.outputs.exports).toBeUndefined();
+      expect(config.outputs.docs).toBe('');
+      expect(config.outputs.exports).toBe('');
       expect(config.targets.plan).toBe(true);
       expect(config.targets.csv).toBe(false);
       expect(config.rules.strict_event_names).toBe(true);

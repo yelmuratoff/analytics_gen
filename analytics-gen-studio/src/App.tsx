@@ -12,6 +12,7 @@ import Layout from './components/Layout.tsx';
 import { loadSchemas, type LoadedSchemas } from './schemas/loader.ts';
 import { applySchemaConstants } from './schemas/constants.ts';
 import { setSchemaDefaultConfig } from './state/store.ts';
+import { refreshValidation } from './hooks/useValidation.ts';
 
 // ── Error Boundary ──
 
@@ -90,14 +91,9 @@ export default function App() {
         applySchemaConstants({
           ...loaded,
           defaultParamType: loaded.parameterTypes[0] ?? 'string',
-          parameterTypes: loaded.parameterTypes,
-          paramFieldNames: loaded.paramFieldNames,
-          paramMutualExclusions: loaded.paramMutualExclusions,
-          stringOnlyFields: loaded.stringOnlyFields,
-          numericOnlyFields: loaded.numericOnlyFields,
-          operationsField: loaded.operationsField,
         });
         setSchemaDefaultConfig(loaded.defaultConfig);
+        refreshValidation();
         setSchemas(loaded);
       })
       .catch((err) => setError(err.message));

@@ -10,7 +10,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import { parameterEditorUiSchema } from '../schemas/ui-schemas.ts';
 import { DEFAULT_PARAM_TYPE, PARAMETER_TYPES } from '../schemas/constants.ts';
-import { useParameterValidation, countAdvancedFields } from '../hooks/useParameterValidation.ts';
+import { validateParamForm } from '../utils/validation.ts';
 import { compactTemplates } from './rjsf/index.ts';
 import AdvancedSection from './AdvancedSection.tsx';
 import type { ParamDef } from '../types/index.ts';
@@ -37,6 +37,16 @@ function withoutFields(schema: RJSFSchema, fields: string[]): RJSFSchema {
   return { ...schema, properties };
 }
 
+function countAdvancedFields(value: ParamDef, excludeFields: string[]): number {
+  const exclude = new Set(['type', ...excludeFields]);
+  return Object.entries(value).filter(([k, v]) => {
+    if (exclude.has(k)) return false;
+    if (v == null || v === '') return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    return true;
+  }).length;
+}
+
 function pickFields(value: ParamDef, fields: string[]): Partial<ParamDef> {
   const source = value as Record<string, unknown>;
   return Object.fromEntries(fields.filter((f) => f in source).map((f) => [f, source[f]])) as Partial<ParamDef>;
@@ -44,7 +54,6 @@ function pickFields(value: ParamDef, fields: string[]): Partial<ParamDef> {
 
 export default function ParamDefinitionForm({ value, onChange, parameterSchema, managedFields = [] }: ParamDefinitionFormProps) {
   const typeLabelId = useId();
-  const customValidate = useParameterValidation();
   const managedValues = pickFields(value, managedFields);
 
   const handleFormChange = (e: IChangeEvent) => {
@@ -76,7 +85,7 @@ export default function ParamDefinitionForm({ value, onChange, parameterSchema, 
           formData={value}
           validator={validator}
           onChange={handleFormChange}
-          customValidate={customValidate}
+          customValidate={validateParamForm}
           templates={compactTemplates}
           showErrorList={false}
         >
