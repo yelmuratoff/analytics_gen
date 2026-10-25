@@ -4,7 +4,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
 import { refreshValidation } from '../../hooks/useValidation.ts';
 import { getTheme } from '../../theme.ts';
+import { extractImportHints } from '../../utils/yaml-importer.ts';
 import Toolbar from '../../components/Toolbar.tsx';
+import { canonicalSchema } from '../schema-fixtures.ts';
 
 const { exportAllAsZip } = vi.hoisted(() => ({ exportAllAsZip: vi.fn(() => Promise.resolve()) }));
 vi.mock('../../utils/export.ts', async (importOriginal) => ({
@@ -14,10 +16,16 @@ vi.mock('../../utils/export.ts', async (importOriginal) => ({
   peekDiskState: () => Promise.resolve(null),
 }));
 
+const importHints = extractImportHints(
+  canonicalSchema('analytics_gen.schema.json')!,
+  canonicalSchema('events.schema.json')!,
+  canonicalSchema('shared_parameters.schema.json')!,
+);
+
 function renderToolbar() {
   return render(
     <ThemeProvider theme={getTheme('light')}>
-      <Toolbar importHints={{ configRootKey: 'analytics_gen', sharedRootKey: 'parameters', eventFieldNames: [] }} />
+      <Toolbar importHints={importHints} />
     </ThemeProvider>,
   );
 }

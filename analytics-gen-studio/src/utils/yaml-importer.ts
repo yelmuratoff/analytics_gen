@@ -1,6 +1,6 @@
 import * as yaml from 'js-yaml';
 import type { RJSFSchema } from '@rjsf/utils';
-import type { EventFile, SharedParamFile, ContextFile, ConfigState, EventDef, ParamDef } from '../types/index.ts';
+import type { EventFile, SharedParamFile, ContextFile, ConfigState, EventDef, ParamDef, TabId } from '../types/index.ts';
 
 export type YamlFileType = 'config' | 'events' | 'shared' | 'context';
 
@@ -11,6 +11,10 @@ export interface ImportSchemaHints {
   sharedRootKey: string;
   /** Event-level field names from events schema $defs.event */
   eventFieldNames: string[];
+  /** Config sections nested under the root key (e.g. "inputs") */
+  configSections: string[];
+  /** Flat config keys mapped to the "section.field" they alias, from x-alias-for */
+  configAliases: Record<string, string>;
 }
 
 /** Extract detection hints from loaded schemas — no hardcoded values */
@@ -31,7 +35,16 @@ export function extractImportHints(
   const eventDef = (eventsSchema.$defs?.event ?? eventsSchema.$defs?.Event) as RJSFSchema | undefined;
   const eventFieldNames = Object.keys(eventDef?.properties ?? {});
 
-  return { configRootKey, sharedRootKey, eventFieldNames };
+  const configRoot = rawConfigSchema.properties?.[configRootKey] as RJSFSchema | undefined;
+  const configSections: string[] = [];
+  const configAliases: Record<string, string> = {};
+  for (const [key, value] of Object.entries(configRoot?.properties ?? {})) {
+    const property = value as Record<string, unknown>;
+    if (typeof property['x-alias-for'] === 'string') configAliases[key] = property['x-alias-for'];
+    else if (property.type === 'object') configSections.push(key);
+  }
+
+  return { configRootKey, sharedRootKey, eventFieldNames, configSections, configAliases };
 }
 
 /** Detect YAML file type using schema-derived hints */
@@ -170,14 +183,41 @@ export function parseContextYaml(data: Record<string, unknown>, fileName: string
   return { fileName, contextName, properties };
 }
 
-/** Parse a YAML config file into store ConfigState (partial merge) */
+/**
+ * Parse a YAML config file into nested config sections (partial merge).
+ * Flat aliases move to the setting they alias unless the nested form also sets it;
+ * keys that are neither sections nor aliases are returned as ignored.
+ */
 export function parseConfigYaml(
   data: Record<string, unknown>,
-  configRootKey: string,
-): Partial<ConfigState> {
-  const inner = data[configRootKey];
-  if (!isObject(inner)) return {};
-  return inner as Partial<ConfigState>;
+  hints: ImportSchemaHints,
+): { config: Partial<ConfigState>; ignoredKeys: string[] } {
+  const inner = data[hints.configRootKey];
+  if (!isObject(inner)) return { config: {}, ignoredKeys: [] };
+
+  const sections: Record<string, Record<string, unknown>> = {};
+  const ignoredKeys: string[] = [];
+  for (const [key, value] of Object.entries(inner)) {
+    if (hints.configSections.includes(key) && isObject(value)) sections[key] = { ...value };
+    else if (!(key in hints.configAliases)) ignoredKeys.push(key);
+  }
+  for (const [alias, target] of Object.entries(hints.configAliases)) {
+    if (!(alias in inner)) continue;
+    const [section, field] = target.split('.');
+    sections[section] ??= {};
+    if (!(field in sections[section])) sections[section][field] = inner[alias];
+  }
+
+  return { config: sections as Partial<ConfigState>, ignoredKeys };
+}
+
+export interface YamlImportResult {
+  type: YamlFileType;
+  eventFile?: EventFile;
+  sharedFile?: SharedParamFile;
+  contextFile?: ContextFile;
+  config?: Partial<ConfigState>;
+  ignoredKeys?: string[];
 }
 
 /** Parse raw YAML string, detect type, return structured result */
@@ -185,13 +225,7 @@ export function importYamlString(
   yamlContent: string,
   fileName: string,
   hints: ImportSchemaHints,
-): {
-  type: YamlFileType;
-  eventFile?: EventFile;
-  sharedFile?: SharedParamFile;
-  contextFile?: ContextFile;
-  config?: Partial<ConfigState>;
-} | null {
+): YamlImportResult | null {
   const data = yaml.load(yamlContent);
   if (!isObject(data)) return null;
   const parsed = data as Record<string, unknown>;
@@ -201,7 +235,7 @@ export function importYamlString(
 
   switch (type) {
     case 'config':
-      return { type, config: parseConfigYaml(parsed, hints.configRootKey) };
+      return { type, ...parseConfigYaml(parsed, hints) };
     case 'events':
       return { type, eventFile: parseEventYaml(parsed, fileName) };
     case 'shared':
@@ -209,4 +243,33 @@ export function importYamlString(
     case 'context':
       return { type, contextFile: parseContextYaml(parsed, fileName) };
   }
+}
+
+/** The editor tab that shows a file of the given type. */
+export function tabForImport(type: YamlFileType): TabId {
+  return type === 'context' ? 'contexts' : type;
+}
+
+export interface ImportFailure {
+  fileName: string;
+  reason: string;
+}
+
+export interface ImportSummary {
+  imported: number;
+  failures: ImportFailure[];
+  ignoredKeys: string[];
+}
+
+/** One user-facing message for a batch import, naming every skipped file and ignored config key. */
+export function describeImport({ imported, failures, ignoredKeys }: ImportSummary): { message: string; severity: 'success' | 'error' } {
+  const parts = [`Imported ${imported} file${imported === 1 ? '' : 's'}`];
+  if (failures.length > 0) {
+    parts.push(`Skipped ${failures.map((f) => `${f.fileName} (${f.reason})`).join(', ')}`);
+  }
+  if (ignoredKeys.length > 0) {
+    parts.push(`Ignored unknown config keys: ${ignoredKeys.join(', ')}`);
+  }
+  const clean = failures.length === 0 && ignoredKeys.length === 0;
+  return { message: parts.join('. '), severity: clean ? 'success' : 'error' };
 }

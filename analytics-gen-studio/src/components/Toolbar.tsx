@@ -65,7 +65,8 @@ import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import { useValidation } from '../hooks/useValidation.ts';
 import { useSyncedRevision } from '../hooks/useSyncedRevision.ts';
-import { importYamlString, type ImportSchemaHints } from '../utils/yaml-importer.ts';
+import { describeImport, type ImportSchemaHints } from '../utils/yaml-importer.ts';
+import { useYamlImport } from '../hooks/useYamlImport.ts';
 import DocsDrawer from './DocsDrawer.tsx';
 import ProjectDialog from './ProjectDialog.tsx';
 
@@ -142,11 +143,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   // Only subscribe to actions — NOT the full store, to avoid re-renders on data changes
   const loadProject = useStore((s) => s.loadProject);
   const resetState = useStore((s) => s.resetState);
-  const setActiveTab = useStore((s) => s.setActiveTab);
-  const importEventFile = useStore((s) => s.importEventFile);
-  const importSharedParamFile = useStore((s) => s.importSharedParamFile);
-  const importContextFile = useStore((s) => s.importContextFile);
-  const mergeConfig = useStore((s) => s.mergeConfig);
+  const importYamlFiles = useYamlImport(importHints);
   const { mode, toggleColorMode } = useColorMode();
 
   // Shows the file name and remembers it for the next session (all browsers).
@@ -266,46 +263,7 @@ export default function Toolbar({ importHints }: ToolbarProps) {
   const handleImportYaml = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    let imported = 0;
-    let lastType = '';
-
-    for (const file of Array.from(files)) {
-      try {
-        const content = await file.text();
-        const result = importYamlString(content, file.name, importHints);
-        if (!result) {
-          setSnackbar({ message: `Could not detect type of "${file.name}"`, severity: 'error' });
-          continue;
-        }
-
-        switch (result.type) {
-          case 'events':
-            if (result.eventFile) importEventFile(result.eventFile);
-            lastType = 'events';
-            break;
-          case 'shared':
-            if (result.sharedFile) importSharedParamFile(result.sharedFile);
-            lastType = 'shared';
-            break;
-          case 'context':
-            if (result.contextFile) importContextFile(result.contextFile);
-            lastType = 'contexts';
-            break;
-          case 'config':
-            if (result.config) mergeConfig(result.config);
-            lastType = 'config';
-            break;
-        }
-        imported++;
-      } catch (err) {
-        setSnackbar({ message: `Failed to parse "${file.name}": ${err instanceof Error ? err.message : 'Invalid YAML'}`, severity: 'error' });
-      }
-    }
-
-    if (imported > 0) {
-      setSnackbar({ message: `Imported ${imported} file${imported > 1 ? 's' : ''}`, severity: 'success' });
-      if (lastType) setActiveTab(lastType as 'config' | 'events' | 'shared' | 'contexts');
-    }
+    setSnackbar(describeImport(await importYamlFiles(Array.from(files))));
     if (yamlInputRef.current) yamlInputRef.current.value = '';
   };
 
