@@ -163,7 +163,6 @@ final class EventParser {
         final camel = StringUtils.toCamelCase(found.first.codeName);
         return '\${$camel}';
       });
-      // If no replacements were made (e.g. invalid placeholders), keep null to avoid noise?
       if (interpolatedName == escapedEffectiveName) {
         interpolatedName = null;
       }

@@ -86,11 +86,6 @@ class AuditRunner {
       exit(1);
     }
 
-    // Exclude generated files from scan?
-    // We want to see usage in APP code. Generated files (implementation) definetely contain the method declaration,
-    // but typically we want to find INVOCATIONS.
-    // The AnalysisContextCollection will resolve everything.
-
     logger.info('Scanning codebase including: $libPath');
 
     final generatedDir = path.join(projectRoot, config.outputs.dartPath);

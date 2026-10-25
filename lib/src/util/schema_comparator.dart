@@ -248,9 +248,6 @@ class SchemaComparator {
       ));
     }
 
-    // Validation changes (regex, min, max, etc.)
-    // Adding validation is technically breaking for data ingestion (rejects previously valid data)
-    // but maybe not for code compilation. We'll mark it as breaking for safety.
     if (current.regex != previous.regex) {
       changes.add(SchemaChange(
         type: SchemaChangeType.modified,
@@ -259,7 +256,6 @@ class SchemaComparator {
         isBreaking: true,
       ));
     }
-    // ... other validations can be added similarly
 
     return changes;
   }
