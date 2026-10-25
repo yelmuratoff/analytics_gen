@@ -9,6 +9,7 @@ import '../parser/event_loader.dart';
 import '../util/logger.dart';
 import '../util/project_revision.dart';
 import '../util/yaml_keys.dart';
+import 'output_manager.dart';
 
 /// Generates the AnalyticsGen Studio project file (`analytics-studio.json`)
 /// from the analytics YAML configuration.
@@ -22,6 +23,7 @@ class StudioGenerator {
     required this.projectRoot,
     required this.configPath,
     this.log = const NoOpLogger(),
+    this.outputManager = const OutputManager(),
   });
 
   /// Analytics configuration.
@@ -35,6 +37,10 @@ class StudioGenerator {
 
   /// The logger to use.
   final Logger log;
+
+  /// Writes the project file, skipping the write when its content is
+  /// unchanged.
+  final OutputManager outputManager;
 
   /// Generates the studio project file at [outputPath] (or
   /// `config.outputs.studioPath` when omitted).
@@ -74,8 +80,8 @@ class StudioGenerator {
       ...content,
     };
 
-    await outputFile.parent.create(recursive: true);
-    await outputFile.writeAsString(
+    await outputManager.writeFileIfContentChanged(
+      outputFile.path,
       const JsonEncoder.withIndent('  ').convert(studioJson),
     );
 

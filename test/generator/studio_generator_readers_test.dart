@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
+import 'package:analytics_gen/src/generator/output_manager.dart';
 import 'package:analytics_gen/src/generator/studio_generator.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
@@ -205,6 +206,21 @@ user_properties:
           contains('increment'));
     });
 
+    test('writes the project file through the output manager', () async {
+      scaffold();
+      final outputManager = _RecordingOutputManager();
+
+      await StudioGenerator(
+        config: config,
+        projectRoot: tempDir.path,
+        configPath: 'analytics_gen.yaml',
+        outputManager: outputManager,
+      ).generate(outputPath: 'nested/out.json');
+
+      expect(outputManager.writes, [p.join(tempDir.path, 'nested/out.json')]);
+      expect(File(outputManager.writes.single).existsSync(), isTrue);
+    });
+
     test('writes to config.outputs.studioPath when no outputPath is given',
         () async {
       scaffold();
@@ -311,4 +327,14 @@ user_properties:
       expect(context['properties'], isEmpty);
     });
   });
+}
+
+final class _RecordingOutputManager extends OutputManager {
+  final writes = <String>[];
+
+  @override
+  Future<void> writeFileIfContentChanged(String filePath, String content) {
+    writes.add(filePath);
+    return super.writeFileIfContentChanged(filePath, content);
+  }
 }
