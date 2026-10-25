@@ -14,7 +14,9 @@ final class DartTypeMapper {
     'datetime': 'DateTime',
     'date': 'DateTime',
     'uri': 'Uri',
+    'num': 'num',
     'number': 'num',
+    'dynamic': 'dynamic',
   };
 
   /// Converts a YAML type to its corresponding Dart type.

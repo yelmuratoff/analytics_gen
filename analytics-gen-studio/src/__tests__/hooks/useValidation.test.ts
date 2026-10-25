@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useStore } from '../../state/store.ts';
-import { applySchemaConstants, NUMERIC_ONLY_FIELDS } from '../../schemas/constants.ts';
+import { applySchemaConstants, TYPE_RESTRICTED_FIELDS } from '../../schemas/constants.ts';
 import { useValidation, refreshValidation } from '../../hooks/useValidation.ts';
 
 const schemaRules = {
@@ -9,7 +9,7 @@ const schemaRules = {
   snakeCaseDomainPattern: /^[a-z0-9_]+$/,
   snakeCaseParamPattern: /^[a-z][a-z0-9_]*$/,
 };
-const loadedNumericOnlyFields = [...NUMERIC_ONLY_FIELDS];
+const loadedTypeRestrictedFields = { ...TYPE_RESTRICTED_FIELDS };
 
 describe('useValidation', () => {
   beforeEach(() => {
@@ -19,21 +19,21 @@ describe('useValidation', () => {
   });
 
   afterEach(() => {
-    applySchemaConstants({ ...schemaRules, numericOnlyFields: loadedNumericOnlyFields });
+    applySchemaConstants({ ...schemaRules, typeRestrictedFields: loadedTypeRestrictedFields });
     refreshValidation();
   });
 
   it('recomputes errors when schema rules arrive after the project is loaded', () => {
-    applySchemaConstants({ ...schemaRules, numericOnlyFields: [] });
+    applySchemaConstants({ ...schemaRules, typeRestrictedFields: {} });
     refreshValidation();
     const { result } = renderHook(() => useValidation());
     expect(result.current).toEqual([]);
 
     act(() => {
-      applySchemaConstants({ ...schemaRules, numericOnlyFields: ['min'] });
+      applySchemaConstants({ ...schemaRules, typeRestrictedFields: { min: ['int'] } });
       refreshValidation();
     });
 
-    expect(result.current.map((e) => e.message)).toEqual(['min only applies to numeric types']);
+    expect(result.current.map((e) => e.message)).toEqual(['min only applies to int parameters']);
   });
 });

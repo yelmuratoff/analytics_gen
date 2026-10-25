@@ -6,6 +6,7 @@ import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_parameter.dart';
 import '../util/string_utils.dart';
+import '../util/type_mapper.dart';
 import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
 
@@ -294,6 +295,15 @@ final class ParameterParser {
       dartType = dartType.substring(0, dartType.length - 1);
     }
 
+    if (dartType == null && paramValue is YamlMap) {
+      _ensureRulesFitType(
+        paramValue,
+        rawName: rawName,
+        paramType: paramType,
+        filePath: filePath,
+      );
+    }
+
     if (allowedValues != null) {
       if (dartType != null) {
         throw AnalyticsParseException(
@@ -396,5 +406,40 @@ final class ParameterParser {
       deprecatedIn: deprecatedIn,
       sourceName: rawName,
     );
+  }
+
+  static const _stringRuleKeys = [
+    YamlKeys.regex,
+    YamlKeys.minLength,
+    YamlKeys.maxLength,
+  ];
+  static const _stringRuleDartTypes = {'String', 'dynamic'};
+  static const _rangeRuleKeys = [YamlKeys.min, YamlKeys.max];
+  static const _rangeRuleDartTypes = {'int', 'double', 'num', 'dynamic'};
+
+  static void _ensureRulesFitType(
+    YamlMap paramValue, {
+    required String rawName,
+    required String paramType,
+    required String filePath,
+  }) {
+    final dartType = DartTypeMapper.toDartType(paramType);
+
+    void ensure(List<String> ruleKeys, Set<String> dartTypes, String kind) {
+      if (dartTypes.contains(dartType)) return;
+      for (final key in ruleKeys) {
+        final node = paramValue.nodes[key];
+        if (node == null || node.value == null) continue;
+        throw AnalyticsParseException(
+          '$key only applies to $kind parameters, but "$rawName" has type '
+          '"$paramType".',
+          filePath: filePath,
+          span: node.span,
+        );
+      }
+    }
+
+    ensure(_stringRuleKeys, _stringRuleDartTypes, 'string');
+    ensure(_rangeRuleKeys, _rangeRuleDartTypes, 'numeric');
   }
 }

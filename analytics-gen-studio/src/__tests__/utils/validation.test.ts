@@ -141,20 +141,30 @@ describe('paramViolations', () => {
       .toEqual([{ field: 'max_length', message: 'max_length must be >= min_length' }]);
   });
 
-  it('rejects length rules on a non-string type', () => {
-    expect(paramViolations({ type: 'int', min_length: 1 }).map((v) => v.field)).toEqual(['min_length']);
+  it.each(['int', 'bool', 'datetime'])('rejects length and regex rules on %s', (type) => {
+    expect(paramViolations({ type, min_length: 1, max_length: 5, regex: '^a' }).map((v) => v.field))
+      .toEqual(['regex', 'min_length', 'max_length']);
   });
 
-  it.each(['string', 'string?'])('allows length rules on %s', (type) => {
-    expect(paramViolations({ type, min_length: 1, max_length: 50 })).toEqual([]);
+  it.each(['string', 'string?', 'String', 'dynamic'])('allows length and regex rules on %s', (type) => {
+    expect(paramViolations({ type, min_length: 1, max_length: 50, regex: '^a' })).toEqual([]);
   });
 
-  it('rejects range rules on a non-numeric type', () => {
-    expect(paramViolations({ type: 'string', min: 0, max: 10 }).map((v) => v.field)).toEqual(['min', 'max']);
+  it.each(['string', 'bool', 'date', 'datetime'])('rejects range rules on %s', (type) => {
+    expect(paramViolations({ type, min: 0, max: 10 }).map((v) => v.field)).toEqual(['min', 'max']);
   });
 
-  it.each(['int', 'double', 'double?', 'num', 'num?'])('allows range rules on %s', (type) => {
+  it.each(['int', 'double', 'double?', 'float', 'num', 'num?', 'number', 'dynamic'])('allows range rules on %s', (type) => {
     expect(paramViolations({ type, min: 0, max: 100 })).toEqual([]);
+  });
+
+  it('names the supported types in the message', () => {
+    expect(paramViolations({ type: 'datetime', min: 0 }))
+      .toEqual([{ field: 'min', message: 'min only applies to int, double, float, num, number, dynamic parameters' }]);
+  });
+
+  it('rejects allowed_values on a type the schema does not support for them', () => {
+    expect(paramViolations({ type: 'datetime', allowed_values: ['a'] }).map((v) => v.field)).toEqual(['allowed_values']);
   });
 
   it('rejects a non-snake_case identifier', () => {

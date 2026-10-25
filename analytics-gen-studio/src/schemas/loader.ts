@@ -29,10 +29,8 @@ export interface LoadedSchemas {
   paramFieldNames: string[];
   /** Mutually exclusive field pairs from x-constraints */
   paramMutualExclusions: Array<[string, string]>;
-  /** Fields that only apply to string type */
-  stringOnlyFields: string[];
-  /** Fields that only apply to numeric types */
-  numericOnlyFields: string[];
+  /** Parameter types each field applies to, from x-constraints.supported_types (lowercase) */
+  typeRestrictedFields: Record<string, string[]>;
   /** Operations field name */
   operationsField: string;
 }
@@ -157,8 +155,7 @@ function extractParamConstraints(parameterSchema: RJSFSchema) {
   const props = parameterSchema.properties ?? {};
   const fieldNames = Object.keys(props);
   const mutualExclusions: Array<[string, string]> = [];
-  const stringOnlyFields: string[] = [];
-  const numericOnlyFields: string[] = [];
+  const typeRestrictedFields: Record<string, string[]> = {};
   let operationsField = 'operations';
 
   for (const [key, fieldSchema] of Object.entries(props)) {
@@ -174,14 +171,8 @@ function extractParamConstraints(parameterSchema: RJSFSchema) {
       }
     }
 
-    // Detect string-only fields (integer type with "length" in name)
-    if (field.type === 'integer' && key.includes('length')) {
-      stringOnlyFields.push(key);
-    }
-
-    // Detect numeric-only fields (number type, name is 'min' or 'max' without 'length')
-    if (field.type === 'number' && !key.includes('length')) {
-      numericOnlyFields.push(key);
+    if (Array.isArray(constraints?.supported_types)) {
+      typeRestrictedFields[key] = (constraints.supported_types as string[]).map((t) => t.toLowerCase());
     }
 
     // Detect operations field (array with items.enum)
@@ -193,7 +184,7 @@ function extractParamConstraints(parameterSchema: RJSFSchema) {
     }
   }
 
-  return { fieldNames, mutualExclusions, stringOnlyFields, numericOnlyFields, operationsField };
+  return { fieldNames, mutualExclusions, typeRestrictedFields, operationsField };
 }
 
 export async function loadSchemas(): Promise<LoadedSchemas> {
@@ -229,8 +220,7 @@ export async function loadSchemas(): Promise<LoadedSchemas> {
     ...(() => { const p = extractSnakeCasePatterns(configSchema); return { snakeCaseDomainPattern: p.domain, snakeCaseParamPattern: p.param }; })(),
     paramFieldNames: constraints.fieldNames,
     paramMutualExclusions: constraints.mutualExclusions,
-    stringOnlyFields: constraints.stringOnlyFields,
-    numericOnlyFields: constraints.numericOnlyFields,
+    typeRestrictedFields: constraints.typeRestrictedFields,
     operationsField: constraints.operationsField,
   };
 }

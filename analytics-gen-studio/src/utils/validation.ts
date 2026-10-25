@@ -2,10 +2,8 @@ import type { FormValidation } from '@rjsf/utils';
 import {
   SNAKE_CASE_PARAM,
   SNAKE_CASE_DOMAIN,
-  NON_NUMERIC_TYPES,
   PARAM_MUTUAL_EXCLUSIONS,
-  STRING_ONLY_FIELDS,
-  NUMERIC_ONLY_FIELDS,
+  TYPE_RESTRICTED_FIELDS,
 } from '../schemas/constants.ts';
 import type { ValidationError, ParamDef, ConfigState, EventFile, SharedParamFile, ContextFile, TabId } from '../types/index.ts';
 
@@ -45,16 +43,11 @@ export function paramViolations(param: ParamDef): ParamViolation[] {
     violations.push({ field: 'regex', message: "regex cannot contain triple quotes (''')" });
   }
 
-  const baseType = param.type?.replace(/\?$/, '');
+  const baseType = param.type?.replace(/\?$/, '').toLowerCase();
   if (baseType) {
-    for (const field of STRING_ONLY_FIELDS) {
-      if (fields[field] !== undefined && baseType !== 'string') {
-        violations.push({ field, message: `${field} only applies to string type` });
-      }
-    }
-    for (const field of NUMERIC_ONLY_FIELDS) {
-      if (fields[field] !== undefined && NON_NUMERIC_TYPES.has(baseType)) {
-        violations.push({ field, message: `${field} only applies to numeric types` });
+    for (const [field, supportedTypes] of Object.entries(TYPE_RESTRICTED_FIELDS)) {
+      if (isSet(fields[field]) && !supportedTypes.includes(baseType)) {
+        violations.push({ field, message: `${field} only applies to ${supportedTypes.join(', ')} parameters` });
       }
     }
   }
