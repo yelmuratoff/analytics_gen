@@ -39,6 +39,7 @@ import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
 import { useInlineRename } from '../../hooks/useInlineRename.ts';
 import { withYamlExtension } from '../../utils/file-names.ts';
 import InlineRenameField from '../InlineRenameField.tsx';
+import ErrorDot from '../ErrorDot.tsx';
 import ItemMenu from '../ItemMenu.tsx';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
@@ -242,7 +243,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                     : (
                       <>
                         <ListItemText
-                          primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <Tooltip title={errorMessages.get(`contexts:${fi}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0, ml: 0.5 }} /></Tooltip>}</>}
+                          primary={<><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.fileName}</Box><Typography component="span" sx={{ fontSize: '0.78rem', color: 'text.disabled', ml: 0.5, flexShrink: 0 }}>{Object.keys(file.properties).length || ''}</Typography>{errorKeys.has(`contexts:${fi}`) && <ErrorDot messages={errorMessages.get(`contexts:${fi}`)} />}</>}
                           primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
                           sx={{ minWidth: 0, '& .MuiListItemText-primary': { display: 'flex', alignItems: 'center', overflow: 'hidden' } }}
                         />
@@ -295,7 +296,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
                                 ? renderInlineEdit('0.78rem', 24)
                                 : (
                                   <>
-                                    <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <Tooltip title={errorMessages.get(`contexts:${fi}:${pn}`)?.join('; ') ?? ''} arrow enterDelay={200} placement="right"><Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', display: 'inline-block', flexShrink: 0 }} /></Tooltip>}</Box>} primaryTypographyProps={{
+                                    <ListItemText primary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><span>{pn}</span>{hasErr && <ErrorDot messages={errorMessages.get(`contexts:${fi}:${pn}`)} ml={0} />}</Box>} primaryTypographyProps={{
                                       fontSize: '0.78rem', fontFamily: '"JetBrains Mono", monospace',
                                     }} />
                                     <ItemMenu actions={[

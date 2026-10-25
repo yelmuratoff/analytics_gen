@@ -41,19 +41,8 @@ import InlineRenameField from '../InlineRenameField.tsx';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import ItemMenu from '../ItemMenu.tsx';
+import ErrorDot from '../ErrorDot.tsx';
 import type { EventDef, ParamDef } from '../../types/index.ts';
-
-const ErrorDot = ({ messages }: { messages?: string[] }) => {
-  const label = messages?.length ? messages.join('; ') : 'Validation error';
-  const dot = (
-    <Box component="span" role="img" aria-label={label} sx={{
-      width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main',
-      display: 'inline-block', flexShrink: 0, ml: 0.5,
-    }} />
-  );
-  if (!messages?.length) return dot;
-  return <Tooltip title={label} arrow enterDelay={200} placement="right">{dot}</Tooltip>;
-};
 
 const Arrow = ({ open }: { open: boolean }) => open
   ? <KeyboardArrowDownRounded sx={{ fontSize: 18, color: 'text.secondary' }} />
