@@ -335,4 +335,58 @@ describe('store', () => {
       expect(useStore.getState().selectedPath).toBeNull();
     });
   });
+
+  describe('renaming', () => {
+    beforeEach(() => {
+      useStore.setState({
+        eventFiles: [{
+          fileName: 'auth.yaml',
+          domains: {
+            auth: {
+              login: { description: 'Login', parameters: { method: 'string', flow_id: null, user_id: 'int' } },
+              logout: { description: 'Logout', parameters: { flow_id: null } },
+            },
+            profile: {},
+          },
+        }],
+        sharedParamFiles: [{ fileName: 'shared.yaml', parameters: { flow_id: 'string', session_id: 'string' } }],
+        contextFiles: [{ fileName: 'user.yaml', contextName: 'user', properties: { plan: 'string', role: 'string' } }],
+      });
+    });
+
+    const auth = () => useStore.getState().eventFiles[0].domains;
+
+    it('keeps key order when renaming', () => {
+      useStore.getState().renameParameter(0, 'auth', 'login', 'method', 'login_method');
+      expect(Object.keys(auth().auth.login.parameters)).toEqual(['login_method', 'flow_id', 'user_id']);
+    });
+
+    it.each([
+      ['domain', () => useStore.getState().renameDomain(0, 'profile', 'auth'), () => Object.keys(auth())],
+      ['event', () => useStore.getState().renameEvent(0, 'auth', 'logout', 'login'), () => Object.keys(auth().auth)],
+      ['parameter', () => useStore.getState().renameParameter(0, 'auth', 'login', 'method', 'user_id'), () => Object.keys(auth().auth.login.parameters)],
+      ['shared parameter', () => useStore.getState().renameSharedParam(0, 'session_id', 'flow_id'), () => Object.keys(useStore.getState().sharedParamFiles[0].parameters)],
+      ['context property', () => useStore.getState().renameContextProperty(0, 'role', 'plan'), () => Object.keys(useStore.getState().contextFiles[0].properties)],
+    ])('refuses to rename a %s onto an existing name', (_kind, rename, keys) => {
+      const before = keys();
+      rename();
+      expect(keys()).toEqual(before);
+    });
+
+    it('renames the event references of a shared parameter', () => {
+      useStore.getState().renameSharedParam(0, 'flow_id', 'journey_id');
+
+      expect(Object.keys(auth().auth.login.parameters)).toEqual(['method', 'journey_id', 'user_id']);
+      expect(auth().auth.logout.parameters).toEqual({ journey_id: null });
+    });
+
+    it('keeps event references when another shared file still defines the name', () => {
+      useStore.getState().addSharedParamFile('more.yaml');
+      useStore.getState().addSharedParam(1, 'flow_id', 'string');
+
+      useStore.getState().renameSharedParam(0, 'flow_id', 'journey_id');
+
+      expect(auth().auth.logout.parameters).toEqual({ flow_id: null });
+    });
+  });
 });

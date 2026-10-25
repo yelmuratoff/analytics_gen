@@ -45,6 +45,12 @@ const initialState = {
   errors: [],
 };
 
+/** Returns a copy of `record` with `oldName` renamed in place, or null when there is nothing to rename or `newName` is taken. */
+function renameKey<T>(record: Record<string, T>, oldName: string, newName: string): Record<string, T> | null {
+  if (oldName === newName || !(oldName in record) || newName in record) return null;
+  return Object.fromEntries(Object.entries(record).map(([k, v]) => [k === oldName ? newName : k, v]));
+}
+
 function uniqueName(base: string, existing: string[]): string {
   let name = `${base}_copy`;
   let i = 2;
@@ -203,51 +209,43 @@ export const useStore = create<StudioState>()(
           s.eventFiles[fileIndex].fileName = newName;
         }),
         renameDomain: (fileIndex, oldName, newName) => set((s) => {
-          const domains = s.eventFiles[fileIndex].domains;
-          if (oldName === newName || !domains[oldName]) return;
-          // Preserve key order: rebuild object
-          const entries = Object.entries(domains);
-          const rebuilt: typeof domains = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.eventFiles[fileIndex].domains = rebuilt;
+          const renamed = renameKey(s.eventFiles[fileIndex].domains, oldName, newName);
+          if (!renamed) return;
+          s.eventFiles[fileIndex].domains = renamed;
           if (s.selectedPath?.domain === oldName) s.selectedPath.domain = newName;
         }),
         renameEvent: (fileIndex, domain, oldName, newName) => set((s) => {
-          const events = s.eventFiles[fileIndex].domains[domain];
-          if (oldName === newName || !events[oldName]) return;
-          const entries = Object.entries(events);
-          const rebuilt: typeof events = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.eventFiles[fileIndex].domains[domain] = rebuilt;
+          const renamed = renameKey(s.eventFiles[fileIndex].domains[domain], oldName, newName);
+          if (!renamed) return;
+          s.eventFiles[fileIndex].domains[domain] = renamed;
           if (s.selectedPath?.event === oldName) s.selectedPath.event = newName;
         }),
         renameParameter: (fileIndex, domain, eventName, oldName, newName) => set((s) => {
-          const params = s.eventFiles[fileIndex].domains[domain][eventName].parameters;
-          if (oldName === newName || !(oldName in params)) return;
-          const entries = Object.entries(params);
-          const rebuilt: typeof params = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.eventFiles[fileIndex].domains[domain][eventName].parameters = rebuilt;
+          const event = s.eventFiles[fileIndex].domains[domain][eventName];
+          const renamed = renameKey(event.parameters, oldName, newName);
+          if (!renamed) return;
+          event.parameters = renamed;
           if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
         }),
         renameSharedParamFile: (fileIndex, newName) => set((s) => {
           s.sharedParamFiles[fileIndex].fileName = newName;
         }),
         renameSharedParam: (fileIndex, oldName, newName) => set((s) => {
-          const params = s.sharedParamFiles[fileIndex].parameters;
-          if (oldName === newName || !(oldName in params)) return;
-          const entries = Object.entries(params);
-          const rebuilt: typeof params = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
+          const file = s.sharedParamFiles[fileIndex];
+          const renamed = renameKey(file.parameters, oldName, newName);
+          if (!renamed) return;
+          file.parameters = renamed;
+          if (!s.sharedParamFiles.some((f) => oldName in f.parameters)) {
+            for (const eventFile of s.eventFiles) {
+              for (const events of Object.values(eventFile.domains)) {
+                for (const event of Object.values(events)) {
+                  if (event.parameters[oldName] !== null) continue;
+                  const references = renameKey(event.parameters, oldName, newName);
+                  if (references) event.parameters = references;
+                }
+              }
+            }
           }
-          s.sharedParamFiles[fileIndex].parameters = rebuilt;
           if (s.selectedPath?.parameter === oldName) s.selectedPath.parameter = newName;
         }),
         renameContextFile: (fileIndex, newName) => set((s) => {
@@ -257,14 +255,10 @@ export const useStore = create<StudioState>()(
           s.contextFiles[fileIndex].contextName = newName;
         }),
         renameContextProperty: (fileIndex, oldName, newName) => set((s) => {
-          const props = s.contextFiles[fileIndex].properties;
-          if (oldName === newName || !(oldName in props)) return;
-          const entries = Object.entries(props);
-          const rebuilt: typeof props = {};
-          for (const [k, v] of entries) {
-            rebuilt[k === oldName ? newName : k] = v;
-          }
-          s.contextFiles[fileIndex].properties = rebuilt;
+          const file = s.contextFiles[fileIndex];
+          const renamed = renameKey(file.properties, oldName, newName);
+          if (!renamed) return;
+          file.properties = renamed;
           if (s.selectedPath?.contextProperty === oldName) s.selectedPath.contextProperty = newName;
         }),
 

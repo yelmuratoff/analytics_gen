@@ -35,6 +35,9 @@ import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
 import { addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
+import { useInlineRename } from '../../hooks/useInlineRename.ts';
+import { withYamlExtension } from '../../utils/file-names.ts';
+import InlineRenameField from '../InlineRenameField.tsx';
 import AddItemDialog from '../AddItemDialog.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import ItemMenu from '../ItemMenu.tsx';
@@ -68,12 +71,20 @@ const Badge = memo(({ n }: { n: number }) => (
 
 // ── Parameter Row ──
 
+interface RenameTarget {
+  type: 'file' | 'domain' | 'event' | 'param';
+  fi: number;
+  domain?: string;
+  event?: string;
+  original: string;
+}
+
 interface ParamRowActions {
   select: (path: { tab: 'events'; fileIndex: number; domain: string; event: string; parameter: string }) => void;
   duplicate: (fi: number, dn: string, en: string, pn: string) => void;
   confirmDelete: (opts: { title: string; message: string; action: () => void }) => void;
   remove: (fi: number, dn: string, en: string, pn: string) => void;
-  startEdit: (item: { type: string; fi: number; domain: string; event: string; original: string }) => void;
+  startEdit: (item: RenameTarget) => void;
 }
 
 const ParamRow = memo(({ pn, pv, fi, dn, en, isSelected, hasError, errorMsgs, actions, editNode }: {
@@ -187,8 +198,26 @@ export default function FileTree() {
 
   const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
 
-  const [editing, setEditing] = useState<{ type: string; fi: number; domain?: string; event?: string; original: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const rename = useInlineRename<RenameTarget>({
+    takenNames: (t) => {
+      switch (t.type) {
+        case 'file': return files.map((f) => f.fileName);
+        case 'domain': return Object.keys(files[t.fi].domains);
+        case 'event': return Object.keys(files[t.fi].domains[t.domain!]);
+        case 'param': return Object.keys(files[t.fi].domains[t.domain!][t.event!].parameters);
+      }
+    },
+    normalize: (t, name) => t.type === 'file' ? withYamlExtension(name) : name,
+    apply: (t, name) => {
+      switch (t.type) {
+        case 'file': renameEventFile(t.fi, name); break;
+        case 'domain': renameDomain(t.fi, t.original, name); break;
+        case 'event': renameEvent(t.fi, t.domain!, t.original, name); break;
+        case 'param': renameParameter(t.fi, t.domain!, t.event!, t.original, name); break;
+      }
+    },
+  });
+  const editing = rename.target;
 
   // Track expanded nodes — default ALL COLLAPSED for performance
   const [isExpandPending, startTransition] = useTransition();
@@ -210,10 +239,7 @@ export default function FileTree() {
     setVisibleLimits((prev) => ({ ...prev, [key]: Math.min((prev[key] ?? PAGE_SIZE) + PAGE_SIZE, total) }));
   }, []);
 
-  const startEditing = useCallback((item: typeof editing) => {
-    setEditing(item);
-    setEditValue(item!.original);
-  }, []);
+  const startEditing = rename.start;
 
   // Stable action refs for memoized ParamRow — store selectors are already stable
   const paramActions = useMemo((): ParamRowActions => ({
@@ -224,18 +250,6 @@ export default function FileTree() {
     startEdit: startEditing,
   }), [setSelectedPath, duplicateParameter, removeParameter, startEditing]);
 
-  const commitRename = useCallback(() => {
-    if (!editing) return;
-    const val = editValue.trim();
-    if (!val || val === editing.original) { setEditing(null); return; }
-    switch (editing.type) {
-      case 'file': renameEventFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`); break;
-      case 'domain': renameDomain(editing.fi, editing.original, val); break;
-      case 'event': renameEvent(editing.fi, editing.domain!, editing.original, val); break;
-      case 'param': renameParameter(editing.fi, editing.domain!, editing.event!, editing.original, val); break;
-    }
-    setEditing(null);
-  }, [editing, editValue, renameEventFile, renameDomain, renameEvent, renameParameter]);
 
   const allSharedParams = useMemo(() => sharedParamFiles.flatMap((f) => Object.keys(f.parameters)), [sharedParamFiles]);
   const q = search.toLowerCase();
@@ -336,17 +350,11 @@ export default function FileTree() {
     return event ? Object.keys(event.parameters).some((pn) => pn.toLowerCase().includes(q)) : false;
   }, [files, q]);
 
-  const renderInlineEdit = (onCommit: () => void, fontSize = '0.78rem', height = 24, mono = false) => (
-    <TextField size="small" autoFocus value={editValue}
-      onChange={(e) => setEditValue(e.target.value)}
-      onBlur={onCommit}
-      onKeyDown={(e) => { if (e.key === 'Enter') onCommit(); if (e.key === 'Escape') setEditing(null); }}
-      onClick={(e) => e.stopPropagation()}
-      slotProps={{
-        htmlInput: { 'aria-label': 'Rename' },
-        input: { sx: { fontSize, py: 0, height, ...(mono ? { fontFamily: '"JetBrains Mono", monospace' } : {}), '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main', borderWidth: 2 } } },
-      }}
-      sx={{ flex: 1 }}
+  const renderInlineEdit = (fontSize = '0.78rem', height = 24, mono = false) => (
+    <InlineRenameField
+      value={rename.value} error={rename.error}
+      onChange={rename.setValue} onCommit={rename.commit} onCancel={rename.cancel}
+      fontSize={fontSize} height={height} mono={mono}
     />
   );
 
@@ -445,7 +453,7 @@ export default function FileTree() {
                   <InsertDriveFileRounded sx={{ fontSize: 17, color: 'brand.fileIcon' }} />
                 </ListItemIcon>
                 {editing?.type === 'file' && editing.fi === fi
-                  ? renderInlineEdit(commitRename, '0.82rem', 26)
+                  ? renderInlineEdit('0.82rem', 26)
                   : (
                     <>
                       <ListItemText
@@ -483,7 +491,7 @@ export default function FileTree() {
                             <FolderRounded sx={{ fontSize: 16, color: 'primary.main' }} />
                           </ListItemIcon>
                           {editing?.type === 'domain' && editing.fi === fi && editing.original === dn
-                            ? renderInlineEdit(commitRename)
+                            ? renderInlineEdit()
                             : (
                               <>
                                 <ListItemText
@@ -520,7 +528,7 @@ export default function FileTree() {
                                     onSelect={() => setSelectedPath({ tab: 'events', fileIndex: fi, domain: dn, event: en })}
                                     onDuplicate={() => duplicateEvent(fi, dn, en)}
                                     onRename={() => startEditing({ type: 'event', fi, domain: dn, original: en })}
-                                    editNode={editing?.type === 'event' && editing.fi === fi && editing.domain === dn && editing.original === en ? renderInlineEdit(commitRename, '0.82rem', 26) : undefined}
+                                    editNode={editing?.type === 'event' && editing.fi === fi && editing.domain === dn && editing.original === en ? renderInlineEdit('0.82rem', 26) : undefined}
                                     onDelete={() => setConfirmDelete({
                                       title: `Delete event "${en}"?`,
                                       message: `This will remove the event and its ${paramCount} parameter(s).`,
@@ -536,7 +544,7 @@ export default function FileTree() {
                                             hasError={errorKeys.has(`events:${fi}:${dn}:${en}:${pn}`)}
                                             errorMsgs={errorMessages.get(`events:${fi}:${dn}:${en}:${pn}`)}
                                             actions={paramActions}
-                                            editNode={editing?.type === 'param' && editing.fi === fi && editing.domain === dn && editing.event === en && editing.original === pn ? renderInlineEdit(commitRename, '0.78rem', 24, true) : undefined}
+                                            editNode={editing?.type === 'param' && editing.fi === fi && editing.domain === dn && editing.event === en && editing.original === pn ? renderInlineEdit('0.78rem', 24, true) : undefined}
                                           />
                                         );
                                       })}
@@ -634,7 +642,7 @@ export default function FileTree() {
       <AddItemDialog open={addFileOpen} title="Add Event File" label="File name" placeholder="auth.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
         onAdd={(n) => {
-          addEventFile(n.endsWith('.yaml') ? n : `${n}.yaml`);
+          addEventFile(withYamlExtension(n));
           setExpanded((prev) => new Set(prev).add(`f${files.length}`));
           setAddFileOpen(false);
           setAddDomainFor(files.length);

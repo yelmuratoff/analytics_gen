@@ -32,7 +32,10 @@ import { addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-share
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
+import { useInlineRename } from '../../hooks/useInlineRename.ts';
+import { withYamlExtension } from '../../utils/file-names.ts';
 import AddItemDialog from '../AddItemDialog.tsx';
+import InlineRenameField from '../InlineRenameField.tsx';
 import ConfirmDialog from '../ConfirmDialog.tsx';
 import EmptyState from '../EmptyState.tsx';
 import ItemMenu from '../ItemMenu.tsx';
@@ -62,8 +65,15 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const isPending = isSearchPending || isExpandPending;
   const [addFileOpen, setAddFileOpen] = useState(false);
   const [addParamOpen, setAddParamOpen] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ type: 'file' | 'param'; fi: number; original: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const rename = useInlineRename<{ type: 'file' | 'param'; fi: number; original: string }>({
+    takenNames: (t) => t.type === 'file' ? files.map((f) => f.fileName) : Object.keys(files[t.fi].parameters),
+    normalize: (t, name) => t.type === 'file' ? withYamlExtension(name) : name,
+    apply: (t, name) => {
+      if (t.type === 'file') renameSharedParamFile(t.fi, name);
+      else renameSharedParam(t.fi, t.original, name);
+    },
+  });
+  const editing = rename.target;
   const [collapsedFiles, setCollapsedFiles] = useState<Set<number>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ title: string; message: string; action: () => void } | null>(null);
   const [visibleLimits, setVisibleLimits] = useState<Record<number, number>>({});
@@ -113,34 +123,13 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
     return Object.keys(file.parameters).some((pn) => pn.toLowerCase().includes(q));
   };
 
-  const startEditing = (type: 'file' | 'param', fi: number, original: string) => {
-    setEditing({ type, fi, original });
-    setEditValue(original);
-  };
-
-  const commitRename = () => {
-    if (!editing) return;
-    const val = editValue.trim();
-    if (!val || val === editing.original) { setEditing(null); return; }
-    if (editing.type === 'file') {
-      renameSharedParamFile(editing.fi, val.endsWith('.yaml') ? val : `${val}.yaml`);
-    } else {
-      renameSharedParam(editing.fi, editing.original, val);
-    }
-    setEditing(null);
-  };
+  const startEditing = (type: 'file' | 'param', fi: number, original: string) => rename.start({ type, fi, original });
 
   const renderInlineEdit = (fontSize = '0.82rem', height = 24) => (
-    <TextField size="small" autoFocus value={editValue}
-      onChange={(e) => setEditValue(e.target.value)}
-      onBlur={commitRename}
-      onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
-      onClick={(e) => e.stopPropagation()}
-      slotProps={{
-        htmlInput: { 'aria-label': 'Rename' },
-        input: { sx: { fontSize, py: 0, height, fontFamily: '"JetBrains Mono", monospace' } },
-      }}
-      sx={{ flex: 1 }}
+    <InlineRenameField
+      value={rename.value} error={rename.error}
+      onChange={rename.setValue} onCommit={rename.commit} onCancel={rename.cancel}
+      fontSize={fontSize} height={height}
     />
   );
 
@@ -342,7 +331,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
       </Box>
       <AddItemDialog open={addFileOpen} title="Add File" label="File name" placeholder="shared_user.yaml"
         isFileName existingNames={files.map((f) => f.fileName)} onClose={() => setAddFileOpen(false)}
-        onAdd={(n) => addSharedParamFile(n.endsWith('.yaml') ? n : `${n}.yaml`)} />
+        onAdd={(n) => addSharedParamFile(withYamlExtension(n))} />
       {addParamOpen !== null && (
         <AddItemDialog open title="Add Parameter" label="Name" placeholder="session_id"
           validateSnakeCase existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
