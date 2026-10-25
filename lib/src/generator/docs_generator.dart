@@ -97,13 +97,11 @@ final class DocsGenerator {
     buffer.writeln('## Table of Contents');
     buffer.writeln();
     for (final domainName in domains.keys) {
-      final anchor = domainName.toLowerCase().replaceAll('_', '-');
-      buffer.writeln('- [$domainName](#$anchor)');
+      buffer.writeln('- [$domainName](#${_headingAnchor(domainName)})');
     }
     for (final contextName in contexts.keys) {
       final title = _getContextTitle(contextName);
-      final anchor = title.toLowerCase().replaceAll(' ', '-');
-      buffer.writeln('- [$title](#$anchor)');
+      buffer.writeln('- [$title](#${_headingAnchor(title)})');
     }
     buffer.writeln();
 
@@ -169,6 +167,12 @@ final class DocsGenerator {
     if (contextName == 'global_context') return 'Global Context';
     return StringUtils.capitalizePascal(contextName);
   }
+
+  // GitHub heading anchors: lowercase, punctuation other than - and _ dropped, spaces become hyphens.
+  String _headingAnchor(String heading) => heading
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\w\- ]'), '')
+      .replaceAll(' ', '-');
 
   /// Generates documentation for a single domain
   String _generateDomainDocs(String domainName, AnalyticsDomain domain) {

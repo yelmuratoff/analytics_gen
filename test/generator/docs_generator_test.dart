@@ -24,6 +24,30 @@ void main() {
       }
     });
 
+    test('links the table of contents to GitHub heading anchors', () async {
+      File(p.join(tempProject.path, 'events', 'profile.yaml'))
+          .writeAsStringSync('user_profile:\n'
+              '  viewed:\n'
+              '    description: Profile viewed\n');
+      final config = AnalyticsConfig(
+        inputs: AnalyticsInputs(eventsPath: 'events'),
+        outputs: AnalyticsOutputs(docsPath: 'docs/analytics_events.md'),
+        targets: AnalyticsTargets(generateDocs: true),
+      );
+      final sources = await EventLoader(
+        eventsPath: p.join(tempProject.path, 'events'),
+      ).loadEventFiles();
+      final domains = await YamlParser().parseEvents(sources);
+
+      await DocsGenerator(config: config, projectRoot: tempProject.path)
+          .generate(domains);
+
+      final content = File(p.join(tempProject.path, config.outputs.docsPath!))
+          .readAsStringSync();
+      expect(content, contains('## user_profile'));
+      expect(content, contains('- [user_profile](#user_profile)'));
+    });
+
     test('generates markdown with domain and event table', () async {
       final eventsFile = File(p.join(tempProject.path, 'events', 'auth.yaml'));
       await eventsFile.writeAsString(
