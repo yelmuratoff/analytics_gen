@@ -1,5 +1,6 @@
 import '../models/analytics_domain.dart';
 import '../models/tracking_plan.dart';
+import 'tracking_ledger.dart';
 
 /// Injects `tracking_creation_date` from the ledger into each event's meta.
 final class CreationDateInjector {
@@ -17,8 +18,7 @@ final class CreationDateInjector {
       final domain = entry.value;
 
       final updatedEvents = domain.events.map((event) {
-        final ledgerKey = '$domainName.${event.name}';
-        final date = ledger[ledgerKey];
+        final date = ledger[TrackingLedger.keyFor(domainName, event.name)];
         if (date == null) return event;
 
         return event.copyWith(

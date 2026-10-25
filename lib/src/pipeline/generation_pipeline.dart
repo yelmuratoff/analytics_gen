@@ -147,7 +147,8 @@ class GenerationPipeline {
 
     final eventKeys = <String>[
       for (final entry in plan.domains.entries)
-        for (final event in entry.value.events) '${entry.key}.${event.name}',
+        for (final event in entry.value.events)
+          TrackingLedger.keyFor(entry.key, event.name),
     ];
 
     final existingCount = (await ledger.load()).length;
