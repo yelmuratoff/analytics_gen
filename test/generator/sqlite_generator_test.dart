@@ -49,6 +49,7 @@ void main() {
       File(sqlPath).writeAsStringSync('prebuilt');
 
       final generator = SqliteGenerator(
+        projectRoot: tempDir.path,
         log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: (executable, arguments) async {
@@ -100,6 +101,7 @@ void main() {
       }
 
       final generator = SqliteGenerator(
+        projectRoot: tempDir.path,
         log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: fakeRun,
@@ -140,6 +142,7 @@ void main() {
       }
 
       final generator = SqliteGenerator(
+        projectRoot: tempDir.path,
         log: TestLogger(logs),
         naming: const NamingStrategy(),
         runProcess: fakeRun,

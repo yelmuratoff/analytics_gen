@@ -13,10 +13,14 @@ import 'sql_generator.dart';
 final class SqliteGenerator {
   /// Creates a new SQLite generator.
   SqliteGenerator({
+    required String projectRoot,
     this.log = const NoOpLogger(),
     NamingStrategy? naming,
     Future<ProcessResult> Function(String, List<String>)? runProcess,
-  })  : _sqlGenerator = SqlGenerator(naming: naming ?? const NamingStrategy()),
+  })  : _sqlGenerator = SqlGenerator(
+          naming: naming ?? const NamingStrategy(),
+          projectRoot: projectRoot,
+        ),
         _runProcess = runProcess ?? Process.run;
   final SqlGenerator _sqlGenerator;
 

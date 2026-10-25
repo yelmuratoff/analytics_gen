@@ -123,9 +123,11 @@ final class ExportGenerator {
       tasks.add(() async {
         final sqlGen = SqlGenerator(
           naming: config.naming,
+          projectRoot: projectRoot,
           outputManager: outputManager,
         );
         final sqliteGen = SqliteGenerator(
+          projectRoot: projectRoot,
           log: log,
           naming: config.naming,
         );
