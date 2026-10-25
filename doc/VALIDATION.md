@@ -105,6 +105,9 @@ logger.logEvent(
 | `Parameters ... must be a map` | YAML indentation/structure is invalid. | Ensure `parameters` points to a map (use `{}` when there are no parameters). |
 | `Allowed values must be a non-empty list` | `allowed_values` was empty or not a list. | Provide at least one allowed value or remove the guard. |
 | `min_length only applies to string parameters, but "count" has type "int"` | `regex`, `min_length` and `max_length` generate `RegExp.hasMatch` and `.length` checks, and `min`/`max` generate `<`/`>` comparisons. These only compile on `string` (or `dynamic`) and numeric types respectively. | Change the type or remove the rule. With `dart_type`, the check is skipped and the custom type must support it. |
+| `Field "description" must be a string.` | A field holds a value of the wrong type, such as `description: 42`, `min: "1"` or `deprecated: "yes"`. The error points at the value. | Quote text values, write numbers and `true`/`false` without quotes, and use whole numbers for `min_length` and `max_length`. |
+| `Regex pattern for parameter "code" is not valid: ...` | The `regex` value does not compile as a Dart `RegExp`. Generated code compiles the same pattern, so it would throw in the app. | Fix the pattern. In YAML, single quotes keep backslashes as written: `regex: '^\d+$'`. |
+| `Invalid configuration for "casing": expected one of snake_case, title_case, original` | `naming.casing` is not one of the supported values. | Use one of the listed values. |
 
 CI should call `--validate-only` to catch these failures without touching generated files.
 
