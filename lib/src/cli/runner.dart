@@ -26,9 +26,10 @@ class AnalyticsGenRunner {
   /// Runs the generator.
   Future<void> run(List<String> arguments) async {
     Logger? logger;
+    var verbose = false;
     try {
       final results = _parser.parse(arguments);
-      final verbose = results['verbose'] as bool;
+      verbose = results['verbose'] as bool;
       logger = ConsoleLogger(verbose: verbose);
 
       if (results['help'] as bool) {
@@ -98,8 +99,10 @@ class AnalyticsGenRunner {
       } else {
         await pipeline.run(request);
       }
-    } catch (e) {
-      (logger ?? const ConsoleLogger()).error('Error: $e');
+    } catch (e, stackTrace) {
+      final log = logger ?? const ConsoleLogger();
+      log.error('Error: $e');
+      if (verbose) log.error('Stack trace: $stackTrace');
       exit(1);
     }
   }
