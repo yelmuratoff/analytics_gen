@@ -16,10 +16,9 @@ import ParameterEditor from './ParameterEditor.tsx';
 interface EventsTabProps {
   parameterSchema: RJSFSchema;
   eventEditorSchema: RJSFSchema;
-  parameterTypes: string[];
 }
 
-export default function EventsTab({ parameterSchema, eventEditorSchema, parameterTypes }: EventsTabProps) {
+export default function EventsTab({ parameterSchema, eventEditorSchema }: EventsTabProps) {
   const selectedPath = useStore((s) => s.selectedPath);
   const setSelectedPath = useStore((s) => s.setSelectedPath);
   const files = useStore((s) => s.eventFiles);
@@ -102,7 +101,6 @@ export default function EventsTab({ parameterSchema, eventEditorSchema, paramete
           eventName={selectedPath.event}
           paramName={selectedPath.parameter}
           parameterSchema={parameterSchema}
-          parameterTypes={parameterTypes}
           breadcrumb={breadcrumb}
         />
       );

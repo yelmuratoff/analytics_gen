@@ -121,7 +121,7 @@ export default function Layout({ schemas }: LayoutProps) {
       case 'config':
         return <ConfigTab configSchema={schemas.configSchema} />;
       case 'events':
-        return <EventsTab parameterSchema={schemas.parameterSchema} eventEditorSchema={schemas.eventEditorSchema} parameterTypes={schemas.parameterTypes} />;
+        return <EventsTab parameterSchema={schemas.parameterSchema} eventEditorSchema={schemas.eventEditorSchema} />;
       case 'shared':
         return <SharedParamsTab parameterSchema={schemas.parameterSchema} />;
       case 'contexts':
