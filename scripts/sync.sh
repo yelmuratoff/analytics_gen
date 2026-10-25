@@ -114,10 +114,10 @@ else
 fi
 
 step "Studio: TypeScript check"
-TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
+TSC_OUTPUT=$(npx tsc -b 2>&1)
 TSC_EXIT=$?
 if [ "$TSC_EXIT" -eq 0 ]; then
-  ok "tsc --noEmit — 0 errors"
+  ok "tsc -b — 0 errors"
 else
   echo "$TSC_OUTPUT" | head -5
   fail "TypeScript errors found"
@@ -125,7 +125,8 @@ fi
 
 step "Studio: tests"
 STUDIO_TEST_OUTPUT=$(npx vitest run 2>&1)
-if echo "$STUDIO_TEST_OUTPUT" | grep -q "passed"; then
+STUDIO_TEST_EXIT=$?
+if [ "$STUDIO_TEST_EXIT" -eq 0 ]; then
   TEST_LINE=$(echo "$STUDIO_TEST_OUTPUT" | grep "Tests" | tail -1)
   ok "vitest — $TEST_LINE"
 else
