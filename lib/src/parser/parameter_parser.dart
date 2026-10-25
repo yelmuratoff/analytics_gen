@@ -215,13 +215,26 @@ final class ParameterParser {
       dartImport = stringField(YamlKeys.dartImport);
       // Validation rules
       regex = stringField(YamlKeys.regex);
-      if (regex != null && regex.contains("'''")) {
-        throw AnalyticsParseException(
-          'Regex pattern for parameter "$rawName" cannot contain triple quotes '
-          "('''). This prevents generation errors in Dart raw strings.",
-          filePath: filePath,
-          span: paramValue.nodes[YamlKeys.regex]?.span ?? valueNode.span,
-        );
+      if (regex != null) {
+        final regexSpan = paramValue.nodes[YamlKeys.regex]!.span;
+        if (regex.contains("'''")) {
+          throw AnalyticsParseException(
+            'Regex pattern for parameter "$rawName" cannot contain triple quotes '
+            "('''). This prevents generation errors in Dart raw strings.",
+            filePath: filePath,
+            span: regexSpan,
+          );
+        }
+        try {
+          RegExp(regex);
+        } on FormatException catch (e) {
+          throw AnalyticsParseException(
+            'Regex pattern for parameter "$rawName" is not valid: ${e.message}',
+            filePath: filePath,
+            innerError: e,
+            span: regexSpan,
+          );
+        }
       }
       minLength =
           paramValue.optionalField<int>(YamlKeys.minLength, filePath: filePath);

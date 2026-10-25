@@ -154,6 +154,36 @@ void main() {
       );
     });
 
+    test('throws at the pattern when a regex does not compile', () async {
+      final files = {
+        'auth.yaml': 'auth:\n'
+            '  login:\n'
+            '    description: Test\n'
+            '    parameters:\n'
+            '      code:\n'
+            '        type: string\n'
+            '        regex: "[a-"\n'
+      };
+
+      expect(
+        () => parseEventsHelper(files: files),
+        throwsA(
+          isA<AnalyticsAggregateException>().having(
+            (e) => e.errors.single,
+            'error',
+            isA<AnalyticsParseException>()
+                .having(
+                  (e) => e.message,
+                  'message',
+                  startsWith(
+                      'Regex pattern for parameter "code" is not valid:'),
+                )
+                .having((e) => e.span?.text, 'span text', '"[a-"'),
+          ),
+        ),
+      );
+    });
+
     test('throws when allowed_values types do not match parameter type',
         () async {
       final files = {
