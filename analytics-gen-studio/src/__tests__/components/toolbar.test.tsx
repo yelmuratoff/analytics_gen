@@ -53,3 +53,30 @@ describe('Toolbar export', () => {
     expect(await screen.findByText('ZIP exported')).toBeInTheDocument();
   });
 });
+
+describe('Toolbar shortcuts with Shift', () => {
+  beforeEach(() => {
+    exportAllAsZip.mockClear();
+    useStore.getState().resetState();
+    useStore.temporal.getState().clear();
+    refreshValidation();
+  });
+
+  it('exports when Shift turns the key into an uppercase E', async () => {
+    renderToolbar();
+
+    await act(async () => fireEvent.keyDown(window, { key: 'E', shiftKey: true, ctrlKey: true }));
+
+    expect(exportAllAsZip).toHaveBeenCalledTimes(1);
+  });
+
+  it('redoes when Shift turns the key into an uppercase Z', async () => {
+    renderToolbar();
+    act(() => useStore.getState().addEventFile('auth.yaml'));
+    act(() => useStore.temporal.getState().undo());
+
+    await act(async () => fireEvent.keyDown(window, { key: 'Z', shiftKey: true, ctrlKey: true }));
+
+    expect(useStore.getState().eventFiles.map((f) => f.fileName)).toEqual(['auth.yaml']);
+  });
+});

@@ -359,25 +359,26 @@ export default function Toolbar({ importHints }: ToolbarProps) {
       // Skip undo/redo when a text input is focused (let browser handle it)
       const tag = (e.target as HTMLElement)?.tagName;
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
-      if (e.key === 'z' && e.shiftKey && !isInput) {
+      const key = e.key.toLowerCase();
+      if (key === 'z' && e.shiftKey && !isInput) {
         e.preventDefault();
         redo();
-      } else if (e.key === 'z' && !e.shiftKey && !isInput) {
+      } else if (key === 'z' && !e.shiftKey && !isInput) {
         e.preventDefault();
         undo();
-      } else if (e.key === 's' && e.shiftKey) {
+      } else if (key === 's' && e.shiftKey) {
         e.preventDefault();
         handleSaveAs();
-      } else if (e.key === 's') {
+      } else if (key === 's') {
         e.preventDefault();
         handleSave();
-      } else if (e.key === 'e' && e.shiftKey) {
+      } else if (key === 'e' && e.shiftKey) {
         e.preventDefault();
         handleExportZip();
-      } else if (e.key === 'k') {
+      } else if (key === 'k') {
         e.preventDefault();
         setPaletteOpen(true);
-      } else if (e.key === 'o') {
+      } else if (key === 'o') {
         e.preventDefault();
         handleOpen();
       }
