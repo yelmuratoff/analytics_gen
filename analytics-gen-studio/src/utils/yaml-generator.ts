@@ -5,6 +5,8 @@ import type {
   SharedParamFile,
   ContextFile,
   ParamDef,
+  StudioState,
+  TabId,
 } from "../types/index.ts";
 import { DEFAULT_EVENT_DESCRIPTION } from "../schemas/constants.ts";
 
@@ -139,4 +141,32 @@ export function generateContextFileYaml(file: ContextFile): string {
   }
   const output = { [file.contextName]: props };
   return yaml.dump(output, DUMP_OPTIONS);
+}
+
+export const CONFIG_FILE_NAME = "analytics_gen.yaml";
+
+export interface YamlFile {
+  fileName: string;
+  content: string;
+}
+
+export type ProjectYamlContent = Pick<StudioState, "config" | "eventFiles" | "sharedParamFiles" | "contextFiles">;
+
+/** The YAML files one tab contributes to the project export. */
+export function yamlFilesFor(tab: TabId, content: ProjectYamlContent): YamlFile[] {
+  switch (tab) {
+    case "config":
+      return [{ fileName: CONFIG_FILE_NAME, content: generateConfigYaml(content.config) }];
+    case "events":
+      return content.eventFiles.map((f) => ({ fileName: f.fileName, content: generateEventFileYaml(f) }));
+    case "shared":
+      return content.sharedParamFiles.map((f) => ({ fileName: f.fileName, content: generateSharedParamFileYaml(f) }));
+    case "contexts":
+      return content.contextFiles.map((f) => ({ fileName: f.fileName, content: generateContextFileYaml(f) }));
+  }
+}
+
+/** Every YAML file of the project export, config first. */
+export function allYamlFiles(content: ProjectYamlContent): YamlFile[] {
+  return (["config", "events", "shared", "contexts"] as const).flatMap((tab) => yamlFilesFor(tab, content));
 }

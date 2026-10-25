@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock file-saver to prevent DOM access after test cleanup
-vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
+const { saveAs } = vi.hoisted(() => ({ saveAs: vi.fn() }));
+vi.mock('file-saver', () => ({ saveAs }));
 
 // Mock FileReader since it's not available in Node test env
 class MockFileReader {
@@ -146,17 +147,22 @@ describe('saveProject', () => {
 });
 
 describe('exportAllAsZip', () => {
-  it('does not throw with empty state', async () => {
+  it('saves one ZIP with the config and every project file after it is built', async () => {
+    const JSZip = (await import('jszip')).default;
     const { exportAllAsZip } = await import('../../utils/export.ts');
+    const { useStore } = await import('../../state/store.ts');
+    saveAs.mockClear();
+    useStore.getState().resetState();
+    useStore.getState().addEventFile('auth.yaml');
+    useStore.getState().addSharedParamFile('shared.yaml');
+    useStore.getState().addContextFile('user.yaml', 'user');
 
-    const mockState = {
-      config: { inputs: { events: 'e', shared_parameters: [], contexts: [], imports: [] }, outputs: { dart: 'd' }, targets: { csv: false, json: false, sql: false, docs: false, plan: true, test_matchers: false }, rules: { include_event_description: false, strict_event_names: true, enforce_centrally_defined_parameters: false, prevent_event_parameter_duplicates: false }, naming: { casing: 'snake_case', enforce_snake_case_domains: true, enforce_snake_case_parameters: true, event_name_template: '', identifier_template: '', domain_aliases: {} }, meta: { auto_tracking_creation_date: false, include_meta_in_parameters: false } },
-      eventFiles: [],
-      sharedParamFiles: [],
-      contextFiles: [],
-    } as any;
+    await exportAllAsZip(useStore.getState(), { zipName: 'project.zip' });
 
-    // Should not throw
-    expect(() => exportAllAsZip(mockState)).not.toThrow();
+    expect(saveAs).toHaveBeenCalledTimes(1);
+    const [blob, name] = saveAs.mock.calls[0];
+    expect(name).toBe('project.zip');
+    const zip = await JSZip.loadAsync(await (blob as Blob).arrayBuffer());
+    expect(Object.keys(zip.files)).toEqual(['analytics_gen.yaml', 'auth.yaml', 'shared.yaml', 'user.yaml']);
   });
 });

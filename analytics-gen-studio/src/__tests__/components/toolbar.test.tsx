@@ -1,0 +1,55 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { ThemeProvider } from '@mui/material/styles';
+import { useStore } from '../../state/store.ts';
+import { refreshValidation } from '../../hooks/useValidation.ts';
+import { getTheme } from '../../theme.ts';
+import Toolbar from '../../components/Toolbar.tsx';
+
+const { exportAllAsZip } = vi.hoisted(() => ({ exportAllAsZip: vi.fn(() => Promise.resolve()) }));
+vi.mock('../../utils/export.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../utils/export.ts')>()),
+  exportAllAsZip,
+  restoreFileHandle: () => Promise.resolve(null),
+  peekDiskState: () => Promise.resolve(null),
+}));
+
+function renderToolbar() {
+  return render(
+    <ThemeProvider theme={getTheme('light')}>
+      <Toolbar importHints={{ configRootKey: 'analytics_gen', sharedRootKey: 'parameters', eventFieldNames: [] }} />
+    </ThemeProvider>,
+  );
+}
+
+function pressExportShortcut() {
+  fireEvent.keyDown(window, { key: 'e', code: 'KeyE', shiftKey: true, ctrlKey: true });
+}
+
+describe('Toolbar export', () => {
+  beforeEach(() => {
+    exportAllAsZip.mockClear();
+    useStore.getState().resetState();
+  });
+
+  it('does not export from the shortcut while the project has validation errors', async () => {
+    useStore.getState().addEventFile('empty.yaml');
+    refreshValidation();
+    renderToolbar();
+
+    await act(async () => pressExportShortcut());
+
+    expect(exportAllAsZip).not.toHaveBeenCalled();
+    expect(await screen.findByText('Fix the validation errors before exporting')).toBeInTheDocument();
+  });
+
+  it('exports from the shortcut when the project is valid', async () => {
+    refreshValidation();
+    renderToolbar();
+
+    await act(async () => pressExportShortcut());
+
+    expect(exportAllAsZip).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('ZIP exported')).toBeInTheDocument();
+  });
+});

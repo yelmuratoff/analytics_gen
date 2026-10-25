@@ -155,10 +155,18 @@ export default function Toolbar({ importHints }: ToolbarProps) {
     setLastFileName(name);
   }, []);
 
-  const handleExportZip = useCallback(() => {
-    exportAllAsZip(useStore.getState(), { zipName: exportNames().zipName });
-    setSnackbar({ message: 'ZIP exported', severity: 'success' });
-  }, []);
+  const handleExportZip = useCallback(async () => {
+    if (hasErrors) {
+      setSnackbar({ message: 'Fix the validation errors before exporting', severity: 'error' });
+      return;
+    }
+    try {
+      await exportAllAsZip(useStore.getState(), { zipName: exportNames().zipName });
+      setSnackbar({ message: 'ZIP exported', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ message: `Export failed: ${err instanceof Error ? err.message : 'Unknown error'}`, severity: 'error' });
+    }
+  }, [hasErrors]);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
