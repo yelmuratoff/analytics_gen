@@ -1,8 +1,10 @@
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:source_span/source_span.dart';
 import 'package:yaml/yaml.dart';
 
 import '../config/parser_config.dart';
+import '../core/exceptions.dart';
 import '../util/logger.dart';
 import 'context_parser.dart';
 import 'domain_parser.dart';
@@ -14,6 +16,24 @@ import 'shared_parameter_parser.dart';
 /// Parses YAML files containing analytics event definitions.
 typedef LoadYamlNode = YamlNode Function(String,
     {dynamic sourceUrl, dynamic recover, dynamic errorListener});
+
+/// Parses [source] with [loadYamlNode] and returns its root node, whose
+/// spans name the source file.
+///
+/// Throws [AnalyticsParseException] at the error's location when the
+/// content is not valid YAML.
+YamlNode loadSourceYaml(LoadYamlNode loadYamlNode, AnalyticsSource source) {
+  try {
+    return loadYamlNode(source.content, sourceUrl: Uri.file(source.filePath));
+  } on FormatException catch (e) {
+    throw AnalyticsParseException(
+      'Invalid YAML: ${e.message}',
+      filePath: source.filePath,
+      span: e is SourceSpanFormatException ? e.span : null,
+      innerError: e,
+    );
+  }
+}
 
 /// YAML parser for analytics event definitions.
 final class YamlParser {

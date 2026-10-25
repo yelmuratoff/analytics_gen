@@ -38,16 +38,7 @@ class SharedParameterParser {
 
   /// Parses shared parameters from a YAML source.
   Map<String, AnalyticsParameter> parse(AnalyticsSource source) {
-    final YamlNode parsedNode;
-    try {
-      parsedNode = loadYamlNode(source.content);
-    } catch (e) {
-      throw AnalyticsParseException(
-        'Failed to parse shared parameters YAML: $e',
-        filePath: source.filePath,
-        innerError: e,
-      );
-    }
+    final parsedNode = loadSourceYaml(loadYamlNode, source);
 
     if (parsedNode is! YamlMap) {
       // If empty or just comments

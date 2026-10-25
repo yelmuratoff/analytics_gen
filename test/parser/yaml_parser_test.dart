@@ -835,7 +835,7 @@ void main() {
         throwsA(isA<AnalyticsParseException>().having(
           (e) => e.message,
           'message',
-          contains('Failed to parse YAML file'),
+          startsWith('Invalid YAML: '),
         )),
       );
     });
@@ -919,7 +919,7 @@ void main() {
         throwsA(isA<AnalyticsAggregateException>().having(
           (e) => e.errors.first.message,
           'message',
-          contains('Failed to parse YAML file'),
+          startsWith('Invalid YAML: '),
         )),
       );
     });

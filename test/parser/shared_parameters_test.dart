@@ -169,7 +169,7 @@ events:
         throwsA(isA<AnalyticsParseException>().having(
           (e) => e.message,
           'message',
-          contains('Failed to parse shared parameters YAML'),
+          'Invalid YAML: Mock parsing error',
         )),
       );
     });

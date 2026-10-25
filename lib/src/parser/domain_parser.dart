@@ -144,16 +144,7 @@ class DomainParser {
     AnalyticsSource source,
     Map<String, _DomainSource> merged,
   ) {
-    final YamlNode parsedNode;
-    try {
-      parsedNode = loadYamlNode(source.content);
-    } catch (e) {
-      throw AnalyticsParseException(
-        'Failed to parse YAML file: $e',
-        filePath: source.filePath,
-        innerError: e,
-      );
-    }
+    final parsedNode = loadSourceYaml(loadYamlNode, source);
 
     if (parsedNode is! YamlMap) {
       // If the file is empty or contains only comments, loadYamlNode might return a YamlScalar with null value
