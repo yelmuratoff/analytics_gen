@@ -6,6 +6,7 @@ import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
+import '../util/logger.dart';
 
 /// Parses analytics domains from YAML.
 final class DomainModelParser {
@@ -20,6 +21,7 @@ final class DomainModelParser {
     bool preventEventParameterDuplicates = false,
     bool strictEventNames = true,
     void Function(AnalyticsParseException)? onError,
+    Logger log = const NoOpLogger(),
   }) {
     if (valueNode is! YamlMap) {
       throw AnalyticsParseException(
@@ -52,6 +54,7 @@ final class DomainModelParser {
           preventEventParameterDuplicates: preventEventParameterDuplicates,
           strictEventNames: strictEventNames,
           keySpan: keyNode.span,
+          log: log,
         );
         events.add(event);
       } on AnalyticsParseException catch (e) {

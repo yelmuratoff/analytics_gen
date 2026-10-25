@@ -111,6 +111,14 @@ logger.logEvent(
 
 CI should call `--validate-only` to catch these failures without touching generated files.
 
+A field the schema does not define, such as a misspelled `paramters:` or `allowed_value:`, is ignored, so the parser logs a warning with its location instead of failing:
+
+```
+events/auth.yaml:4:5: Unknown field "paramters" in event "auth.login" is ignored.
+```
+
+A parameter without a `type` key may name its type as a key instead (`method: {string: null}`); that key is not reported.
+
 ## Runtime Guards
 
 - `allowed_values` produces runtime assertions in generated methods. Passing a disallowed value throws `ArgumentError` immediately, making mistakes obvious in tests.

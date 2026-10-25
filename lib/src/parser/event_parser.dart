@@ -5,6 +5,7 @@ import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_event.dart';
 import '../models/analytics_parameter.dart';
+import '../util/logger.dart';
 import '../util/string_utils.dart';
 import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
@@ -25,6 +26,7 @@ final class EventParser {
     bool preventEventParameterDuplicates = false,
     bool strictEventNames = true,
     SourceSpan? keySpan,
+    Logger log = const NoOpLogger(),
   }) {
     if (valueNode is! YamlMap) {
       throw AnalyticsParseException(
@@ -35,6 +37,12 @@ final class EventParser {
     }
 
     final eventData = valueNode;
+    eventData.warnUnknownFields(
+      YamlKeys.eventFields,
+      owner: 'event "$domainName.$eventName"',
+      filePath: filePath,
+      log: log,
+    );
 
     // Strict Event Name Validation: Check for interpolation
     if (strictEventNames &&
@@ -130,6 +138,7 @@ final class EventParser {
         sharedParameters: sharedParameters,
         enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
         preventEventParameterDuplicates: preventEventParameterDuplicates,
+        log: log,
       );
       parameters.addAll(parsedParams);
     }

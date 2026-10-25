@@ -1,8 +1,9 @@
 import 'package:yaml/yaml.dart';
 
 import '../core/exceptions.dart';
+import '../util/logger.dart';
 
-/// Typed access to scalar fields of a tracking plan YAML map.
+/// Typed access to the fields of a tracking plan YAML map.
 extension YamlFields on YamlMap {
   /// Returns the value of [key], or null when the key is absent or empty.
   ///
@@ -20,6 +21,26 @@ extension YamlFields on YamlMap {
           span: node.span,
         ),
     };
+  }
+
+  /// Logs a warning through [log] for each key that is not in [knownFields].
+  ///
+  /// The warning names the key, the [owner] it belongs to, and its location
+  /// in [filePath].
+  void warnUnknownFields(
+    Set<String> knownFields, {
+    required String owner,
+    required String filePath,
+    required Logger log,
+  }) {
+    for (final key in nodes.keys.cast<YamlNode>()) {
+      if (knownFields.contains(key.value)) continue;
+      final start = key.span.start;
+      log.warning(
+        '$filePath:${start.line + 1}:${start.column + 1}: '
+        'Unknown field "${key.value}" in $owner is ignored.',
+      );
+    }
   }
 
   static String _describe(Type type) => switch (type) {

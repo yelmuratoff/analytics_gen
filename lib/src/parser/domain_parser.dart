@@ -127,6 +127,7 @@ class DomainParser {
           preventEventParameterDuplicates: preventEventParameterDuplicates,
           strictEventNames: strictEventNames,
           onError: onError,
+          log: log,
         );
         yield domain;
       } on AnalyticsParseException catch (e) {

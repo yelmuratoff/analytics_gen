@@ -3,9 +3,12 @@ import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
+import '../util/logger.dart';
+import '../util/yaml_keys.dart';
 import 'event_loader.dart';
 import 'parameter_parser.dart';
 import 'schema_validator.dart';
+import 'yaml_fields.dart';
 import 'yaml_parser.dart';
 
 /// Parses shared parameters from YAML sources.
@@ -15,10 +18,14 @@ class SharedParameterParser {
     required this.naming,
     required this.validator,
     required this.loadYamlNode,
+    this.log = const NoOpLogger(),
   });
 
   /// The naming strategy to use.
   final NamingStrategy naming;
+
+  /// The logger that receives warnings about ignored fields.
+  final Logger log;
 
   /// The schema validator used to validate the structure and types
   /// of the shared parameters YAML before parsing.
@@ -55,7 +62,13 @@ class SharedParameterParser {
     }
 
     final parsedMap = parsedNode;
-    final parametersNode = parsedMap.nodes['parameters'];
+    parsedMap.warnUnknownFields(
+      YamlKeys.sharedParametersFileFields,
+      owner: 'the shared parameters file',
+      filePath: source.filePath,
+      log: log,
+    );
+    final parametersNode = parsedMap.nodes[YamlKeys.parameters];
 
     if (parametersNode == null) {
       return {};
@@ -82,6 +95,7 @@ class SharedParameterParser {
       eventName: 'shared',
       filePath: source.filePath,
       naming: naming,
+      log: log,
     );
 
     return {for (final p in parametersList) p.name: p};

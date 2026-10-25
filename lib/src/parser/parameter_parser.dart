@@ -5,6 +5,7 @@ import 'package:yaml/yaml.dart';
 import '../config/naming_strategy.dart';
 import '../core/exceptions.dart';
 import '../models/analytics_parameter.dart';
+import '../util/logger.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
 import '../util/yaml_keys.dart';
@@ -23,6 +24,7 @@ final class ParameterParser {
     Map<String, AnalyticsParameter> sharedParameters = const {},
     bool enforceCentrallyDefinedParameters = false,
     bool preventEventParameterDuplicates = false,
+    Logger log = const NoOpLogger(),
   }) {
     final parameters = <AnalyticsParameter>[];
     final seenRawNames = <String>{};
@@ -54,6 +56,7 @@ final class ParameterParser {
         sharedParameters: sharedParameters,
         enforceCentrallyDefinedParameters: enforceCentrallyDefinedParameters,
         preventEventParameterDuplicates: preventEventParameterDuplicates,
+        log: log,
       );
 
       if (!seenAnalyticsNames.add(param.name)) {
@@ -94,6 +97,7 @@ final class ParameterParser {
     Map<String, AnalyticsParameter> sharedParameters = const {},
     bool enforceCentrallyDefinedParameters = false,
     bool preventEventParameterDuplicates = false,
+    Logger log = const NoOpLogger(),
   }) {
     final sharedParam = sharedParameters[rawName];
 
@@ -260,29 +264,25 @@ final class ParameterParser {
       // Check if 'type' key exists explicitly
       if (paramValue.containsKey(YamlKeys.type)) {
         paramType = paramValue[YamlKeys.type].toString();
+        paramValue.warnUnknownFields(
+          YamlKeys.parameterFields,
+          owner: 'parameter "$rawName"',
+          filePath: filePath,
+          log: log,
+        );
       } else {
         // Fallback: Find type key (anything except known property names)
-        const knownKeys = {
-          YamlKeys.description,
-          YamlKeys.allowedValues,
-          YamlKeys.identifier,
-          YamlKeys.paramName,
-          YamlKeys.dartType,
-          YamlKeys.meta,
-          YamlKeys.regex,
-          YamlKeys.minLength,
-          YamlKeys.maxLength,
-          YamlKeys.min,
-          YamlKeys.max,
-          YamlKeys.operations,
-          YamlKeys.addedIn,
-          YamlKeys.deprecatedIn,
-          YamlKeys.dartImport,
-        };
         final typeKey = paramValue.keys
-            .where((k) => !knownKeys.contains(k.toString()))
+            .map((k) => k.toString())
+            .where((k) => !YamlKeys.parameterFields.contains(k))
             .firstOrNull;
-        paramType = typeKey?.toString() ?? 'dynamic';
+        paramType = typeKey ?? 'dynamic';
+        paramValue.warnUnknownFields(
+          {...YamlKeys.parameterFields, if (typeKey != null) typeKey},
+          owner: 'parameter "$rawName"',
+          filePath: filePath,
+          log: log,
+        );
       }
 
       final rawAllowed = paramValue.nodes[YamlKeys.allowedValues];

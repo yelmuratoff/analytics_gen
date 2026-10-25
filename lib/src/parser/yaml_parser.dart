@@ -61,12 +61,14 @@ final class YamlParser {
           validator: _validator,
           loadYamlNode: _loadYamlNode,
           naming: config.naming,
+          log: log,
         );
     _sharedParameterParser = sharedParameterParser ??
         SharedParameterParser(
           validator: _validator,
           loadYamlNode: _loadYamlNode,
           naming: config.naming,
+          log: log,
         );
   }
 
