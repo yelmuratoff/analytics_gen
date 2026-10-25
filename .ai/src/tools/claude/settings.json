@@ -28,9 +28,6 @@
       "Bash(skills-ref validate *)"
     ],
     "ask": [
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)",
       "Bash(git rebase *)",
       "Bash(dart pub publish *)",
       "Bash(npm publish *)",
