@@ -6,26 +6,20 @@ import { temporal } from 'zundo';
 import type { StudioState, ConfigState, EventDef, ParamDef } from '../types/index.ts';
 import { DEFAULT_EVENT_DESCRIPTION } from '../schemas/constants.ts';
 import { newProjectId } from '../utils/project-meta.ts';
+import { withDefaults } from '../utils/config-defaults.ts';
 
 /** Placeholder config — replaced by schema-derived defaults on first load.
  *  See App.tsx: applySchemaDefaults() fills real values from schema.
  *  This is only used before schemas are loaded (splash screen). */
 let schemaDefaultConfig: ConfigState | null = null;
 
-/** Called from App.tsx after schemas load to set the real defaults */
+/** Called from App.tsx after schemas load: records the defaults and fills in any setting the current config lacks. */
 export function setSchemaDefaultConfig(config: ConfigState) {
   schemaDefaultConfig = config;
-  // If store still has empty/placeholder config (first visit), apply schema defaults
-  const current = useStore.getState().config;
-  const cfg = current as unknown as Record<string, unknown>;
-  const hasData = Object.values(cfg).some((v) =>
-    typeof v === 'object' && v !== null && Object.values(v as Record<string, unknown>).some((fv) =>
-      fv !== '' && fv !== false && !(Array.isArray(fv) && fv.length === 0) && !(typeof fv === 'object' && fv !== null && Object.keys(fv).length === 0)
-    )
-  );
-  if (!hasData) {
-    useStore.getState().setConfig(config);
-  }
+  const history = useStore.temporal.getState();
+  history.pause();
+  useStore.setState((s) => ({ config: withDefaults(s.config, config) }));
+  history.resume();
 }
 
 function getDefaultConfig(): ConfigState {
@@ -276,7 +270,7 @@ export const useStore = create<StudioState>()(
           projectId: data.projectId ?? newProjectId(),
           projectName: data.projectName ?? '',
           ...(data.activeTab && { activeTab: data.activeTab }),
-          ...(data.config && { config: data.config }),
+          ...(data.config && { config: withDefaults(data.config, getDefaultConfig()) }),
           ...(data.eventFiles && { eventFiles: data.eventFiles }),
           ...(data.sharedParamFiles && { sharedParamFiles: data.sharedParamFiles }),
           ...(data.contextFiles && { contextFiles: data.contextFiles }),

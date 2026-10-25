@@ -97,12 +97,11 @@ function validateParam(
 /** Validates the whole project for the error panel and the export gate. */
 export function computeValidation(config: ConfigState, eventFiles: EventFile[], sharedParamFiles: SharedParamFile[], contextFiles: ContextFile[]): ValidationError[] {
   const errors: ValidationError[] = [];
-  const cfg = config as unknown as Record<string, Record<string, unknown>>;
-  const enforceSnakeDomains = cfg.naming?.enforce_snake_case_domains as boolean ?? false;
-  const enforceSnakeParams = cfg.naming?.enforce_snake_case_parameters as boolean ?? false;
-  const strictEventNames = cfg.rules?.strict_event_names as boolean ?? false;
+  const enforceSnakeDomains = !!config.naming?.enforce_snake_case_domains;
+  const enforceSnakeParams = !!config.naming?.enforce_snake_case_parameters;
+  const strictEventNames = !!config.rules?.strict_event_names;
 
-  if (!cfg.outputs?.dart) {
+  if (!config.outputs?.dart) {
     errors.push({ path: 'config.outputs.dart', message: 'Dart output path is required', tab: 'config' });
   }
 
