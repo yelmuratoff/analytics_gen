@@ -8,6 +8,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:yaml/yaml.dart';
+
 void main() {
   final schemaDir = Directory('schema');
   final outputDir = Directory('templates');
@@ -240,7 +242,7 @@ void _generateSharedParametersTemplate(
   buf.writeln('    type: string');
   buf.writeln('    description: Current app version.');
   buf.writeln('    param_name: app_ver');
-  buf.writeln('    regex: "^\\d+\\.\\d+\\.\\d+\$"');
+  buf.writeln(r"    regex: '^\d+\.\d+\.\d+$'");
   buf.writeln();
   buf.writeln('  screen_width:');
   buf.writeln('    type: int');
@@ -315,7 +317,7 @@ void _generateContextTemplate(Directory schemaDir, Directory outputDir) {
 // ── Helpers ──
 
 String _yamlValue(dynamic value) {
-  if (value is String) return value;
+  if (value is String) return _yamlString(value);
   if (value is bool) return value.toString();
   if (value is num) return value.toString();
   if (value is List) {
@@ -325,6 +327,17 @@ String _yamlValue(dynamic value) {
   }
   if (value is Map) return value.isEmpty ? '{}' : jsonEncode(value);
   return value.toString();
+}
+
+String _yamlString(String value) {
+  final Object? loaded;
+  try {
+    loaded = loadYaml('value: $value');
+  } on YamlException {
+    return jsonEncode(value);
+  }
+  final readsBackUnchanged = loaded is Map && loaded['value'] == value;
+  return readsBackUnchanged ? value : jsonEncode(value);
 }
 
 List<String> _wrapText(String text, int maxWidth) {

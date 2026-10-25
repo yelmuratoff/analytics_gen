@@ -41,7 +41,7 @@ parameters:
     type: string
     description: Current app version.
     param_name: app_ver
-    regex: "^\d+\.\d+\.\d+$"
+    regex: '^\d+\.\d+\.\d+$'
 
   screen_width:
     type: int
