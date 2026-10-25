@@ -13,7 +13,7 @@ Verify `$ARGUMENTS` changes without modifying product behavior.
    focused tests before `dart test`.
 3. For Studio, run `npm --prefix analytics-gen-studio test`,
    `npm --prefix analytics-gen-studio run lint`, and
-   `npm --prefix analytics-gen-studio exec -- tsc -b`.
+   `npm --prefix analytics-gen-studio exec -- tsc -b analytics-gen-studio`.
 4. For schema or cross-stack changes, run `./scripts/sync.sh`; it owns the required
    regeneration and contract cross-reference sequence.
 5. For Studio production build verification, run `dart doc` before
