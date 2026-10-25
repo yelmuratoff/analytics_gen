@@ -58,7 +58,7 @@ final class CsvGenerator {
 
         // Remove complex fields not suitable for flat CSV (like parameters list)
         row.remove('parameters');
-        row.remove('dual_write_to'); // or flatten it?
+        row.remove('dual_write_to');
         row.remove('source_path'); // Internal field
 
         // Flatten dual_write_to if present
@@ -105,7 +105,6 @@ final class CsvGenerator {
         row['operations'] = (row['operations'] as List).join(';');
       }
 
-      // Add validation summary column for convenience (optional, but good for backward compat/readability)
       final validation = <String>[];
       if (param.regex != null) validation.add('regex:${param.regex}');
       if (param.minLength != null) validation.add('min_len:${param.minLength}');

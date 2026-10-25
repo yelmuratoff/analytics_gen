@@ -62,8 +62,7 @@ final class AnalyticsSerialization {
       dualWriteTo: map['dual_write_to'] != null
           ? List<String>.from(cast<Iterable>('dual_write_to'))
           : null,
-      interpolatedName: cast<String?>(
-          'interpolated_name'), // Note: this might be missing in older serialized versions?
+      interpolatedName: cast<String?>('interpolated_name'),
     );
   }
 
