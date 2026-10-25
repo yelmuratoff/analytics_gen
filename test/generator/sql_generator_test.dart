@@ -181,8 +181,6 @@ void main() {
       await generator.generate(domains, outputPath);
       final first = await File(outputPath).readAsString();
 
-      await Future<void>.delayed(const Duration(milliseconds: 5));
-
       await generator.generate(domains, outputPath);
       final second = await File(outputPath).readAsString();
 

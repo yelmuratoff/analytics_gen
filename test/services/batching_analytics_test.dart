@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 
 import '../test_utils.dart';
@@ -39,28 +40,62 @@ void main() {
       batching.logEvent(name: 'event_a');
       batching.logEvent(name: 'event_b');
 
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await pumpEventQueue();
 
       expect(
           delegate.recordedEvents.map((e) => e.name), ['event_a', 'event_b']);
       await batching.flush();
     });
 
-    test('flushInterval periodically drains queue', () async {
-      final delegate = _FakeAsyncAnalytics();
-      final batching = BatchingAnalytics(
-        delegate: delegate,
-        maxBatchSize: 10,
-        flushInterval: const Duration(milliseconds: 20),
-      );
+    test('flushInterval periodically drains queue', () {
+      fakeAsync((async) {
+        final delegate = _FakeAsyncAnalytics();
+        final batching = BatchingAnalytics(
+          delegate: delegate,
+          maxBatchSize: 10,
+          flushInterval: const Duration(milliseconds: 20),
+        );
 
-      batching.logEvent(name: 'interval_event');
-      expect(delegate.recordedEvents, isEmpty);
+        batching.logEvent(name: 'interval_event');
+        async.elapse(const Duration(milliseconds: 19));
+        expect(delegate.recordedEvents, isEmpty);
 
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-      expect(delegate.recordedEvents.length, 1);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(delegate.recordedEvents.length, 1);
 
-      await batching.dispose();
+        batching.dispose();
+        async.flushMicrotasks();
+      });
+    });
+
+    test('waits for the backoff before a failed flush completes', () {
+      fakeAsync((async) {
+        final batching = BatchingAnalytics(
+          delegate: _FakeAsyncAnalytics()..alwaysThrow = true,
+          maxRetries: 5,
+          minRetryDelay: const Duration(milliseconds: 100),
+          maxRetryDelay: const Duration(milliseconds: 150),
+          onFlushError: (_, __) {},
+        );
+        batching.logEvent(name: 'unstable');
+
+        var completed = 0;
+        void flush() {
+          batching.flush().catchError((_) {}).whenComplete(() => completed++);
+        }
+
+        flush();
+        async.elapse(const Duration(milliseconds: 99));
+        expect(completed, 0);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(completed, 1, reason: 'first retry waits minRetryDelay');
+
+        flush();
+        async.elapse(const Duration(milliseconds: 149));
+        expect(completed, 1);
+        async.elapse(const Duration(milliseconds: 1));
+        expect(completed, 2, reason: 'doubled delay is capped');
+      });
     });
 
     test('failed flush requeues the batch', () async {
@@ -68,6 +103,7 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 10,
+        minRetryDelay: Duration.zero,
         onFlushError: (_, __) {},
       );
 
@@ -92,13 +128,13 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 1,
-        minRetryDelay: const Duration(milliseconds: 1),
+        minRetryDelay: Duration.zero,
         onFlushError: (error, _) => errors.add(error),
       );
 
       batching.logEvent(name: 'auto');
 
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await pumpEventQueue();
       expect(errors, isNotEmpty);
       expect(delegate.recordedEvents, isEmpty);
 
@@ -114,6 +150,7 @@ void main() {
       final batching = BatchingAnalytics(
         delegate: delegate,
         maxBatchSize: 10,
+        minRetryDelay: Duration.zero,
         onFlushError: (_, __) {},
       );
 
@@ -149,6 +186,7 @@ void main() {
         delegate: delegate,
         maxBatchSize: 1,
         maxRetries: 2,
+        minRetryDelay: Duration.zero,
         onFlushError: (_, __) {},
       );
 
@@ -221,7 +259,7 @@ void main() {
 
       // Allow first event to complete; this should trigger a follow-up flush
       c1.complete();
-      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await pumpEventQueue();
 
       // e1 should have been recorded, e2 still pending
       expect(delegate.recordedEvents.map((e) => e.name), ['e1']);
@@ -245,7 +283,7 @@ void main() {
       final disposing = batching.dispose().then((_) => done = true);
 
       // dispose shouldn't complete while flush is blocked
-      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await pumpEventQueue();
       expect(done, isFalse);
 
       // allow flush to complete
@@ -395,7 +433,7 @@ void main() {
     // Allow second to finish
     c2.complete();
     // Wait a short while for the follow-up to finish
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await pumpEventQueue();
 
     expect(delegate.recordedEvents.map((e) => e.name), ['e1', 'e2']);
   });

@@ -137,20 +137,12 @@ void main() {
     });
 
     test('reconcile does not write file when nothing changed', () async {
-      await File(ledgerPath).writeAsString(jsonEncode({
-        'auth.login': '2026-01-15',
-      }));
-      final lastModified = await File(ledgerPath).lastModified();
+      final compact = jsonEncode({'auth.login': '2026-01-15'});
+      await File(ledgerPath).writeAsString(compact);
 
-      final ledger = createLedger();
+      await createLedger().reconcile(['auth.login']);
 
-      // Small delay to detect file write
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-
-      await ledger.reconcile(['auth.login']);
-
-      final newModified = await File(ledgerPath).lastModified();
-      expect(newModified, equals(lastModified));
+      expect(await File(ledgerPath).readAsString(), compact);
     });
 
     test('reconcile formats timestamp with zero-padded components', () async {

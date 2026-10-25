@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:analytics_gen/analytics_gen.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 
 import '../test_utils.dart';
@@ -289,22 +290,25 @@ void main() {
       });
 
       test('logEventAsync waits for all async providers (concurrent execution)',
-          () async {
-        final slow1 =
-            _SlowAsyncProvider(delay: const Duration(milliseconds: 100));
-        final slow2 =
-            _SlowAsyncProvider(delay: const Duration(milliseconds: 50));
-        final multi = MultiProviderAnalytics([slow1, slow2]);
+          () {
+        fakeAsync((async) {
+          final slow1 =
+              _SlowAsyncProvider(delay: const Duration(milliseconds: 100));
+          final slow2 =
+              _SlowAsyncProvider(delay: const Duration(milliseconds: 50));
+          final multi = MultiProviderAnalytics([slow1, slow2]);
 
-        final stopwatch = Stopwatch()..start();
-        await multi.logEventAsync(name: 'concurrent_test');
-        stopwatch.stop();
+          var done = false;
+          multi.logEventAsync(name: 'concurrent_test').then((_) => done = true);
 
-        // Should wait at least for the slowest
-        expect(stopwatch.elapsedMilliseconds, greaterThanOrEqualTo(100));
+          async.elapse(const Duration(milliseconds: 99));
+          expect(done, isFalse, reason: 'waits for the slowest provider');
 
-        expect(slow1.eventCount, equals(1));
-        expect(slow2.eventCount, equals(1));
+          async.elapse(const Duration(milliseconds: 1));
+          expect(done, isTrue, reason: 'providers run concurrently, not 150ms');
+          expect(slow1.eventCount, equals(1));
+          expect(slow2.eventCount, equals(1));
+        });
       });
 
       test('respects provider filters in async path', () async {
@@ -523,7 +527,7 @@ class _AsyncLoggingProvider implements IAnalytics, IAsyncAnalytics {
   @override
   Future<void> logEventAsync(
       {required String name, AnalyticsParams? parameters}) async {
-    await Future.delayed(const Duration(milliseconds: 5));
+    await Future<void>.delayed(Duration.zero);
     _delegate.logEvent(name: name, parameters: parameters);
   }
 

@@ -125,8 +125,6 @@ void main() {
           await File(p.join(tempDir.path, 'analytics_events.min.json'))
               .readAsString();
 
-      await Future<void>.delayed(const Duration(milliseconds: 5));
-
       await generator.generate(domains, tempDir.path);
 
       final prettySecond =

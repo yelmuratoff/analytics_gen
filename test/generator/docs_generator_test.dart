@@ -454,8 +454,6 @@ void main() {
         p.join(tempProject.path, config.outputs.docsPath!),
       ).readAsString();
 
-      await Future<void>.delayed(const Duration(milliseconds: 5));
-
       await generator.generate(domains);
       final secondRun = await File(
         p.join(tempProject.path, config.outputs.docsPath!),
