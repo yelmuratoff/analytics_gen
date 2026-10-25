@@ -99,7 +99,9 @@ final class ParameterParser {
     bool preventEventParameterDuplicates = false,
     Logger log = const NoOpLogger(),
   }) {
-    final sharedParam = sharedParameters[rawName];
+    final sharedParam = sharedParameters[rawName] ??
+        sharedParameters.values
+            .firstWhereOrNull((p) => p.sourceName == rawName);
 
     if (enforceCentrallyDefinedParameters && sharedParam == null) {
       throw AnalyticsParseException(

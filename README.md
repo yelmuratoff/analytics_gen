@@ -338,6 +338,8 @@ Define common parameters in a central file to ensure consistency and reduce dupl
          type: int
    ```
 
+   Reference a shared parameter by its key in the shared file. When it sets `param_name`, that name works as a reference too.
+
 ## Contexts & Global Properties
 
 Contexts allow you to define global properties (like user attributes, device info, or theme settings) that are managed separately from individual events.
