@@ -3,30 +3,6 @@
 /** Number of items shown before "Show more" pagination button */
 export const PAGE_SIZE = 20;
 
-export const hoverAction = {
-  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
-  p: 0.5, flexShrink: 0,
-  '&:hover': { color: 'primary.main', bgcolor: (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}0F`, opacity: 1 },
-  '.MuiListItemButton-root:hover &, .MuiListItemButton-root:focus-within &': { opacity: 1 },
-  '&:focus-visible': { opacity: 1, outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 1 },
-} as const;
-
-export const hoverEdit = {
-  opacity: 0, transition: 'opacity 0.1s', color: 'text.disabled',
-  p: 0.3, flexShrink: 0,
-  '&:hover': { color: 'primary.main', bgcolor: (t: { palette: { primary: { main: string } } }) => `${t.palette.primary.main}0F`, opacity: 1 },
-  '.MuiListItemButton-root:hover &, .MuiListItemButton-root:focus-within &': { opacity: 0.7 },
-  '&:focus-visible': { opacity: 1, outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 1 },
-} as const;
-
-export const hoverDelete = {
-  opacity: 0, transition: 'opacity 0.15s', color: 'text.disabled',
-  p: 0.5, flexShrink: 0,
-  '&:hover': { color: 'error.main', bgcolor: (t: { palette: { error: { main: string } } }) => `${t.palette.error.main}0F`, opacity: 1 },
-  '.MuiListItemButton-root:hover &, .MuiListItemButton-root:focus-within &': { opacity: 1 },
-  '&:focus-visible': { opacity: 1, outline: '2px solid', outlineColor: 'error.main', outlineOffset: 1 },
-} as const;
-
 export const addItemButton = {
   py: 0.3,
   opacity: 0.7,

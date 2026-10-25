@@ -65,6 +65,7 @@ import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import { useValidation } from '../hooks/useValidation.ts';
 import { useSyncedRevision } from '../hooks/useSyncedRevision.ts';
+import { modKeyLabel } from '../utils/platform.ts';
 import { describeImport, type ImportSchemaHints } from '../utils/yaml-importer.ts';
 import { useYamlImport } from '../hooks/useYamlImport.ts';
 import DocsDrawer from './DocsDrawer.tsx';
@@ -92,8 +93,7 @@ function currentRevision(): string {
   return computeRevision(contentOf(useStore.getState()));
 }
 
-const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
-const mod = isMac ? '\u2318' : 'Ctrl+';
+const mod = modKeyLabel;
 
 const shortcuts = [
   { keys: `${mod}S`, description: 'Save project' },

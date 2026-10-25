@@ -19,10 +19,6 @@ export const supportsFileSystemAccess = typeof window !== 'undefined' &&
 /** Stored file handle for "Save" without dialog */
 let currentFileHandle: FileSystemFileHandle | null = null;
 
-export function getCurrentFileName(): string | null {
-  return currentFileHandle?.name ?? null;
-}
-
 export function clearFileHandle() {
   currentFileHandle = null;
   clearLastFileName();

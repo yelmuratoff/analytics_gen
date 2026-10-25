@@ -37,7 +37,6 @@ const initialState = {
   sharedParamFiles: [],
   contextFiles: [],
   selectedPath: null,
-  errors: [],
 };
 
 /** Returns a copy of `record` with `oldName` renamed in place, or null when there is nothing to rename or `newName` is taken. */

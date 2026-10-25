@@ -101,7 +101,6 @@ export interface StudioState {
   sharedParamFiles: SharedParamFile[];
   contextFiles: ContextFile[];
   selectedPath: SelectionPath | null;
-  errors: ValidationError[];
 
   // Actions
   setActiveTab: (tab: TabId) => void;

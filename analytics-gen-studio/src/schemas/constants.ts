@@ -14,9 +14,6 @@ export let DEFAULT_PARAM_TYPE = 'string';
 /** All parameter types from schema */
 export let PARAMETER_TYPES: string[] = ['string'];
 
-/** Parameter field names extracted from schema — used in validation and yaml generation */
-export let PARAM_FIELD_NAMES: string[] = [];
-
 /** Fields with x-constraints.mutually_exclusive_with */
 export let PARAM_MUTUAL_EXCLUSIONS: Array<[string, string]> = [];
 
@@ -33,7 +30,6 @@ export function applySchemaConstants(values: {
   snakeCaseParamPattern: RegExp;
   defaultParamType?: string;
   parameterTypes?: string[];
-  paramFieldNames?: string[];
   paramMutualExclusions?: Array<[string, string]>;
   typeRestrictedFields?: Record<string, string[]>;
   operationsField?: string;
@@ -43,7 +39,6 @@ export function applySchemaConstants(values: {
   SNAKE_CASE_PARAM = values.snakeCaseParamPattern;
   if (values.defaultParamType) DEFAULT_PARAM_TYPE = values.defaultParamType;
   if (values.parameterTypes) PARAMETER_TYPES = values.parameterTypes;
-  if (values.paramFieldNames) PARAM_FIELD_NAMES = values.paramFieldNames;
   if (values.paramMutualExclusions) PARAM_MUTUAL_EXCLUSIONS = values.paramMutualExclusions;
   if (values.typeRestrictedFields) TYPE_RESTRICTED_FIELDS = values.typeRestrictedFields;
   if (values.operationsField) OPERATIONS_FIELD = values.operationsField;

@@ -135,7 +135,6 @@ describe('saveProject', () => {
       sharedParamFiles: [],
       contextFiles: [],
       selectedPath: null,
-      errors: [],
     } as any;
 
     saveProject(mockState);

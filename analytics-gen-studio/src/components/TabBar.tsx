@@ -13,10 +13,10 @@ import ShareRounded from '@mui/icons-material/ShareRounded';
 import LayersRounded from '@mui/icons-material/LayersRounded';
 import { useStore } from '../state/store.ts';
 import { useValidation } from '../hooks/useValidation.ts';
+import { modKeyLabel } from '../utils/platform.ts';
 import type { TabId } from '../types/index.ts';
 
-const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
-const modKey = isMac ? '\u2318' : 'Ctrl+';
+const modKey = modKeyLabel;
 
 const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
   { id: 'config', label: 'Config', icon: <SettingsRounded sx={{ fontSize: 18 }} /> },

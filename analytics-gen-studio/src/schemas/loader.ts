@@ -7,7 +7,6 @@ export interface LoadedSchemas {
   eventsSchema: RJSFSchema;
   parameterSchema: RJSFSchema;
   sharedParametersSchema: RJSFSchema;
-  contextSchema: RJSFSchema;
   rawConfigSchema: RJSFSchema;
   /** Event-level schema for RJSF (without 'parameters' — those are managed separately) */
   eventEditorSchema: RJSFSchema;
@@ -15,8 +14,6 @@ export interface LoadedSchemas {
   parameterTypes: string[];
   /** Operations extracted from parameter.schema.json operations.items.enum */
   operations: string[];
-  /** Casing options extracted from config schema naming.casing.enum */
-  casingOptions: string[];
   /** Default config extracted from schema defaults */
   defaultConfig: ConfigState;
   /** Default event description from events.schema.json */
@@ -25,8 +22,6 @@ export interface LoadedSchemas {
   snakeCaseDomainPattern: RegExp;
   /** Snake case regex pattern from config schema (for params/identifiers) */
   snakeCaseParamPattern: RegExp;
-  /** Parameter field names from schema */
-  paramFieldNames: string[];
   /** Mutually exclusive field pairs from x-constraints */
   paramMutualExclusions: Array<[string, string]>;
   /** Parameter types each field applies to, from x-constraints.supported_types (lowercase) */
@@ -99,12 +94,6 @@ function extractOperations(parameterSchema: RJSFSchema): string[] {
   return (items?.enum as string[]) ?? [];
 }
 
-function extractCasingOptions(configSchema: RJSFSchema): string[] {
-  const naming = configSchema.properties?.naming as RJSFSchema | undefined;
-  const casing = naming?.properties?.casing as Record<string, unknown> | undefined;
-  return (casing?.enum as string[]) ?? [];
-}
-
 /** Recursively extract `default` values from a JSON Schema object into a plain object */
 function extractDefaults(schema: RJSFSchema): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -153,7 +142,6 @@ function extractSnakeCasePatterns(configSchema: RJSFSchema): { domain: RegExp; p
 
 function extractParamConstraints(parameterSchema: RJSFSchema) {
   const props = parameterSchema.properties ?? {};
-  const fieldNames = Object.keys(props);
   const mutualExclusions: Array<[string, string]> = [];
   const typeRestrictedFields: Record<string, string[]> = {};
   let operationsField = 'operations';
@@ -184,16 +172,15 @@ function extractParamConstraints(parameterSchema: RJSFSchema) {
     }
   }
 
-  return { fieldNames, mutualExclusions, typeRestrictedFields, operationsField };
+  return { mutualExclusions, typeRestrictedFields, operationsField };
 }
 
 export async function loadSchemas(): Promise<LoadedSchemas> {
-  const [rawConfig, events, parameter, sharedParameters, context] = await Promise.all([
+  const [rawConfig, events, parameter, sharedParameters] = await Promise.all([
     fetchSchema('analytics_gen.schema.json'),
     fetchSchema('events.schema.json'),
     fetchSchema('parameter.schema.json'),
     fetchSchema('shared_parameters.schema.json'),
-    fetchSchema('context.schema.json'),
   ]);
 
   const configSchema = prepareConfigSchema(rawConfig);
@@ -209,16 +196,13 @@ export async function loadSchemas(): Promise<LoadedSchemas> {
     eventsSchema: events,
     parameterSchema: prepareParameterSchema(parameter),
     sharedParametersSchema: sharedParameters,
-    contextSchema: context,
     rawConfigSchema: rawConfig,
     eventEditorSchema,
     parameterTypes: extractParameterTypes(parameter),
     operations: extractOperations(parameter),
-    casingOptions: extractCasingOptions(configSchema),
     defaultConfig: extractDefaultConfig(configSchema),
     defaultEventDescription: extractDefaultEventDescription(events),
     ...(() => { const p = extractSnakeCasePatterns(configSchema); return { snakeCaseDomainPattern: p.domain, snakeCaseParamPattern: p.param }; })(),
-    paramFieldNames: constraints.fieldNames,
     paramMutualExclusions: constraints.mutualExclusions,
     typeRestrictedFields: constraints.typeRestrictedFields,
     operationsField: constraints.operationsField,
