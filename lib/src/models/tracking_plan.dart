@@ -18,7 +18,10 @@ final class TrackingPlan {
   /// The total number of events across all domains.
   int get totalEvents => domains.values.fold(0, (sum, d) => sum + d.eventCount);
 
-  /// The total number of unique parameters across all events and contexts.
+  /// The number of event parameters across all domains.
+  ///
+  /// A parameter counts once for every event that declares it. Context
+  /// properties are not included.
   int get totalParameters =>
       domains.values.fold(0, (sum, d) => sum + d.parameterCount);
 }
