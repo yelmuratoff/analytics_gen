@@ -2,12 +2,8 @@ import 'dart:io';
 
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:analytics_gen/src/config/config_parser.dart';
-import 'package:analytics_gen/src/config/parser_config.dart';
-import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
-import 'package:analytics_gen/src/models/analytics_parameter.dart';
-import 'package:analytics_gen/src/parser/event_loader.dart';
-import 'package:analytics_gen/src/parser/yaml_parser.dart';
+import 'package:analytics_gen/src/pipeline/tracking_plan_loader.dart';
 import 'package:analytics_gen/src/util/event_naming.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
@@ -72,7 +68,10 @@ class AuditRunner {
     logger.info('Starting "Dead Event" Audit...');
 
     // 1. Load Defined Events
-    final domains = await _loadDomains(projectRoot, config, logger);
+    final plan =
+        await TrackingPlanLoader(projectRoot: projectRoot, config: config)
+            .load(logger);
+    final domains = plan.domains;
     if (domains.isEmpty) {
       logger.warning('No events found in definition files.');
       return;
@@ -181,60 +180,6 @@ class AuditRunner {
         }
       }
     }
-  }
-
-  Future<Map<String, AnalyticsDomain>> _loadDomains(
-    String projectRoot,
-    AnalyticsConfig config,
-    Logger logger,
-  ) async {
-    // Resolve shared parameter paths
-    final sharedParameterPaths = config.inputs.sharedParameters
-        .map((p) => path.join(projectRoot, p))
-        .toList();
-
-    // Load files
-    final loader = EventLoader(
-      eventsPath: path.join(projectRoot, config.inputs.eventsPath),
-      contextFiles:
-          config.inputs.contexts.map((c) => path.join(projectRoot, c)).toList(),
-      sharedParameterFiles: sharedParameterPaths,
-      log: logger,
-    );
-    final eventSources = await loader.loadEventFiles();
-
-    final Map<String, AnalyticsParameter> sharedParameters = {};
-    if (sharedParameterPaths.isNotEmpty) {
-      final sharedParser = YamlParser(
-        log: logger,
-        config: ParserConfig(naming: config.naming),
-      );
-      for (final sharedPath in sharedParameterPaths) {
-        final sharedSource = await loader.loadSourceFile(sharedPath);
-        if (sharedSource != null) {
-          try {
-            final params = sharedParser.parseSharedParameters(sharedSource);
-            sharedParameters.addAll(params);
-          } catch (_) {
-            // Ignore errors here, just best effort
-          }
-        }
-      }
-    }
-
-    final parser = YamlParser(
-      log: logger,
-      config: ParserConfig(
-        naming: config.naming,
-        strictEventNames: config.rules.strictEventNames,
-        enforceCentrallyDefinedParameters:
-            config.rules.enforceCentrallyDefinedParameters,
-        preventEventParameterDuplicates:
-            config.rules.preventEventParameterDuplicates,
-        sharedParameters: sharedParameters,
-      ),
-    );
-    return parser.parseEvents(eventSources);
   }
 }
 
