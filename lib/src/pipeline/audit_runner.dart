@@ -15,8 +15,8 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 
 import '../cli/arguments.dart';
+import '../cli/cli_command.dart';
 import '../cli/usage.dart';
-import '../config/config_loader.dart';
 import '../services/git_service.dart';
 
 /// Runner for the dead event audit tool.
@@ -25,40 +25,24 @@ class AuditRunner {
   AuditRunner({
     ArgParser? parser,
     ConfigParser? configParser,
-  })  : _parser = parser ?? createArgParser(),
+  })  : _parser = parser ?? createAuditArgParser(),
         _configParser = configParser;
 
   final ArgParser _parser;
   final ConfigParser? _configParser;
 
   /// Runs the audit.
-  Future<void> run(List<String> arguments) async {
-    Logger? logger;
-    try {
-      final results = _parser.parse(arguments);
-      final verbose = results['verbose'] as bool;
-      logger = ConsoleLogger(verbose: verbose);
-
-      if (results['help'] as bool) {
-        printUsage(_parser, logger: logger);
-        return;
-      }
-
-      final projectRoot = Directory.current.path;
-      final configPath = results['config'] as String;
-      final config = await loadAnalyticsConfig(
-        projectRoot,
-        configPath,
-        logger: logger,
-        parser: _configParser,
+  Future<void> run(List<String> arguments) => runCliCommand(
+        arguments,
+        parser: _parser,
+        printUsage: (logger) => printAuditUsage(_parser, logger: logger),
+        configParser: _configParser,
+        command: (invocation) => _runAudit(
+          invocation.projectRoot,
+          invocation.config,
+          invocation.logger,
+        ),
       );
-
-      await _runAudit(projectRoot, config, logger);
-    } catch (e) {
-      (logger ?? const ConsoleLogger()).error('Error: $e');
-      exit(1);
-    }
-  }
 
   Future<void> _runAudit(
     String projectRoot,

@@ -1,8 +1,9 @@
 import 'package:analytics_gen/src/config/analytics_config.dart';
 import 'package:args/args.dart';
 
-/// Creates an argument parser for the analytics code generator CLI.
-ArgParser createArgParser() {
+/// Creates a parser with the options every analytics_gen command accepts:
+/// `--help`, `--config` and `--verbose`.
+ArgParser createCommonArgParser() {
   return ArgParser()
     ..addFlag(
       'help',
@@ -10,6 +11,38 @@ ArgParser createArgParser() {
       negatable: false,
       help: 'Show usage information',
     )
+    ..addOption(
+      'config',
+      abbr: 'c',
+      help: 'Path to config file',
+      defaultsTo: 'analytics_gen.yaml',
+    )
+    ..addFlag(
+      'verbose',
+      abbr: 'v',
+      negatable: true,
+      defaultsTo: true,
+      help: 'Show detailed logs',
+    );
+}
+
+/// Creates an argument parser for the `audit` command.
+ArgParser createAuditArgParser() => createCommonArgParser();
+
+/// Creates an argument parser for the `studio_export` command.
+ArgParser createStudioExportArgParser() {
+  return createCommonArgParser()
+    ..addOption(
+      'output',
+      abbr: 'o',
+      help: 'Output path for the studio project file '
+          '(overrides outputs.studio in config).',
+    );
+}
+
+/// Creates an argument parser for the analytics code generator CLI.
+ArgParser createArgParser() {
+  return createCommonArgParser()
     ..addFlag(
       'watch',
       abbr: 'w',
@@ -42,19 +75,6 @@ ArgParser createArgParser() {
       'studio',
       negatable: true,
       help: 'Generate AnalyticsGen Studio project file (analytics-studio.json)',
-    )
-    ..addOption(
-      'config',
-      abbr: 'c',
-      help: 'Path to config file',
-      defaultsTo: 'analytics_gen.yaml',
-    )
-    ..addFlag(
-      'verbose',
-      abbr: 'v',
-      negatable: true,
-      defaultsTo: true,
-      help: 'Show detailed generation logs',
     )
     ..addFlag(
       'validate-only',

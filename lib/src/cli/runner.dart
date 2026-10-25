@@ -4,11 +4,11 @@ import 'package:analytics_gen/src/config/config_parser.dart';
 import 'package:analytics_gen/src/util/logger.dart';
 import 'package:args/args.dart';
 
-import '../config/config_loader.dart';
 import '../pipeline/generation_pipeline.dart';
 import '../pipeline/generation_request.dart';
 import '../pipeline/plan_printer.dart';
 import 'arguments.dart';
+import 'cli_command.dart';
 import 'usage.dart';
 
 /// Runner for the analytics code generator CLI.
@@ -24,86 +24,55 @@ class AnalyticsGenRunner {
   final ConfigParser? _configParser;
 
   /// Runs the generator.
-  Future<void> run(List<String> arguments) async {
-    Logger? logger;
-    var verbose = false;
-    try {
-      final results = _parser.parse(arguments);
-      verbose = results['verbose'] as bool;
-      logger = ConsoleLogger(verbose: verbose);
-
-      if (results['help'] as bool) {
-        printUsage(_parser, logger: logger);
-        return;
-      }
-
-      final projectRoot = Directory.current.path;
-      final configPath = results['config'] as String;
-      final config = await loadAnalyticsConfig(
-        projectRoot,
-        configPath,
-        logger: logger,
-        parser: _configParser,
+  Future<void> run(List<String> arguments) => runCliCommand(
+        arguments,
+        parser: _parser,
+        printUsage: (logger) => printUsage(_parser, logger: logger),
+        configParser: _configParser,
+        command: _generate,
       );
 
-      final generateCode = results['code'] as bool;
-      final generateDocs = resolveDocsFlag(results, config);
-      final generateExports = resolveExportsFlag(results, config);
-      final generateStudio = resolveStudioFlag(results, config);
-      final watch = results['watch'] as bool;
-      final planOnly = results['plan'] as bool;
-      final validateOnly = results['validate-only'] as bool;
-      final enableMetrics = results['metrics'] as bool;
+  Future<void> _generate(CliInvocation invocation) async {
+    final CliInvocation(:results, :logger, :projectRoot, :config) = invocation;
 
-      _ensureNotCombined('plan', planOnly, 'watch', watch, logger);
-      _ensureNotCombined(
-          'plan', planOnly, 'validate-only', validateOnly, logger);
-      _ensureNotCombined('validate-only', validateOnly, 'watch', watch, logger);
+    final watch = results['watch'] as bool;
+    final planOnly = results['plan'] as bool;
+    final validateOnly = results['validate-only'] as bool;
 
-      if (planOnly) {
-        await printTrackingPlan(
-          projectRoot,
-          config,
-          logger: logger,
-        );
-        return;
-      }
+    _ensureNotCombined('plan', planOnly, 'watch', watch, logger);
+    _ensureNotCombined('plan', planOnly, 'validate-only', validateOnly, logger);
+    _ensureNotCombined('validate-only', validateOnly, 'watch', watch, logger);
 
-      if (validateOnly) {
-        await validateTrackingPlan(
-          projectRoot,
-          config,
-          logger: logger,
-        );
-        return;
-      }
+    if (planOnly) {
+      await printTrackingPlan(projectRoot, config, logger: logger);
+      return;
+    }
 
-      final request = GenerationRequest(
-        generateCode: generateCode,
-        generateDocs: generateDocs,
-        generateExports: generateExports,
-        generateStudio: generateStudio,
-        verbose: verbose,
-        enableMetrics: enableMetrics,
-        logger: logger,
-      );
+    if (validateOnly) {
+      await validateTrackingPlan(projectRoot, config, logger: logger);
+      return;
+    }
 
-      final pipeline = GenerationPipeline(
-        projectRoot: projectRoot,
-        config: config,
-        configPath: configPath,
-      );
+    final request = GenerationRequest(
+      generateCode: results['code'] as bool,
+      generateDocs: resolveDocsFlag(results, config),
+      generateExports: resolveExportsFlag(results, config),
+      generateStudio: resolveStudioFlag(results, config),
+      verbose: invocation.verbose,
+      enableMetrics: results['metrics'] as bool,
+      logger: logger,
+    );
 
-      if (watch) {
-        await pipeline.watch(request);
-      } else {
-        await pipeline.run(request);
-      }
-    } catch (e, stackTrace) {
-      final log = logger ?? const ConsoleLogger();
-      log.error('Error: $e');
-      if (verbose) log.error('Stack trace: $stackTrace');
-      exit(1);
+    final pipeline = GenerationPipeline(
+      projectRoot: projectRoot,
+      config: config,
+      configPath: invocation.configPath,
+    );
+
+    if (watch) {
+      await pipeline.watch(request);
+    } else {
+      await pipeline.run(request);
     }
   }
 
