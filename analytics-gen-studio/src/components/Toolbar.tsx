@@ -36,7 +36,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import { useTheme } from '@mui/material/styles';
 import { useStore as useStoreBase } from 'zustand';
 import { useStore } from '../state/store.ts';
-import { useColorMode } from '../App.tsx';
+import { useColorMode } from '../theme.ts';
 import CommandPalette from './CommandPalette.tsx';
 import type { CommandPaletteActions } from './CommandPalette.tsx';
 import {
