@@ -9,7 +9,7 @@ set +e  # Don't exit on error — we track failures manually
 # ─────────────────────────────────────────────────────────────
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT"
+cd "$ROOT" || exit 1
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -55,7 +55,7 @@ fi
 
 step "Generate API docs (dart doc)"
 if dart doc 2>&1 | grep -q "Success!"; then
-  TOPIC_COUNT=$(ls doc/api/topics/*-topic.html 2>/dev/null | wc -l | tr -d ' ')
+  TOPIC_COUNT=$(find doc/api/topics -maxdepth 1 -name '*-topic.html' 2>/dev/null | wc -l | tr -d ' ')
   ok "doc/api/ — $TOPIC_COUNT topic pages"
 else
   dart doc 2>&1 | grep -E "error|warning" | tail -5
@@ -106,7 +106,7 @@ fi
 # ─── 5. Studio checks ───
 
 step "Studio: generate TypeScript types"
-cd analytics-gen-studio
+cd analytics-gen-studio || exit 1
 if node scripts/generate-types.mjs 2>&1 | grep -q "Generated"; then
   ok "src/types/generated.ts"
 else
@@ -154,7 +154,7 @@ else
   fail "Studio build failed"
 fi
 
-cd "$ROOT"
+cd "$ROOT" || exit 1
 
 # ─── 6. Cross-reference check ───
 
@@ -194,12 +194,12 @@ fi
 # ─── 7. Studio hardcode check ───
 
 step "Studio: no hardcoded schema values"
-cd analytics-gen-studio/src
+cd analytics-gen-studio/src || exit 1
 HARDCODE=$(grep -rn "'shared_parameters'\|'dart'\|'plan'\|'csv'\|'snake_case'\|'No description'\|'lib/src/analytics'" \
   --include="*.ts" --include="*.tsx" \
   | grep -v "node_modules\|__tests__\|generated\|constants\|schemas/\|tab:\|case '\|TabId\|import \|\.d\.ts" \
   | grep -cv "selectedPath\.\|\.tab !==\|\.tab ===\|outputs: Required\|tab: '\|id: '" || true)
-cd "$ROOT"
+cd "$ROOT" || exit 1
 if [ "$HARDCODE" -le 0 ] 2>/dev/null; then
   ok "No hardcoded schema values"
 else
@@ -217,7 +217,7 @@ for f in schema/*.json; do
   fi
 done
 if $SCHEMA_OK; then
-  ok "All $(ls schema/*.json | wc -l | tr -d ' ') schema files valid"
+  ok "All $(find schema -maxdepth 1 -name '*.json' | wc -l | tr -d ' ') schema files valid"
 fi
 
 # ─── Summary ───
