@@ -190,6 +190,35 @@ void main() {
       expect(result, contains(r"aB('a\\b');"));
     });
 
+    test('reads nullable enum and dart_type values without a null-aware access',
+        () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: 'method',
+            type: 'string',
+            isNullable: true,
+            allowedValues: ['email'],
+          ),
+          AnalyticsParameter(
+            name: 'locale',
+            type: 'string',
+            dartType: 'Locale',
+            isNullable: true,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(result, contains('if (method != null) "method": method.value,'));
+      expect(result, contains('if (locale != null) "locale": locale.name,'));
+    });
+
     test('escapes wire names in the parameters map', () {
       final event = AnalyticsEvent(
         name: 'login',

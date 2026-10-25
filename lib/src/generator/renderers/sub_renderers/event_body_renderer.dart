@@ -62,12 +62,10 @@ class EventBodyRenderer {
         String valueAccess;
         if (param.dartType != null) {
           // Serialize external Dart types using .name (assumed Enum)
-          valueAccess =
-              param.isNullable ? '$camelParam?.name' : '$camelParam.name';
+          valueAccess = '$camelParam.name';
         } else if (param.usesGeneratedEnum) {
           // Serialize generated Enum wrappers using .value
-          valueAccess =
-              param.isNullable ? '$camelParam?.value' : '$camelParam.value';
+          valueAccess = '$camelParam.value';
         } else {
           valueAccess = camelParam;
         }
