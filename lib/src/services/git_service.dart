@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as path;
+
 import '../util/logger.dart';
 
 /// Information about a file or line commit history.
@@ -34,6 +36,10 @@ class GitService {
   final Logger logger;
 
   /// Retrieves the last commit info for a specific line in a file.
+  ///
+  /// Runs git in the file's directory, so the file's own repository answers
+  /// regardless of the current directory. Returns null when the file is not
+  /// tracked or git is unavailable.
   Future<GitCommitInfo?> getBlame(String filePath, int lineNumber) async {
     try {
       // git blame -L n,n -p file
@@ -44,8 +50,9 @@ class GitService {
           '-L',
           '$lineNumber,$lineNumber',
           '--line-porcelain',
-          filePath
+          path.basename(filePath),
         ],
+        workingDirectory: path.dirname(filePath),
       );
 
       if (result.exitCode != 0) {
