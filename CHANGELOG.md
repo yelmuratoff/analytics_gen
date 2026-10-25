@@ -2,6 +2,79 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0]
+
+### Behaviour changes
+
+Most of these turn a silent mistake into an error. Check them before upgrading:
+
+- An unknown `naming.casing` value, such as `titleCase`, now stops generation and lists the accepted values. Before, it silently fell back to `snake_case`.
+- A parameter written as `name:` with no shared parameter of that name now fails to parse. Before, it generated `required null name`, which did not compile.
+- A `regex` that does not compile, a length rule (`min_length`, `max_length`, `regex`) on a non-string type, and a range rule (`min`, `max`) on a non-numeric type now fail to parse. Before, they produced code that did not compile or threw in the app.
+- `audit` and `studio_export` reject generation flags such as `--watch` or `--docs`. Before, they accepted and ignored them.
+- When `sqlite3` is installed but cannot build the database, generation fails with its error. Before, it reported success and left an empty database.
+- The SQL and SQLite exports store `source_path` relative to the project root (`events/auth.yaml`) instead of an absolute path.
+- `BatchingAnalytics` and `MultiProviderAnalytics` write failures that have no callback to the console through a `ConsoleLogger`. Pass `logger` to send them elsewhere. In debug builds, a failed flush no longer throws an `AssertionError` in place of the delegate's error.
+- Generated context files with a `regex` switch from `r'...'` to `r'''...'''`, the form events already use.
+
+### Features
+
+- Unknown fields in events, parameters and shared parameter files, such as a misspelled `paramters:` or `allowed_value:`, log a warning with the file, line and column. Generation continues.
+- `BatchingAnalytics` takes an optional `maxQueueSize` that drops the oldest events while the provider is unreachable, and a `logger`. Every dropped event, including one logged after `dispose()`, goes to `onEventDropped`.
+- A shared parameter that sets `param_name` can be referenced by its key in the shared file as well as by that name, matching the Studio.
+- `audit` and `studio_export` have their own `--help` and options.
+
+### Fixes
+
+#### Generated code
+
+- Quotes, `$`, backslashes and line breaks in YAML values no longer break the generated Dart: enum values, wire names from `param_name`, context names, `replacement`, multi-line descriptions and regex patterns are escaped.
+- Allowed values that differ only in case or separators (`Email`, `email`) report a collision instead of generating two identical enum constants.
+- Dual-write calls compile when both parameters are generated enums, convert the value by name, and fall back to logging the target event when the types cannot match, for example a nullable value feeding a required parameter. Arguments are passed by identifier, not by wire name.
+- Interpolated event names use the parameter's identifier, so `identifier:` overrides no longer produce undefined variables.
+- Nullable enum and `dart_type` parameters no longer generate a `?.` that the analyzer reports as a warning.
+
+#### Parsing and errors
+
+- A field with the wrong type (`description: 42`, `min: "1"`) is reported by name at the value, in event, context and shared parameter files alike. In context and shared files it used to crash with a raw `TypeError`.
+- Every located error names its file (`line 3, column 18 of events/auth.yaml`), and a YAML syntax error is reported once instead of twice.
+- Mistyped `naming` fields, a `naming` value that is not a map, a config file with only comments, and a config file whose root is a list are reported clearly.
+- With `--verbose`, a stack trace is printed only for unexpected failures, not for mistakes in the tracking plan, config or command line.
+- The generated YAML templates load again: `event_name_template` is quoted and the regex example no longer uses an invalid escape.
+
+#### CLI and exports
+
+- Watch mode keeps running when a regeneration fails.
+- `audit` and the Studio export read the tracking plan the same way generation does, including shared parameters, contexts and glob event paths.
+- The dead event report runs `git blame` in the events file's repository, so it shows last-modified details regardless of the current directory.
+- The SQLite export quotes the script path, so it works in directories with spaces.
+- The schema evolution check treats type aliases (`bool`, `boolean`) as the same type, reports `dart_type` changes and narrowed `allowed_values` as breaking, and reports widened `allowed_values` as non-breaking.
+- The Markdown docs link their table of contents to the real heading anchors.
+- The Studio export warns about each malformed YAML file it skips and no longer rewrites an unchanged project file.
+
+#### Runtime services
+
+- `BatchingAnalytics.dispose()` delivers events that a failed automatic flush put back in the queue, instead of throwing and losing them.
+- A provider filter that throws in `MultiProviderAnalytics`, or a provider that throws before returning a future, is reported through `onProviderFailure` and no longer stops delivery to the other providers.
+
+#### Studio
+
+- The three parameter editors share one form: changing the type keeps the other fields, and switching selections no longer crashes with "Rendered fewer hooks than expected".
+- Renames onto an existing name are rejected, new names follow the configured naming rules, and ZIP export is blocked while validation errors remain.
+- Navigation no longer enters undo history or marks the project as unsaved, keyboard shortcuts work with Caps Lock or Shift, settings missing from stored projects are filled with their defaults, YAML import reports every failure, and tree controls have accessible names.
+
+### Deprecations
+
+- `ensureAnalyticsInitialized` is deprecated: the generated `Analytics.instance` performs the check. It will be removed in the next major release.
+- `BatchingAnalytics.startFlushForTest` is deprecated in favour of `flush()`.
+
+### Internals
+
+- The format check in CI resolves dependencies first; it had failed on every pull request. The Studio ESLint check runs in CI and `sync.sh`, and `sync.sh` now fails when the type check or Studio tests fail.
+- Tests use `fake_async` instead of real waits, and the CLI commands run in process. Line coverage of `lib/` rose from 93.6% to 95.8%.
+- Field lists, type aliases, config defaults and the generated-enum rule each live in one place, and a test keeps them in step with `schema/*.json`.
+- Unused internal code was removed.
+
 ## [2.2.2]
 
 ### Fixes
