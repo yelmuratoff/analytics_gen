@@ -9,6 +9,7 @@ import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
 import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
+import 'yaml_fields.dart';
 
 /// Parses analytics parameters from YAML.
 final class ParameterParser {
@@ -136,8 +137,14 @@ final class ParameterParser {
     String? wireNameOverride;
 
     if (paramValue is YamlMap) {
-      identifierOverride = paramValue[YamlKeys.identifier] as String?;
-      wireNameOverride = paramValue[YamlKeys.paramName] as String?;
+      identifierOverride = paramValue.optionalField<String>(
+        YamlKeys.identifier,
+        filePath: filePath,
+      );
+      wireNameOverride = paramValue.optionalField<String>(
+        YamlKeys.paramName,
+        filePath: filePath,
+      );
     }
 
     final codeIdentifier = identifierOverride ?? rawName;
@@ -181,10 +188,13 @@ final class ParameterParser {
 
     if (paramValue is YamlMap) {
       // Complex parameter with 'type' and/or 'description'
-      description = paramValue[YamlKeys.description] as String?;
-      addedIn = paramValue[YamlKeys.addedIn] as String?;
-      deprecatedIn = paramValue[YamlKeys.deprecatedIn] as String?;
-      dartType = paramValue[YamlKeys.dartType] as String?;
+      String? stringField(String key) =>
+          paramValue.optionalField<String>(key, filePath: filePath);
+
+      description = stringField(YamlKeys.description);
+      addedIn = stringField(YamlKeys.addedIn);
+      deprecatedIn = stringField(YamlKeys.deprecatedIn);
+      dartType = stringField(YamlKeys.dartType);
 
       final metaNode = paramValue.nodes[YamlKeys.meta];
       if (metaNode != null) {
@@ -202,9 +212,9 @@ final class ParameterParser {
           span: metaNode.span,
         );
       }
-      dartImport = paramValue[YamlKeys.dartImport] as String?;
+      dartImport = stringField(YamlKeys.dartImport);
       // Validation rules
-      regex = paramValue[YamlKeys.regex] as String?;
+      regex = stringField(YamlKeys.regex);
       if (regex != null && regex.contains("'''")) {
         throw AnalyticsParseException(
           'Regex pattern for parameter "$rawName" cannot contain triple quotes '
@@ -213,10 +223,12 @@ final class ParameterParser {
           span: paramValue.nodes[YamlKeys.regex]?.span ?? valueNode.span,
         );
       }
-      minLength = paramValue[YamlKeys.minLength] as int?;
-      maxLength = paramValue[YamlKeys.maxLength] as int?;
-      min = paramValue[YamlKeys.min] as num?;
-      max = paramValue[YamlKeys.max] as num?;
+      minLength =
+          paramValue.optionalField<int>(YamlKeys.minLength, filePath: filePath);
+      maxLength =
+          paramValue.optionalField<int>(YamlKeys.maxLength, filePath: filePath);
+      min = paramValue.optionalField<num>(YamlKeys.min, filePath: filePath);
+      max = paramValue.optionalField<num>(YamlKeys.max, filePath: filePath);
 
       final rawOperations = paramValue.nodes[YamlKeys.operations];
       if (rawOperations != null) {

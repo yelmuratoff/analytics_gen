@@ -845,7 +845,7 @@ void main() {
       );
     });
 
-    test('wraps non-Analytics exception during event parsing', () async {
+    test('reports a list where a string field is expected', () async {
       final files = {
         'auth.yaml': 'auth:\n'
             '  login:\n'
@@ -857,9 +857,9 @@ void main() {
       expect(
         () => parseEventsHelper(files: files),
         throwsA(isA<AnalyticsAggregateException>().having(
-          (e) => e.errors.first.innerError,
-          'innerError',
-          isNotNull,
+          (e) => e.errors.single.message,
+          'message',
+          'Field "description" must be a string.',
         )),
       );
     });

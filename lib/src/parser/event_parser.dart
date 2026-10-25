@@ -9,6 +9,7 @@ import '../util/string_utils.dart';
 import '../util/yaml_keys.dart';
 import 'json_value_normalizer.dart';
 import 'parameter_parser.dart';
+import 'yaml_fields.dart';
 
 /// Parses analytics events from YAML.
 final class EventParser {
@@ -46,9 +47,12 @@ final class EventParser {
       );
     }
 
+    String? field(String key) =>
+        eventData.optionalField<String>(key, filePath: filePath);
+
     final description =
-        eventData[YamlKeys.description] as String? ?? 'No description provided';
-    final customEventName = eventData[YamlKeys.eventName] as String?;
+        field(YamlKeys.description) ?? 'No description provided';
+    final customEventName = field(YamlKeys.eventName);
 
     if (customEventName != null) {
       final customEventNameNode = eventData.nodes[YamlKeys.eventName];
@@ -62,11 +66,15 @@ final class EventParser {
         );
       }
     }
-    final identifier = eventData[YamlKeys.identifier] as String?;
-    final deprecated = eventData[YamlKeys.deprecated] as bool? ?? false;
-    final replacement = eventData[YamlKeys.replacement] as String?;
-    final addedIn = eventData[YamlKeys.addedIn] as String?;
-    final deprecatedIn = eventData[YamlKeys.deprecatedIn] as String?;
+    final identifier = field(YamlKeys.identifier);
+    final deprecated = eventData.optionalField<bool>(
+          YamlKeys.deprecated,
+          filePath: filePath,
+        ) ??
+        false;
+    final replacement = field(YamlKeys.replacement);
+    final addedIn = field(YamlKeys.addedIn);
+    final deprecatedIn = field(YamlKeys.deprecatedIn);
 
     final dualWriteToNode = eventData.nodes[YamlKeys.dualWriteTo];
     List<String>? dualWriteTo;
