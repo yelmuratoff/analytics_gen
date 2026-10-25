@@ -149,25 +149,6 @@ void main() {
       });
     });
 
-    group('validateEventMap', () {
-      test('accepts valid map', () {
-        final node = loadYamlNode('description: test');
-        expect(
-            () => validator.validateEventMap(
-                node, 'domain', 'event', 'test.yaml'),
-            returnsNormally);
-      });
-
-      test('throws for non-map', () {
-        final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
-        expect(
-          () =>
-              validator.validateEventMap(node, 'domain', 'event', 'test.yaml'),
-          throwsA(isA<AnalyticsParseException>()),
-        );
-      });
-    });
-
     group('validateParametersMap', () {
       test('accepts valid map', () {
         final node = loadYamlNode('param: { type: string }');
@@ -182,22 +163,6 @@ void main() {
         expect(
           () => validator.validateParametersMap(
               node, 'domain', 'event', 'test.yaml'),
-          throwsA(isA<AnalyticsParseException>()),
-        );
-      });
-    });
-
-    group('validateMetaMap', () {
-      test('accepts valid map', () {
-        final node = loadYamlNode('key: value');
-        expect(() => validator.validateMetaMap(node, 'test.yaml'),
-            returnsNormally);
-      });
-
-      test('throws for non-map', () {
-        final node = loadYamlNode('string', sourceUrl: Uri.parse('test.yaml'));
-        expect(
-          () => validator.validateMetaMap(node, 'test.yaml'),
           throwsA(isA<AnalyticsParseException>()),
         );
       });

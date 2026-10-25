@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
@@ -36,10 +34,6 @@ final class AnalyticsSerialization {
       'events': domain.events.map(eventToMap).toList(),
     };
   }
-
-  /// Converts a domain to JSON.
-  static String domainToJson(AnalyticsDomain domain) =>
-      json.encode(domainToMap(domain));
 
   // --- Event ---
 
@@ -92,10 +86,6 @@ final class AnalyticsSerialization {
       'interpolated_name': event.interpolatedName,
     };
   }
-
-  /// Converts an event to JSON.
-  static String eventToJson(AnalyticsEvent event) =>
-      json.encode(eventToMap(event));
 
   // --- Parameter ---
 

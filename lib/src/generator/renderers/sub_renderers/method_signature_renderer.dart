@@ -51,12 +51,4 @@ class MethodSignatureRenderer {
 
     return buffer.toString();
   }
-
-  /// Alias for [renderParameters].
-  String renderEventArguments(
-    String domainName,
-    AnalyticsEvent event, {
-    int indent = 0,
-  }) =>
-      renderParameters(domainName, event, indent: indent);
 }

@@ -1,5 +1,4 @@
 import 'package:analytics_gen/src/models/analytics_domain.dart';
-import 'package:source_span/source_span.dart';
 import 'package:yaml/yaml.dart';
 
 import '../config/naming_strategy.dart';
@@ -10,16 +9,10 @@ import '../util/event_naming.dart';
 /// Validates analytics schema definitions.
 final class SchemaValidator {
   /// Creates a new schema validator.
-  const SchemaValidator(
-    this.naming, {
-    this.strictEventNames = true,
-  });
+  const SchemaValidator(this.naming);
 
   /// The naming strategy to use.
   final NamingStrategy naming;
-
-  /// Whether to enforce strict event naming (no interpolation).
-  final bool strictEventNames;
 
   /// Validates that a domain name adheres to the naming strategy.
   void validateDomainName(String domainName, String filePath) {
@@ -29,20 +22,6 @@ final class SchemaValidator {
         'naming strategy. Update analytics_gen.naming.enforce_snake_case_domains '
         'or rename the domain.',
         filePath: filePath,
-      );
-    }
-  }
-
-  /// Validates that an event name does not contain interpolation characters if strict mode is enabled.
-  void validateEventName(String eventName, String filePath,
-      {SourceSpan? span}) {
-    if (strictEventNames &&
-        (eventName.contains('{') || eventName.contains('}'))) {
-      throw AnalyticsParseException(
-        'Event name "$eventName" contains interpolation characters "{" or "}". '
-        'Dynamic event names are discouraged as they lead to high cardinality.',
-        filePath: filePath,
-        span: span,
       );
     }
   }
@@ -112,22 +91,6 @@ final class SchemaValidator {
     }
   }
 
-  /// Validates that an event definition is a map.
-  void validateEventMap(
-    YamlNode node,
-    String domainName,
-    String eventName,
-    String filePath,
-  ) {
-    if (node is! YamlMap) {
-      throw AnalyticsParseException(
-        'Event "$domainName.$eventName" must be a map.',
-        filePath: filePath,
-        span: node.span,
-      );
-    }
-  }
-
   /// Validates that parameters definition is a map.
   void validateParametersMap(
     YamlNode node,
@@ -138,17 +101,6 @@ final class SchemaValidator {
     if (node is! YamlMap) {
       throw AnalyticsParseException(
         'Parameters for event "$domainName.$eventName" must be a map.',
-        filePath: filePath,
-        span: node.span,
-      );
-    }
-  }
-
-  /// Validates that meta definition is a map.
-  void validateMetaMap(YamlNode node, String filePath) {
-    if (node is! YamlMap) {
-      throw AnalyticsParseException(
-        'The "meta" field must be a map.',
         filePath: filePath,
         span: node.span,
       );

@@ -179,7 +179,7 @@ class EventRenderer extends BaseRenderer {
 
     // Method signature
     buffer.write('  void $methodName(');
-    buffer.write(sigRenderer.renderEventArguments(
+    buffer.write(sigRenderer.renderParameters(
       domainName,
       event,
       indent: 2,

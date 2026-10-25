@@ -36,11 +36,7 @@ final class YamlParser {
                     sourceUrl: sourceUrl as Uri?,
                     recover: (recover as bool?) ?? false,
                     errorListener: errorListener)) {
-    _validator = validator ??
-        SchemaValidator(
-          config.naming,
-          strictEventNames: config.strictEventNames,
-        );
+    _validator = validator ?? SchemaValidator(config.naming);
 
     _domainParser = domainParser ??
         DomainParser(

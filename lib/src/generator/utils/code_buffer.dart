@@ -38,22 +38,6 @@ class CodeBuffer {
     }
   }
 
-  /// Execute [block] with increased indentation.
-  void scope(void Function() block, {String? open, String? close}) {
-    if (open != null) writeln(open);
-    indent();
-    block();
-    outdent();
-    if (close != null) writeln(close);
-  }
-
-  /// Joins a list of items with a separator and optional indentation.
-  void joinLines(Iterable<String> lines) {
-    for (final line in lines) {
-      writeln(line);
-    }
-  }
-
   @override
   String toString() => _buffer.toString();
 }

@@ -150,7 +150,7 @@ final class DocsGenerator {
         } else {
           buffer.writeln('Analytics.instance.$methodName(');
           for (final param in firstEvent.parameters) {
-            final camelParam = _toCamelCase(param.codeName);
+            final camelParam = StringUtils.toCamelCase(param.codeName);
             buffer.writeln('  $camelParam: value,');
           }
           buffer.writeln(');');
@@ -243,7 +243,7 @@ final class DocsGenerator {
       } else {
         buffer.writeln('Analytics.instance.$methodName(');
         for (final param in event.parameters) {
-          final camelParam = _toCamelCase(param.codeName);
+          final camelParam = StringUtils.toCamelCase(param.codeName);
           final example = _getExampleValue(domainName, event, param);
           buffer.writeln('  $camelParam: $example,');
         }
@@ -298,11 +298,6 @@ final class DocsGenerator {
     }
 
     return buffer.toString();
-  }
-
-  /// Converts snake_case to camelCase
-  String _toCamelCase(String text) {
-    return StringUtils.toCamelCase(text);
   }
 
   String _formatParameterType(
