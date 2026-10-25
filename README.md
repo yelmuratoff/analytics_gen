@@ -202,6 +202,8 @@ enum AnalyticsAuthLoginMethodEnum {
 void logAuthLogin({required AnalyticsAuthLoginMethodEnum method}) { ... }
 ```
 
+Only the lowercase `string` type produces an enum. With `type: String`, or with `int`, `double`, `bool` and `num`, the parameter keeps its plain Dart type and the generated method checks the value against `allowed_values` at runtime, throwing an `ArgumentError` for anything else.
+
 ## Type-Safe Dart Enums (`dart_type`)
 
 You can also use existing Dart enums (or other classes) directly by specifying `dart_type`. The generator will use this type in the method signature and serialize it using `.name`.

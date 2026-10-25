@@ -121,7 +121,7 @@ A parameter without a `type` key may name its type as a key instead (`method: {s
 
 ## Runtime Guards
 
-- `allowed_values` produces runtime assertions in generated methods. Passing a disallowed value throws `ArgumentError` immediately, making mistakes obvious in tests.
+- `allowed_values` on a lowercase `string` parameter generates an enum, so a value outside the list does not compile. On `String` and the other scalar types, generated methods check the value at runtime: passing a disallowed value throws `ArgumentError` immediately, making mistakes obvious in tests.
 - Deprecated events include their replacement in generated documentation and mixin comments so you can migrate safely.
 - Custom types (e.g., `DateTime`, `Uri`) pass through unchanged. Ensure your providers can serialize them; otherwise, transform to primitives before logging (e.g., convert `DateTime` to ISO 8601 strings). Add unit tests exercising provider adapters so unsupported types fail fast instead of silently dropping data.
 
