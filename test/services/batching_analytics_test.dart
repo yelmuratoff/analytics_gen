@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:analytics_gen/analytics_gen.dart';
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('BatchingAnalytics', () {
     test('flush sends buffered events to delegate', () async {
@@ -258,19 +260,95 @@ void main() {
       final batching = BatchingAnalytics(delegate: delegate);
       await expectLater(batching.flush(), completes);
     });
+
+    test('dispose delivers events re-queued by a failed automatic flush',
+        () async {
+      final delegate = _FakeAsyncAnalytics()..throwNext = true;
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxBatchSize: 1,
+        minRetryDelay: Duration.zero,
+        onFlushError: (_, __) {},
+      );
+
+      batching.logEvent(name: 'first');
+      await batching.dispose();
+
+      expect(delegate.recordedEvents.map((e) => e.name), ['first']);
+    });
+
+    test('drops an event logged after dispose and reports it', () async {
+      final delegate = _FakeAsyncAnalytics();
+      final dropped = <(String, Object)>[];
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxBatchSize: 1,
+        onEventDropped: (name, _, error, __) => dropped.add((name, error)),
+      );
+      await batching.dispose();
+
+      batching.logEvent(name: 'late');
+      await batching.flush();
+
+      expect(delegate.recordedEvents, isEmpty);
+      expect(dropped.single.$1, 'late');
+      expect(dropped.single.$2, isA<StateError>());
+    });
+
+    test('logs a dropped event when no onEventDropped handler is set',
+        () async {
+      final logs = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: _FakeAsyncAnalytics(),
+        logger: TestLogger(logs),
+      );
+      await batching.dispose();
+
+      batching.logEvent(name: 'late');
+
+      expect(logs, [
+        '[BatchingAnalytics] Dropped event "late": Bad state: '
+            'logEvent was called after dispose.',
+      ]);
+    });
+
+    test('logs a failed flush and rethrows the delegate error', () async {
+      final logs = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: _FakeAsyncAnalytics()..throwNext = true,
+        minRetryDelay: Duration.zero,
+        logger: TestLogger(logs),
+      );
+
+      batching.logEvent(name: 'unstable');
+
+      await expectLater(batching.flush(), throwsA(isA<StateError>()));
+      expect(logs, [
+        '[BatchingAnalytics] Flush failed',
+        'Bad state: delegate failure',
+      ]);
+    });
+
+    test('drops the oldest events beyond maxQueueSize', () async {
+      final delegate = _FakeAsyncAnalytics();
+      final dropped = <String>[];
+      final batching = BatchingAnalytics(
+        delegate: delegate,
+        maxQueueSize: 2,
+        onEventDropped: (name, _, __, ___) => dropped.add(name),
+      );
+
+      batching.logEvent(name: 'a');
+      batching.logEvent(name: 'b');
+      batching.logEvent(name: 'c');
+      await batching.flush();
+
+      expect(dropped, ['a']);
+      expect(delegate.recordedEvents.map((e) => e.name), ['b', 'c']);
+    });
   });
 
-  test(
-      '_startFlush returns immediate Future when nothing pending (via test seam)',
-      () async {
-    final delegate = _FakeAsyncAnalytics();
-    final batching = BatchingAnalytics(delegate: delegate);
-    await expectLater(
-        batching.startFlushForTest(propagateErrors: true), completes);
-  });
-
-  test(
-      'startFlush during active flush sets follow-up and returns active future',
+  test('flush during an active flush delivers events logged meanwhile',
       () async {
     final c1 = Completer<void>();
     final c2 = Completer<void>();
@@ -284,8 +362,7 @@ void main() {
     // Add pending e2
     batching.logEvent(name: 'e2');
 
-    // Call startFlushForTest which should detect active flush and set follow up
-    final futureDuring = batching.startFlushForTest(propagateErrors: true);
+    final futureDuring = batching.flush();
 
     // complete first; this will allow f1 to finish
     c1.complete();

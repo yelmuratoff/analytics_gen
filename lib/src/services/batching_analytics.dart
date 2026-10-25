@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 
 import '../core/analytics_interface.dart';
 import '../core/async_analytics_interface.dart';
+import '../util/logger.dart';
 
 /// Signature for error handler invoked when batch flush fails.
 typedef BatchFlushErrorHandler = void Function(
@@ -25,19 +26,28 @@ typedef EventDroppedHandler = void Function(
 /// `IAnalytics.logEvent` contract exposed to the rest of the app.
 final class BatchingAnalytics implements IAnalytics {
   /// Creates a new batching analytics service.
+  ///
+  /// Failures without a matching [onFlushError] or [onEventDropped] handler
+  /// are written to [logger], which defaults to a [ConsoleLogger].
   BatchingAnalytics({
     required IAsyncAnalytics delegate,
     this.maxBatchSize = 20,
     this.maxRetries = 3,
     this.minRetryDelay = const Duration(milliseconds: 500),
     this.maxRetryDelay = const Duration(seconds: 10),
+    this.maxQueueSize,
     Duration? flushInterval,
-    BatchFlushErrorHandler? onFlushError,
+    this.onFlushError,
     this.onEventDropped,
+    Logger? logger,
   })  : assert(maxBatchSize > 0, 'maxBatchSize must be greater than zero.'),
         assert(maxRetries >= 0, 'maxRetries must be non-negative.'),
+        assert(
+          maxQueueSize == null || maxQueueSize > 0,
+          'maxQueueSize must be greater than zero.',
+        ),
         _delegate = delegate,
-        onFlushError = onFlushError ?? _defaultErrorHandler {
+        _logger = logger ?? const ConsoleLogger() {
     if (flushInterval != null) {
       _timer = Timer.periodic(flushInterval, (_) {
         if (_pending.isNotEmpty) {
@@ -47,21 +57,18 @@ final class BatchingAnalytics implements IAnalytics {
     }
   }
 
-  static void _defaultErrorHandler(Object error, StackTrace stackTrace) {
-    // At minimum, log to console in production
-    // ignore: avoid_print
-    print('[BatchingAnalytics] Flush failed: $error');
-
-    // Throw in debug mode to make issues visible during development
-    assert(false, 'Batch flush failed. Configure onFlushError callback.');
-  }
-
   final IAsyncAnalytics _delegate;
+  final Logger _logger;
 
   /// The maximum number of events to buffer before flushing.
   final int maxBatchSize;
 
-  /// The maximum number of times to retry a failed batch.
+  /// How many times an event may fail to deliver before it is dropped.
+  ///
+  /// A failed event stays at the front of the queue for the next flush. Once
+  /// it has failed [maxRetries] times it is dropped and reported to
+  /// [onEventDropped]. A value of 0 drops an event on its first failure, the
+  /// same as 1.
   final int maxRetries;
 
   /// The minimum delay between retries.
@@ -70,20 +77,46 @@ final class BatchingAnalytics implements IAnalytics {
   /// The maximum delay between retries.
   final Duration maxRetryDelay;
 
-  /// Callback for handling flush errors.
+  /// The most events kept waiting for delivery, or null for no limit.
+  ///
+  /// When a new event would exceed the limit, the oldest waiting events are
+  /// dropped and reported to [onEventDropped]. Set a limit when the delegate
+  /// can stay unreachable for long, so the queue cannot grow without bound.
+  final int? maxQueueSize;
+
+  /// Called with the error of every failed flush.
+  ///
+  /// A manual [flush] reports its failure here and also throws it. When null,
+  /// the failure is logged instead.
   final BatchFlushErrorHandler? onFlushError;
 
-  /// Callback for handling dropped events (Dead Letter Queue).
+  /// Called for every event that is dropped instead of delivered (a dead
+  /// letter queue).
+  ///
+  /// An event is dropped after failing [maxRetries] times, when it exceeds
+  /// [maxQueueSize], or when it is logged after [dispose]. When null, the
+  /// drop is logged instead.
   final EventDroppedHandler? onEventDropped;
 
   final List<_QueuedAnalyticsEvent> _pending = <_QueuedAnalyticsEvent>[];
   Future<void>? _activeFlush;
   Timer? _timer;
   bool _needsFollowUpFlush = false;
+  bool _disposed = false;
 
   @override
   void logEvent({required String name, AnalyticsParams? parameters}) {
-    _pending.add(_QueuedAnalyticsEvent(name, parameters));
+    final event = _QueuedAnalyticsEvent(name, parameters);
+    if (_disposed) {
+      _dropEvent(
+        event,
+        StateError('logEvent was called after dispose.'),
+        StackTrace.current,
+      );
+      return;
+    }
+    _pending.add(event);
+    _enforceQueueLimit();
     if (_activeFlush != null) {
       _needsFollowUpFlush = true;
     }
@@ -94,13 +127,14 @@ final class BatchingAnalytics implements IAnalytics {
 
   /// Flushes buffered events and waits for completion.
   ///
-  /// If the flush fails (e.g. network error) and retries are exhausted,
-  /// this method will throw the underlying exception. This allows callers
-  /// to handle failures when manually flushing (e.g. on app background).
+  /// Throws the delegate's error when an event fails to deliver. The failed
+  /// event and every event after it stay queued for the next flush, and the
+  /// failure is also reported to [onFlushError]. This lets callers handle
+  /// failures when flushing manually, for example when the app goes to the
+  /// background.
   ///
-  /// In contrast, automatic background flushes (triggered by [maxBatchSize]
-  /// or `flushInterval`) catch errors and report them to [onFlushError]
-  /// without throwing.
+  /// Automatic flushes, triggered by [maxBatchSize] or `flushInterval`,
+  /// report failures to [onFlushError] without throwing.
   ///
   /// If a flush is already in progress, this returns the future of the
   /// active flush.
@@ -111,14 +145,44 @@ final class BatchingAnalytics implements IAnalytics {
     return _startFlush(propagateErrors: true);
   }
 
-  /// Cancels timers and drains pending events.
+  /// Cancels timers and delivers the events that are still queued.
+  ///
+  /// Waits for an automatic flush in progress, whose failure was already
+  /// reported to [onFlushError], then flushes what remains. Throws if that
+  /// final flush fails. Events logged after [dispose] are dropped.
   Future<void> dispose() async {
+    _disposed = true;
     _timer?.cancel();
-    if (_activeFlush != null) {
-      await _activeFlush;
-    }
+    await _activeFlush?.catchError((Object _) {});
     await flush();
     _needsFollowUpFlush = false;
+  }
+
+  void _enforceQueueLimit() {
+    final limit = maxQueueSize;
+    if (limit == null) return;
+    while (_pending.length > limit) {
+      _dropEvent(
+        _pending.removeAt(0),
+        StateError('The queue exceeded maxQueueSize ($limit).'),
+        StackTrace.current,
+      );
+    }
+  }
+
+  void _dropEvent(
+    _QueuedAnalyticsEvent event,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    final handler = onEventDropped;
+    if (handler == null) {
+      _logger.warning(
+        '[BatchingAnalytics] Dropped event "${event.name}": $error',
+      );
+      return;
+    }
+    handler(event.name, event.parameters, error, stackTrace);
   }
 
   void _scheduleAutoFlush() {
@@ -191,6 +255,10 @@ final class BatchingAnalytics implements IAnalytics {
   }
 
   /// Exposes [_startFlush] for testing only.
+  @Deprecated(
+    'Use flush(), which starts the same flush with propagateErrors: true. '
+    'This test hook will be removed in the next major release.',
+  )
   @visibleForTesting
   Future<void> startFlushForTest({required bool propagateErrors}) =>
       _startFlush(propagateErrors: propagateErrors);
@@ -218,12 +286,7 @@ final class BatchingAnalytics implements IAnalytics {
 
         if (failedEvent.retryCount >= maxRetries) {
           // Drop the poison pill event by skipping it in the re-queue
-          onEventDropped?.call(
-            failedEvent.name,
-            failedEvent.parameters,
-            error,
-            stackTrace,
-          );
+          _dropEvent(failedEvent, error, stackTrace);
           nextIndex++;
         } else {
           // Backoff before retrying
@@ -238,9 +301,18 @@ final class BatchingAnalytics implements IAnalytics {
           _pending.insertAll(0, remaining);
         }
       }
-      onFlushError?.call(error, stackTrace);
+      _reportFlushError(error, stackTrace);
       rethrow;
     }
+  }
+
+  void _reportFlushError(Object error, StackTrace stackTrace) {
+    final handler = onFlushError;
+    if (handler == null) {
+      _logger.error('[BatchingAnalytics] Flush failed', error, stackTrace);
+      return;
+    }
+    handler(error, stackTrace);
   }
 
   Duration _calculateBackoff(int retryCount) {

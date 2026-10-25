@@ -543,7 +543,9 @@ Future<void> onAppBackground() async {
 - `maxBatchSize` forces a flush when enough events accumulate.
 - `flushInterval` (optional) drains on a timer for long-lived sessions.
 - `flush()` returns a `Future` so lifecycle hooks (`AppLifecycleState.paused`, integration-test teardown) can wait for delivery.
-- **Exception Handling**: Manual calls to `flush()` will throw if retries are exhausted, allowing you to handle network failures. Automatic background flushes catch errors and report them to `onFlushError` without crashing the app.
+- **Exception Handling**: A manual `flush()` throws when an event fails to deliver, so you can handle network failures. The failed event stays queued for the next flush until it has failed `maxRetries` times, then it is dropped and passed to `onEventDropped`. Automatic flushes report failures to `onFlushError` without throwing. Without these callbacks, failures are logged through the `logger` you pass (a `ConsoleLogger` by default).
+- `maxQueueSize` (optional) caps how many events wait for delivery while the provider is unreachable. When a new event would exceed it, the oldest are dropped and passed to `onEventDropped`.
+- Events logged after `dispose()` are dropped and passed to `onEventDropped`.
 
 Combine `BatchingAnalytics` with `AsyncAnalyticsAdapter` to await multiple providers without changing the generated, synchronous API surface.
 
