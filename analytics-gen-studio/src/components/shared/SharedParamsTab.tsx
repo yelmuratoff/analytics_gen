@@ -27,7 +27,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { alpha } from '@mui/material/styles';
 import type { RJSFSchema } from '@rjsf/utils';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import { DEFAULT_PARAM_TYPE, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
 import { addItemButton, sidebarScroll, PAGE_SIZE } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
@@ -58,6 +58,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
   const removeSharedParam = useStore((s) => s.removeSharedParam);
   const renameSharedParamFile = useStore((s) => s.renameSharedParamFile);
   const renameSharedParam = useStore((s) => s.renameSharedParam);
+  const enforceSnakeParams = useStore((s) => !!s.config.naming?.enforce_snake_case_parameters);
 
   const errorKeys = useErrorKeys();
   const errorMessages = useErrorMessages();
@@ -335,7 +336,7 @@ export default function SharedParamsTab({ parameterSchema }: SharedParamsTabProp
         onAdd={(n) => addSharedParamFile(withYamlExtension(n))} />
       {addParamOpen !== null && (
         <AddItemDialog open title="Add Parameter" label="Name" placeholder="session_id"
-          validateSnakeCase existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
+          namePattern={enforceSnakeParams ? SNAKE_CASE_PARAM : undefined} existingNames={Object.keys(files[addParamOpen]?.parameters ?? {})}
           onClose={() => setAddParamOpen(null)}
           onAdd={(n) => {
             addSharedParam(addParamOpen, n, { type: DEFAULT_PARAM_TYPE });

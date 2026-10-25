@@ -31,7 +31,7 @@ import Collapse from '@mui/material/Collapse';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material/styles';
 import { useStore } from '../../state/store.ts';
-import { DEFAULT_PARAM_TYPE } from '../../schemas/constants.ts';
+import { DEFAULT_PARAM_TYPE, SNAKE_CASE_DOMAIN, SNAKE_CASE_PARAM } from '../../schemas/constants.ts';
 import { addItemButton as addBtnSx, truncatedText as truncTextSx, truncatedName as truncNameSx } from '../../styles/tree-shared.ts';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
@@ -184,6 +184,8 @@ export default function FileTree() {
   const renameDomain = useStore((s) => s.renameDomain);
   const renameEvent = useStore((s) => s.renameEvent);
   const renameParameter = useStore((s) => s.renameParameter);
+  const enforceSnakeDomains = useStore((s) => !!s.config.naming?.enforce_snake_case_domains);
+  const enforceSnakeParams = useStore((s) => !!s.config.naming?.enforce_snake_case_parameters);
 
   const { searchInput, search, isPending: isSearchPending, handleSearchChange } = useDebouncedSearch();
 
@@ -638,7 +640,7 @@ export default function FileTree() {
         }} />
       {addDomainFor !== null && !addEventFor && (
         <AddItemDialog open title="Add Domain" label="Domain name" placeholder="auth"
-          validateSnakeCase existingNames={Object.keys(files[addDomainFor]?.domains ?? {})} onClose={() => setAddDomainFor(null)}
+          namePattern={enforceSnakeDomains ? SNAKE_CASE_DOMAIN : undefined} existingNames={Object.keys(files[addDomainFor]?.domains ?? {})} onClose={() => setAddDomainFor(null)}
           onAdd={(n) => {
             addDomain(addDomainFor, n);
             setExpanded((prev) => { const next = new Set(prev); next.add(`f${addDomainFor}`); next.add(`f${addDomainFor}.d${n}`); return next; });
@@ -647,7 +649,7 @@ export default function FileTree() {
       )}
       {addEventFor && !sharedAnchorEl && (
         <AddItemDialog open title="Add Event" label="Event name" placeholder="login"
-          validateSnakeCase existingNames={Object.keys(files[addEventFor.fi]?.domains[addEventFor.domain] ?? {})}
+          namePattern={SNAKE_CASE_PARAM} existingNames={Object.keys(files[addEventFor.fi]?.domains[addEventFor.domain] ?? {})}
           onClose={() => setAddEventFor(null)}
           onAdd={(n) => {
             addEvent(addEventFor.fi, addEventFor.domain, n);
@@ -658,7 +660,7 @@ export default function FileTree() {
       )}
       {addParamFor && !sharedAnchorEl && !addMenuAnchor && (
         <AddItemDialog open title="Add Parameter" label="Parameter name" placeholder="session_id"
-          validateSnakeCase existingNames={Object.keys(files[addParamFor.fi]?.domains[addParamFor.domain]?.[addParamFor.event]?.parameters ?? {})}
+          namePattern={enforceSnakeParams ? SNAKE_CASE_PARAM : undefined} existingNames={Object.keys(files[addParamFor.fi]?.domains[addParamFor.domain]?.[addParamFor.event]?.parameters ?? {})}
           onClose={() => setAddParamFor(null)}
           onAdd={(n) => {
             addParameter(addParamFor.fi, addParamFor.domain, addParamFor.event, n, { type: DEFAULT_PARAM_TYPE });

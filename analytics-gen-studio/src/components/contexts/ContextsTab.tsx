@@ -38,6 +38,7 @@ import { useResizeHandle } from '../../hooks/useResizeHandle.ts';
 import { useErrorKeys, useErrorMessages } from '../../hooks/useValidation.ts';
 import { useInlineRename } from '../../hooks/useInlineRename.ts';
 import { withYamlExtension } from '../../utils/file-names.ts';
+import { newNameError } from '../../utils/validation.ts';
 import InlineRenameField from '../InlineRenameField.tsx';
 import ErrorDot from '../ErrorDot.tsx';
 import ItemMenu from '../ItemMenu.tsx';
@@ -67,6 +68,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const renameContextFile = useStore((s) => s.renameContextFile);
   const renameContextName = useStore((s) => s.renameContextName);
   const renameContextProperty = useStore((s) => s.renameContextProperty);
+  const enforceSnakeParams = useStore((s) => !!s.config.naming?.enforce_snake_case_parameters);
 
   const errorKeys = useErrorKeys();
   const errorMessages = useErrorMessages();
@@ -123,11 +125,10 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
   const handleAddFile = () => {
     const fn = fileNameInput.trim();
     const cn = contextNameInput.trim();
-    if (!fn) { setFileError('File name is required'); return; }
-    if (!/^[a-zA-Z0-9_.\-/]+$/.test(fn)) { setFileError('Invalid characters'); return; }
-    if (!cn) { setCtxError('Context name is required'); return; }
-    if (!SNAKE_CASE_PARAM.test(cn)) { setCtxError('Must be snake_case'); return; }
-    if (files.some((f) => f.fileName === withYamlExtension(fn))) { setFileError('File already exists'); return; }
+    const fileNameError = newNameError(fn && withYamlExtension(fn), { isFileName: true, existingNames: files.map((f) => f.fileName) });
+    if (fileNameError) { setFileError(fileNameError); return; }
+    const contextNameError = newNameError(cn, { namePattern: SNAKE_CASE_PARAM, existingNames: files.map((f) => f.contextName) });
+    if (contextNameError) { setCtxError(contextNameError); return; }
     addContextFile(withYamlExtension(fn), cn);
     setFileNameInput(''); setContextNameInput('');
     setFileError(''); setCtxError('');
@@ -383,7 +384,7 @@ export default function ContextsTab({ parameterSchema, operations }: ContextsTab
 
       {addPropOpen !== null && (
         <AddItemDialog open title="Add Property" label="Name" placeholder="user_id"
-          validateSnakeCase existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
+          namePattern={enforceSnakeParams ? SNAKE_CASE_PARAM : undefined} existingNames={Object.keys(files[addPropOpen]?.properties ?? {})}
           onClose={() => setAddPropOpen(null)}
           onAdd={(n) => {
             addContextProperty(addPropOpen, n, { type: DEFAULT_PARAM_TYPE });

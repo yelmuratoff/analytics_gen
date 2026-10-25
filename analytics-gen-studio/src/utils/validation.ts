@@ -19,6 +19,35 @@ export function snakeCaseNameError(name: string, enforceSnakeCase: boolean): str
   return `"${name}" must be snake_case (a-z, 0-9, _)`;
 }
 
+const YAML_UNSAFE = /[:{}[\]&*?|><!%@`#,'"\\]/;
+const VALID_YAML_KEY = /^[a-zA-Z_][a-zA-Z0-9_./-]*$/;
+const VALID_FILE_NAME = /^[a-zA-Z0-9_./-]+$/;
+const MAX_NAME_LENGTH = 100;
+
+interface NewNameRules {
+  existingNames?: string[];
+  isFileName?: boolean;
+  /** Naming convention the name must follow, when the config enforces one. */
+  namePattern?: RegExp;
+}
+
+/** Returns why `input` cannot name a new item, or null when it can. */
+export function newNameError(input: string, { existingNames = [], isFileName, namePattern }: NewNameRules = {}): string | null {
+  if (!input) return 'Name cannot be empty';
+  if (existingNames.includes(input)) return 'Name already exists';
+
+  if (isFileName) {
+    if (!VALID_FILE_NAME.test(input)) return 'Invalid characters. Use letters, numbers, _, -, .';
+  } else {
+    if (YAML_UNSAFE.test(input)) return 'Contains characters that break YAML (: { } [ ] etc.)';
+    if (!VALID_YAML_KEY.test(input)) return 'Must start with a letter or _, only letters, numbers, _';
+    if (namePattern && !namePattern.test(input)) return 'Must be snake_case (lowercase, numbers, underscores)';
+  }
+
+  if (input.length > MAX_NAME_LENGTH) return `Name is too long (max ${MAX_NAME_LENGTH} characters)`;
+  return null;
+}
+
 /** Whether a custom event name uses `{ }` placeholders while strict_event_names forbids them. */
 export function breaksStrictEventNames(eventName: string | undefined, strictEventNames: boolean): boolean {
   return strictEventNames && !!eventName && (eventName.includes('{') || eventName.includes('}'));
