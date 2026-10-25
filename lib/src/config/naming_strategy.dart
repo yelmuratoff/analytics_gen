@@ -22,6 +22,15 @@ final class NamingStrategy {
       return const NamingStrategy();
     }
 
+    T? read<T extends Object>(String key) => switch (yaml[key]) {
+          null => null,
+          final T value => value,
+          final other => throw FormatException(
+              'Invalid configuration for "$key": '
+              'expected $T but got ${other.runtimeType}',
+            ),
+        };
+
     final aliasesRaw = yaml[YamlKeys.domainAliases];
     final aliases = <String, String>{};
     if (aliasesRaw is Map) {
@@ -30,27 +39,34 @@ final class NamingStrategy {
       }
     }
 
-    final conventionStr = yaml[YamlKeys.casing] as String?;
-    final convention = switch (conventionStr) {
-      'snake_case' => EventNamingConvention.snakeCase,
-      'title_case' => EventNamingConvention.titleCase,
-      'original' => EventNamingConvention.original,
-      _ => EventNamingConvention.snakeCase,
-    };
+    final casing = read<String>(YamlKeys.casing);
+    final convention = casing == null
+        ? EventNamingConvention.snakeCase
+        : _conventionsByCasing[casing] ??
+            (throw FormatException(
+              'Invalid configuration for "${YamlKeys.casing}": expected one '
+              'of ${_conventionsByCasing.keys.join(', ')} but got "$casing"',
+            ));
 
     return NamingStrategy(
       enforceSnakeCaseDomains:
-          yaml[YamlKeys.enforceSnakeCaseDomains] as bool? ?? true,
+          read<bool>(YamlKeys.enforceSnakeCaseDomains) ?? true,
       enforceSnakeCaseParameters:
-          yaml[YamlKeys.enforceSnakeCaseParameters] as bool? ?? true,
+          read<bool>(YamlKeys.enforceSnakeCaseParameters) ?? true,
       eventNameTemplate:
-          yaml[YamlKeys.eventNameTemplate] as String? ?? '{domain}: {event}',
+          read<String>(YamlKeys.eventNameTemplate) ?? '{domain}: {event}',
       identifierTemplate:
-          yaml[YamlKeys.identifierTemplate] as String? ?? '{domain}: {event}',
+          read<String>(YamlKeys.identifierTemplate) ?? '{domain}: {event}',
       domainAliases: aliases,
       convention: convention,
     );
   }
+
+  static const _conventionsByCasing = {
+    'snake_case': EventNamingConvention.snakeCase,
+    'title_case': EventNamingConvention.titleCase,
+    'original': EventNamingConvention.original,
+  };
   static final _snakeCaseDomain = RegExp(r'^[a-z0-9_]+$');
   static final _snakeCaseParam = RegExp(r'^[a-z][a-z0-9_]*$');
 

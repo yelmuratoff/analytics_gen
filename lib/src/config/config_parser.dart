@@ -155,7 +155,9 @@ class ConfigParser {
           val(config, YamlKeys.preventEventParameterDuplicates, false),
         ),
       ),
-      naming: NamingStrategy.fromYaml(config[YamlKeys.naming] as Map?),
+      naming: NamingStrategy.fromYaml(
+        safeMap(config[YamlKeys.naming], YamlKeys.naming),
+      ),
       meta: AnalyticsMeta(
         autoTrackingCreationDate: val(
           metaConfig,
