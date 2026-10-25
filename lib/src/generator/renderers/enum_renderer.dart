@@ -4,6 +4,7 @@ import 'package:analytics_gen/src/models/analytics_parameter.dart';
 import '../../core/exceptions.dart';
 import '../../models/analytics_event.dart';
 import '../../util/string_utils.dart';
+import '../model_codegen.dart';
 
 /// Renders Dart enums for analytics parameters with allowed values.
 class EnumRenderer {
@@ -15,9 +16,7 @@ class EnumRenderer {
     final buffer = StringBuffer();
     for (final event in domain.events) {
       for (final param in event.parameters) {
-        if (param.type == 'string' &&
-            param.allowedValues != null &&
-            param.allowedValues!.isNotEmpty) {
+        if (param.usesGeneratedEnum) {
           buffer.write(_renderEnum(domainName, event, param));
         }
       }

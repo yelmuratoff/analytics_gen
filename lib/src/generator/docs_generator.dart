@@ -9,6 +9,7 @@ import '../util/logger.dart';
 import '../util/string_utils.dart';
 import '../util/type_mapper.dart';
 import 'generation_metadata.dart';
+import 'model_codegen.dart';
 import 'output_manager.dart';
 import 'renderers/enum_renderer.dart';
 
@@ -304,12 +305,6 @@ final class DocsGenerator {
     return StringUtils.toCamelCase(text);
   }
 
-  bool _isGeneratedEnumParameter(AnalyticsParameter param) {
-    return param.dartType == null &&
-        param.type == 'string' &&
-        (param.allowedValues != null && param.allowedValues!.isNotEmpty);
-  }
-
   String _formatParameterType(
     String domainName,
     AnalyticsEvent event,
@@ -320,7 +315,7 @@ final class DocsGenerator {
       return '${explicitType.trim()}${param.isNullable ? '?' : ''}';
     }
 
-    if (_isGeneratedEnumParameter(param)) {
+    if (param.usesGeneratedEnum) {
       final enumName =
           const EnumRenderer().buildEnumName(domainName, event, param);
       return '$enumName${param.isNullable ? '?' : ''}';
@@ -345,7 +340,7 @@ final class DocsGenerator {
       return '${explicitType.trim()}.values.first';
     }
 
-    if (_isGeneratedEnumParameter(param)) {
+    if (param.usesGeneratedEnum) {
       final allowedValues = param.allowedValues;
       if (allowedValues != null && allowedValues.isNotEmpty) {
         final enumName =

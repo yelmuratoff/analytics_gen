@@ -3,6 +3,7 @@ import 'package:analytics_gen/src/models/analytics_event.dart';
 
 import '../../config/analytics_config.dart';
 import '../../util/string_utils.dart';
+import '../model_codegen.dart';
 import 'base_renderer.dart';
 import 'enum_renderer.dart';
 
@@ -108,10 +109,7 @@ class MatchersRenderer extends BaseRenderer {
       // So actual is String.
       // But the user passed `AuthLoginMethod.email` into the matcher.
 
-      final isEnum =
-          param.type == 'string' && (param.allowedValues?.isNotEmpty ?? false);
-
-      if (isEnum && param.dartType == null) {
+      if (param.usesGeneratedEnum) {
         // params[key] will be String (serialized value).
         // $camelParam is Enum.
         final enumName =

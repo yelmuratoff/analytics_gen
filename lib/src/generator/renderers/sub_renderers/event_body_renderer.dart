@@ -5,6 +5,7 @@ import 'package:analytics_gen/src/models/analytics_event.dart';
 import '../../../util/event_naming.dart';
 import '../../../util/string_utils.dart';
 import '../../../util/type_mapper.dart';
+import '../../model_codegen.dart';
 import '../../utils/code_buffer.dart';
 import '../../validators/cross_domain_validator.dart';
 import 'validation_renderer.dart';
@@ -42,10 +43,7 @@ class EventBodyRenderer {
     final includeMeta =
         config.meta.includeMetaInParameters && event.meta.isNotEmpty;
 
-    final hasParametersParam = event.parameters
-        .any((p) => StringUtils.toCamelCase(p.codeName) == 'parameters');
-    final parametersArgName =
-        hasParametersParam ? 'analyticsParameters' : 'parameters';
+    final parametersArgName = event.parametersArgumentName;
 
     if (event.parameters.isNotEmpty || includeDescription || includeMeta) {
       buffer.writeln('final eventParameters = <String, Object?>{');
@@ -60,16 +58,13 @@ class EventBodyRenderer {
       }
       for (final param in event.parameters) {
         final camelParam = StringUtils.toCamelCase(param.codeName);
-        final isEnum = param.type == 'string' &&
-            param.allowedValues != null &&
-            param.allowedValues!.isNotEmpty;
 
         String valueAccess;
         if (param.dartType != null) {
           // Serialize external Dart types using .name (assumed Enum)
           valueAccess =
               param.isNullable ? '$camelParam?.name' : '$camelParam.name';
-        } else if (isEnum) {
+        } else if (param.usesGeneratedEnum) {
           // Serialize generated Enum wrappers using .value
           valueAccess =
               param.isNullable ? '$camelParam?.value' : '$camelParam.value';
@@ -160,11 +155,7 @@ class EventBodyRenderer {
       // Skip validation for external Dart types as valid values are enforced by type
       if (param.dartType != null) continue;
 
-      final isEnum = param.type == 'string' &&
-          param.allowedValues != null &&
-          param.allowedValues!.isNotEmpty;
-
-      if (!isEnum) {
+      if (!param.usesGeneratedEnum) {
         final allowedValues = param.allowedValues;
         if (allowedValues != null && allowedValues.isNotEmpty) {
           final camelParam = StringUtils.toCamelCase(param.codeName);

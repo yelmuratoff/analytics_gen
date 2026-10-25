@@ -2,6 +2,7 @@ import 'package:analytics_gen/src/models/analytics_event.dart';
 
 import '../../../util/string_utils.dart';
 import '../../../util/type_mapper.dart';
+import '../../model_codegen.dart';
 import '../enum_renderer.dart';
 
 /// Renders method signatures.
@@ -21,14 +22,10 @@ class MethodSignatureRenderer {
     if (event.parameters.isNotEmpty) {
       buffer.writeln('{');
       for (final param in event.parameters) {
-        final isEnum = param.type == 'string' &&
-            param.allowedValues != null &&
-            param.allowedValues!.isNotEmpty;
-
         String dartType;
         if (param.dartType != null) {
           dartType = param.dartType!;
-        } else if (isEnum) {
+        } else if (param.usesGeneratedEnum) {
           dartType =
               const EnumRenderer().buildEnumName(domainName, event, param);
         } else {
@@ -42,11 +39,9 @@ class MethodSignatureRenderer {
       }
 
       // Add optional parameters override
-      final hasParametersParam = event.parameters
-          .any((p) => StringUtils.toCamelCase(p.codeName) == 'parameters');
-      final parametersArgName =
-          hasParametersParam ? 'analyticsParameters' : 'parameters';
-      buffer.writeln('$indentStr  Map<String, Object?>? $parametersArgName,');
+      buffer.writeln(
+        '$indentStr  Map<String, Object?>? ${event.parametersArgumentName},',
+      );
 
       buffer.write('$indentStr}');
     } else {

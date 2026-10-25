@@ -1,6 +1,7 @@
 import 'package:analytics_gen/src/models/analytics_event.dart';
 
 import '../../../util/type_mapper.dart';
+import '../../model_codegen.dart';
 import '../enum_renderer.dart';
 
 /// Renders documentation comments.
@@ -42,15 +43,11 @@ class DocumentationRenderer {
     if (event.parameters.isNotEmpty) {
       buffer.writeln('$indentStr/// Parameters:');
       for (final param in event.parameters) {
-        final isEnum = param.type == 'string' &&
-            param.allowedValues != null &&
-            param.allowedValues!.isNotEmpty;
-
         String typeName;
         if (param.dartType != null) {
           typeName = param.dartType!;
         } else {
-          typeName = isEnum
+          typeName = param.usesGeneratedEnum
               ? const EnumRenderer().buildEnumName(domainName, event, param)
               : DartTypeMapper.toDartType(param.type);
         }

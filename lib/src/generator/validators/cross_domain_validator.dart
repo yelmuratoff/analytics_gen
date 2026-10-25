@@ -3,6 +3,7 @@ import '../../models/analytics_domain.dart';
 import '../../models/analytics_event.dart';
 import '../../util/event_naming.dart';
 import '../../util/string_utils.dart';
+import '../model_codegen.dart';
 import 'cross_domain_validation_result.dart';
 
 /// Validates and resolves cross-domain event calls.
@@ -96,12 +97,8 @@ class CrossDomainValidator {
       final sourceParam = currentEvent.parameters[sourceParamIndex];
       final sourceVarName = StringUtils.toCamelCase(sourceParam.codeName);
 
-      final sourceIsEnum = sourceParam.type == 'string' &&
-          sourceParam.allowedValues != null &&
-          sourceParam.allowedValues!.isNotEmpty;
-      final targetIsEnum = targetParam.type == 'string' &&
-          targetParam.allowedValues != null &&
-          targetParam.allowedValues!.isNotEmpty;
+      final sourceIsEnum = sourceParam.usesGeneratedEnum;
+      final targetIsEnum = targetParam.usesGeneratedEnum;
 
       // Handle dart_type matching
       if (sourceParam.dartType != null || targetParam.dartType != null) {
