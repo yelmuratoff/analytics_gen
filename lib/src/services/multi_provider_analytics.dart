@@ -25,10 +25,12 @@ typedef EventPredicate = bool Function(String name, AnalyticsParams? params);
 /// ([logEventAsync]) logging.
 ///
 /// ### When to use [logEvent] (Synchronous)
-/// Use this for standard app usage (e.g. UI interactions). It wraps all provider
-/// calls in microtasks to ensure the UI thread is not blocked, even if a provider
-/// performs expensive synchronous work. Errors are reported via [onError] or
-/// [onProviderFailure].
+/// Use this for standard app usage (e.g. UI interactions). Each provider runs
+/// in its own microtask, so [logEvent] returns before any provider does and a
+/// failing provider or filter cannot interrupt the caller or the other
+/// providers. Microtasks still run on the calling isolate before the next
+/// frame, so a provider with expensive synchronous work still delays the UI.
+/// Errors are reported via [onError] or [onProviderFailure].
 ///
 /// ### When to use [logEventAsync] (Asynchronous)
 /// Use this when you need to ensure delivery before proceeding, such as:
@@ -55,6 +57,10 @@ final class MultiProviderAnalytics
   /// Creates an immutable multi-provider analytics service.
   ///
   /// The [providers] list is copied and made unmodifiable to ensure immutability.
+  ///
+  /// A provider or filter failure goes to [onProviderFailure] and [onError].
+  /// When neither is set, it is logged as a warning through [logger], which
+  /// defaults to a [ConsoleLogger].
   MultiProviderAnalytics(
     List<IAnalytics> providers, {
     this.onError,
@@ -63,7 +69,7 @@ final class MultiProviderAnalytics
     Logger? logger,
   })  : _providers = List.unmodifiable(providers),
         _providerFilters = Map.unmodifiable(providerFilters ?? const {}),
-        _logger = logger ?? const NoOpLogger();
+        _logger = logger ?? const ConsoleLogger();
   final List<IAnalytics> _providers;
 
   /// Notifies observers when any provider fails.
@@ -89,11 +95,9 @@ final class MultiProviderAnalytics
     AnalyticsParams? parameters,
   }) {
     for (final provider in _providers) {
-      final predicate = _providerFilters[provider];
-      if (predicate != null && !predicate(name, parameters)) continue;
-
       scheduleMicrotask(() {
         try {
+          if (!_accepts(provider, name, parameters)) return;
           provider.logEvent(name: name, parameters: parameters);
         } catch (error, stackTrace) {
           _handleProviderFailure(provider, name, parameters, error, stackTrace);
@@ -107,38 +111,38 @@ final class MultiProviderAnalytics
     required String name,
     AnalyticsParams? parameters,
   }) async {
-    final List<Future<void>> pending = [];
+    await Future.wait([
+      for (final provider in _providers)
+        _deliverAsync(provider, name, parameters),
+    ]);
+  }
 
-    for (final provider in _providers) {
-      final predicate = _providerFilters[provider];
-      if (predicate != null && !predicate(name, parameters)) continue;
-
-      if (provider is IAsyncAnalytics) {
-        // If the provider offers an async API, await it and map any errors
-        // back through the failure hooks.
-        final asyncProvider = provider as IAsyncAnalytics;
-        pending.add(asyncProvider
-            .logEventAsync(name: name, parameters: parameters)
-            .catchError((error, stackTrace) {
-          _handleProviderFailure(
-              provider, name, parameters, error, stackTrace as StackTrace);
-        }));
+  Future<void> _deliverAsync(
+    IAnalytics provider,
+    String name,
+    AnalyticsParams? parameters,
+  ) async {
+    try {
+      if (!_accepts(provider, name, parameters)) return;
+      if (provider case final IAsyncAnalytics asyncProvider) {
+        await asyncProvider.logEventAsync(name: name, parameters: parameters);
       } else {
-        // Wrap sync logging in a microtask so async callers don't block.
-        pending.add(Future.microtask(
-                () => provider.logEvent(name: name, parameters: parameters))
-            .catchError((error, stackTrace) {
-          _handleProviderFailure(
-              provider, name, parameters, error, stackTrace as StackTrace);
-        }));
+        await Future.microtask(
+          () => provider.logEvent(name: name, parameters: parameters),
+        );
       }
+    } catch (error, stackTrace) {
+      _handleProviderFailure(provider, name, parameters, error, stackTrace);
     }
+  }
 
-    if (pending.isEmpty) return;
-
-    // Wait for all providers to complete but don't throw if one fails — errors
-    // are already reported to onProviderFailure and onError via catchError wrappers above.
-    await Future.wait(pending);
+  bool _accepts(
+    IAnalytics provider,
+    String name,
+    AnalyticsParams? parameters,
+  ) {
+    final predicate = _providerFilters[provider];
+    return predicate == null || predicate(name, parameters);
   }
 
   void _handleProviderFailure(
