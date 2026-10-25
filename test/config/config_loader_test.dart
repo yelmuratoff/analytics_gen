@@ -6,6 +6,8 @@ import 'package:analytics_gen/src/util/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('loadAnalyticsConfig', () {
     late Directory tempDir;
@@ -35,6 +37,27 @@ void main() {
         config.inputs.eventsPath,
         AnalyticsConfig.defaultConfig.inputs.eventsPath,
       );
+    });
+
+    test('uses the defaults and shows a starter config without a file',
+        () async {
+      final logs = <String>[];
+
+      final config = await loadAnalyticsConfig(
+        tempDir.path,
+        'analytics_gen.yaml',
+        logger: TestLogger(logs),
+      );
+
+      expect(
+        config.inputs.eventsPath,
+        AnalyticsConfig.defaultConfig.inputs.eventsPath,
+      );
+      expect(
+        logs.first,
+        'No config file found at analytics_gen.yaml, using defaults',
+      );
+      expect(logs, contains('analytics_gen:'));
     });
 
     test('names the file when its root is not a map', () async {
