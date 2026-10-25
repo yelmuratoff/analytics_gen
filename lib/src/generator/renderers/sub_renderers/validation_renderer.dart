@@ -68,7 +68,8 @@ class ValidationRenderer {
 
       if (cachedRegexFieldName == null) {
         buffer.writeln(
-          "$indentStr    final $regexRef = RegExp(r'$regex');",
+          '$indentStr    final $regexRef = '
+          'RegExp(${StringUtils.regexLiteral(regex)});',
         );
       }
 

@@ -100,7 +100,10 @@ class EventRenderer extends BaseRenderer {
       for (final entry in entries) {
         final pattern = entry.key;
         final fieldName = entry.value;
-        buffer.writeln("  static final $fieldName = RegExp(r'''$pattern''');");
+        buffer.writeln(
+          '  static final $fieldName = '
+          'RegExp(${StringUtils.regexLiteral(pattern)});',
+        );
       }
       buffer.writeln();
     }
@@ -157,7 +160,9 @@ class EventRenderer extends BaseRenderer {
     // Deprecation annotation
     if (event.deprecated) {
       final message = _buildDeprecationMessage(event);
-      buffer.writeln("  @Deprecated('$message')");
+      buffer.writeln(
+        "  @Deprecated('${StringUtils.escapeSingleQuoted(message)}')",
+      );
     } else {
       if (event.interpolatedName != null) {
         buffer.writeln(

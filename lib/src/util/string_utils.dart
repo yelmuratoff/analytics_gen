@@ -60,19 +60,37 @@ final class StringUtils {
             .join();
   }
 
-  /// Escapes single quotes, backslashes, and dollar signs for use in Dart single-quoted string literals.
+  /// Escapes single quotes, backslashes, dollar signs, and line breaks for use in Dart single-quoted string literals.
   static String escapeSingleQuoted(String value) {
-    return value
+    return _escapeLineBreaks(value
         .replaceAll('\\', '\\\\')
         .replaceAll("'", "\\'")
-        .replaceAll(r'$', r'\$');
+        .replaceAll(r'$', r'\$'));
   }
 
-  /// Escapes double quotes, backslashes, and dollar signs for use in Dart double-quoted string literals.
+  /// Escapes double quotes, backslashes, dollar signs, and line breaks for use in Dart double-quoted string literals.
   static String escapeDoubleQuoted(String value) {
-    return value
+    return _escapeLineBreaks(value
         .replaceAll('\\', '\\\\')
         .replaceAll('"', '\\"')
-        .replaceAll(r'$', r'\$');
+        .replaceAll(r'$', r'\$'));
+  }
+
+  /// Returns a Dart string literal whose value is exactly [pattern].
+  ///
+  /// Uses a raw triple-quoted literal so regex escapes stay readable, and an
+  /// escaped single-quoted literal for patterns a raw literal cannot hold.
+  static String regexLiteral(String pattern) {
+    final fitsRawLiteral = !pattern.contains("'''") &&
+        !pattern.endsWith("'") &&
+        !pattern.contains('\n') &&
+        !pattern.contains('\r');
+    return fitsRawLiteral
+        ? "r'''$pattern'''"
+        : "'${escapeSingleQuoted(pattern)}'";
+  }
+
+  static String _escapeLineBreaks(String value) {
+    return value.replaceAll('\n', r'\n').replaceAll('\r', r'\r');
   }
 }

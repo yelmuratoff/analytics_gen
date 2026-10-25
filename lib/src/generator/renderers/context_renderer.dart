@@ -45,7 +45,7 @@ class ContextRenderer extends BaseRenderer {
 
     buffer.writeln('/// Key for $pascalName capability');
     buffer.writeln(
-        "const ${camelContextName}Key = CapabilityKey<${pascalName}Capability>('$contextName');");
+        "const ${camelContextName}Key = CapabilityKey<${pascalName}Capability>('${StringUtils.escapeSingleQuoted(contextName)}');");
     buffer.writeln();
 
     buffer.writeln('/// Mixin for Analytics class');
@@ -98,7 +98,7 @@ class ContextRenderer extends BaseRenderer {
         ));
 
         buffer.writeln(
-            "    capability(${camelContextName}Key)?.$interfaceMethodName('${prop.name}', value);");
+            "    capability(${camelContextName}Key)?.$interfaceMethodName('${StringUtils.escapeSingleQuoted(prop.name)}', value);");
         buffer.writeln('  }');
         buffer.writeln();
       }

@@ -4,9 +4,11 @@ import 'package:analytics_gen/src/core/exceptions.dart';
 import 'package:analytics_gen/src/generator/renderers/analytics_class_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/context_renderer.dart';
 import 'package:analytics_gen/src/generator/renderers/event_renderer.dart';
+import 'package:analytics_gen/src/generator/renderers/matchers_renderer.dart';
 import 'package:analytics_gen/src/models/analytics_domain.dart';
 import 'package:analytics_gen/src/models/analytics_event.dart';
 import 'package:analytics_gen/src/models/analytics_parameter.dart';
+import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -186,6 +188,121 @@ void main() {
       expect(result, contains(r"donTKnow('don\'t know'),"));
       expect(result, contains(r"value5('\$5'),"));
       expect(result, contains(r"aB('a\\b');"));
+    });
+
+    test('escapes wire names in the parameters map', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: r'user"s $id',
+            codeName: 'user_id',
+            type: 'string',
+            isNullable: false,
+          ),
+          AnalyticsParameter(
+            name: r'note"s $x',
+            codeName: 'note',
+            type: 'string',
+            isNullable: true,
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(result, contains(r'"user\"s \$id": userId,'));
+      expect(result, contains(r'if (note != null) "note\"s \$x": note,'));
+      expectValidDart(result);
+    });
+
+    test('escapes a multi-line description in the parameters map', () {
+      final describingRenderer = EventRenderer(
+        AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+          rules: AnalyticsRules(includeEventDescription: true),
+        ),
+      );
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in\nwith a password',
+        parameters: [],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          describingRenderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(
+        result,
+        contains(r"'description': 'User logs in\nwith a password',"),
+      );
+      expectValidDart(result);
+    });
+
+    test('renders a regex that ends with a quote as an escaped literal', () {
+      final event = AnalyticsEvent(
+        name: 'search',
+        description: 'Search items',
+        parameters: [
+          AnalyticsParameter(
+            name: 'query',
+            type: 'string',
+            isNullable: false,
+            regex: "^[a-z]+'",
+          ),
+        ],
+      );
+      final domain = AnalyticsDomain(name: 'items', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('items', domain, {'items': domain});
+
+      expect(
+        result,
+        contains(r"static final _queryRegex = RegExp('^[a-z]+\'');"),
+      );
+      expectValidDart(result);
+    });
+
+    test('escapes the replacement in the deprecation message', () {
+      final event = AnalyticsEvent(
+        name: 'old_login',
+        description: 'Old login',
+        parameters: [],
+        deprecated: true,
+        replacement: "the user's new flow",
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(
+        result,
+        contains(r"@Deprecated('Use the user\'s new flow instead.')"),
+      );
+      expectValidDart(result);
+    });
+
+    test('escapes the event name of an unresolved dual-write target', () {
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [],
+        dualWriteTo: [r'other.say"hi"'],
+      );
+      final domain = AnalyticsDomain(name: 'auth', events: [event]);
+
+      final result =
+          renderer.renderDomainFile('auth', domain, {'auth': domain});
+
+      expect(result, contains(r'name: "other.say\"hi\"",'));
+      expectValidDart(result);
     });
 
     test('throws when allowed values map to the same enum constant', () {
@@ -600,6 +717,46 @@ void main() {
       expect(result, contains(r"'must be one of don\'t, \$5',"));
     });
 
+    test('renders a regex containing a quote as a valid literal', () {
+      final properties = [
+        AnalyticsParameter(
+          name: 'nickname',
+          type: 'string',
+          isNullable: false,
+          regex: r"^[a-z']+$",
+        ),
+      ];
+
+      final result = renderer.renderContextFile('profile', properties);
+
+      expect(
+        result,
+        contains(r"final _valueRegex = RegExp(r'''^[a-z']+$''');"),
+      );
+      expectValidDart(result);
+    });
+
+    test('escapes the property wire name passed to the capability', () {
+      final properties = [
+        AnalyticsParameter(
+          name: r"plan's $tier",
+          codeName: 'plan_tier',
+          type: 'string',
+          isNullable: false,
+        ),
+      ];
+
+      final result = renderer.renderContextFile('profile', properties);
+
+      expect(
+        result,
+        contains(
+          r"capability(profileKey)?.setProfileProperty('plan\'s \$tier', value);",
+        ),
+      );
+      expectValidDart(result);
+    });
+
     test('renders each line of a multi-line description as a doc comment', () {
       final properties = [
         AnalyticsParameter(
@@ -726,6 +883,36 @@ void main() {
               'static const List<AnalyticsDomain> plan = <AnalyticsDomain>['));
       expect(result, contains("name: 'auth',"));
       expect(result, contains("name: 'login',"));
+    });
+
+    test('escapes a multi-line event description in the plan', () {
+      renderer = AnalyticsClassRenderer(
+        AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+          targets: AnalyticsTargets(generatePlan: true),
+        ),
+      );
+      final domains = {
+        'auth': AnalyticsDomain(
+          name: 'auth',
+          events: [
+            AnalyticsEvent(
+              name: 'login',
+              description: 'User logs in\r\nwith a password',
+              parameters: [],
+            ),
+          ],
+        ),
+      };
+
+      final result = renderer.renderAnalyticsClass(domains);
+
+      expect(
+        result,
+        contains(r"description: 'User logs in\r\nwith a password',"),
+      );
+      expectValidDart(result);
     });
 
     test('renders analytics plan with event identifier', () {
@@ -912,4 +1099,42 @@ void main() {
       expect(result, contains("'special_key\\'': 'value\\'with\\'quotes',"));
     });
   });
+
+  group('MatchersRenderer', () {
+    test('escapes wire names in parameter lookups', () {
+      final renderer = MatchersRenderer(
+        AnalyticsConfig(
+          inputs: AnalyticsInputs(eventsPath: 'events'),
+          outputs: AnalyticsOutputs(dartPath: 'lib/analytics'),
+        ),
+      );
+      final event = AnalyticsEvent(
+        name: 'login',
+        description: 'User logs in',
+        parameters: [
+          AnalyticsParameter(
+            name: r'user"s $id',
+            codeName: 'user_id',
+            type: 'string',
+            isNullable: false,
+          ),
+        ],
+      );
+
+      final result = renderer.render(
+        {
+          'auth': AnalyticsDomain(name: 'auth', events: [event])
+        },
+      );
+
+      expect(result, contains(r'if (!params.containsKey("user\"s \$id"))'));
+      expect(result, contains(r'final actual = params["user\"s \$id"];'));
+      expectValidDart(result);
+    });
+  });
+}
+
+void expectValidDart(String source) {
+  final parsed = parseString(content: source, throwIfDiagnostics: false);
+  expect(parsed.errors, isEmpty, reason: source);
 }

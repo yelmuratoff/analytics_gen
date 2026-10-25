@@ -15,5 +15,14 @@ void main() {
       expect(StringUtils.toCamelCase('screen-view'), equals('screenView'));
       expect(StringUtils.toCamelCase(''), equals(''));
     });
+
+    test('regexLiteral keeps a pattern raw when a raw literal can hold it', () {
+      expect(StringUtils.regexLiteral(r"^\d+'s$"), equals(r"r'''^\d+'s$'''"));
+    });
+
+    test('regexLiteral escapes a pattern a raw literal cannot hold', () {
+      expect(StringUtils.regexLiteral("a'''b"), equals(r"'a\'\'\'b'"));
+      expect(StringUtils.regexLiteral('a\nb'), equals(r"'a\nb'"));
+    });
   });
 }

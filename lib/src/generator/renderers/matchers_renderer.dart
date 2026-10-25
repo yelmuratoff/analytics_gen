@@ -91,10 +91,11 @@ class MatchersRenderer extends BaseRenderer {
       // UNLESS we want strict matching.
       // Usually typed matchers imply "if you pass argument, check it".
 
+      final wireName = StringUtils.escapeDoubleQuoted(param.name);
       buffer.writeln('    if ($camelParam != null) {');
-      buffer.writeln(
-          '      if (!params.containsKey("${param.name}")) return false;');
-      buffer.writeln('      final actual = params["${param.name}"];');
+      buffer
+          .writeln('      if (!params.containsKey("$wireName")) return false;');
+      buffer.writeln('      final actual = params["$wireName"];');
 
       // Check if $camelParam is a Matcher or a Value
       buffer.writeln('      if ($camelParam is Matcher) {');

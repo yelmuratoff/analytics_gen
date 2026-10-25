@@ -77,12 +77,13 @@ class EventBodyRenderer {
           valueAccess = camelParam;
         }
 
+        final wireName = StringUtils.escapeDoubleQuoted(param.name);
         if (param.isNullable) {
           buffer.writeln(
-            '  if ($camelParam != null) "${param.name}": $valueAccess,',
+            '  if ($camelParam != null) "$wireName": $valueAccess,',
           );
         } else {
-          buffer.writeln('  "${param.name}": $valueAccess,');
+          buffer.writeln('  "$wireName": $valueAccess,');
         }
       }
       buffer.writeln('}..addAll($parametersArgName ?? const {});');
@@ -240,7 +241,9 @@ class EventBodyRenderer {
         buffer.writeln('${result.methodName}($args);');
       } else {
         buffer.writeln('logger.logEvent(');
-        buffer.writeln('  name: "${result.fallbackEventName}",');
+        buffer.writeln(
+          '  name: "${StringUtils.escapeDoubleQuoted(result.fallbackEventName!)}",',
+        );
         buffer.writeln('  parameters: $eventParametersVar,');
         buffer.writeln(');');
       }

@@ -210,8 +210,10 @@ void main() {
       );
 
       // Without cachedRegexFieldName, creates inline local variable
-      expect(checks,
-          contains("final _emailRegex = RegExp(r'^[^@]+@[^@]+\\.[^@]+\$');"));
+      expect(
+          checks,
+          contains(
+              "final _emailRegex = RegExp(r'''^[^@]+@[^@]+\\.[^@]+\$''');"));
       expect(checks, contains('if (!_emailRegex.hasMatch(email))'));
       expect(checks, contains('throw ArgumentError.value'));
       expect(checks, contains('must match regex'));
@@ -225,8 +227,10 @@ void main() {
       );
 
       // Without cachedRegexFieldName, creates inline local variable
-      expect(checks,
-          contains("final _emailRegex = RegExp(r'^[^@]+@[^@]+\\.[^@]+\$');"));
+      expect(
+          checks,
+          contains(
+              "final _emailRegex = RegExp(r'''^[^@]+@[^@]+\\.[^@]+\$''');"));
       expect(checks,
           contains('if (email != null && !_emailRegex.hasMatch(email))'));
     });
