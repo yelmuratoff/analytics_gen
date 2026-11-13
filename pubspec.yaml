@@ -13,6 +13,10 @@ topics:
   - analytics-generation
   - analytics-generator
 
+screenshots:
+  - description: "Analytics Gen Studio editing a YAML tracking plan, on desktop and on a phone."
+    path: assets/screenshots/banner.webp
+
 environment:
   sdk: ">=3.4.0 <4.0.0"
 
