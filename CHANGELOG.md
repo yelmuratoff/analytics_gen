@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.1]
+
+### Performance
+
+- The SQLite export builds `analytics_events.db` in one transaction. Before, `sqlite3` committed every insert separately, and a plan with 2,000 events spent about 20 seconds on the database alone. A full generation of that plan now takes under 3 seconds, and so does each rebuild in `--watch` mode. `create_database.sql` and the database contents are unchanged.
+
+### Fixes
+
+- When a statement in the script fails, `analytics_events.db` keeps none of the script. Before, every statement that succeeded stayed in the database, and generation still reported the error.
+
+### Documentation
+
+- The pub.dev page shows a screenshot of the Studio on desktop and on a phone.
+
 ## [2.3.0]
 
 ### Behaviour changes
