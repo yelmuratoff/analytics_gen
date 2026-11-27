@@ -91,7 +91,7 @@ void main() {
           return ProcessResult(0, 0, '3.45.0', '');
         }
 
-        if (executable == 'sqlite3' && arguments.length == 2) {
+        if (executable == 'sqlite3' && arguments.length > 1) {
           final dbPath = arguments.first;
           // Simulate creation of the database file when executing the SQL script.
           File(dbPath).writeAsBytesSync(const <int>[]);
@@ -119,7 +119,9 @@ void main() {
       );
     });
 
-    test('passes the script path to sqlite3 as one quoted argument', () async {
+    test(
+        'reads the script in one transaction, passing its path as one '
+        'quoted argument', () async {
       final outputDir = p.join(tempDir.path, r'my "exports" \ dir');
       Directory(outputDir).createSync();
       final calls = <List<String>>[];
@@ -138,7 +140,9 @@ void main() {
       final escaped = sqlPath.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
       expect(calls.last, [
         p.join(outputDir, 'analytics_events.db'),
+        'BEGIN;',
         '.read "$escaped"',
+        'COMMIT;',
       ]);
     });
 
@@ -174,7 +178,7 @@ void main() {
           return ProcessResult(0, 0, '3.45.0', '');
         }
 
-        if (executable == 'sqlite3' && arguments.length == 2) {
+        if (executable == 'sqlite3' && arguments.length > 1) {
           return ProcessResult(0, 1, '', 'creation failed');
         }
 

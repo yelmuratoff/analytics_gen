@@ -71,7 +71,7 @@ final class SqliteGenerator {
     // Execute SQL script to create database
     final result = await _runProcess(
       'sqlite3',
-      [dbPath, '.read ${_dotCommandArgument(sqlPath)}'],
+      [dbPath, 'BEGIN;', '.read ${_dotCommandArgument(sqlPath)}', 'COMMIT;'],
     );
 
     if (result.exitCode != 0) {
