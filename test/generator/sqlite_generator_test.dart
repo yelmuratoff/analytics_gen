@@ -164,6 +164,28 @@ void main() {
       );
     }, skip: _sqlite3Missing() ? 'sqlite3 is not installed' : false);
 
+    test('keeps nothing from a script that fails partway through', () async {
+      final sqlPath = p.join(tempDir.path, 'create_database.sql');
+      File(sqlPath).writeAsStringSync(
+        'CREATE TABLE domains (id INTEGER);\n'
+        'INSERT INTO domains VALUES (1);\n'
+        'INSERT INTO missing_table VALUES (2);\n'
+        'INSERT INTO domains VALUES (3);\n',
+      );
+
+      await expectLater(
+        SqliteGenerator(projectRoot: tempDir.path)
+            .generate(domains, tempDir.path, existingSqlPath: sqlPath),
+        throwsA(isA<AnalyticsGenerationException>()),
+      );
+
+      final tables = Process.runSync(
+        'sqlite3',
+        [p.join(tempDir.path, 'analytics_events.db'), '.tables'],
+      );
+      expect((tables.stdout as String).trim(), isEmpty);
+    }, skip: _sqlite3Missing() ? 'sqlite3 is not installed' : false);
+
     test('deletes stale database and throws when sqlite3 errors', () async {
       final dbPath = p.join(tempDir.path, 'analytics_events.db');
       File(dbPath).writeAsStringSync('stale content');
