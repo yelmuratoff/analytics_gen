@@ -91,7 +91,7 @@ void main() {
           return ProcessResult(0, 0, '3.45.0', '');
         }
 
-        if (executable == 'sqlite3' && arguments.length == 2) {
+        if (executable == 'sqlite3' && arguments.length > 1) {
           final dbPath = arguments.first;
           // Simulate creation of the database file when executing the SQL script.
           File(dbPath).writeAsBytesSync(const <int>[]);
@@ -119,7 +119,9 @@ void main() {
       );
     });
 
-    test('passes the script path to sqlite3 as one quoted argument', () async {
+    test(
+        'reads the script in one transaction, passing its path as one '
+        'quoted argument', () async {
       final outputDir = p.join(tempDir.path, r'my "exports" \ dir');
       Directory(outputDir).createSync();
       final calls = <List<String>>[];
@@ -138,7 +140,9 @@ void main() {
       final escaped = sqlPath.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
       expect(calls.last, [
         p.join(outputDir, 'analytics_events.db'),
+        'BEGIN;',
         '.read "$escaped"',
+        'COMMIT;',
       ]);
     });
 
@@ -160,6 +164,28 @@ void main() {
       );
     }, skip: _sqlite3Missing() ? 'sqlite3 is not installed' : false);
 
+    test('keeps nothing from a script that fails partway through', () async {
+      final sqlPath = p.join(tempDir.path, 'create_database.sql');
+      File(sqlPath).writeAsStringSync(
+        'CREATE TABLE domains (id INTEGER);\n'
+        'INSERT INTO domains VALUES (1);\n'
+        'INSERT INTO missing_table VALUES (2);\n'
+        'INSERT INTO domains VALUES (3);\n',
+      );
+
+      await expectLater(
+        SqliteGenerator(projectRoot: tempDir.path)
+            .generate(domains, tempDir.path, existingSqlPath: sqlPath),
+        throwsA(isA<AnalyticsGenerationException>()),
+      );
+
+      final tables = Process.runSync(
+        'sqlite3',
+        [p.join(tempDir.path, 'analytics_events.db'), '.tables'],
+      );
+      expect((tables.stdout as String).trim(), isEmpty);
+    }, skip: _sqlite3Missing() ? 'sqlite3 is not installed' : false);
+
     test('deletes stale database and throws when sqlite3 errors', () async {
       final dbPath = p.join(tempDir.path, 'analytics_events.db');
       File(dbPath).writeAsStringSync('stale content');
@@ -174,7 +200,7 @@ void main() {
           return ProcessResult(0, 0, '3.45.0', '');
         }
 
-        if (executable == 'sqlite3' && arguments.length == 2) {
+        if (executable == 'sqlite3' && arguments.length > 1) {
           return ProcessResult(0, 1, '', 'creation failed');
         }
 
